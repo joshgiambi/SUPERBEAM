@@ -1,0 +1,1606 @@
+2025-10-24 22:03:37,100 - __main__ - INFO - Starting Fast Shape Propagation Service on 127.0.0.1:5002
+ * Serving Flask app 'fast_propagation_service'
+ * Debug mode: off
+2025-10-24 22:03:37,104 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5002
+2025-10-24 22:03:37,104 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-24 22:03:41,938 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:03:41] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:04:15,732 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:04:15] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:05:30,374 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:05:30] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:00,824 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:00] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:11,695 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:11] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:21,098 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:21] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:30,870 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:30,954 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:30] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:32,273 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:32,418 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:32] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:33,738 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:33,885 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:33] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:34,912 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:35,035 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:35] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:36,143 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:36,231 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:36] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:36,953 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:37,055 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:37] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:37,797 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:37,896 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:37] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:38,599 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:38,709 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:38] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:39,413 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:39,528 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:39] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:41,064 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:41,202 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:41] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:42,260 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:42,432 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:42] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:43,283 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:43,503 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:43] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:43,922 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:44,013 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:44] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:46,075 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:46,261 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:46] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:47,733 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:47] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:47,733 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:47,947 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:47] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:49,743 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:49,744 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:49] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:49,850 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:49] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:50,780 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:50,944 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:50] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:52,711 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:53,053 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:53] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:54,724 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:55,019 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:55] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:10:56,777 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-24 22:10:57,077 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:57] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-24 22:11:31,947 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:11:31] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:13:32,353 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:32] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:13:35,849 - __main__ - INFO - Predicting with 1 references for target at 422.1
+2025-10-24 22:13:35,852 - __main__ - INFO - Shape prediction: centroid=(276.7, 240.7), area=73, bbox=[259 234  34  18]
+2025-10-24 22:13:35,853 - __main__ - INFO - Intensity: median=42.0, std=65.0, range=[-6.7, 90.7]
+2025-10-24 22:13:35,858 - __main__ - INFO - Candidate pixels: 401, threshold=0.055
+2025-10-24 22:13:35,903 - __main__ - INFO - Predicting with 1 references for target at 422.1
+2025-10-24 22:13:35,903 - __main__ - INFO - Result: area=452 (pred=73), area_ratio=0.16, centroid_score=0.85, quality=0.51
+2025-10-24 22:13:35,912 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:35,913 - __main__ - INFO - Shape prediction: centroid=(214.7, 260.7), area=114, bbox=[199 240  38  47]
+2025-10-24 22:13:35,914 - __main__ - INFO - Intensity: median=35.0, std=55.3, range=[-6.5, 76.5]
+2025-10-24 22:13:35,916 - __main__ - INFO - Candidate pixels: 864, threshold=0.007
+2025-10-24 22:13:35,939 - __main__ - INFO - Result: area=114 (pred=114), area_ratio=1.00, centroid_score=0.29, quality=0.64
+2025-10-24 22:13:35,954 - __main__ - INFO - Predicting with 1 references for target at 422.1
+2025-10-24 22:13:35,963 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:35,964 - __main__ - INFO - Shape prediction: centroid=(277.6, 238.4), area=73, bbox=[261 229  32  23]
+2025-10-24 22:13:35,964 - __main__ - INFO - Intensity: median=40.0, std=76.8, range=[-17.6, 94.4]
+2025-10-24 22:13:35,966 - __main__ - INFO - Candidate pixels: 520, threshold=0.050
+2025-10-24 22:13:35,966 - __main__ - INFO - Result: area=575 (pred=73), area_ratio=0.13, centroid_score=0.80, quality=0.47
+2025-10-24 22:13:35,975 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:37,555 - __main__ - INFO - Predicting with 1 references for target at 422.1
+2025-10-24 22:13:37,556 - __main__ - INFO - Shape prediction: centroid=(281.1, 251.6), area=100, bbox=[263 235  39  29]
+2025-10-24 22:13:37,556 - __main__ - INFO - Intensity: median=55.5, std=69.4, range=[3.4, 107.6]
+2025-10-24 22:13:37,559 - __main__ - INFO - Candidate pixels: 704, threshold=0.016
+2025-10-24 22:13:37,560 - __main__ - INFO - Result: area=645 (pred=100), area_ratio=0.16, centroid_score=0.77, quality=0.46
+2025-10-24 22:13:37,569 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:37] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:37,610 - __main__ - INFO - Predicting with 1 references for target at 422.1
+2025-10-24 22:13:37,611 - __main__ - INFO - Shape prediction: centroid=(281.1, 251.6), area=100, bbox=[263 235  39  29]
+2025-10-24 22:13:37,612 - __main__ - INFO - Intensity: median=55.5, std=69.4, range=[3.4, 107.6]
+2025-10-24 22:13:37,613 - __main__ - INFO - Candidate pixels: 704, threshold=0.016
+2025-10-24 22:13:37,614 - __main__ - INFO - Result: area=645 (pred=100), area_ratio=0.16, centroid_score=0.77, quality=0.46
+2025-10-24 22:13:37,623 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:37] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,311 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:40,312 - __main__ - INFO - Shape prediction: centroid=(216.0, 260.4), area=133, bbox=[198 240  45  49]
+2025-10-24 22:13:40,312 - __main__ - INFO - Intensity: median=55.0, std=49.3, range=[18.1, 91.9]
+2025-10-24 22:13:40,351 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:40,351 - __main__ - INFO - Candidate pixels: 765, threshold=0.005
+2025-10-24 22:13:40,352 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,352 - __main__ - INFO - Result: area=299 (pred=133), area_ratio=0.44, centroid_score=0.55, quality=0.50
+2025-10-24 22:13:40,361 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,363 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,401 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:40,439 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:40,440 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,441 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,441 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:40,441 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,442 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,479 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:40,480 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:40,489 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,490 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,521 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:40,526 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,526 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:40,527 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:40,549 - __main__ - INFO - Shape prediction: centroid=(276.0, 239.2), area=74, bbox=[258 231  35  20]
+2025-10-24 22:13:40,563 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:40,564 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:40,564 - __main__ - INFO - Intensity: median=30.0, std=60.1, range=[-15.1, 75.1]
+2025-10-24 22:13:40,571 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:40,573 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,583 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,583 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,584 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:40,584 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,585 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:40,594 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,616 - __main__ - INFO - Candidate pixels: 221, threshold=0.065
+2025-10-24 22:13:40,632 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:40,633 - __main__ - INFO - Result: area=225 (pred=74), area_ratio=0.33, centroid_score=0.66, quality=0.50
+2025-10-24 22:13:40,634 - __main__ - INFO - Candidate pixels: 558, threshold=0.091
+2025-10-24 22:13:40,634 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,643 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,644 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,645 - __main__ - INFO - Result: area=627 (pred=111), area_ratio=0.18, centroid_score=0.78, quality=0.48
+2025-10-24 22:13:40,676 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,722 - __main__ - INFO - Predicting with 1 references for target at 286.1
+2025-10-24 22:13:40,727 - __main__ - INFO - Predicting with 1 references for target at 288.1
+2025-10-24 22:13:40,729 - __main__ - INFO - Shape prediction: centroid=(214.7, 260.7), area=114, bbox=[199 240  38  47]
+2025-10-24 22:13:40,729 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:40,729 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,764 - __main__ - INFO - Predicting with 1 references for target at 284.1
+2025-10-24 22:13:40,764 - __main__ - INFO - Intensity: median=35.0, std=55.3, range=[-6.5, 76.5]
+2025-10-24 22:13:40,765 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,787 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,801 - __main__ - INFO - Predicting with 1 references for target at 284.1
+2025-10-24 22:13:40,802 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,802 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:40,811 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,832 - __main__ - INFO - Shape prediction: centroid=(282.3, 255.1), area=96, bbox=[265 237  37  34]
+2025-10-24 22:13:40,846 - __main__ - INFO - Predicting with 1 references for target at 284.1
+2025-10-24 22:13:40,847 - __main__ - INFO - Intensity: median=43.0, std=58.4, range=[-0.8, 75.8]
+2025-10-24 22:13:40,847 - __main__ - INFO - Candidate pixels: 579, threshold=0.058
+2025-10-24 22:13:40,847 - __main__ - INFO - Candidate pixels: 454, threshold=0.004
+2025-10-24 22:13:40,848 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,848 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,848 - __main__ - INFO - Result: area=112 (pred=111), area_ratio=0.99, centroid_score=0.44, quality=0.72
+2025-10-24 22:13:40,848 - __main__ - INFO - Candidate pixels: 429, threshold=0.055
+2025-10-24 22:13:40,849 - __main__ - INFO - Result: area=476 (pred=114), area_ratio=0.24, centroid_score=0.49, quality=0.36
+2025-10-24 22:13:40,866 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,868 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,869 - __main__ - INFO - Result: area=109 (pred=111), area_ratio=0.98, centroid_score=0.51, quality=0.75
+2025-10-24 22:13:40,879 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,880 - __main__ - INFO - Candidate pixels: 323, threshold=0.008
+2025-10-24 22:13:40,881 - __main__ - INFO - Candidate pixels: 429, threshold=0.055
+2025-10-24 22:13:40,881 - __main__ - INFO - Result: area=172 (pred=96), area_ratio=0.56, centroid_score=0.77, quality=0.66
+2025-10-24 22:13:40,891 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,892 - __main__ - INFO - Result: area=109 (pred=111), area_ratio=0.98, centroid_score=0.51, quality=0.75
+2025-10-24 22:13:40,901 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,937 - __main__ - INFO - Predicting with 1 references for target at 286.1
+2025-10-24 22:13:40,938 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:40,939 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:40,941 - __main__ - INFO - Candidate pixels: 509, threshold=0.054
+2025-10-24 22:13:40,942 - __main__ - INFO - Result: area=581 (pred=111), area_ratio=0.19, centroid_score=0.82, quality=0.51
+2025-10-24 22:13:40,952 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:40,989 - __main__ - INFO - Predicting with 1 references for target at 288.1
+2025-10-24 22:13:41,025 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:41,026 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,026 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,047 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,063 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,063 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:41,064 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,065 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,102 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:41,102 - __main__ - INFO - Candidate pixels: 579, threshold=0.058
+2025-10-24 22:13:41,137 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:41,137 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:41,138 - __main__ - INFO - Shape prediction: centroid=(283.1, 255.8), area=92, bbox=[265 237  36  36]
+2025-10-24 22:13:41,138 - __main__ - INFO - Result: area=112 (pred=111), area_ratio=0.99, centroid_score=0.44, quality=0.72
+2025-10-24 22:13:41,138 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,139 - __main__ - INFO - Intensity: median=54.5, std=62.1, range=[7.9, 101.1]
+2025-10-24 22:13:41,139 - __main__ - INFO - Candidate pixels: 558, threshold=0.091
+2025-10-24 22:13:41,146 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:41,148 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,148 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,157 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,158 - __main__ - INFO - Result: area=627 (pred=111), area_ratio=0.18, centroid_score=0.78, quality=0.48
+2025-10-24 22:13:41,167 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,168 - __main__ - INFO - Candidate pixels: 558, threshold=0.091
+2025-10-24 22:13:41,168 - __main__ - INFO - Candidate pixels: 422, threshold=0.017
+2025-10-24 22:13:41,169 - __main__ - INFO - Result: area=627 (pred=111), area_ratio=0.18, centroid_score=0.78, quality=0.48
+2025-10-24 22:13:41,178 - __main__ - INFO - Result: area=112 (pred=92), area_ratio=0.82, centroid_score=0.51, quality=0.67
+2025-10-24 22:13:41,178 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,188 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,657 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:41,658 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,659 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,660 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:41,661 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:41,671 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,712 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:41,712 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,713 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,715 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:41,752 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:41,752 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:41,761 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,762 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,796 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:41,796 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,797 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:41,797 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:41,798 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:41,799 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:41,809 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:41,809 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:41,809 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:41,818 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:42,469 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:42,470 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:42,470 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:42,472 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:42,472 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:42,481 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:42,521 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:42,522 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:42,522 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:42,524 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:42,525 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:42,534 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:42,692 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:42,693 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:42,693 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:42,695 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:42,696 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:42,705 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:42,752 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:42,753 - __main__ - INFO - Shape prediction: centroid=(286.6, 261.0), area=114, bbox=[268 237  33  48]
+2025-10-24 22:13:42,753 - __main__ - INFO - Intensity: median=15.0, std=63.4, range=[-32.5, 62.5]
+2025-10-24 22:13:42,755 - __main__ - INFO - Candidate pixels: 706, threshold=0.011
+2025-10-24 22:13:42,756 - __main__ - INFO - Result: area=634 (pred=114), area_ratio=0.18, centroid_score=0.76, quality=0.47
+2025-10-24 22:13:42,764 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:43,670 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:43,671 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:43,672 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:43,673 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:43,674 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:43,683 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:43,722 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:43,723 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:43,723 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:43,725 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:43,726 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:43,735 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:45,362 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:45,363 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:45,364 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:45,366 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:45,366 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:45,375 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:45,416 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:45,416 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:45,417 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:45,418 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:45,419 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:45,427 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:46,864 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:46,865 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:46,865 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:46,867 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:46,868 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:46,877 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:46,916 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:46,938 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:46,952 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:46,952 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:46,953 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:46,953 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:46,954 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:46,955 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:46,964 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:46,965 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:46,965 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:46,974 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:47,010 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:47,011 - __main__ - INFO - Shape prediction: centroid=(217.2, 258.0), area=131, bbox=[199 238  45  48]
+2025-10-24 22:13:47,012 - __main__ - INFO - Intensity: median=37.0, std=53.2, range=[-2.9, 76.9]
+2025-10-24 22:13:47,013 - __main__ - INFO - Candidate pixels: 698, threshold=0.008
+2025-10-24 22:13:47,014 - __main__ - INFO - Result: area=390 (pred=131), area_ratio=0.34, centroid_score=0.57, quality=0.45
+2025-10-24 22:13:47,023 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:47,504 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:47,505 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:47,505 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:47,507 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:47,508 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:47,518 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:47,558 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:47,559 - __main__ - INFO - Shape prediction: centroid=(214.7, 260.7), area=114, bbox=[199 240  38  47]
+2025-10-24 22:13:47,559 - __main__ - INFO - Intensity: median=35.0, std=55.3, range=[-6.5, 76.5]
+2025-10-24 22:13:47,561 - __main__ - INFO - Candidate pixels: 779, threshold=0.006
+2025-10-24 22:13:47,561 - __main__ - INFO - Result: area=114 (pred=114), area_ratio=1.00, centroid_score=0.33, quality=0.67
+2025-10-24 22:13:47,570 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:49,019 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:49,019 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:49,020 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:49,022 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:49,023 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:49,032 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:49] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:49,072 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:49,073 - __main__ - INFO - Shape prediction: centroid=(286.4, 260.6), area=114, bbox=[267 237  34  47]
+2025-10-24 22:13:49,074 - __main__ - INFO - Intensity: median=31.5, std=61.5, range=[-14.6, 77.6]
+2025-10-24 22:13:49,076 - __main__ - INFO - Candidate pixels: 693, threshold=0.006
+2025-10-24 22:13:49,076 - __main__ - INFO - Result: area=106 (pred=114), area_ratio=0.93, centroid_score=0.33, quality=0.63
+2025-10-24 22:13:49,085 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:49] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:50,097 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:50,098 - __main__ - INFO - Shape prediction: centroid=(217.7, 258.0), area=133, bbox=[199 239  46  47]
+2025-10-24 22:13:50,098 - __main__ - INFO - Intensity: median=33.0, std=53.9, range=[-7.4, 73.4]
+2025-10-24 22:13:50,100 - __main__ - INFO - Candidate pixels: 711, threshold=0.008
+2025-10-24 22:13:50,101 - __main__ - INFO - Result: area=392 (pred=133), area_ratio=0.34, centroid_score=0.55, quality=0.45
+2025-10-24 22:13:50,111 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:50] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:50,158 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:50,159 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:50,159 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:50,161 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:50,162 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:50,171 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:50] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:51,385 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:51,386 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:51,386 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:51,388 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:51,389 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:51,399 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:51] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:51,438 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:51,439 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:51,439 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:51,442 - __main__ - INFO - Candidate pixels: 541, threshold=0.099
+2025-10-24 22:13:51,443 - __main__ - INFO - Result: area=86 (pred=111), area_ratio=0.77, centroid_score=0.47, quality=0.62
+2025-10-24 22:13:51,452 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:51] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:52,067 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:52,068 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:52,069 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:52,107 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:52,107 - __main__ - INFO - Candidate pixels: 558, threshold=0.091
+2025-10-24 22:13:52,108 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:52,109 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:52,139 - __main__ - INFO - Result: area=627 (pred=111), area_ratio=0.18, centroid_score=0.78, quality=0.48
+2025-10-24 22:13:52,144 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:52,153 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:52] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:52,154 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:52,155 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:52,155 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:52,156 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:52,165 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:52] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:52,166 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:52,167 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:52,176 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:52] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:52,210 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:52,211 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:52,211 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:52,213 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:52,214 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:52,223 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:52] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:53,137 - __main__ - INFO - Predicting with 1 references for target at 288.1
+2025-10-24 22:13:53,138 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:53,139 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:53,141 - __main__ - INFO - Candidate pixels: 579, threshold=0.058
+2025-10-24 22:13:53,141 - __main__ - INFO - Result: area=112 (pred=111), area_ratio=0.99, centroid_score=0.44, quality=0.72
+2025-10-24 22:13:53,151 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:53] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:53,193 - __main__ - INFO - Predicting with 1 references for target at 288.1
+2025-10-24 22:13:53,194 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:53,194 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:53,196 - __main__ - INFO - Candidate pixels: 579, threshold=0.058
+2025-10-24 22:13:53,197 - __main__ - INFO - Result: area=112 (pred=111), area_ratio=0.99, centroid_score=0.44, quality=0.72
+2025-10-24 22:13:53,206 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:53] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:54,021 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:54,022 - __main__ - INFO - Shape prediction: centroid=(211.1, 264.8), area=120, bbox=[192 240  39  50]
+2025-10-24 22:13:54,022 - __main__ - INFO - Intensity: median=47.0, std=54.4, range=[6.2, 80.0]
+2025-10-24 22:13:54,024 - __main__ - INFO - Candidate pixels: 459, threshold=0.001
+2025-10-24 22:13:54,025 - __main__ - INFO - Result: area=48 (pred=120), area_ratio=0.40, centroid_score=0.53, quality=0.47
+2025-10-24 22:13:54,034 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:54] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:54,074 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:54,075 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:54,075 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:54,077 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:54,078 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:54,087 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:54] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:55,380 - __main__ - INFO - Predicting with 1 references for target at 290.1
+2025-10-24 22:13:55,381 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:55,381 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:55,383 - __main__ - INFO - Candidate pixels: 581, threshold=0.056
+2025-10-24 22:13:55,384 - __main__ - INFO - Result: area=713 (pred=111), area_ratio=0.16, centroid_score=0.94, quality=0.55
+2025-10-24 22:13:55,393 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:55] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,071 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:56,072 - __main__ - INFO - Shape prediction: centroid=(281.5, 254.4), area=94, bbox=[264 237  37  32]
+2025-10-24 22:13:56,072 - __main__ - INFO - Intensity: median=49.5, std=68.8, range=[-2.1, 101.1]
+2025-10-24 22:13:56,074 - __main__ - INFO - Candidate pixels: 463, threshold=0.022
+2025-10-24 22:13:56,075 - __main__ - INFO - Result: area=338 (pred=94), area_ratio=0.28, centroid_score=0.70, quality=0.49
+2025-10-24 22:13:56,084 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,125 - __main__ - INFO - Predicting with 1 references for target at 292.1
+2025-10-24 22:13:56,126 - __main__ - INFO - Shape prediction: centroid=(214.7, 261.3), area=112, bbox=[199 238  34  49]
+2025-10-24 22:13:56,162 - __main__ - INFO - Intensity: median=51.5, std=46.6, range=[16.6, 86.4]
+2025-10-24 22:13:56,162 - __main__ - INFO - Predicting with 1 references for target at 294.1
+2025-10-24 22:13:56,163 - __main__ - INFO - Shape prediction: centroid=(276.7, 240.2), area=71, bbox=[259 233  34  18]
+2025-10-24 22:13:56,198 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:56,199 - __main__ - INFO - Intensity: median=19.0, std=53.6, range=[-21.2, 59.2]
+2025-10-24 22:13:56,200 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:56,200 - __main__ - INFO - Candidate pixels: 320, threshold=0.010
+2025-10-24 22:13:56,201 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:56,202 - __main__ - INFO - Result: area=166 (pred=112), area_ratio=0.67, centroid_score=0.60, quality=0.64
+2025-10-24 22:13:56,211 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,246 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:56,246 - __main__ - INFO - Candidate pixels: 130, threshold=0.111
+2025-10-24 22:13:56,247 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:56,247 - __main__ - INFO - Result: area=69 (pred=71), area_ratio=0.97, centroid_score=0.57, quality=0.77
+2025-10-24 22:13:56,247 - __main__ - INFO - Shape prediction: centroid=(287.8, 253.7), area=136, bbox=[261 236  47  43]
+2025-10-24 22:13:56,256 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,257 - __main__ - INFO - Intensity: median=34.5, std=80.8, range=[-26.1, 95.1]
+2025-10-24 22:13:56,257 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:56,267 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,269 - __main__ - INFO - Candidate pixels: 988, threshold=0.006
+2025-10-24 22:13:56,269 - __main__ - INFO - Result: area=1055 (pred=136), area_ratio=0.13, centroid_score=0.69, quality=0.41
+2025-10-24 22:13:56,279 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,312 - __main__ - INFO - Predicting with 1 references for target at 296.1
+2025-10-24 22:13:56,313 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:56,313 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:56,315 - __main__ - INFO - Candidate pixels: 494, threshold=0.080
+2025-10-24 22:13:56,316 - __main__ - INFO - Result: area=665 (pred=111), area_ratio=0.17, centroid_score=0.84, quality=0.50
+2025-10-24 22:13:56,325 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:56,529 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:56,530 - __main__ - INFO - Shape prediction: centroid=(215.9, 255.4), area=115, bbox=[199 236  40  47]
+2025-10-24 22:13:56,530 - __main__ - INFO - Intensity: median=27.0, std=55.8, range=[-14.8, 68.8]
+2025-10-24 22:13:56,532 - __main__ - INFO - Candidate pixels: 774, threshold=0.010
+2025-10-24 22:13:56,532 - __main__ - INFO - Result: area=476 (pred=115), area_ratio=0.24, centroid_score=0.61, quality=0.43
+2025-10-24 22:13:56,541 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:56] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:57,585 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:57,586 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:57,587 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:57,590 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:57,591 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:57,601 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:57] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:13:57,637 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:13:57,638 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:13:57,638 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:13:57,640 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:13:57,641 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:13:57,649 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:13:57] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:04,068 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:04,069 - __main__ - INFO - Shape prediction: centroid=(215.9, 260.7), area=128, bbox=[199 240  43  49]
+2025-10-24 22:14:04,069 - __main__ - INFO - Intensity: median=39.0, std=57.7, range=[-4.2, 82.2]
+2025-10-24 22:14:04,071 - __main__ - INFO - Candidate pixels: 913, threshold=0.005
+2025-10-24 22:14:04,072 - __main__ - INFO - Result: area=115 (pred=128), area_ratio=0.90, centroid_score=0.34, quality=0.62
+2025-10-24 22:14:04,082 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:04,125 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:04,126 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:14:04,126 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:14:04,128 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:14:04,128 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:14:04,137 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:05,572 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:05,573 - __main__ - INFO - Shape prediction: centroid=(215.9, 260.7), area=128, bbox=[199 240  43  49]
+2025-10-24 22:14:05,574 - __main__ - INFO - Intensity: median=41.0, std=50.4, range=[3.2, 78.8]
+2025-10-24 22:14:05,576 - __main__ - INFO - Candidate pixels: 816, threshold=0.005
+2025-10-24 22:14:05,576 - __main__ - INFO - Result: area=399 (pred=128), area_ratio=0.32, centroid_score=0.56, quality=0.44
+2025-10-24 22:14:05,586 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:06,884 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:06,885 - __main__ - INFO - Shape prediction: centroid=(215.9, 255.4), area=115, bbox=[199 236  40  47]
+2025-10-24 22:14:06,885 - __main__ - INFO - Intensity: median=27.0, std=55.8, range=[-14.8, 68.8]
+2025-10-24 22:14:06,887 - __main__ - INFO - Candidate pixels: 774, threshold=0.010
+2025-10-24 22:14:06,888 - __main__ - INFO - Result: area=476 (pred=115), area_ratio=0.24, centroid_score=0.61, quality=0.43
+2025-10-24 22:14:06,897 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:06] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:06,937 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:06,938 - __main__ - INFO - Shape prediction: centroid=(280.7, 253.8), area=100, bbox=[264 236  37  30]
+2025-10-24 22:14:06,938 - __main__ - INFO - Intensity: median=56.0, std=70.6, range=[3.0, 109.0]
+2025-10-24 22:14:06,940 - __main__ - INFO - Candidate pixels: 429, threshold=0.027
+2025-10-24 22:14:06,941 - __main__ - INFO - Result: area=138 (pred=100), area_ratio=0.72, centroid_score=0.46, quality=0.59
+2025-10-24 22:14:06,949 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:06] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:08,801 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:08,801 - __main__ - INFO - Shape prediction: centroid=(214.3, 261.4), area=119, bbox=[198 240  39  48]
+2025-10-24 22:14:08,802 - __main__ - INFO - Intensity: median=54.0, std=44.4, range=[20.7, 87.3]
+2025-10-24 22:14:08,804 - __main__ - INFO - Candidate pixels: 595, threshold=0.005
+2025-10-24 22:14:08,804 - __main__ - INFO - Result: area=275 (pred=119), area_ratio=0.43, centroid_score=0.58, quality=0.51
+2025-10-24 22:14:08,813 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:08] "POST /predict HTTP/1.1" 200 -
+2025-10-24 22:14:08,852 - __main__ - INFO - Predicting with 1 references for target at 298.1
+2025-10-24 22:14:08,853 - __main__ - INFO - Shape prediction: centroid=(280.7, 246.7), area=111, bbox=[262 231  41  28]
+2025-10-24 22:14:08,854 - __main__ - INFO - Intensity: median=-24.0, std=66.4, range=[-73.8, 25.8]
+2025-10-24 22:14:08,855 - __main__ - INFO - Candidate pixels: 480, threshold=0.076
+2025-10-24 22:14:08,856 - __main__ - INFO - Result: area=219 (pred=111), area_ratio=0.51, centroid_score=0.53, quality=0.52
+2025-10-24 22:14:08,865 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:14:08] "POST /predict HTTP/1.1" 200 -
+2025-10-25 09:32:08,397 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:32:08] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:34:14,071 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:34:14] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:35:55,938 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:35:55] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:37:02,860 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:37:02] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:46:03,996 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:46:03] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:47:26,282 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:47:26] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:50:24,648 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:50:24] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:50:46,056 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:50:46] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:50:56,604 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:50:56] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:51:04,309 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:51:04] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:51:15,576 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:51:15] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:51:58,280 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:51:58] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:52:59,487 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:52:59,613 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:52:59] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:01,175 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:01,343 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:01] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:02,250 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:02,445 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:02] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:04,035 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:04,214 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:04] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:05,038 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:05,161 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:05] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:06,028 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:06,135 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:06] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:06,966 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:07,070 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:07] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:07,912 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:08,012 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:08] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:09,442 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:09,562 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:09] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:10,595 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:10,729 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:10] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:11,085 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:11,427 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:11] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:11,427 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:11,466 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:11] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:12,510 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:12,737 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:12] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:16,068 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:16,600 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:16] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:20,646 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:21,131 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:21] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:23,874 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:24,923 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:24] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:28,708 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:29,236 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:29] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:30,869 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:31,093 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:31] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:32,762 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:33,025 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:33] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:34,608 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:34,837 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:34] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:36,408 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-25 09:53:36,649 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:36] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-25 09:53:56,576 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:53:56] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:54:16,626 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:54:16] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:56:08,271 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:56:08] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:57:23,866 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:57:23] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:02:03,979 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:02:03] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:02:10,271 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:02:10] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:05:54,332 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:05:54] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:06:30,972 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:06:30] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:08:01,992 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:08:01] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:08:31,848 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:08:31] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:08:44,902 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:08:44] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:08:53,420 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:08:53] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:09:01,702 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:09:01] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:09:10,440 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:09:10] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:09:26,053 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:09:26] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:09:57,205 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:09:57] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:10:05,326 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:10:05] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:10:34,831 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:10:34] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:11:12,651 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:11:12] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:12:27,976 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:12:27] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:12:37,347 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:12:37] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:12:40,135 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:12:40] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:12:46,312 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:12:46] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:13:08,318 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:13:08] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:13:20,254 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:13:20] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:13:49,360 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:13:49] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:14:26,500 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:14:26] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:16:33,868 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:16:33] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:27:25,976 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:27:25] "GET /health HTTP/1.1" 200 -
+2025-10-25 10:27:54,342 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 10:27:54] "GET /health HTTP/1.1" 200 -
+2025-10-25 15:52:29,616 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 15:52:29] "GET /health HTTP/1.1" 200 -
+2025-10-25 15:52:53,198 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 15:52:53] "GET /health HTTP/1.1" 200 -
+2025-10-26 11:50:59,914 - werkzeug - INFO - 127.0.0.1 - - [26/Oct/2025 11:50:59] "GET /health HTTP/1.1" 200 -
+2025-10-27 07:50:44,462 - werkzeug - INFO - 127.0.0.1 - - [27/Oct/2025 07:50:44] "GET /health HTTP/1.1" 200 -
+2025-10-28 15:27:47,318 - werkzeug - INFO - 127.0.0.1 - - [28/Oct/2025 15:27:47] "GET /health HTTP/1.1" 200 -
+2025-10-28 19:04:19,376 - werkzeug - INFO - 127.0.0.1 - - [28/Oct/2025 19:04:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 09:27:35,198 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 09:27:35] "GET /health HTTP/1.1" 200 -
+2025-10-29 11:49:45,444 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 11:49:45] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:14:12,454 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:14:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:16:05,285 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:16:05] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:16:21,327 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:16:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:16:48,433 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:16:48] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:19:27,440 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:19:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:21:18,264 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:21:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:21:45,828 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:21:45] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:21:57,433 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:21:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:22:12,451 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:22:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:22:17,930 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:22:17] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:23:58,698 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:23:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:26:54,003 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:26:54] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:30:36,926 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:30:36] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:31:31,544 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:31:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:33:18,472 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:33:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:37:59,537 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:37:59] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:39:03,955 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:39:03] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:39:32,673 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:39:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:49:04,984 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:49:04] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:50:36,004 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:50:36] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:50:54,635 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:50:54] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:51:19,401 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:51:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:52:17,303 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:52:17] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:52:19,021 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:52:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:52:41,870 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:52:41] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:53:48,156 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:53:48] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:54:58,532 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:54:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:56:07,994 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:56:07] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:56:17,052 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:56:17] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:56:38,303 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:56:38] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:56:48,034 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:56:48] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:57:59,862 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:57:59] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:59:00,034 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:59:00] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:59:06,667 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:59:06] "GET /health HTTP/1.1" 200 -
+2025-10-29 13:59:19,052 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 13:59:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:25,832 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:25] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:38,095 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:38] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:38,817 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:38] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:42,618 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:42] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:43,394 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:43] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:47,772 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:47] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:00:48,407 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:00:48] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:02:13,624 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:02:13] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:03:27,896 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:03:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:05:15,472 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:05:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:05:22,552 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:05:22] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:05:36,574 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:05:36] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:04,185 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:04] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:04,831 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:04] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:06,864 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:06] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:07,029 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:07] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:24,523 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:24,840 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:36,898 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:36] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:37,225 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:07:55,228 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:07:55] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:22,243 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:22] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:22,819 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:22] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:31,582 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:31,952 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:43,669 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:43] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:08:43,990 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:08:43] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:09:24,340 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:09:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:09:33,253 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:09:33] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:09:33,880 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:09:33] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:09:45,090 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:09:45] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:09:45,824 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:09:45] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:08,081 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:08,829 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:24,170 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:24,926 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:37,130 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:10:37,822 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:10:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:11,688 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:11] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:12,022 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:29,499 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:29] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:29,826 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:29] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:44,431 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:44] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:11:44,839 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:11:44] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:13:16,161 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:13:16] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:15:18,151 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:15:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:15:18,845 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:15:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:15:41,911 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:15:41] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:16:18,486 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:16:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:16:44,841 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:16:44] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:20:19,167 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:20:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:20:43,856 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:20:43] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:20:56,967 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:20:56] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:21:08,227 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:21:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:21:34,180 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:21:34] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:21:44,453 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:21:44] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:21:53,380 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:21:53] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:22:25,915 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:22:25] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:22:28,264 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:22:28] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:22:44,870 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:22:44] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:24:14,436 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:24:14] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:24:23,669 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:24:23] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:24:29,088 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:24:29] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:24:50,029 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:24:50] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:25:43,299 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:25:43] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:09,393 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:09] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:19,012 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:23,330 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:23] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:39,390 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:39,609 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:58,202 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:34:58,598 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:34:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:35:29,927 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:35:29] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:36:19,761 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:36:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:36:25,805 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:36:25] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:40:28,440 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:40:28] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:40:28,622 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:40:28] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:40:28,667 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:40:28] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:46:31,535 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:46:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:46:31,628 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:46:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:46:31,676 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:46:31] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:50:39,095 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:50:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:50:39,650 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:50:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:50:39,697 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:50:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:04,848 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:04] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:05,660 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:05] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:05,703 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:05] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:13,922 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:13] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:14,657 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:14] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:14,700 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:14] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:57,093 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:57,661 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:57,704 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:57,957 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:58,651 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:58,694 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:58,909 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:58] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:59,649 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:59] "GET /health HTTP/1.1" 200 -
+2025-10-29 14:51:59,695 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 14:51:59] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:00:15,870 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:00:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:00:16,109 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:00:16] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:00:16,177 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:00:16] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:08,073 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:08,731 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:08,782 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:08] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:19,909 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:20,678 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:20,732 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:57,324 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:57,731 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:01:57,788 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:01:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:02:12,006 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:02:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:02:12,113 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:02:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:02:12,162 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:02:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:05:27,199 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:05:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:05:27,774 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:05:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:05:27,848 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:05:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:07:12,428 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:07:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:13:30,255 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:13:30] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:13:57,657 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-29 15:13:57,661 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:13:57] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-29 15:13:57,696 - __main__ - ERROR - Prediction failed: 'reference_slices'
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/fast_propagation_service.py", line 319, in predict
+    reference_slices = data['reference_slices']
+                       ~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'reference_slices'
+2025-10-29 15:13:57,697 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:13:57] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-10-29 15:21:12,789 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:21:12] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:25:01,989 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:25:01] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:25:02,147 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:25:02] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:25:02,221 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:25:02] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:27:19,090 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:27:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:30:33,989 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:30:33] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:32:20,142 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:32:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:33:21,992 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:33:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:34:05,863 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:34:05] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:35:21,145 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:35:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:37:24,132 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:37:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:37:57,225 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:37:57] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:39:26,855 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:39:26] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:42:52,823 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:42:52] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:44:45,020 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:44:45] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:44:54,469 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:44:54] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:45:00,820 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:45:00] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:47:17,912 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:47:17] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:55:18,331 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:55:18] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:55:27,258 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:55:27] "GET /health HTTP/1.1" 200 -
+2025-10-29 15:58:05,217 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 15:58:05] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:01:41,400 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:01:41] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:05:23,077 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:05:23] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:05:24,545 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:05:24] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:08:20,771 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:08:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:09:00,916 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:09:00] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:12:37,454 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:12:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:19:04,550 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:19:04] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:20:20,973 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:20:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:21:16,413 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:21:16] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:25:36,426 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:25:36] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:27:30,663 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:27:30] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:27:54,008 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:27:54] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:28:02,417 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:28:02] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:30:15,199 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:30:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:30:15,700 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:30:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:30:15,768 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:30:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:30:15,773 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:30:15] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:36:21,379 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:36:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:36:21,454 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:36:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:36:21,532 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:36:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:36:21,540 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:36:21] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:38:55,304 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:38:55] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:39:19,312 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:39:19] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:39:35,937 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:39:35] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:43:37,479 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:43:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:43:37,485 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:43:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:43:37,488 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:43:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:43:39,099 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:43:39] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:44:02,622 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:44:02] "GET /health HTTP/1.1" 200 -
+2025-10-29 16:52:32,752 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 16:52:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:21:20,981 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:21:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:21:20,986 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:21:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:21:20,988 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:21:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:21:20,990 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:21:20] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:27:37,294 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:27:37] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:29:32,422 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:29:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:29:32,430 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:29:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:29:32,471 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:29:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:29:32,643 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:29:32] "GET /health HTTP/1.1" 200 -
+2025-10-29 17:29:32,684 - werkzeug - INFO - 127.0.0.1 - - [29/Oct/2025 17:29:32] "GET /health HTTP/1.1" 200 -
+2025-10-30 14:11:59,594 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 14:11:59] "GET /health HTTP/1.1" 200 -
+2025-10-30 14:30:48,620 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 14:30:48] "GET /health HTTP/1.1" 200 -
+2025-10-30 14:31:54,343 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 14:31:54] "GET /health HTTP/1.1" 200 -
+2025-10-30 14:32:43,009 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 14:32:43] "GET /health HTTP/1.1" 200 -
+2025-10-30 14:35:39,976 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 14:35:39] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:04:43,562 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:04:43] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:08:32,969 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:08:32] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:09:00,651 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:09:00] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:11:01,069 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:11:01] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:11:34,466 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:11:34] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:12:07,541 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:12:07] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:15:56,111 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:15:56] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:16:22,161 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:16:22] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:16:33,620 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:16:33] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:18:03,029 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:18:03] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:18:49,857 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:18:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:19:43,056 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:19:43] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:20:22,472 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:20:22] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:20:53,711 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:20:53] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:21:05,406 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:21:05] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:21:40,210 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:21:40] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:23:57,245 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:23:57] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:27:57,986 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:27:57] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:29:51,689 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:29:51] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:33:41,633 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:33:41] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:33:42,362 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:33:42] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:33:42,375 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:33:42] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:33:42,475 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:33:42] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:39:07,419 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:39:07] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:42:34,093 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:42:34] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:45:28,540 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:45:28] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:12,246 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:12,248 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:12,368 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:12,379 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:12,385 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:20,111 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:20] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:20,146 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:20] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:20,366 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:20] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:20,370 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:20] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:20,374 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:20] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:36,932 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:36] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:36,933 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:36] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:37,364 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:37] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:37,367 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:37] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:37,370 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:37] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:48,467 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:48] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:49,369 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:49,374 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:46:49,377 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:46:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:48,429 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:48] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:49,361 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:49,363 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:49,366 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:49] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:54,048 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:54] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:54,363 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:54] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:54,368 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:54] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:47:54,372 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:47:54] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:14,005 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:14] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:22,213 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:22] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:27,076 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:27] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:45,009 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:45] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:45,360 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:45] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:45,362 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:45] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:49:45,364 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:49:45] "GET /health HTTP/1.1" 200 -
+2025-10-30 15:56:59,051 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 15:56:59] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:04:00,143 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:04:00] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:09:48,662 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:09:48] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:10:58,345 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:10:58] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:12:32,609 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:12:32] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:28:04,095 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:28:04] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:33:07,810 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:33:07] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:35:25,816 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:35:25] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:35:26,376 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:35:26] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:35:26,382 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:35:26] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:35:26,390 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:35:26] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:36:17,730 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:36:17] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:36:18,369 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:36:18] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:36:18,372 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:36:18] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:36:18,374 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:36:18] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:41:26,098 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:41:26] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:43:24,884 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:43:24] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:44:06,975 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:44:06] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:45:46,529 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:45:46] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:48:31,042 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:48:31] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:49:02,864 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:49:02] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:49:52,750 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:49:52] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:50:01,034 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:50:01] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:53:10,495 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:53:10] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:55:25,850 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:55:25] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:57:32,708 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:57:32] "GET /health HTTP/1.1" 200 -
+2025-10-30 16:57:46,440 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 16:57:46] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:02:35,266 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:02:35] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:03:12,776 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:03:12] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:10:03,164 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:10:03] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:10:22,427 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:10:22] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:10:22,589 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:10:22] "GET /health HTTP/1.1" 200 -
+2025-10-30 17:10:22,592 - werkzeug - INFO - 127.0.0.1 - - [30/Oct/2025 17:10:22] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:10:16,576 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:10:16] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:15:49,097 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:15:49] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:18:55,838 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:18:55] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:26:39,800 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:26:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:26:49,694 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:26:49] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:27:46,701 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:27:46] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:28:36,067 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:28:36] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:28:53,191 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:28:53] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:29:05,982 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:29:05] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:29:26,903 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:29:26] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:29:51,653 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:29:51] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:30:23,320 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:30:23] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:30:42,229 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:30:42] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:33:11,246 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:33:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:33:37,628 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:33:37] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:34:05,429 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:34:05] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:34:31,965 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:34:31] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:35:29,328 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:35:29] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:35:43,274 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:35:43] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:37:59,280 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:37:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:38:01,493 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:38:01] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:38:14,711 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:38:14] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:38:15,341 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:38:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:38:40,303 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:38:40] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:38:50,184 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:38:50] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:39:17,245 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:39:17] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:39:41,961 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:39:41] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:44:50,151 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:44:50] "GET /health HTTP/1.1" 200 -
+2025-10-31 13:48:16,813 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 13:48:16] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:31:14,326 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:31:14] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:32:52,142 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:32:52] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:32:59,466 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:32:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:33:01,845 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:33:01] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:35:34,232 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:35:34] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:53:22,209 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:53:22] "GET /health HTTP/1.1" 200 -
+2025-10-31 14:56:49,644 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 14:56:49] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:02:11,325 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:02:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:02:11,326 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:02:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:02:26,330 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:02:26] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:02:26,335 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:02:26] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:29,969 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:29] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:29,970 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:29] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:34,148 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:34] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:34,170 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:34] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:59,806 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:05:59,807 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:05:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:04,953 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:04,967 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:09,994 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:09] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:09,994 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:09] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:13,022 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:13] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:13,038 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:13] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:21,610 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:21] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:21,853 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:21] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:41,489 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:41] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:41,489 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:41] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:47,775 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:47] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:58,811 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:58] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:58,826 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:58] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:59,902 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:06:59,902 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:06:59] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:10,822 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:10] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:10,822 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:10] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:15,745 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:15,761 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:41,038 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:41] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:41,039 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:41] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:42,752 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:42] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:42,758 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:42] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:55,708 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:55] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:07:55,709 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:07:55] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:04,720 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:04,725 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:11,494 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:11,499 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:14,328 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:14] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:14,329 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:14] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:15,977 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:16,035 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:16] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:32,855 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:32] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:33,124 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:33] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:39,884 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:39,889 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:46,889 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:46] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:08:46,890 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:08:46] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:00,781 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:00] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:00,782 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:00] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:04,954 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:04,954 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:15,693 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:15,693 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:15] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:31,800 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:31] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:31,801 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:31] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:48,953 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:48] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:09:48,953 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:09:48] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:06,936 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:06] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:07,205 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:07] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:24,732 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:24] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:24,734 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:24] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:42,915 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:42] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:12:42,926 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:12:42] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:15:19,275 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:15:19] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:15:19,477 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:15:19] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:19:12,480 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:19:12] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:19:46,640 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:19:46] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:22:39,606 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:22:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:24:28,321 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:24:28] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:25:47,649 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:25:47] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:29:17,341 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:29:17] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:30:47,829 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:30:47] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:30:49,411 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:30:49] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:30:50,199 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:30:50] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:30:55,720 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:30:55] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:31:10,802 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:31:10] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:31:51,432 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:31:51] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:32:52,350 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:32:52] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:32:55,365 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:32:55] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:32:57,913 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:32:57] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:33:00,214 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:33:00] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:33:37,682 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:33:37] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:39:30,949 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:39:30] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:40:39,639 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:40:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:43:36,023 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:43:36] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:43:36,024 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:43:36] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:43:45,652 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:43:45] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:43:45,653 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:43:45] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:45:39,240 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:45:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:45:39,241 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:45:39] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:50:00,708 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:50:00] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:51:26,143 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:51:26] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:52:11,500 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:52:11] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:52:17,912 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:52:17] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:53:19,779 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:53:19] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:54:08,549 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:54:08] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:57:29,622 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:57:29] "GET /health HTTP/1.1" 200 -
+2025-10-31 15:57:51,754 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 15:57:51] "GET /health HTTP/1.1" 200 -
+2025-10-31 16:24:10,128 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 16:24:10] "GET /health HTTP/1.1" 200 -
+2025-10-31 16:45:04,394 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 16:45:04] "GET /health HTTP/1.1" 200 -
+2025-10-31 18:08:41,015 - werkzeug - INFO - 127.0.0.1 - - [31/Oct/2025 18:08:41] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:17:52,795 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:17:52] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:38:02,454 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:38:02] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:50:37,222 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:50:37] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:54:12,489 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:54:12] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:54:24,654 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:54:24] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:19,841 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:19] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:34,496 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:34] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:35,853 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:35] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:43,002 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:43] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:49,275 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:49] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:53,517 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:53] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:54,489 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:54] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:56:56,892 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:56:56] "GET /health HTTP/1.1" 200 -
+2025-11-01 12:57:00,212 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 12:57:00] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:01:21,522 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:01:21] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:03:36,489 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:03:36] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:05:10,440 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:05:10] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:06:37,297 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:06:37] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:08:44,031 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:08:44] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:10:04,170 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:10:04] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:10:12,181 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:10:12] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:10:35,004 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:10:35] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:14:17,871 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:14:17] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:14:53,359 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:14:53] "GET /health HTTP/1.1" 200 -
+2025-11-01 13:23:43,501 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 13:23:43] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:13:26,555 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:13:26] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:17:16,859 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:17:16] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:17:24,151 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:17:24] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:18:17,795 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:18:17] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:18:43,559 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:18:43] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:19:01,150 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:19:01] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:19:39,704 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:19:39] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:20:06,200 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:20:06] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:20:39,024 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:20:39] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:22:08,717 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:22:08] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:23:43,666 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:23:43] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:23:52,725 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:23:52] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:27:37,365 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:27:37] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:32:20,987 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:32:20] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:35:06,639 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:35:06] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:39:50,471 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:39:50] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:49:53,629 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:49:53] "GET /health HTTP/1.1" 200 -
+2025-11-01 14:51:11,334 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 14:51:11] "GET /health HTTP/1.1" 200 -
+2025-11-01 19:43:15,895 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 19:43:15] "GET /health HTTP/1.1" 200 -
+2025-11-01 19:43:26,260 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 19:43:26] "GET /health HTTP/1.1" 200 -
+2025-11-01 19:43:43,080 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 19:43:43] "GET /health HTTP/1.1" 200 -
+2025-11-01 19:44:09,436 - werkzeug - INFO - 127.0.0.1 - - [01/Nov/2025 19:44:09] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:11:23,195 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:11:23] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:11:43,475 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:11:43] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:14:14,521 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:14:14] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:14:21,351 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:14:21] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:14:36,798 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:14:36] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:15:33,337 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:15:33] "GET /health HTTP/1.1" 200 -
+2025-11-02 16:35:06,909 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 16:35:06] "GET /health HTTP/1.1" 200 -
+2025-11-02 21:44:30,864 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 21:44:30] "GET /health HTTP/1.1" 200 -
+2025-11-02 21:56:27,761 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 21:56:27] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:05:00,361 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:05:00] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:07:01,706 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:07:01] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:09:43,640 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:09:43] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:16:59,024 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:16:59] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:22:02,361 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:22:02] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:22:20,273 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:22:20] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:22:22,672 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:22:22] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:24:39,045 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:24:39] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:24:46,774 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:24:46] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:25:10,558 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:25:10] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:25:20,567 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:25:20] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:34:45,639 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:34:45] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:55:04,506 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:55:04] "GET /health HTTP/1.1" 200 -
+2025-11-02 22:59:38,236 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 22:59:38] "GET /health HTTP/1.1" 200 -
+2025-11-02 23:01:17,523 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 23:01:17] "GET /health HTTP/1.1" 200 -
+2025-11-02 23:18:32,554 - werkzeug - INFO - 127.0.0.1 - - [02/Nov/2025 23:18:32] "GET /health HTTP/1.1" 200 -
+2025-11-03 07:52:04,761 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 07:52:04] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:06:56,821 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:06:56] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:07:57,237 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:07:57] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:07:57,622 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:07:57] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:07:59,389 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:07:59] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:08:05,426 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:08:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:08:05,669 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:08:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:08:06,442 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:08:06] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:08,859 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:12,283 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:12] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:13,231 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:13] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:15,307 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:16,056 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:16] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:21,880 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:09:22,116 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:09:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:10:14,692 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:10:14] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:10:18,700 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:10:18] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:10:22,961 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:10:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:07,280 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:07] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:08,718 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:09,415 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:09] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:15,818 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:19,062 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:19] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:20,150 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:20] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:11:24,545 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:11:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:20,343 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:20] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:21,032 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:21,843 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:22,484 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:22,940 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:12:33,460 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:12:33] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:13:35,218 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:13:35] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:13:39,686 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:13:39] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:16,357 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:16] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:17,072 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:17] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:19,536 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:19] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:19,777 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:19] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:21,000 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:17:32,317 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:17:32] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:18:13,925 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:18:13] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:18:43,758 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:18:43] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:19:35,558 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:19:35] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:21:12,401 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:21:12] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:21:38,251 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:21:38] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:21:48,206 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:21:48] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:22:42,089 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:22:42] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:24:24,961 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:24:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:24:25,756 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:24:25] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:24:30,751 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:24:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:24:36,143 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:24:36] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:25:04,764 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:25:04] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:25:13,002 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:25:13] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:25:22,525 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:25:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:30:33,895 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:30:33] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:30:46,094 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:30:46] "GET /health HTTP/1.1" 200 -
+2025-11-03 09:31:01,359 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 09:31:01] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:22:22,826 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:22:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:23:03,225 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:23:03] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:23:07,305 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:23:07] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:23:24,091 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:23:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:23:27,447 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:23:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:23:34,051 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:23:34] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:24:24,711 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:24:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:24:44,901 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:24:44] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:24:47,376 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:24:47] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:24:56,503 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:24:56] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:01,845 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:01] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:02,026 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:02] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:05,761 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:05,773 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:08,864 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:09,097 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:09] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:17,599 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:17] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:25:17,606 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:25:17] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:32,712 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:32] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:32,946 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:32] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:47,383 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:47] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:47,739 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:47] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:54,196 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:54] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:26:54,404 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:26:54] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:27:24,074 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:27:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:27:24,094 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:27:24] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:27:27,939 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:27:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:27:27,946 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:27:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:05,099 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:05,103 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:05] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:08,695 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:08,713 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:13,696 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:13] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:13,704 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:13] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:15,070 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:15,122 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:18,542 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:18] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:28:18,563 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:28:18] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:30:18,976 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:30:18] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:36:12,322 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:36:12] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:36:12,337 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:36:12] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:40:14,880 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:40:14] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:40:31,348 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:40:31] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:40:38,748 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:40:38] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:46:09,402 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:46:09] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:47:23,475 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:47:23] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:47:27,036 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:47:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:47:28,891 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:47:28] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:47:30,161 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:47:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:47:32,337 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:47:32] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:53:06,882 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:53:06] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:53:34,181 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:53:34] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:55:11,042 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:55:11] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:57:14,927 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:57:14] "GET /health HTTP/1.1" 200 -
+2025-11-03 14:57:17,989 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 14:57:17] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:00:41,651 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:00:41] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:00:41,658 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:00:41] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:00:50,093 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:00:50] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:00:50,107 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:00:50] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:02:49,267 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:02:49] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:04:31,699 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:04:31] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:04:46,023 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:04:46] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:04:46,029 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:04:46] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:05:54,334 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:05:54] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:05:54,339 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:05:54] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:10:10,629 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:10:10] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:10:11,147 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:10:11] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:10:25,901 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:10:25] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:10:52,107 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:10:52] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:10:52,119 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:10:52] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:14:03,041 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:14:03] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:14:20,536 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:14:20] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:16:48,111 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:16:48] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:17:34,189 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:17:34] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:17:50,002 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:17:50] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:08,934 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:08,937 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:08] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:30,864 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:30,869 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:34,002 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:34] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:18:34,239 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:18:34] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:20:52,989 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:20:52] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:22:09,795 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:22:09] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:22:30,402 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:22:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:22:59,458 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:22:59] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:23:46,030 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:23:46] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:24:21,764 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:24:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:24:29,250 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:24:29] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:25:04,808 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:25:04] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:25:36,909 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:25:36] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:25:51,419 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:25:51] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:26:30,191 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:26:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:26:30,549 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:26:30] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:27:16,024 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:27:16] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:27:16,033 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:27:16] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:27:27,767 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:27:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:27:27,778 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:27:27] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:28:21,025 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:28:21] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:34:15,197 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:34:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:34:15,204 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:34:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:47:39,601 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:47:39] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:00,794 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:00] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:02,570 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:02] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:06,297 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:06] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:06,674 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:06] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:09,096 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:09] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:10,612 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:10] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:12,767 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:12] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:14,212 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:14] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:15,486 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:15] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:16,696 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:16] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:20,327 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:20] "GET /health HTTP/1.1" 200 -
+2025-11-03 15:50:22,506 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 15:50:22] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:04:01,499 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:04:01] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:07:03,755 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:07:03] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:12:26,091 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:12:26] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:12:44,758 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:12:44] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:17:38,977 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:17:38] "GET /health HTTP/1.1" 200 -
+2025-11-03 16:17:38,981 - werkzeug - INFO - 127.0.0.1 - - [03/Nov/2025 16:17:38] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:24,211 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:24] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:24,518 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:24] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:27,969 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:27] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:27,976 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:27] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:41,233 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:41] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:07:41,236 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:07:41] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:08:38,685 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:08:38] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:08:38,706 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:08:38] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:07,404 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:07] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:08,114 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:08] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:14,392 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:14] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:14,475 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:14] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:15,275 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:15] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:09:49,873 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:09:49] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:14:03,220 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:14:03] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:15:06,349 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:15:06] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:15:13,899 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:15:13] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:24:55,654 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:24:55] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:25:32,637 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:25:32] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:26:19,265 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:26:19] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:26:38,095 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:26:38] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:24,103 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:24] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:27,219 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:27] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:29,178 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:29] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:32,025 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:32] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:33,696 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:33] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:27:36,298 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:27:36] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:28:54,405 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:28:54] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:29:41,620 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:29:41] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:29:53,396 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:29:53] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:29:58,723 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:29:58] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:30:44,411 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:30:44] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:30:52,751 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:30:52] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:30:57,375 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:30:57] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:31:29,734 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:31:29] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:31:32,900 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:31:32] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:31:34,949 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:31:34] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:31:38,317 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:31:38] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:32:11,747 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:32:11] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:32:15,041 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:32:15] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:32:19,085 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:32:19] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:32:35,655 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:32:35] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:32:37,818 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:32:37] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:33:22,206 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:33:22] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:33:26,630 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:33:26] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:33:32,609 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:33:32] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:34:07,949 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:34:07] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:34:54,891 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:34:54] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:35:53,086 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:35:53] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:35:54,368 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:35:54] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:36:01,366 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:36:01] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:36:17,375 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:36:17] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:39:32,519 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:39:32] "GET /health HTTP/1.1" 200 -
+2025-11-04 16:55:02,469 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 16:55:02] "GET /health HTTP/1.1" 200 -
+2025-11-04 17:37:40,936 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 17:37:40] "GET /health HTTP/1.1" 200 -
+2025-11-04 17:38:25,609 - werkzeug - INFO - 127.0.0.1 - - [04/Nov/2025 17:38:25] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:18:35,633 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:18:35] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:22:27,807 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:22:27] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:35:23,642 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:35:23] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:49:47,734 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:49:47] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:49:50,314 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:49:50] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:52:14,285 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:52:14] "GET /health HTTP/1.1" 200 -
+2025-11-05 12:54:28,079 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 12:54:28] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:02:57,354 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:02:57] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:04:34,146 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:04:34] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:07:11,333 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:07:11] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:19:55,224 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:19:55] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:43,112 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:43] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:44,273 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:44] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:44,362 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:44] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:55,487 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:55] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:56,526 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:56] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:23:56,708 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:23:56] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:12,025 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:12] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:13,026 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:13] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:13,038 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:13] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:48,184 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:48] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:49,628 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:49] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:25:49,658 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:25:49] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:52:59,240 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:52:59] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:56:17,793 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:56:17] "GET /health HTTP/1.1" 200 -
+2025-11-05 13:56:57,089 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 13:56:57] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:04:28,051 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:04:28] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:16:19,705 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:16:19] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:17:14,294 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:17:14] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:26:15,736 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:26:15] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:33:47,798 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:33:47] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:57:09,889 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:57:09] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:58:59,445 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:58:59] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:59:05,268 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:59:05] "GET /health HTTP/1.1" 200 -
+2025-11-05 14:59:13,515 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 14:59:13] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:02:49,750 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:02:49] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:13:06,723 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:13:06] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:13:21,163 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:13:21] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:13:55,447 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:13:55] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:14:07,965 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:14:07] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:16:23,388 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:16:23] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:17:36,131 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:17:36] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:18:53,760 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:18:53] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:19:43,255 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:19:43] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:20:21,289 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:20:21] "GET /health HTTP/1.1" 200 -
+2025-11-05 15:24:08,426 - werkzeug - INFO - 127.0.0.1 - - [05/Nov/2025 15:24:08] "GET /health HTTP/1.1" 200 -

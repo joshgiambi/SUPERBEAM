@@ -1,0 +1,502 @@
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { ViewerInterface } from '@/components/dicom/viewer-interface';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Home, Download, Save, List, FolderDown, Settings } from 'lucide-react';
+import { UserSettingsPanel } from '@/components/dicom/user-settings-panel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { log } from '@/lib/log';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckboxIndicator } from '@radix-ui/react-checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AIStatusPanel } from '@/components/ai-status-panel';
+
+export default function Viewer() {
+  const [studyData, setStudyData] = useState<any>(null);
+  const [, setLocation] = useLocation();
+  const [contourSettings, setContourSettings] = useState({ width: 2, opacity: 80 });
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [seriesDescription, setSeriesDescription] = useState('');
+  const [selectedExportItems, setSelectedExportItems] = useState<Set<string>>(new Set());
+  const [exportItems, setExportItems] = useState<any[]>([]);
+  const [currentRTSeriesId, setCurrentRTSeriesId] = useState<number | null>(null);
+  const [showUserSettings, setShowUserSettings] = useState(false);
+  const { toast } = useToast();
+  
+  const { data: studies, isLoading, error } = useQuery({
+    queryKey: ['/api/studies'],
+    queryFn: () => fetch('/api/studies').then(res => res.json())
+  });
+  
+  useEffect(() => {
+    const loadStudyData = async () => {
+      log.debug('=== Enhanced Viewer Debug ===', 'viewer');
+      log.debug(`Studies loaded: ${Array.isArray(studies) ? studies.length : 0}`, 'viewer');
+      log.debug(`Loading: ${isLoading}`, 'viewer');
+      if (error) log.debug(`Error: ${String(error)}`, 'viewer');
+      
+      if (studies && studies.length > 0) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const studyId = urlParams.get('studyId');
+        const patientId = urlParams.get('patientId');
+        
+        log.debug(`URL studyId: ${studyId}`, 'viewer');
+        log.debug(`URL patientId: ${patientId}`, 'viewer');
+        log.debug(`All patient IDs: ${JSON.stringify(studies.map((s: any) => ({ id: s.id, patientID: s.patientID, patientId: s.patientId })))}`, 'viewer');
+        
+        let study;
+        let patient = null;
+        
+        if (studyId) {
+          study = studies.find((s: any) => s.id === parseInt(studyId));
+          log.debug(`Found study by ID: ${JSON.stringify(study)}`, 'viewer');
+          if (study) {
+            // Always load ALL studies for this patient so that PET/CT in another study appears
+            const patientStudies = studies.filter((s: any) => s.patientId === study.patientId);
+            log.debug(`Bundling all studies for patient ${study.patientId}: ${patientStudies.length}`, 'viewer');
+            setStudyData({ studies: patientStudies, patient: { id: study.patientId, patientID: study.patientID, patientName: study.patientName } });
+          }
+        } else if (patientId) {
+          // Find ALL studies for this patient
+          
+          // First try exact match on patientID - get ALL matching studies
+          const matchingStudiesByPatientID = studies.filter((s: any) => s.patientID === patientId);
+          log.debug(`Found studies by exact patientID match: ${matchingStudiesByPatientID.length}`, 'viewer');
+          
+          if (matchingStudiesByPatientID.length > 0) {
+            // Found studies directly by patientID
+            log.debug(`Setting studyData with all matching studies: ${matchingStudiesByPatientID.length}`, 'viewer');
+            setStudyData({ studies: matchingStudiesByPatientID });
+            study = matchingStudiesByPatientID[0]; // Set first for compatibility
+          } else {
+            // If not found, try to find by patient database ID
+            const patientQuery = await fetch('/api/patients').then(res => res.json());
+            patient = patientQuery.find((p: any) => p.patientID === patientId);
+            log.debug(`Found patient with patientID: ${patientId} -> ${!!patient}`, 'viewer');
+            
+            if (patient) {
+              const patientStudies = studies.filter((s: any) => s.patientId === patient.id);
+              log.debug(`Found all studies by patient database ID: ${patientStudies.length}`, 'viewer');
+              if (patientStudies.length > 0) {
+                setStudyData({ studies: patientStudies, patient });
+                study = patientStudies[0];
+              }
+            }
+          }
+        } else {
+          study = studies[0];
+          log.debug(`Using first study: ${study?.id}`, 'viewer');
+          if (study) {
+            setStudyData({ studies: [study] });
+          }
+        }
+        
+        if (!study && !studyData) {
+          log.warn('NO STUDY FOUND!', 'viewer');
+        }
+      }
+    };
+    
+    loadStudyData();
+  }, [studies, isLoading, error]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+      if (dateString.length === 8) {
+        const year = dateString.substring(0, 4);
+        const month = dateString.substring(4, 6);
+        const day = dateString.substring(6, 8);
+        const date = new Date(`${year}-${month}-${day}`);
+        return date.toLocaleDateString();
+      }
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  const handleSave = () => {
+    const currentDate = new Date();
+    const defaultDescription = `RT Structure Set - ${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
+    setSeriesDescription(defaultDescription);
+    setShowSaveDialog(true);
+  };
+
+  const handleExport = async () => {
+    if (!currentStudy) return;
+    
+    try {
+      // Fetch all series for the current study
+      const response = await fetch(`/api/studies/${currentStudy.id}/series`);
+      const series = await response.json();
+      
+      // Prepare export items
+      const items = [];
+      for (const s of series) {
+        items.push({
+          id: `series-${s.id}`,
+          type: 'series',
+          name: `${s.modality} - ${s.seriesDescription || 'Unnamed Series'}`,
+          description: `${s.imageCount || 0} images`,
+          data: s
+        });
+      }
+      
+      setExportItems(items);
+      setSelectedExportItems(new Set());
+      setShowExportDialog(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load export items",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveConfirm = async () => {
+    if (!currentStudy || !currentRTSeriesId) {
+      toast({ title: 'Error', description: 'No RT Structure Set loaded', variant: 'destructive' });
+      return;
+    }
+    try {
+      const res = await fetch(`/api/rt-structures/${currentRTSeriesId}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: seriesDescription })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast({ title: 'Success', description: `RT Structure Set saved as: ${seriesDescription}` });
+      setShowSaveDialog(false);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save RT structure set', variant: 'destructive' });
+    }
+  };
+
+  const handleExportConfirm = async () => {
+    if (selectedExportItems.size === 0) {
+      toast({
+        title: "Warning",
+        description: "Please select items to export",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      if (!currentStudy) return;
+      const seriesIds = exportItems
+        .filter((item) => selectedExportItems.has(item.id))
+        .map((item) => item.data.id);
+
+      const res = await fetch(`/api/studies/${currentStudy.id}/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seriesIds })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `study_${currentStudy.id}_export.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Export started', description: `Exporting ${selectedExportItems.size} items...` });
+      setShowExportDialog(false);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to export files', variant: 'destructive' });
+    }
+  };
+
+  if (!studyData) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Loading enhanced viewer...</div>
+      </div>
+    );
+  }
+
+  const currentStudy = studyData.studies[0];
+
+  return (
+    <div className="min-h-screen bg-dicom-black text-white">
+      {/* Enhanced Viewer Header - Redesigned */}
+      <header className="fixed top-4 left-4 right-4 bg-gray-950/95 backdrop-blur-xl border border-gray-700/50 rounded-xl px-5 py-2.5 z-50 shadow-xl">
+        <div className="flex items-center justify-between w-full">
+          {/* Left: Logo + Patient Info */}
+          <div className="flex items-center gap-4">
+            {/* Logo - Compact */}
+            <div className="flex-shrink-0">
+              <style>{`
+                @keyframes superWave {
+                  0% { 
+                    color: white; 
+                    filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+                    transform: translateY(0px);
+                  }
+                  50% { 
+                    color: #06b6d4; 
+                    filter: drop-shadow(0 0 12px #06b6d4);
+                    transform: translateY(-3px);
+                  }
+                  100% { 
+                    color: white; 
+                    filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+                    transform: translateY(0px);
+                  }
+                }
+                @keyframes beamWave {
+                  0% { 
+                    filter: drop-shadow(0 0 6px currentColor);
+                    transform: translateY(0px);
+                  }
+                  50% { 
+                    filter: drop-shadow(0 0 14px currentColor);
+                    transform: translateY(-3px);
+                  }
+                  100% { 
+                    filter: drop-shadow(0 0 6px currentColor);
+                    transform: translateY(0px);
+                  }
+                }
+                .letter-s { animation: superWave 1s ease-in-out forwards; }
+                .letter-u { animation: superWave 1s ease-in-out forwards 0.08s; }
+                .letter-p { animation: superWave 1s ease-in-out forwards 0.16s; }
+                .letter-e1 { animation: superWave 1s ease-in-out forwards 0.24s; }
+                .letter-r { animation: superWave 1s ease-in-out forwards 0.32s; }
+                .letter-b { color: #06b6d4; animation: beamWave 1s ease-in-out forwards 0.4s; }
+                .letter-e2 { color: #ec4899; animation: beamWave 1s ease-in-out forwards 0.48s; }
+                .letter-a { color: #f97316; animation: beamWave 1s ease-in-out forwards 0.56s; }
+                .letter-m { color: #fbbf24; animation: beamWave 1s ease-in-out forwards 0.64s; }
+              `}</style>
+              <h1 className="text-2xl tracking-wider" style={{ letterSpacing: '0.1em', fontFamily: "'Doto', monospace", fontWeight: 900 }}>
+                <span className="letter-s inline-block">S</span>
+                <span className="letter-u inline-block">U</span>
+                <span className="letter-p inline-block">P</span>
+                <span className="letter-e1 inline-block">E</span>
+                <span className="letter-r inline-block">R</span>
+                <span className="letter-b inline-block">B</span>
+                <span className="letter-e2 inline-block">E</span>
+                <span className="letter-a inline-block">A</span>
+                <span className="letter-m inline-block">M</span>
+              </h1>
+            </div>
+            
+            {/* Patient Info - Enhanced */}
+            {(studyData.patient || currentStudy) && (
+              <div className="flex items-center gap-3 pl-4 border-l border-gray-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-white leading-tight tracking-tight">
+                        {studyData.patient?.patientName || currentStudy.patientName || 'Unknown Patient'}
+                      </h2>
+                      <Badge variant="outline" className="border-gray-600/50 text-gray-300 bg-gray-800/40 px-2 py-0.5 text-xs font-medium">
+                        {studyData.patient?.patientID || currentStudy.patientID || 'No ID'}
+                      </Badge>
+                    </div>
+                    {studyData.patient?.patientSex && (
+                      <p className="text-xs text-gray-400 leading-tight mt-1">
+                        {studyData.patient.patientSex}{studyData.patient?.patientAge ? ` • ${studyData.patient.patientAge}` : ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Action Buttons - Redesigned */}
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowUserSettings(true)}
+              className="h-8 px-3 text-white/90 hover:text-cyan-400 hover:bg-cyan-600/20 hover:border-cyan-500/50 hover:shadow-md hover:shadow-cyan-500/20 border border-transparent rounded-lg transition-all duration-200"
+              title="User Settings"
+            >
+              <Settings className="h-4 w-4 mr-1.5" />
+              <span className="text-sm font-medium">Settings</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open('/', '_blank')}
+              className="h-8 px-3 text-white/90 hover:text-blue-400 hover:bg-blue-600/20 hover:border-blue-500/50 hover:shadow-md hover:shadow-blue-500/20 border border-transparent rounded-lg transition-all duration-200"
+            >
+              <List className="h-4 w-4 mr-1.5" />
+              <span className="text-sm font-medium">Patients</span>
+            </Button>
+            
+            <AIStatusPanel />
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleSave()}
+              className="h-8 px-3 text-white/90 hover:text-green-400 hover:bg-green-600/20 hover:border-green-500/50 hover:shadow-md hover:shadow-green-500/20 border border-transparent rounded-lg transition-all duration-200"
+            >
+              <Save className="h-4 w-4 mr-1.5" />
+              <span className="text-sm font-medium">Save</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleExport()}
+              className="h-8 px-3 text-white/90 hover:text-purple-400 hover:bg-purple-600/20 hover:border-purple-500/50 hover:shadow-md hover:shadow-purple-500/20 border border-transparent rounded-lg transition-all duration-200"
+            >
+              <FolderDown className="h-4 w-4 mr-1.5" />
+              <span className="text-sm font-medium">Export</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="pt-20 pb-8 px-4">
+        <ViewerInterface 
+          studyData={studyData} 
+          onContourSettingsChange={setContourSettings}
+          contourSettings={contourSettings}
+          onLoadedRTSeriesChange={setCurrentRTSeriesId}
+        />
+      </div>
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Save RT Structure Set</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Create a new version of the RT structure set
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="series-description" className="text-right text-white">
+                Description
+              </Label>
+              <Input
+                id="series-description"
+                value={seriesDescription}
+                onChange={(e) => setSeriesDescription(e.target.value)}
+                className="col-span-3 bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            <div className="text-sm text-gray-400">
+              This will create a new version of the RT structure set that can be retrieved later.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowSaveDialog(false)}
+              className="border-gray-600 text-gray-400 hover:bg-gray-800"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveConfirm}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Settings Panel */}
+      <UserSettingsPanel
+        isOpen={showUserSettings}
+        onClose={() => setShowUserSettings(false)}
+        initialContourSettings={contourSettings}
+        onContourSettingsChange={setContourSettings}
+      />
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[600px] bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Export DICOM Files</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Select the series you want to export
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedExportItems.size === exportItems.length) {
+                    setSelectedExportItems(new Set());
+                  } else {
+                    setSelectedExportItems(new Set(exportItems.map(item => item.id)));
+                  }
+                }}
+                className="border-gray-600 text-gray-400 hover:bg-gray-800"
+              >
+                {selectedExportItems.size === exportItems.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {exportItems.map((item) => (
+                <div key={item.id} className="flex items-center space-x-2 p-2 hover:bg-gray-700/50 rounded transition-colors">
+                  <Checkbox
+                    id={item.id}
+                    checked={selectedExportItems.has(item.id)}
+                    onCheckedChange={(checked) => {
+                      const newSelected = new Set(selectedExportItems);
+                      if (checked) {
+                        newSelected.add(item.id);
+                      } else {
+                        newSelected.delete(item.id);
+                      }
+                      setSelectedExportItems(newSelected);
+                    }}
+                    className="border-gray-600 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                  />
+                  <Label
+                    htmlFor={item.id}
+                    className="flex-1 cursor-pointer"
+                  >
+                    <div className="font-medium text-white">{item.name}</div>
+                    <div className="text-sm text-gray-400">{item.description}</div>
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowExportDialog(false)}
+              className="border-gray-600 text-gray-400 hover:bg-gray-800"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleExportConfirm}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              Export {selectedExportItems.size} Item{selectedExportItems.size !== 1 ? 's' : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

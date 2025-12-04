@@ -1,0 +1,55 @@
+2025-10-24 16:54:37,894 - __main__ - INFO - Initializing MedSAM service...
+2025-10-24 16:54:38,387 - __main__ - INFO - Using CPU
+2025-10-24 16:54:38,387 - __main__ - INFO - Loading SAM model from /Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/medsam/weights/sam_vit_b.pth...
+2025-10-24 16:54:38,602 - __main__ - INFO - ✅ SAM model loaded successfully (configured for medical imaging)!
+2025-10-24 16:54:38,602 - __main__ - INFO - Model loaded successfully
+2025-10-24 16:54:38,602 - __main__ - INFO - Starting server on 127.0.0.1:5004
+ * Serving Flask app 'medsam_service'
+ * Debug mode: off
+2025-10-24 16:54:38,607 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5004
+2025-10-24 16:54:38,607 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-24 16:54:47,415 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:54:47] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:55:15,638 - __main__ - INFO - Segmentation request: volume shape=(16, 256, 256), scribbles=2, spacing=(1, 1.953125, 1.953125)
+2025-10-24 16:55:15,639 - __main__ - INFO - Segmenting volume shape=(16, 256, 256), scribbles=2
+2025-10-24 16:55:15,639 - __main__ - INFO - Crop box: x=[94:158], y=[105:169] (margin=15px, size=64x64)
+2025-10-24 16:55:17,888 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:55:17] "POST /segment HTTP/1.1" 200 -
+2025-10-24 16:57:42,879 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:57:42] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:57:58,268 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:57:58] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:58:14,514 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:58:14] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:58:23,701 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:58:23] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:58:43,739 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:58:43] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:00:58,299 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:00:58] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:01:14,199 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:01:14] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:02:12,957 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:02:12] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:04:38,083 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:04:38] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:05:35,485 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:05:35] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:05:49,682 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:05:49] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:05:55,409 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:05:55] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:09:09,419 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:09:09] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:10:17,985 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:10:17] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:13:24,518 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:13:24] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:13:40,116 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:13:40] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:13:47,550 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:13:47] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:14:06,893 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:14:06] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:19:37,547 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:19:37] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:20:20,480 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:20:20] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:20:47,326 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:20:47] "GET /health HTTP/1.1" 200 -
+2025-10-24 18:25:17,838 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 18:25:17] "GET /health HTTP/1.1" 200 -
+2025-10-24 21:56:51,848 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 21:56:51] "GET /health HTTP/1.1" 200 -
+2025-10-24 21:58:48,725 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 21:58:48] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:04:15,736 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:04:15] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:47,742 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:47] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:10:49,878 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:10:49] "GET /health HTTP/1.1" 200 -
+2025-10-24 22:11:31,947 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 22:11:31] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:32:08,397 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:32:08] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:34:14,074 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:34:14] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:43:40,092 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:43:40] "GET /health HTTP/1.1" 200 -
+2025-10-25 09:43:48,814 - __main__ - INFO - Segmentation request: volume shape=(30, 256, 256), scribbles=2, spacing=(1, 1.953125, 1.953125)
+2025-10-25 09:43:48,815 - __main__ - INFO - Segmenting volume shape=(30, 256, 256), scribbles=2
+2025-10-25 09:43:48,817 - __main__ - INFO - Crop box: x=[88:152], y=[114:178] (margin=15px, size=64x64)
+2025-10-25 09:43:51,528 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:43:51] "POST /segment HTTP/1.1" 200 -
+2025-10-25 09:44:11,216 - __main__ - INFO - Segmentation request: volume shape=(11, 256, 256), scribbles=1, spacing=(1, 1.953125, 1.953125)
+2025-10-25 09:44:11,216 - __main__ - INFO - Segmenting volume shape=(11, 256, 256), scribbles=1
+2025-10-25 09:44:11,216 - __main__ - INFO - Crop box: x=[75:139], y=[92:156] (margin=15px, size=64x64)
+2025-10-25 09:44:12,419 - werkzeug - INFO - 127.0.0.1 - - [25/Oct/2025 09:44:12] "POST /segment HTTP/1.1" 200 -

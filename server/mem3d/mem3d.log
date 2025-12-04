@@ -1,0 +1,774 @@
+2025-10-23 16:42:19,789 - __main__ - INFO - Loading Mem3D model...
+2025-10-23 16:42:19,789 - __main__ - INFO - Initializing Mem3D on device: cpu
+2025-10-23 16:42:19,789 - __main__ - INFO - Loading STM model from Mem3D repo at: /Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/Mem3D
+/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+2025-10-23 16:42:20,621 - __main__ - INFO - STM model initialized on device: cpu
+2025-10-23 16:42:20,621 - __main__ - INFO - Loading weights from: weights/STM_weights.pth
+2025-10-23 16:42:20,636 - __main__ - INFO - Loading checkpoint directly
+2025-10-23 16:42:20,644 - __main__ - INFO - ✅ STM model loaded successfully!
+2025-10-23 16:42:20,644 - __main__ - INFO -    Total parameters: 38.93M
+2025-10-23 16:42:20,644 - __main__ - INFO -    Device: cpu
+2025-10-23 16:42:20,645 - __main__ - INFO - Mem3D model loaded successfully
+2025-10-23 16:42:20,645 - __main__ - INFO - Mem3D model loaded and ready
+2025-10-23 16:42:20,645 - __main__ - INFO - Starting Mem3D service on 127.0.0.1:5002
+ignore weight from not found key Encoder_M.conv1_o.weight
+ * Serving Flask app 'mem3d_service'
+ * Debug mode: off
+2025-10-23 16:42:20,648 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5002
+2025-10-23 16:42:20,648 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-23 16:42:26,785 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:42:26] "GET /health HTTP/1.1" 200 -
+2025-10-23 16:43:17,895 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[-1000.0, 1697.0], pixel_mean=-907.5, mask_sum=488
+2025-10-23 16:43:17,904 - __main__ - INFO - 📊 Reference slice 42.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=463
+2025-10-23 16:43:17,914 - __main__ - INFO - 📊 Reference slice 47.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=251
+2025-10-23 16:43:17,924 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[-1000.0, 1697.0], pixel_mean=-907.5, mask_sum=488
+2025-10-23 16:43:17,929 - __main__ - INFO - 🎯 Target slice 25.0: shape=(512, 512), pixel_range=[-1000.0, 1734.0], pixel_mean=-917.2
+2025-10-23 16:43:17,930 - __main__ - INFO - 📊 Reference slice 0 at position 40.0: pixel_sum=-237900339.0, mask_sum=488, mask_shape=(512, 512)
+2025-10-23 16:43:17,930 - __main__ - INFO - 📊 Reference slice 1 at position 42.5: pixel_sum=0.0, mask_sum=463, mask_shape=(512, 512)
+2025-10-23 16:43:17,930 - __main__ - INFO - 📊 Reference slice 2 at position 47.5: pixel_sum=0.0, mask_sum=251, mask_shape=(512, 512)
+2025-10-23 16:43:17,931 - __main__ - INFO - 📊 Reference slice 3 at position 40.0: pixel_sum=-237900339.0, mask_sum=488, mask_shape=(512, 512)
+2025-10-23 16:43:17,931 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:43:18,003 - __main__ - INFO - 📊 Reference slice 22.5: shape=(512, 512), pixel_range=[-1000.0, 1741.0], pixel_mean=-916.6, mask_sum=352
+2025-10-23 16:43:18,012 - __main__ - INFO - 📊 Reference slice 27.5: shape=(512, 512), pixel_range=[-1000.0, 1737.0], pixel_mean=-916.7, mask_sum=418
+2025-10-23 16:43:18,022 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=312
+2025-10-23 16:43:18,032 - __main__ - INFO - 📊 Reference slice 22.5: shape=(512, 512), pixel_range=[-1000.0, 1741.0], pixel_mean=-916.6, mask_sum=352
+2025-10-23 16:43:18,037 - __main__ - INFO - 🎯 Target slice 25.0: shape=(512, 512), pixel_range=[-1000.0, 1734.0], pixel_mean=-917.2
+2025-10-23 16:43:18,037 - __main__ - INFO - 📊 Reference slice 0 at position 22.5: pixel_sum=-240285200.0, mask_sum=352, mask_shape=(512, 512)
+2025-10-23 16:43:18,037 - __main__ - INFO - 📊 Reference slice 1 at position 27.5: pixel_sum=-240317295.0, mask_sum=418, mask_shape=(512, 512)
+2025-10-23 16:43:18,037 - __main__ - INFO - 📊 Reference slice 2 at position 20.0: pixel_sum=0.0, mask_sum=312, mask_shape=(512, 512)
+2025-10-23 16:43:18,038 - __main__ - INFO - 📊 Reference slice 3 at position 22.5: pixel_sum=-240285200.0, mask_sum=352, mask_shape=(512, 512)
+2025-10-23 16:43:18,038 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:43:18,434 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5950, mean=0.0110, median=0.0008
+2025-10-23 16:43:18,434 - __main__ - INFO - 🎯 Pixels >0.5: 193, >0.3: 2887
+2025-10-23 16:43:18,435 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:43:18,435 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=2887
+2025-10-23 16:43:18,446 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:43:18,448 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6053, mean=0.0051, median=0.0007
+2025-10-23 16:43:18,448 - __main__ - INFO - 🎯 Pixels >0.5: 285, >0.3: 630
+2025-10-23 16:43:18,448 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:43:18,448 - __main__ - INFO - STM inference complete: quality=0.005, mask sum=630
+2025-10-23 16:43:18,463 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:43:18,762 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[-1000.0, 1736.0], pixel_mean=-917.9, mask_sum=312
+2025-10-23 16:43:18,772 - __main__ - INFO - 📊 Reference slice 22.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=352
+2025-10-23 16:43:18,781 - __main__ - INFO - 📊 Reference slice 27.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=418
+2025-10-23 16:43:18,791 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[-1000.0, 1736.0], pixel_mean=-917.9, mask_sum=312
+2025-10-23 16:43:18,796 - __main__ - INFO - 🎯 Target slice 17.5: shape=(512, 512), pixel_range=[-1000.0, 1700.0], pixel_mean=-918.0
+2025-10-23 16:43:18,796 - __main__ - INFO - 📊 Reference slice 0 at position 20.0: pixel_sum=-240620688.0, mask_sum=312, mask_shape=(512, 512)
+2025-10-23 16:43:18,796 - __main__ - INFO - 📊 Reference slice 1 at position 22.5: pixel_sum=0.0, mask_sum=352, mask_shape=(512, 512)
+2025-10-23 16:43:18,797 - __main__ - INFO - 📊 Reference slice 2 at position 27.5: pixel_sum=0.0, mask_sum=418, mask_shape=(512, 512)
+2025-10-23 16:43:18,797 - __main__ - INFO - 📊 Reference slice 3 at position 20.0: pixel_sum=-240620688.0, mask_sum=312, mask_shape=(512, 512)
+2025-10-23 16:43:18,797 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:43:18,985 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5932, mean=0.0046, median=0.0007
+2025-10-23 16:43:18,985 - __main__ - INFO - 🎯 Pixels >0.5: 206, >0.3: 543
+2025-10-23 16:43:18,985 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:43:18,985 - __main__ - INFO - STM inference complete: quality=0.005, mask sum=543
+2025-10-23 16:43:18,996 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:43:19,375 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[-1000.0, 1697.0], pixel_mean=-907.5, mask_sum=488
+2025-10-23 16:43:19,385 - __main__ - INFO - 📊 Reference slice 42.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=463
+2025-10-23 16:43:19,394 - __main__ - INFO - 📊 Reference slice 47.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=251
+2025-10-23 16:43:19,405 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[-1000.0, 1697.0], pixel_mean=-907.5, mask_sum=488
+2025-10-23 16:43:19,410 - __main__ - INFO - 🎯 Target slice 17.5: shape=(512, 512), pixel_range=[-1000.0, 1700.0], pixel_mean=-918.0
+2025-10-23 16:43:19,410 - __main__ - INFO - 📊 Reference slice 0 at position 40.0: pixel_sum=-237900339.0, mask_sum=488, mask_shape=(512, 512)
+2025-10-23 16:43:19,410 - __main__ - INFO - 📊 Reference slice 1 at position 42.5: pixel_sum=0.0, mask_sum=463, mask_shape=(512, 512)
+2025-10-23 16:43:19,411 - __main__ - INFO - 📊 Reference slice 2 at position 47.5: pixel_sum=0.0, mask_sum=251, mask_shape=(512, 512)
+2025-10-23 16:43:19,411 - __main__ - INFO - 📊 Reference slice 3 at position 40.0: pixel_sum=-237900339.0, mask_sum=488, mask_shape=(512, 512)
+2025-10-23 16:43:19,411 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:43:19,479 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[-1000.0, 1663.0], pixel_mean=-919.7, mask_sum=137
+2025-10-23 16:43:19,489 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=94
+2025-10-23 16:43:19,498 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=62
+2025-10-23 16:43:19,508 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[-1000.0, 1663.0], pixel_mean=-919.7, mask_sum=137
+2025-10-23 16:43:19,513 - __main__ - INFO - 🎯 Target slice 17.5: shape=(512, 512), pixel_range=[-1000.0, 1700.0], pixel_mean=-918.0
+2025-10-23 16:43:19,513 - __main__ - INFO - 📊 Reference slice 0 at position 5.0: pixel_sum=-241085400.0, mask_sum=137, mask_shape=(512, 512)
+2025-10-23 16:43:19,513 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=94, mask_shape=(512, 512)
+2025-10-23 16:43:19,514 - __main__ - INFO - 📊 Reference slice 2 at position 0.0: pixel_sum=0.0, mask_sum=62, mask_shape=(512, 512)
+2025-10-23 16:43:19,514 - __main__ - INFO - 📊 Reference slice 3 at position 5.0: pixel_sum=-241085400.0, mask_sum=137, mask_shape=(512, 512)
+2025-10-23 16:43:19,514 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:43:19,792 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5932, mean=0.0046, median=0.0007
+2025-10-23 16:43:19,792 - __main__ - INFO - 🎯 Pixels >0.5: 206, >0.3: 543
+2025-10-23 16:43:19,792 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:43:19,792 - __main__ - INFO - STM inference complete: quality=0.005, mask sum=543
+2025-10-23 16:43:19,803 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:43:19,805 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5932, mean=0.0046, median=0.0007
+2025-10-23 16:43:19,805 - __main__ - INFO - 🎯 Pixels >0.5: 206, >0.3: 543
+2025-10-23 16:43:19,805 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:43:19,805 - __main__ - INFO - STM inference complete: quality=0.005, mask sum=543
+2025-10-23 16:43:19,819 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:43:29,942 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:43:29] "GET /health HTTP/1.1" 200 -
+2025-10-23 16:48:08,295 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:08,309 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:08,320 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:08,332 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:08,337 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:08,337 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:08,338 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:08,339 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:08,340 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:08,340 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:08,717 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:08,730 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:08,741 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:08,750 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:08,756 - __main__ - INFO - 🎯 Target slice -7.5: shape=(512, 512), pixel_range=[-1000.0, 1733.0], pixel_mean=-923.5
+2025-10-23 16:48:08,757 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:08,757 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:08,758 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:08,759 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:08,759 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:08,827 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:08,836 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:08,846 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:08,856 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:08,861 - __main__ - INFO - 🎯 Target slice -7.5: shape=(512, 512), pixel_range=[-1000.0, 1733.0], pixel_mean=-923.5
+2025-10-23 16:48:08,862 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:08,862 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:08,862 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:08,863 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:08,863 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:09,343 - __main__ - INFO - 🎯 Probability stats: min=0.0001, max=0.9248, mean=0.0675, median=0.0045
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Probability stats: min=0.0001, max=0.8992, mean=0.0662, median=0.0043
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Pixels >0.5: 11504, >0.3: 18911
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8995, mean=0.0076, median=0.0007
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Pixels >0.5: 11199, >0.3: 18038
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Pixels >0.5: 1265, >0.3: 1640
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:09,344 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:09,345 - __main__ - INFO - STM inference complete: quality=0.066, mask sum=18038
+2025-10-23 16:48:09,345 - __main__ - INFO - STM inference complete: quality=0.008, mask sum=1640
+2025-10-23 16:48:09,346 - __main__ - INFO - STM inference complete: quality=0.068, mask sum=18911
+2025-10-23 16:48:09,376 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:09,376 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:09,393 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:11,941 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:11,951 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:11,961 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:11,971 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:11,976 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:11,976 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:11,976 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:11,977 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:11,977 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:11,977 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:12,045 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:12,055 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:12,064 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:12,074 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:12,079 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:12,080 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:12,080 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:12,080 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:12,080 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:12,080 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:12,366 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:12,366 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:12,366 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:12,367 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:12,378 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:12] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:12,388 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:12,388 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:12,388 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:12,389 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:12,402 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:12] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:15,735 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:15,745 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:15,762 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:15,773 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:15,778 - __main__ - INFO - 🎯 Target slice -12.5: shape=(512, 512), pixel_range=[-1000.0, 987.0], pixel_mean=-929.5
+2025-10-23 16:48:15,778 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:15,778 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:15,778 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:15,779 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:15,779 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:15,871 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:15,881 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:15,891 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:15,901 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:15,907 - __main__ - INFO - 🎯 Target slice -12.5: shape=(512, 512), pixel_range=[-1000.0, 987.0], pixel_mean=-929.5
+2025-10-23 16:48:15,907 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:15,907 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:15,907 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:15,908 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:15,908 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:15,991 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:16,001 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:16,011 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:16,021 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:16,027 - __main__ - INFO - 🎯 Target slice -15.0: shape=(512, 512), pixel_range=[-1000.0, 873.0], pixel_mean=-930.4
+2025-10-23 16:48:16,027 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:16,028 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:16,028 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:16,028 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:16,028 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:16,125 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1248
+2025-10-23 16:48:16,135 - __main__ - INFO - 📊 Reference slice 17.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1312
+2025-10-23 16:48:16,145 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1364
+2025-10-23 16:48:16,156 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1248
+2025-10-23 16:48:16,298 - __main__ - INFO - 🎯 Target slice -17.5: shape=(512, 512), pixel_range=[-1000.0, 1354.0], pixel_mean=-932.2
+2025-10-23 16:48:16,298 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-919.7, mask_sum=1264
+2025-10-23 16:48:16,308 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:16,318 - __main__ - INFO - 📊 Reference slice 0 at position 15.0: pixel_sum=-240609184.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:16,318 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:16,328 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:16,328 - __main__ - INFO - 📊 Reference slice 1 at position 17.5: pixel_sum=0.0, mask_sum=1312, mask_shape=(512, 512)
+2025-10-23 16:48:16,337 - __main__ - INFO - 📊 Reference slice 7.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1259
+2025-10-23 16:48:16,347 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:16,357 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-919.7, mask_sum=1264
+2025-10-23 16:48:16,363 - __main__ - INFO - 📊 Reference slice 2 at position 20.0: pixel_sum=0.0, mask_sum=1364, mask_shape=(512, 512)
+2025-10-23 16:48:16,363 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:16,368 - __main__ - INFO - 🎯 Target slice -17.5: shape=(512, 512), pixel_range=[-1000.0, 1354.0], pixel_mean=-932.2
+2025-10-23 16:48:16,369 - __main__ - INFO - 🎯 Target slice -17.5: shape=(512, 512), pixel_range=[-1000.0, 1354.0], pixel_mean=-932.2
+2025-10-23 16:48:16,369 - __main__ - INFO - 📊 Reference slice 3 at position 15.0: pixel_sum=-240609184.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:16,369 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:16,369 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:16,370 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:16,371 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:16,372 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:16,372 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:16,374 - __main__ - INFO - 📊 Reference slice 0 at position 2.5: pixel_sum=-241102060.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:16,375 - __main__ - INFO - 📊 Reference slice 1 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:16,375 - __main__ - INFO - 📊 Reference slice 2 at position 7.5: pixel_sum=0.0, mask_sum=1259, mask_shape=(512, 512)
+2025-10-23 16:48:16,375 - __main__ - INFO - 📊 Reference slice 3 at position 2.5: pixel_sum=-241102060.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:16,376 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:16,865 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7520, mean=0.0110, median=0.0007
+2025-10-23 16:48:16,865 - __main__ - INFO - 🎯 Pixels >0.5: 809, >0.3: 3290
+2025-10-23 16:48:16,866 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:16,866 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=3290
+2025-10-23 16:48:16,886 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:16,917 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7520, mean=0.0110, median=0.0007
+2025-10-23 16:48:16,917 - __main__ - INFO - 🎯 Pixels >0.5: 809, >0.3: 3290
+2025-10-23 16:48:16,917 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:16,917 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=3290
+2025-10-23 16:48:16,932 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:17,025 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:17,036 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:17,048 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:17,060 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:17,066 - __main__ - INFO - 🎯 Target slice -20.0: shape=(512, 512), pixel_range=[-1000.0, 1380.0], pixel_mean=-934.6
+2025-10-23 16:48:17,067 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:17,068 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:17,068 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5944, mean=0.0100, median=0.0008
+2025-10-23 16:48:17,068 - __main__ - INFO - 🎯 Pixels >0.5: 356, >0.3: 2991
+2025-10-23 16:48:17,068 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:17,068 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:17,069 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:17,069 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:17,071 - __main__ - INFO - STM inference complete: quality=0.010, mask sum=2991
+2025-10-23 16:48:17,168 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:17] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:17,169 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:17,180 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:17,191 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:17,201 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:17,207 - __main__ - INFO - 🎯 Target slice -22.5: shape=(512, 512), pixel_range=[-1000.0, 1302.0], pixel_mean=-935.8
+2025-10-23 16:48:17,208 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:17,208 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:17,209 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:17,209 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:17,209 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:17,212 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6706, mean=0.0125, median=0.0007
+2025-10-23 16:48:17,212 - __main__ - INFO - 🎯 Pixels >0.5: 1527, >0.3: 3821
+2025-10-23 16:48:17,212 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:17,212 - __main__ - INFO - STM inference complete: quality=0.012, mask sum=3821
+2025-10-23 16:48:17,229 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:17] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:17,234 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6706, mean=0.0125, median=0.0007
+2025-10-23 16:48:17,234 - __main__ - INFO - 🎯 Pixels >0.5: 1527, >0.3: 3821
+2025-10-23 16:48:17,234 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:17,234 - __main__ - INFO - STM inference complete: quality=0.012, mask sum=3821
+2025-10-23 16:48:17,244 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6706, mean=0.0125, median=0.0007
+2025-10-23 16:48:17,244 - __main__ - INFO - 🎯 Pixels >0.5: 1527, >0.3: 3821
+2025-10-23 16:48:17,244 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:17,248 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:17] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:17,248 - __main__ - INFO - STM inference complete: quality=0.012, mask sum=3821
+2025-10-23 16:48:17,263 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:17] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:17,350 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[-1000.0, 1736.0], pixel_mean=-917.9, mask_sum=1364
+2025-10-23 16:48:17,360 - __main__ - INFO - 📊 Reference slice 25: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1467
+2025-10-23 16:48:17,370 - __main__ - INFO - 📊 Reference slice 27.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1474
+2025-10-23 16:48:17,381 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[-1000.0, 1736.0], pixel_mean=-917.9, mask_sum=1364
+2025-10-23 16:48:17,389 - __main__ - INFO - 🎯 Target slice -25.0: shape=(512, 512), pixel_range=[-1000.0, 1362.0], pixel_mean=-936.7
+2025-10-23 16:48:17,390 - __main__ - INFO - 📊 Reference slice 0 at position 20.0: pixel_sum=-240620688.0, mask_sum=1364, mask_shape=(512, 512)
+2025-10-23 16:48:17,392 - __main__ - INFO - 📊 Reference slice 1 at position 25.0: pixel_sum=0.0, mask_sum=1467, mask_shape=(512, 512)
+2025-10-23 16:48:17,394 - __main__ - INFO - 📊 Reference slice 2 at position 27.5: pixel_sum=0.0, mask_sum=1474, mask_shape=(512, 512)
+2025-10-23 16:48:17,396 - __main__ - INFO - 📊 Reference slice 3 at position 20.0: pixel_sum=-240620688.0, mask_sum=1364, mask_shape=(512, 512)
+2025-10-23 16:48:17,396 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:17,534 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,601 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,620 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:17,629 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,630 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:17,639 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:17,658 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:17,667 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:17,677 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,677 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:17,682 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,691 - __main__ - INFO - 🎯 Target slice -27.5: shape=(512, 512), pixel_range=[-1000.0, 1023.0], pixel_mean=-937.1
+2025-10-23 16:48:17,697 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:17,702 - __main__ - INFO - 🎯 Target slice -22.5: shape=(512, 512), pixel_range=[-1000.0, 1302.0], pixel_mean=-935.8
+2025-10-23 16:48:17,702 - __main__ - INFO - 🎯 Target slice -25.0: shape=(512, 512), pixel_range=[-1000.0, 1362.0], pixel_mean=-936.7
+2025-10-23 16:48:17,702 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,702 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,703 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,704 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:17,704 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:17,704 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:17,704 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:18,187 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7752, mean=0.0128, median=0.0007
+2025-10-23 16:48:18,188 - __main__ - INFO - 🎯 Pixels >0.5: 2392, >0.3: 4077
+2025-10-23 16:48:18,188 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,188 - __main__ - INFO - STM inference complete: quality=0.013, mask sum=4077
+2025-10-23 16:48:18,208 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,243 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7292, mean=0.0128, median=0.0007
+2025-10-23 16:48:18,243 - __main__ - INFO - 🎯 Pixels >0.5: 2010, >0.3: 4464
+2025-10-23 16:48:18,243 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,243 - __main__ - INFO - STM inference complete: quality=0.013, mask sum=4464
+2025-10-23 16:48:18,263 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,397 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:48:18,408 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1244
+2025-10-23 16:48:18,418 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1248
+2025-10-23 16:48:18,429 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:48:18,434 - __main__ - INFO - 🎯 Target slice -20.0: shape=(512, 512), pixel_range=[-1000.0, 1380.0], pixel_mean=-934.6
+2025-10-23 16:48:18,435 - __main__ - INFO - 📊 Reference slice 0 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:48:18,435 - __main__ - INFO - 📊 Reference slice 1 at position 12.5: pixel_sum=0.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:48:18,436 - __main__ - INFO - 📊 Reference slice 2 at position 15.0: pixel_sum=0.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:18,437 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6597, mean=0.0114, median=0.0007
+2025-10-23 16:48:18,437 - __main__ - INFO - 🎯 Pixels >0.5: 664, >0.3: 4160
+2025-10-23 16:48:18,437 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,437 - __main__ - INFO - 📊 Reference slice 3 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:48:18,437 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:18,437 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6597, mean=0.0114, median=0.0007
+2025-10-23 16:48:18,438 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=4160
+2025-10-23 16:48:18,497 - __main__ - INFO - 🎯 Pixels >0.5: 664, >0.3: 4160
+2025-10-23 16:48:18,507 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,507 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5688, mean=0.0105, median=0.0007
+2025-10-23 16:48:18,507 - __main__ - INFO - 🎯 Pixels >0.5: 330, >0.3: 3565
+2025-10-23 16:48:18,507 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,507 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1248
+2025-10-23 16:48:18,529 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,530 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=4160
+2025-10-23 16:48:18,530 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=3565
+2025-10-23 16:48:18,533 - __main__ - INFO - 📊 Reference slice 17.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1312
+2025-10-23 16:48:18,557 - __main__ - INFO - 📊 Reference slice 20: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1364
+2025-10-23 16:48:18,567 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,567 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7292, mean=0.0128, median=0.0007
+2025-10-23 16:48:18,575 - __main__ - INFO - 🎯 Pixels >0.5: 2010, >0.3: 4464
+2025-10-23 16:48:18,583 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1248
+2025-10-23 16:48:18,584 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,584 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:18,590 - __main__ - INFO - 🎯 Target slice -17.5: shape=(512, 512), pixel_range=[-1000.0, 1354.0], pixel_mean=-932.2
+2025-10-23 16:48:18,590 - __main__ - INFO - STM inference complete: quality=0.013, mask sum=4464
+2025-10-23 16:48:18,590 - __main__ - INFO - 📊 Reference slice 0 at position 15.0: pixel_sum=-240609184.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:18,602 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:18,602 - __main__ - INFO - 📊 Reference slice 1 at position 17.5: pixel_sum=0.0, mask_sum=1312, mask_shape=(512, 512)
+2025-10-23 16:48:18,603 - __main__ - INFO - 📊 Reference slice 2 at position 20.0: pixel_sum=0.0, mask_sum=1364, mask_shape=(512, 512)
+2025-10-23 16:48:18,603 - __main__ - INFO - 📊 Reference slice 3 at position 15.0: pixel_sum=-240609184.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:18,603 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:18,693 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:18,704 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:18,714 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:18,725 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:18,731 - __main__ - INFO - 🎯 Target slice -15.0: shape=(512, 512), pixel_range=[-1000.0, 873.0], pixel_mean=-930.4
+2025-10-23 16:48:18,732 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:18,733 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:18,734 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:18,734 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:18,734 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:18,805 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:18,815 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:18,895 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:18,895 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:18,914 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:18,915 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:18,977 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:18,996 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,006 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:19,006 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:19,016 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:19,025 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:19,026 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,026 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:19,026 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:19,042 - __main__ - INFO - 🎯 Target slice -12.5: shape=(512, 512), pixel_range=[-1000.0, 987.0], pixel_mean=-929.5
+2025-10-23 16:48:19,043 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,042 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,042 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:19,048 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:19,048 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:19,048 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:19,049 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:19,049 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,049 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,049 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:19,051 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:19,051 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:19,051 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,051 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:19,602 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7752, mean=0.0128, median=0.0007
+2025-10-23 16:48:19,602 - __main__ - INFO - 🎯 Pixels >0.5: 2392, >0.3: 4077
+2025-10-23 16:48:19,602 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,603 - __main__ - INFO - STM inference complete: quality=0.013, mask sum=4077
+2025-10-23 16:48:19,623 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:19,631 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.6706, mean=0.0125, median=0.0007
+2025-10-23 16:48:19,631 - __main__ - INFO - 🎯 Pixels >0.5: 1527, >0.3: 3821
+2025-10-23 16:48:19,631 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,631 - __main__ - INFO - STM inference complete: quality=0.012, mask sum=3821
+2025-10-23 16:48:19,662 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:19,682 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.5944, mean=0.0100, median=0.0008
+2025-10-23 16:48:19,682 - __main__ - INFO - 🎯 Pixels >0.5: 356, >0.3: 2991
+2025-10-23 16:48:19,682 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,683 - __main__ - INFO - STM inference complete: quality=0.010, mask sum=2991
+2025-10-23 16:48:19,697 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:19,703 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.7520, mean=0.0110, median=0.0007
+2025-10-23 16:48:19,703 - __main__ - INFO - 🎯 Pixels >0.5: 809, >0.3: 3290
+2025-10-23 16:48:19,703 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,703 - __main__ - INFO - STM inference complete: quality=0.011, mask sum=3290
+2025-10-23 16:48:19,719 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:19,789 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,801 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:19,811 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:19,821 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,827 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:19,828 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,829 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:19,829 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:19,829 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:19,829 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,829 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:19,830 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:19,830 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:19,830 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:19,843 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:19] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:19,844 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:19,844 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:19,844 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:19,912 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:19,912 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:19,989 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:19,998 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:20,018 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:20] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:20,019 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:20,029 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:20,039 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:20,116 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:20,124 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:20,129 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:20,138 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:48:20,138 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:20,139 - __main__ - INFO - 🎯 Target slice -7.5: shape=(512, 512), pixel_range=[-1000.0, 1733.0], pixel_mean=-923.5
+2025-10-23 16:48:20,139 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:20,139 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:20,149 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,149 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:20,149 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:20,149 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:20,161 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:20,161 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:20,162 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:20,162 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:20,167 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,168 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:20,168 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:20,168 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,169 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:20,170 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:20,238 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,238 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:20,238 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1244
+2025-10-23 16:48:20,247 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1248
+2025-10-23 16:48:20,257 - __main__ - INFO - 📊 Reference slice 17.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1312
+2025-10-23 16:48:20,335 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[-1000.0, 1683.0], pixel_mean=-917.9, mask_sum=1244
+2025-10-23 16:48:20,340 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:20,350 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:48:20,350 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:20,350 - __main__ - INFO - 📊 Reference slice 0 at position 12.5: pixel_sum=-240634127.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:48:20,362 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:20,371 - __main__ - INFO - 📊 Reference slice 1 at position 15.0: pixel_sum=0.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:48:20,372 - __main__ - INFO - 📊 Reference slice 2 at position 17.5: pixel_sum=0.0, mask_sum=1312, mask_shape=(512, 512)
+2025-10-23 16:48:20,372 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:20,378 - __main__ - INFO - 📊 Reference slice 3 at position 12.5: pixel_sum=-240634127.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:48:20,378 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:48:20,378 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:20,380 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,381 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:20,381 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:20,382 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:20,382 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:20,977 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:20,977 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:20,977 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:20,978 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:21,001 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,022 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:48:21,022 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:48:21,023 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:21,023 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:48:21,037 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,043 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8995, mean=0.0076, median=0.0007
+2025-10-23 16:48:21,043 - __main__ - INFO - 🎯 Pixels >0.5: 1265, >0.3: 1640
+2025-10-23 16:48:21,043 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:21,043 - __main__ - INFO - STM inference complete: quality=0.008, mask sum=1640
+2025-10-23 16:48:21,060 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,060 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:48:21,061 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:48:21,061 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:21,061 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:48:21,075 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,076 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:48:21,076 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:48:21,076 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:21,076 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:48:21,077 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:48:21,077 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:48:21,077 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:21,089 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,090 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:48:21,106 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:21,176 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:21,186 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:21,195 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:21,205 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:21,210 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:48:21,211 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:21,211 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:21,279 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:21,280 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,290 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:21,290 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:21,290 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:21,300 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:21,311 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,316 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:48:21,316 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,317 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:21,318 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:21,318 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,320 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:21,389 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:21,399 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:48:21,590 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:48:21,619 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:48:21,624 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,624 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,634 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:21,643 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,643 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:21,663 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:21,672 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:21,672 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:21,672 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:48:21,682 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:48:21,691 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:21,701 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,702 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:48:21,706 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:48:21,716 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,721 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:48:21,726 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:21,726 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:21,727 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:48:21,727 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:48:21,727 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:21,727 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,727 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,727 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,728 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:21,728 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,729 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:21,729 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:48:21,729 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:48:22,328 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:48:22,328 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:48:22,328 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,329 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:48:22,353 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:22,371 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:48:22,371 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:48:22,371 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,371 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:48:22,388 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:22,396 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:48:22,396 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:48:22,396 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,396 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:48:22,410 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:48:22,414 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,414 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:48:22,415 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:48:22,428 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:22,446 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:48:22,446 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:48:22,446 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:48:22,446 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:48:22,446 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:48:22,467 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:48:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:41,299 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:49:41,308 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1244
+2025-10-23 16:49:41,319 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1248
+2025-10-23 16:49:41,329 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:49:41,334 - __main__ - INFO - 🎯 Target slice -7.5: shape=(512, 512), pixel_range=[-1000.0, 1733.0], pixel_mean=-923.5
+2025-10-23 16:49:41,334 - __main__ - INFO - 📊 Reference slice 0 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:41,335 - __main__ - INFO - 📊 Reference slice 1 at position 12.5: pixel_sum=0.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:49:41,335 - __main__ - INFO - 📊 Reference slice 2 at position 15.0: pixel_sum=0.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:49:41,335 - __main__ - INFO - 📊 Reference slice 3 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:41,335 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:41,426 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:41,436 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:49:41,446 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:49:41,456 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:41,462 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:49:41,462 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:41,534 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:49:41,535 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:41,535 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:49:41,549 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:49:41,549 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:41,559 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:41,559 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:49:41,637 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:41,642 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:49:41,642 - __main__ - INFO - 📊 Reference slice 7.5: shape=(512, 512), pixel_range=[-1000.0, 1701.0], pixel_mean=-919.7, mask_sum=1259
+2025-10-23 16:49:41,652 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:41,652 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1250
+2025-10-23 16:49:41,652 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:49:41,662 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:49:41,662 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1244
+2025-10-23 16:49:41,672 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:41,672 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:41,672 - __main__ - INFO - 📊 Reference slice 7.5: shape=(512, 512), pixel_range=[-1000.0, 1701.0], pixel_mean=-919.7, mask_sum=1259
+2025-10-23 16:49:41,677 - __main__ - INFO - 🎯 Target slice -10.0: shape=(512, 512), pixel_range=[-1000.0, 1641.0], pixel_mean=-926.4
+2025-10-23 16:49:41,677 - __main__ - INFO - 📊 Reference slice 0 at position 7.5: pixel_sum=-241080877.0, mask_sum=1259, mask_shape=(512, 512)
+2025-10-23 16:49:41,677 - __main__ - INFO - 📊 Reference slice 1 at position 10.0: pixel_sum=0.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:41,678 - __main__ - INFO - 📊 Reference slice 2 at position 12.5: pixel_sum=0.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:49:41,678 - __main__ - INFO - 📊 Reference slice 3 at position 7.5: pixel_sum=-241080877.0, mask_sum=1259, mask_shape=(512, 512)
+2025-10-23 16:49:41,678 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:42,118 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8995, mean=0.0076, median=0.0007
+2025-10-23 16:49:42,119 - __main__ - INFO - 🎯 Pixels >0.5: 1265, >0.3: 1640
+2025-10-23 16:49:42,119 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:42,119 - __main__ - INFO - STM inference complete: quality=0.008, mask sum=1640
+2025-10-23 16:49:42,130 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:42] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:42,147 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:49:42,147 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:49:42,147 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:42,148 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:49:42,162 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:42] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:42,182 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:49:42,182 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:49:42,182 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:42,182 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:49:42,193 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:42] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:42,197 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8438, mean=0.0089, median=0.0007
+2025-10-23 16:49:42,197 - __main__ - INFO - 🎯 Pixels >0.5: 1244, >0.3: 1688
+2025-10-23 16:49:42,197 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:42,198 - __main__ - INFO - STM inference complete: quality=0.009, mask sum=1688
+2025-10-23 16:49:42,211 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:42] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:43,483 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[-1000.0, 1663.0], pixel_mean=-919.7, mask_sum=1260
+2025-10-23 16:49:43,494 - __main__ - INFO - 📊 Reference slice 7.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1259
+2025-10-23 16:49:43,504 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1250
+2025-10-23 16:49:43,514 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[-1000.0, 1663.0], pixel_mean=-919.7, mask_sum=1260
+2025-10-23 16:49:43,520 - __main__ - INFO - 🎯 Target slice -7.5: shape=(512, 512), pixel_range=[-1000.0, 1733.0], pixel_mean=-923.5
+2025-10-23 16:49:43,520 - __main__ - INFO - 📊 Reference slice 0 at position 5.0: pixel_sum=-241085400.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:49:43,521 - __main__ - INFO - 📊 Reference slice 1 at position 7.5: pixel_sum=0.0, mask_sum=1259, mask_shape=(512, 512)
+2025-10-23 16:49:43,521 - __main__ - INFO - 📊 Reference slice 2 at position 10.0: pixel_sum=0.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:43,522 - __main__ - INFO - 📊 Reference slice 3 at position 5.0: pixel_sum=-241085400.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:49:43,522 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:43,589 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:49:43,599 - __main__ - INFO - 📊 Reference slice 12.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1244
+2025-10-23 16:49:43,676 - __main__ - INFO - 📊 Reference slice 15: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1248
+2025-10-23 16:49:43,685 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:43,695 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:49:43,695 - __main__ - INFO - 📊 Reference slice 10: shape=(512, 512), pixel_range=[-1000.0, 1696.0], pixel_mean=-918.5, mask_sum=1250
+2025-10-23 16:49:43,709 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:49:43,709 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:49:43,719 - __main__ - INFO - 📊 Reference slice 0 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:43,719 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:43,724 - __main__ - INFO - 📊 Reference slice 1 at position 12.5: pixel_sum=0.0, mask_sum=1244, mask_shape=(512, 512)
+2025-10-23 16:49:43,724 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:49:43,724 - __main__ - INFO - 📊 Reference slice 2 at position 15.0: pixel_sum=0.0, mask_sum=1248, mask_shape=(512, 512)
+2025-10-23 16:49:43,724 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:43,724 - __main__ - INFO - 📊 Reference slice 3 at position 10.0: pixel_sum=-240789945.0, mask_sum=1250, mask_shape=(512, 512)
+2025-10-23 16:49:43,725 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:43,725 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:49:43,725 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:49:43,725 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:43,725 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:44,084 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:49:44,085 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:49:44,085 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:44,085 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:49:44,097 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:44] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:44,110 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:49:44,110 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:49:44,110 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:44,111 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:49:44,125 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:44] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:44,139 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.8995, mean=0.0076, median=0.0007
+2025-10-23 16:49:44,139 - __main__ - INFO - 🎯 Pixels >0.5: 1265, >0.3: 1640
+2025-10-23 16:49:44,139 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:44,139 - __main__ - INFO - STM inference complete: quality=0.008, mask sum=1640
+2025-10-23 16:49:44,151 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:44] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:44,504 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:44,514 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:49:44,523 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:49:44,534 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:44,539 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:49:44,540 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:44,540 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:49:44,541 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:49:44,541 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:44,541 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:44,609 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:49:44,619 - __main__ - INFO - 📊 Reference slice 2.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1264
+2025-10-23 16:49:44,628 - __main__ - INFO - 📊 Reference slice 5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1260
+2025-10-23 16:49:44,638 - __main__ - INFO - 📊 Reference slice 0: shape=(512, 512), pixel_range=[-1000.0, 3071.0], pixel_mean=-921.2, mask_sum=1270
+2025-10-23 16:49:44,643 - __main__ - INFO - 🎯 Target slice -2.5: shape=(512, 512), pixel_range=[-1000.0, 2939.0], pixel_mean=-922.0
+2025-10-23 16:49:44,643 - __main__ - INFO - 📊 Reference slice 0 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:49:44,643 - __main__ - INFO - 📊 Reference slice 1 at position 2.5: pixel_sum=0.0, mask_sum=1264, mask_shape=(512, 512)
+2025-10-23 16:49:44,643 - __main__ - INFO - 📊 Reference slice 2 at position 5.0: pixel_sum=0.0, mask_sum=1260, mask_shape=(512, 512)
+2025-10-23 16:49:44,644 - __main__ - INFO - 📊 Reference slice 3 at position 0.0: pixel_sum=-241492959.0, mask_sum=1270, mask_shape=(512, 512)
+2025-10-23 16:49:44,644 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:44,927 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:49:44,927 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:49:44,927 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:44,928 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:49:44,938 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:44] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:44,940 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9522, mean=0.0074, median=0.0006
+2025-10-23 16:49:44,940 - __main__ - INFO - 🎯 Pixels >0.5: 1341, >0.3: 1733
+2025-10-23 16:49:44,940 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:44,940 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1733
+2025-10-23 16:49:44,955 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:44] "POST /predict HTTP/1.1" 200 -
+2025-10-23 16:49:48,712 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:48,721 - __main__ - INFO - 📊 Reference slice 37.5: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1106
+2025-10-23 16:49:48,731 - __main__ - INFO - 📊 Reference slice 40: shape=(512, 512), pixel_range=[0.0, 0.0], pixel_mean=0.0, mask_sum=1002
+2025-10-23 16:49:48,741 - __main__ - INFO - 📊 Reference slice 35: shape=(512, 512), pixel_range=[-1000.0, 1725.0], pixel_mean=-912.0, mask_sum=1206
+2025-10-23 16:49:48,747 - __main__ - INFO - 🎯 Target slice -5.0: shape=(512, 512), pixel_range=[-1000.0, 1751.0], pixel_mean=-922.7
+2025-10-23 16:49:48,747 - __main__ - INFO - 📊 Reference slice 0 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:48,748 - __main__ - INFO - 📊 Reference slice 1 at position 37.5: pixel_sum=0.0, mask_sum=1106, mask_shape=(512, 512)
+2025-10-23 16:49:48,748 - __main__ - INFO - 📊 Reference slice 2 at position 40.0: pixel_sum=0.0, mask_sum=1002, mask_shape=(512, 512)
+2025-10-23 16:49:48,748 - __main__ - INFO - 📊 Reference slice 3 at position 35.0: pixel_sum=-239077088.0, mask_sum=1206, mask_shape=(512, 512)
+2025-10-23 16:49:48,748 - __main__ - INFO - 🚀 Using STM model for inference (model loaded: True)
+2025-10-23 16:49:49,035 - __main__ - INFO - 🎯 Probability stats: min=0.0000, max=0.9268, mean=0.0072, median=0.0007
+2025-10-23 16:49:49,035 - __main__ - INFO - 🎯 Pixels >0.5: 1349, >0.3: 1737
+2025-10-23 16:49:49,035 - __main__ - INFO - 🎯 Using adaptive threshold: 0.300 (median is low)
+2025-10-23 16:49:49,035 - __main__ - INFO - STM inference complete: quality=0.007, mask sum=1737
+2025-10-23 16:49:49,046 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 16:49:49] "POST /predict HTTP/1.1" 200 -

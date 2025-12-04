@@ -1,0 +1,592 @@
+2025-10-24 16:39:12,500 - __main__ - INFO - Starting Geometric Propagation Service on 127.0.0.1:5002
+ * Serving Flask app 'geometric_propagation_service'
+ * Debug mode: off
+2025-10-24 16:39:12,505 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5002
+2025-10-24 16:39:12,505 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-24 16:39:14,819 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:14] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:39:17,426 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:17] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:39:20,211 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:20] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:39:30,130 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:30] "GET /health HTTP/1.1" 200 -
+2025-10-24 16:39:34,297 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,371 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,448 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,455 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:34,456 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:34,456 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:34,477 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,487 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,487 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,577 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,581 - __main__ - INFO - Propagation: shift=(-0.1, -0.0), scale=0.95, HU_overlap=0.60, size_ratio=3.60, distance=-6.0, quality=0.61, mask_pixels=108
+2025-10-24 16:39:34,592 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,689 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,693 - __main__ - INFO - Propagation: shift=(-0.1, -0.0), scale=0.95, HU_overlap=0.60, size_ratio=3.60, distance=-6.0, quality=0.61, mask_pixels=108
+2025-10-24 16:39:34,704 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,782 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,785 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:34,796 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,877 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,951 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:34,953 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:34,964 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:34,965 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:34,975 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:34] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:35,485 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:35,488 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:35,499 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:35,579 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:35,653 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:35,727 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:35,727 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:35,738 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:35,740 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:35,751 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:35,752 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:35,763 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:35] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:36,011 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:36,015 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:36,025 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:36] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:36,108 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:36,111 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:36,122 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:36] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:43,146 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:43,150 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:43,161 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:44,443 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:44,447 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:44,458 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:44,541 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:44,545 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:44,556 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:45,303 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:45,306 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:45,318 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:49,791 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:49,795 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:49,806 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:49] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:50,538 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:50,542 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:50,553 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:50] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:50,660 - __main__ - INFO - Reference HU stats: mean=72.9, std=26.8, range=[10.0, 113.0], threshold=[19.4, 113.0]
+2025-10-24 16:39:50,663 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.76, size_ratio=2.03, distance=2.0, quality=0.80, mask_pixels=130
+2025-10-24 16:39:50,675 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:50] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,149 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,153 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:39:58,164 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,245 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,249 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:39:58,260 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,334 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,339 - __main__ - INFO - Propagation: shift=(-0.1, -0.0), scale=0.95, HU_overlap=0.60, size_ratio=3.60, distance=-6.0, quality=0.61, mask_pixels=108
+2025-10-24 16:39:58,350 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,435 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,509 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,588 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,589 - __main__ - INFO - Propagation: shift=(-0.1, 0.1), scale=0.97, HU_overlap=0.64, size_ratio=4.87, distance=-8.0, quality=0.56, mask_pixels=146
+2025-10-24 16:39:58,658 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,806 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,816 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,822 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,822 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:39:58,833 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,837 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:39:58,849 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,923 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:39:58,924 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:58,935 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,935 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:39:58,946 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,946 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:39:58,957 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:58,962 - __main__ - INFO - Propagation: shift=(-0.0, 0.1), scale=1.00, HU_overlap=0.62, size_ratio=7.03, distance=-12.0, quality=0.48, mask_pixels=211
+2025-10-24 16:39:58,973 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:58] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,059 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,133 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,212 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,341 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,356 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,357 - __main__ - INFO - Propagation: shift=(0.1, 0.0), scale=1.03, HU_overlap=0.57, size_ratio=8.83, distance=-16.0, quality=0.43, mask_pixels=265
+2025-10-24 16:39:59,367 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,441 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,441 - __main__ - INFO - Propagation: shift=(-0.0, 0.1), scale=1.02, HU_overlap=0.57, size_ratio=7.80, distance=-14.0, quality=0.44, mask_pixels=234
+2025-10-24 16:39:59,452 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,454 - __main__ - INFO - Propagation: shift=(0.7, -0.7), scale=1.07, HU_overlap=0.46, size_ratio=9.23, distance=-20.0, quality=0.36, mask_pixels=277
+2025-10-24 16:39:59,465 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,466 - __main__ - INFO - Propagation: shift=(0.4, -0.3), scale=1.05, HU_overlap=0.51, size_ratio=9.07, distance=-18.0, quality=0.39, mask_pixels=272
+2025-10-24 16:39:59,466 - __main__ - INFO - Propagation: shift=(0.7, -0.7), scale=1.07, HU_overlap=0.46, size_ratio=9.23, distance=-20.0, quality=0.36, mask_pixels=277
+2025-10-24 16:39:59,478 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,489 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,564 - __main__ - INFO - Propagation: shift=(0.4, -0.3), scale=1.05, HU_overlap=0.51, size_ratio=9.07, distance=-18.0, quality=0.39, mask_pixels=272
+2025-10-24 16:39:59,571 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,575 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,582 - __main__ - INFO - Propagation: shift=(0.1, 0.0), scale=1.03, HU_overlap=0.57, size_ratio=8.83, distance=-16.0, quality=0.43, mask_pixels=265
+2025-10-24 16:39:59,593 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:39:59,674 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,755 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,829 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,973 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,973 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:39:59,974 - __main__ - INFO - Propagation: shift=(-0.0, 0.1), scale=1.00, HU_overlap=0.62, size_ratio=7.03, distance=-12.0, quality=0.48, mask_pixels=211
+2025-10-24 16:39:59,984 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:39:59] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,062 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:40:00,137 - __main__ - INFO - Propagation: shift=(0.0, 0.1), scale=0.99, HU_overlap=0.65, size_ratio=6.80, distance=-10.0, quality=0.51, mask_pixels=204
+2025-10-24 16:40:00,144 - __main__ - INFO - Reference HU stats: mean=81.6, std=21.1, range=[45.0, 117.0], threshold=[45.0, 117.0]
+2025-10-24 16:40:00,149 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,149 - __main__ - INFO - Propagation: shift=(-0.1, -0.1), scale=0.94, HU_overlap=0.66, size_ratio=2.90, distance=-4.0, quality=0.68, mask_pixels=87
+2025-10-24 16:40:00,149 - __main__ - INFO - Propagation: shift=(-0.1, -0.0), scale=0.95, HU_overlap=0.60, size_ratio=3.60, distance=-6.0, quality=0.61, mask_pixels=108
+2025-10-24 16:40:00,150 - __main__ - INFO - Propagation: shift=(-0.0, 0.1), scale=1.02, HU_overlap=0.57, size_ratio=7.80, distance=-14.0, quality=0.44, mask_pixels=234
+2025-10-24 16:40:00,161 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,179 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,183 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,184 - __main__ - INFO - Propagation: shift=(-0.1, 0.1), scale=0.97, HU_overlap=0.64, size_ratio=4.87, distance=-8.0, quality=0.56, mask_pixels=146
+2025-10-24 16:40:00,195 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,197 - __main__ - INFO - Propagation: shift=(0.1, -0.1), scale=0.97, HU_overlap=0.74, size_ratio=2.37, distance=-2.0, quality=0.78, mask_pixels=71
+2025-10-24 16:40:00,207 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,288 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,293 - __main__ - INFO - Propagation: shift=(1.3, -0.9), scale=0.84, HU_overlap=0.37, size_ratio=1.42, distance=14.0, quality=0.51, mask_pixels=92
+2025-10-24 16:40:00,303 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,392 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,467 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,545 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,767 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,767 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:00,768 - __main__ - INFO - Reference HU stats: mean=30.5, std=37.3, range=[-50.0, 78.0], threshold=[-44.1, 78.0]
+2025-10-24 16:40:00,769 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:00,780 - __main__ - INFO - Propagation: shift=(1.2, -0.8), scale=0.92, HU_overlap=0.40, size_ratio=5.55, distance=26.0, quality=0.35, mask_pixels=361
+2025-10-24 16:40:00,780 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,791 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,795 - __main__ - INFO - Propagation: shift=(0.3, -0.1), scale=1.02, HU_overlap=0.22, size_ratio=0.19, distance=6.0, quality=0.46, mask_pixels=5
+2025-10-24 16:40:00,806 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,807 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:00,808 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:00,808 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:00,819 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,837 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,841 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:00] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:00,981 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,061 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,192 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,207 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,281 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,282 - __main__ - INFO - Propagation: shift=(1.7, -0.8), scale=0.98, HU_overlap=0.45, size_ratio=7.00, distance=30.0, quality=0.34, mask_pixels=455
+2025-10-24 16:40:01,292 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:01] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:01,302 - __main__ - INFO - Propagation: shift=(1.2, -0.8), scale=0.92, HU_overlap=0.40, size_ratio=5.55, distance=26.0, quality=0.35, mask_pixels=361
+2025-10-24 16:40:01,313 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:01] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:01,314 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:01,315 - __main__ - INFO - Propagation: shift=(1.7, -0.8), scale=0.98, HU_overlap=0.45, size_ratio=7.00, distance=30.0, quality=0.34, mask_pixels=455
+2025-10-24 16:40:01,315 - __main__ - INFO - Propagation: shift=(1.7, -0.8), scale=0.98, HU_overlap=0.45, size_ratio=7.00, distance=30.0, quality=0.34, mask_pixels=455
+2025-10-24 16:40:01,347 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:01] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:01,347 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:01] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:01,347 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:01] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:01,980 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:01,990 - __main__ - INFO - Propagation: shift=(1.2, -0.8), scale=0.92, HU_overlap=0.40, size_ratio=5.55, distance=26.0, quality=0.35, mask_pixels=361
+2025-10-24 16:40:02,000 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:02] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:02,085 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:02,095 - __main__ - INFO - Propagation: shift=(1.2, -0.8), scale=0.92, HU_overlap=0.40, size_ratio=5.55, distance=26.0, quality=0.35, mask_pixels=361
+2025-10-24 16:40:02,105 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:02] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:02,992 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:03,003 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:03,013 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:03] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:03,092 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:03,103 - __main__ - INFO - Propagation: shift=(1.4, -0.6), scale=0.99, HU_overlap=0.41, size_ratio=6.23, distance=28.0, quality=0.35, mask_pixels=405
+2025-10-24 16:40:03,113 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:03] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:03,775 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:03,786 - __main__ - INFO - Propagation: shift=(1.7, -0.8), scale=0.98, HU_overlap=0.45, size_ratio=7.00, distance=30.0, quality=0.34, mask_pixels=455
+2025-10-24 16:40:03,796 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:03] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:03,876 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:03,951 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:03,961 - __main__ - INFO - Propagation: shift=(1.7, -0.8), scale=0.98, HU_overlap=0.45, size_ratio=7.00, distance=30.0, quality=0.34, mask_pixels=455
+2025-10-24 16:40:03,972 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:03] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:04,045 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:04,045 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.95, HU_overlap=0.41, size_ratio=6.02, distance=32.0, quality=0.34, mask_pixels=391
+2025-10-24 16:40:04,056 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:04,068 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.95, HU_overlap=0.41, size_ratio=6.02, distance=32.0, quality=0.34, mask_pixels=391
+2025-10-24 16:40:04,078 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:04,699 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:04,713 - __main__ - INFO - Propagation: shift=(1.8, -1.1), scale=0.95, HU_overlap=0.36, size_ratio=5.85, distance=34.0, quality=0.32, mask_pixels=380
+2025-10-24 16:40:04,723 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:04,802 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:04,815 - __main__ - INFO - Propagation: shift=(1.8, -1.1), scale=0.95, HU_overlap=0.36, size_ratio=5.85, distance=34.0, quality=0.32, mask_pixels=380
+2025-10-24 16:40:04,826 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:04] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,269 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:05,284 - __main__ - INFO - Propagation: shift=(1.7, -0.9), scale=0.97, HU_overlap=0.32, size_ratio=5.71, distance=36.0, quality=0.32, mask_pixels=371
+2025-10-24 16:40:05,294 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,373 - __main__ - INFO - Reference HU stats: mean=32.4, std=34.5, range=[-42.0, 90.0], threshold=[-36.6, 90.0]
+2025-10-24 16:40:05,381 - __main__ - INFO - Propagation: shift=(0.1, 0.1), scale=1.20, HU_overlap=0.51, size_ratio=10.12, distance=20.0, quality=0.36, mask_pixels=405
+2025-10-24 16:40:05,391 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,469 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:05,544 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:05,620 - __main__ - INFO - Reference HU stats: mean=30.5, std=37.3, range=[-50.0, 78.0], threshold=[-44.1, 78.0]
+2025-10-24 16:40:05,622 - __main__ - INFO - Propagation: shift=(1.6, -0.9), scale=0.98, HU_overlap=0.29, size_ratio=5.86, distance=38.0, quality=0.30, mask_pixels=381
+2025-10-24 16:40:05,689 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,704 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:05,709 - __main__ - INFO - Propagation: shift=(-0.0, -0.2), scale=1.00, HU_overlap=0.49, size_ratio=10.04, distance=16.0, quality=0.41, mask_pixels=261
+2025-10-24 16:40:05,720 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,720 - __main__ - INFO - Propagation: shift=(1.7, -1.0), scale=0.99, HU_overlap=0.28, size_ratio=3.80, distance=40.0, quality=0.34, mask_pixels=247
+2025-10-24 16:40:05,732 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:05,732 - __main__ - INFO - Propagation: shift=(1.7, -1.0), scale=0.99, HU_overlap=0.28, size_ratio=3.80, distance=40.0, quality=0.34, mask_pixels=247
+2025-10-24 16:40:05,743 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:05] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:06,432 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:06,451 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.99, HU_overlap=0.25, size_ratio=4.88, distance=42.0, quality=0.31, mask_pixels=317
+2025-10-24 16:40:06,461 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:06] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:06,537 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:06,555 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.99, HU_overlap=0.25, size_ratio=4.88, distance=42.0, quality=0.31, mask_pixels=317
+2025-10-24 16:40:06,566 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:06] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,021 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,038 - __main__ - INFO - Propagation: shift=(1.7, -1.0), scale=0.99, HU_overlap=0.28, size_ratio=3.80, distance=40.0, quality=0.34, mask_pixels=247
+2025-10-24 16:40:07,048 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,126 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,201 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,216 - __main__ - INFO - Propagation: shift=(1.7, -1.0), scale=0.99, HU_overlap=0.28, size_ratio=3.80, distance=40.0, quality=0.34, mask_pixels=247
+2025-10-24 16:40:07,227 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,298 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,298 - __main__ - INFO - Propagation: shift=(1.6, -0.9), scale=0.98, HU_overlap=0.29, size_ratio=5.86, distance=38.0, quality=0.30, mask_pixels=381
+2025-10-24 16:40:07,309 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,324 - __main__ - INFO - Propagation: shift=(1.6, -0.9), scale=0.98, HU_overlap=0.29, size_ratio=5.86, distance=38.0, quality=0.30, mask_pixels=381
+2025-10-24 16:40:07,335 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,580 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,594 - __main__ - INFO - Propagation: shift=(1.7, -0.9), scale=0.97, HU_overlap=0.32, size_ratio=5.71, distance=36.0, quality=0.32, mask_pixels=371
+2025-10-24 16:40:07,605 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:07,682 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:07,697 - __main__ - INFO - Propagation: shift=(1.7, -0.9), scale=0.97, HU_overlap=0.32, size_ratio=5.71, distance=36.0, quality=0.32, mask_pixels=371
+2025-10-24 16:40:07,707 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:07] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:08,187 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:08,200 - __main__ - INFO - Propagation: shift=(1.8, -1.1), scale=0.95, HU_overlap=0.36, size_ratio=5.85, distance=34.0, quality=0.32, mask_pixels=380
+2025-10-24 16:40:08,211 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:08] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:08,321 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:08,333 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.95, HU_overlap=0.41, size_ratio=6.02, distance=32.0, quality=0.34, mask_pixels=391
+2025-10-24 16:40:08,343 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:08] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:08,418 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:08,492 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:08,503 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.95, HU_overlap=0.41, size_ratio=6.02, distance=32.0, quality=0.34, mask_pixels=391
+2025-10-24 16:40:08,513 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:08] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:08,514 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.95, HU_overlap=0.41, size_ratio=6.02, distance=32.0, quality=0.34, mask_pixels=391
+2025-10-24 16:40:08,525 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:08] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:09,089 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,103 - __main__ - INFO - Propagation: shift=(1.8, -1.1), scale=0.95, HU_overlap=0.36, size_ratio=5.85, distance=34.0, quality=0.32, mask_pixels=380
+2025-10-24 16:40:09,113 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:09] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:09,193 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,207 - __main__ - INFO - Propagation: shift=(1.8, -1.1), scale=0.95, HU_overlap=0.36, size_ratio=5.85, distance=34.0, quality=0.32, mask_pixels=380
+2025-10-24 16:40:09,217 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:09] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:09,683 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,770 - __main__ - INFO - Propagation: shift=(1.7, -0.9), scale=0.97, HU_overlap=0.32, size_ratio=5.71, distance=36.0, quality=0.32, mask_pixels=371
+2025-10-24 16:40:09,781 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:09] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:09,782 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,855 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,942 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:09,944 - __main__ - INFO - Propagation: shift=(1.6, -0.9), scale=0.98, HU_overlap=0.29, size_ratio=5.86, distance=38.0, quality=0.30, mask_pixels=381
+2025-10-24 16:40:09,945 - __main__ - INFO - Propagation: shift=(1.7, -1.0), scale=0.99, HU_overlap=0.28, size_ratio=3.80, distance=40.0, quality=0.34, mask_pixels=247
+2025-10-24 16:40:09,956 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:09] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:09,966 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:09] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:10,040 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,112 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,128 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.99, HU_overlap=0.25, size_ratio=4.88, distance=42.0, quality=0.31, mask_pixels=317
+2025-10-24 16:40:10,139 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:10] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:10,140 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.99, HU_overlap=0.25, size_ratio=4.88, distance=42.0, quality=0.31, mask_pixels=317
+2025-10-24 16:40:10,140 - __main__ - INFO - Propagation: shift=(1.9, -1.1), scale=0.99, HU_overlap=0.25, size_ratio=4.88, distance=42.0, quality=0.31, mask_pixels=317
+2025-10-24 16:40:10,158 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:10] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:10,162 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:10] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:10,678 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,772 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,772 - __main__ - INFO - Propagation: shift=(2.1, -1.1), scale=0.99, HU_overlap=0.28, size_ratio=7.37, distance=44.0, quality=0.30, mask_pixels=479
+2025-10-24 16:40:10,783 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:10] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:10,857 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,933 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:10,992 - __main__ - INFO - Propagation: shift=(2.2, -1.1), scale=0.98, HU_overlap=0.33, size_ratio=10.42, distance=46.0, quality=0.30, mask_pixels=677
+2025-10-24 16:40:11,018 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:11] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:11,019 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:11,019 - __main__ - INFO - Propagation: shift=(2.1, -1.1), scale=0.98, HU_overlap=0.34, size_ratio=10.25, distance=48.0, quality=0.30, mask_pixels=666
+2025-10-24 16:40:11,030 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:11] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:11,051 - __main__ - INFO - Propagation: shift=(2.1, -1.1), scale=0.98, HU_overlap=0.34, size_ratio=10.25, distance=48.0, quality=0.30, mask_pixels=666
+2025-10-24 16:40:11,062 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:11] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:11,063 - __main__ - INFO - Propagation: shift=(2.1, -1.1), scale=0.98, HU_overlap=0.34, size_ratio=10.25, distance=48.0, quality=0.30, mask_pixels=666
+2025-10-24 16:40:11,074 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:11] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:12,005 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,116 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,116 - __main__ - INFO - Propagation: shift=(1.9, -1.0), scale=0.98, HU_overlap=0.34, size_ratio=10.97, distance=50.0, quality=0.30, mask_pixels=713
+2025-10-24 16:40:12,127 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:12] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:12,150 - __main__ - INFO - Propagation: shift=(1.9, -1.0), scale=0.98, HU_overlap=0.34, size_ratio=10.97, distance=50.0, quality=0.30, mask_pixels=713
+2025-10-24 16:40:12,161 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:12] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:12,750 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,826 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,901 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,902 - __main__ - INFO - Propagation: shift=(1.9, -1.0), scale=0.98, HU_overlap=0.33, size_ratio=12.71, distance=52.0, quality=0.30, mask_pixels=826
+2025-10-24 16:40:12,913 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:12] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:12,991 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:12,992 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:13,002 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:13] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:13,002 - __main__ - INFO - Propagation: shift=(1.8, -1.0), scale=0.98, HU_overlap=0.32, size_ratio=9.68, distance=54.0, quality=0.30, mask_pixels=629
+2025-10-24 16:40:13,013 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:13] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:13,041 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:13,051 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:13] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,120 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,219 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,220 - __main__ - INFO - Propagation: shift=(1.4, -1.6), scale=0.97, HU_overlap=0.38, size_ratio=19.48, distance=58.0, quality=0.30, mask_pixels=1266
+2025-10-24 16:40:14,230 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,305 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,381 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,458 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,459 - __main__ - INFO - Propagation: shift=(1.8, -1.7), scale=0.96, HU_overlap=0.35, size_ratio=18.77, distance=62.0, quality=0.30, mask_pixels=1220
+2025-10-24 16:40:14,461 - __main__ - INFO - Propagation: shift=(1.5, -1.8), scale=0.96, HU_overlap=0.39, size_ratio=11.62, distance=60.0, quality=0.30, mask_pixels=755
+2025-10-24 16:40:14,477 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,481 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,553 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:14,554 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:14,565 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,599 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:14,610 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:14,610 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:14,621 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:14] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:15,301 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:15,396 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:15,396 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:15,407 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:15] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:15,444 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:15,455 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:15] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:16,090 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:16,180 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:16,181 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:16,191 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:16] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:16,230 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:16,241 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:16] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:16,317 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:16,402 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:16,402 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:16,412 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:16] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:16,454 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:16,465 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:16] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,035 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,128 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,129 - __main__ - INFO - Propagation: shift=(1.9, -1.6), scale=0.99, HU_overlap=0.21, size_ratio=9.57, distance=72.0, quality=0.30, mask_pixels=622
+2025-10-24 16:40:17,139 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,183 - __main__ - INFO - Propagation: shift=(1.9, -1.6), scale=0.99, HU_overlap=0.21, size_ratio=9.57, distance=72.0, quality=0.30, mask_pixels=622
+2025-10-24 16:40:17,193 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,302 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,396 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,397 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.24, size_ratio=13.89, distance=74.0, quality=0.30, mask_pixels=903
+2025-10-24 16:40:17,407 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,502 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,503 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.24, size_ratio=13.89, distance=74.0, quality=0.30, mask_pixels=903
+2025-10-24 16:40:17,514 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,613 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:17,614 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.22, size_ratio=7.95, distance=76.0, quality=0.30, mask_pixels=517
+2025-10-24 16:40:17,624 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:17,671 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.22, size_ratio=7.95, distance=76.0, quality=0.30, mask_pixels=517
+2025-10-24 16:40:17,682 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:17] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:18,725 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:18,802 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:18,876 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:18,877 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.24, size_ratio=13.89, distance=74.0, quality=0.30, mask_pixels=903
+2025-10-24 16:40:18,887 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:18] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:18,989 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:18,990 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:19,001 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:19,001 - __main__ - INFO - Propagation: shift=(1.9, -1.6), scale=0.99, HU_overlap=0.21, size_ratio=9.57, distance=72.0, quality=0.30, mask_pixels=622
+2025-10-24 16:40:19,012 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:19,084 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:19,123 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:19,133 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:19,134 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:19,145 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:19,618 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:19,711 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:19,712 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:19,723 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:19,762 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:19,772 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:19] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:20,186 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:20,288 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:20,289 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:20,299 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:20] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:20,336 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:20,347 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:20] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:20,918 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:21,008 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:21,009 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:21,019 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:21] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:21,054 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:21,064 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:21] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:21,703 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:21,802 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:21,803 - __main__ - INFO - Propagation: shift=(1.8, -1.7), scale=0.96, HU_overlap=0.35, size_ratio=18.77, distance=62.0, quality=0.30, mask_pixels=1220
+2025-10-24 16:40:21,813 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:21] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:21,846 - __main__ - INFO - Propagation: shift=(1.8, -1.7), scale=0.96, HU_overlap=0.35, size_ratio=18.77, distance=62.0, quality=0.30, mask_pixels=1220
+2025-10-24 16:40:21,856 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:21] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:22,453 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:22,547 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:22,548 - __main__ - INFO - Propagation: shift=(1.5, -1.8), scale=0.96, HU_overlap=0.39, size_ratio=11.62, distance=60.0, quality=0.30, mask_pixels=755
+2025-10-24 16:40:22,559 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:22] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:22,590 - __main__ - INFO - Propagation: shift=(1.5, -1.8), scale=0.96, HU_overlap=0.39, size_ratio=11.62, distance=60.0, quality=0.30, mask_pixels=755
+2025-10-24 16:40:22,601 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:22] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:23,252 - __main__ - INFO - Reference HU stats: mean=77.9, std=23.3, range=[19.0, 150.0], threshold=[31.3, 124.6]
+2025-10-24 16:40:23,345 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:23,346 - __main__ - INFO - Propagation: shift=(2.6, -2.1), scale=0.99, HU_overlap=0.53, size_ratio=24.42, distance=60.0, quality=0.34, mask_pixels=2320
+2025-10-24 16:40:23,356 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:23] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:23,386 - __main__ - INFO - Propagation: shift=(1.4, -1.6), scale=0.97, HU_overlap=0.38, size_ratio=19.48, distance=58.0, quality=0.30, mask_pixels=1266
+2025-10-24 16:40:23,397 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:23] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:24,236 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:24,330 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:24,331 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:24,341 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:24] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:24,369 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:24,380 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:24] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:25,050 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:25,139 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:25,140 - __main__ - INFO - Propagation: shift=(1.8, -1.0), scale=0.98, HU_overlap=0.32, size_ratio=9.68, distance=54.0, quality=0.30, mask_pixels=629
+2025-10-24 16:40:25,150 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:25] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:25,176 - __main__ - INFO - Propagation: shift=(1.8, -1.0), scale=0.98, HU_overlap=0.32, size_ratio=9.68, distance=54.0, quality=0.30, mask_pixels=629
+2025-10-24 16:40:25,187 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:25] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:32,718 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:32,813 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:32,814 - __main__ - INFO - Propagation: shift=(1.9, -1.0), scale=0.98, HU_overlap=0.33, size_ratio=12.71, distance=52.0, quality=0.30, mask_pixels=826
+2025-10-24 16:40:32,824 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:32] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:32,850 - __main__ - INFO - Propagation: shift=(1.9, -1.0), scale=0.98, HU_overlap=0.33, size_ratio=12.71, distance=52.0, quality=0.30, mask_pixels=826
+2025-10-24 16:40:32,861 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:32] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:38,584 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:38,686 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:38,686 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:38,697 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:38] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:38,726 - __main__ - INFO - Propagation: shift=(1.6, -1.3), scale=0.98, HU_overlap=0.33, size_ratio=11.55, distance=56.0, quality=0.30, mask_pixels=751
+2025-10-24 16:40:38,737 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:38] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:39,319 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:39,417 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:39,417 - __main__ - INFO - Propagation: shift=(1.4, -1.6), scale=0.97, HU_overlap=0.38, size_ratio=19.48, distance=58.0, quality=0.30, mask_pixels=1266
+2025-10-24 16:40:39,428 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:39] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:39,458 - __main__ - INFO - Propagation: shift=(1.4, -1.6), scale=0.97, HU_overlap=0.38, size_ratio=19.48, distance=58.0, quality=0.30, mask_pixels=1266
+2025-10-24 16:40:39,469 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:39] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:40,570 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:40,660 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:40,661 - __main__ - INFO - Propagation: shift=(1.5, -1.8), scale=0.96, HU_overlap=0.39, size_ratio=11.62, distance=60.0, quality=0.30, mask_pixels=755
+2025-10-24 16:40:40,671 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:40,702 - __main__ - INFO - Propagation: shift=(1.5, -1.8), scale=0.96, HU_overlap=0.39, size_ratio=11.62, distance=60.0, quality=0.30, mask_pixels=755
+2025-10-24 16:40:40,713 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:40] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:41,349 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:41,440 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:41,440 - __main__ - INFO - Propagation: shift=(1.8, -1.7), scale=0.96, HU_overlap=0.35, size_ratio=18.77, distance=62.0, quality=0.30, mask_pixels=1220
+2025-10-24 16:40:41,451 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:41,483 - __main__ - INFO - Propagation: shift=(1.8, -1.7), scale=0.96, HU_overlap=0.35, size_ratio=18.77, distance=62.0, quality=0.30, mask_pixels=1220
+2025-10-24 16:40:41,494 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:41] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:42,171 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:42,261 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:42,261 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:42,272 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:42,306 - __main__ - INFO - Propagation: shift=(1.8, -1.5), scale=0.98, HU_overlap=0.33, size_ratio=11.45, distance=64.0, quality=0.30, mask_pixels=744
+2025-10-24 16:40:42,317 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:42] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:43,155 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:43,255 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:43,256 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:43,267 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:43,304 - __main__ - INFO - Propagation: shift=(1.5, -0.8), scale=1.00, HU_overlap=0.24, size_ratio=9.97, distance=66.0, quality=0.30, mask_pixels=648
+2025-10-24 16:40:43,315 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:43,817 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:43,909 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:43,910 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:43,922 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:43] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:43,998 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:43,999 - __main__ - INFO - Propagation: shift=(1.5, -0.6), scale=0.99, HU_overlap=0.19, size_ratio=7.98, distance=68.0, quality=0.30, mask_pixels=519
+2025-10-24 16:40:44,010 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:44,085 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:44,086 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:44,096 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:44,137 - __main__ - INFO - Propagation: shift=(1.8, -1.2), scale=0.97, HU_overlap=0.18, size_ratio=6.51, distance=70.0, quality=0.30, mask_pixels=423
+2025-10-24 16:40:44,147 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:44,652 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:44,745 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:44,746 - __main__ - INFO - Propagation: shift=(1.9, -1.6), scale=0.99, HU_overlap=0.21, size_ratio=9.57, distance=72.0, quality=0.30, mask_pixels=622
+2025-10-24 16:40:44,756 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:44,843 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:44,844 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.24, size_ratio=13.89, distance=74.0, quality=0.30, mask_pixels=903
+2025-10-24 16:40:44,855 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:44,900 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.24, size_ratio=13.89, distance=74.0, quality=0.30, mask_pixels=903
+2025-10-24 16:40:44,910 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:44] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:45,757 - __main__ - INFO - Reference HU stats: mean=-15.8, std=17.2, range=[-53.0, 6.0], threshold=[-50.1, 6.0]
+2025-10-24 16:40:45,849 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:45,850 - __main__ - INFO - Propagation: shift=(0.7, -1.0), scale=0.80, HU_overlap=0.15, size_ratio=6.86, distance=64.0, quality=0.30, mask_pixels=96
+2025-10-24 16:40:45,861 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:45,908 - __main__ - INFO - Propagation: shift=(2.0, -1.5), scale=0.98, HU_overlap=0.22, size_ratio=7.95, distance=76.0, quality=0.30, mask_pixels=517
+2025-10-24 16:40:45,919 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:46,230 - __main__ - INFO - Reference HU stats: mean=32.4, std=34.5, range=[-42.0, 90.0], threshold=[-36.6, 90.0]
+2025-10-24 16:40:46,322 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:46,323 - __main__ - INFO - Propagation: shift=(-0.8, 0.2), scale=1.05, HU_overlap=0.64, size_ratio=70.85, distance=62.0, quality=0.38, mask_pixels=2834
+2025-10-24 16:40:46,334 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:46,409 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:46,410 - __main__ - INFO - Propagation: shift=(1.8, -1.4), scale=0.98, HU_overlap=0.18, size_ratio=9.32, distance=78.0, quality=0.30, mask_pixels=606
+2025-10-24 16:40:46,421 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:46,496 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:46,497 - __main__ - INFO - Propagation: shift=(1.6, -1.0), scale=0.97, HU_overlap=0.16, size_ratio=6.83, distance=80.0, quality=0.30, mask_pixels=444
+2025-10-24 16:40:46,507 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:46,559 - __main__ - INFO - Propagation: shift=(1.6, -1.0), scale=0.97, HU_overlap=0.16, size_ratio=6.83, distance=80.0, quality=0.30, mask_pixels=444
+2025-10-24 16:40:46,569 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:47,122 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:47,198 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:47,274 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:47,276 - __main__ - INFO - Propagation: shift=(2.1, -0.1), scale=1.03, HU_overlap=0.19, size_ratio=9.65, distance=82.0, quality=0.30, mask_pixels=627
+2025-10-24 16:40:47,286 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:47,358 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:47,359 - __main__ - INFO - Propagation: shift=(2.9, -0.3), scale=1.19, HU_overlap=0.24, size_ratio=7.83, distance=84.0, quality=0.30, mask_pixels=509
+2025-10-24 16:40:47,370 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:47,446 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:47,447 - __main__ - INFO - Propagation: shift=(4.2, -0.8), scale=1.13, HU_overlap=0.22, size_ratio=7.28, distance=86.0, quality=0.30, mask_pixels=473
+2025-10-24 16:40:47,457 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:47,457 - __main__ - INFO - Propagation: shift=(2.9, -0.3), scale=1.19, HU_overlap=0.24, size_ratio=7.83, distance=84.0, quality=0.30, mask_pixels=509
+2025-10-24 16:40:47,468 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:47,529 - __main__ - INFO - Propagation: shift=(4.2, -0.8), scale=1.13, HU_overlap=0.22, size_ratio=7.28, distance=86.0, quality=0.30, mask_pixels=473
+2025-10-24 16:40:47,539 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:48,709 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:48,805 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:48,806 - __main__ - INFO - Propagation: shift=(2.9, -0.3), scale=1.19, HU_overlap=0.24, size_ratio=7.83, distance=84.0, quality=0.30, mask_pixels=509
+2025-10-24 16:40:48,816 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:48] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:48,872 - __main__ - INFO - Propagation: shift=(2.9, -0.3), scale=1.19, HU_overlap=0.24, size_ratio=7.83, distance=84.0, quality=0.30, mask_pixels=509
+2025-10-24 16:40:48,883 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:48] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:40:49,639 - __main__ - INFO - Reference HU stats: mean=101.7, std=20.2, range=[45.0, 131.0], threshold=[61.3, 131.0]
+2025-10-24 16:40:49,697 - __main__ - INFO - Propagation: shift=(2.9, -0.3), scale=1.19, HU_overlap=0.24, size_ratio=7.83, distance=84.0, quality=0.30, mask_pixels=509
+2025-10-24 16:40:49,708 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:40:49] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:45,673 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:45,677 - __main__ - INFO - Propagation: shift=(0.0, 0.7), scale=1.02, HU_overlap=0.65, size_ratio=1.90, distance=-2.0, quality=0.77, mask_pixels=133
+2025-10-24 16:41:45,687 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:45,822 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:45,836 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:45,844 - __main__ - INFO - Propagation: shift=(0.1, 1.6), scale=1.02, HU_overlap=0.64, size_ratio=2.51, distance=-4.0, quality=0.69, mask_pixels=176
+2025-10-24 16:41:45,927 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:45,928 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:45,928 - __main__ - INFO - Propagation: shift=(0.1, 2.2), scale=1.03, HU_overlap=0.66, size_ratio=3.04, distance=-6.0, quality=0.64, mask_pixels=213
+2025-10-24 16:41:45,994 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:45] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,009 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,082 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,158 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,231 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,231 - __main__ - INFO - Propagation: shift=(0.1, 2.3), scale=1.05, HU_overlap=0.63, size_ratio=3.31, distance=-8.0, quality=0.58, mask_pixels=232
+2025-10-24 16:41:46,238 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:46,243 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,252 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,325 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,326 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:46,336 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,338 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:46,349 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,423 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,424 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:46,434 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,435 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:46,445 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,518 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:46,521 - __main__ - INFO - Propagation: shift=(0.2, 2.5), scale=1.03, HU_overlap=0.56, size_ratio=4.34, distance=-12.0, quality=0.49, mask_pixels=304
+2025-10-24 16:41:46,532 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:46,532 - __main__ - INFO - Propagation: shift=(0.2, 2.5), scale=1.03, HU_overlap=0.56, size_ratio=4.34, distance=-12.0, quality=0.49, mask_pixels=304
+2025-10-24 16:41:46,543 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:46] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:47,847 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:47,853 - __main__ - INFO - Propagation: shift=(0.2, 2.4), scale=1.06, HU_overlap=0.58, size_ratio=4.07, distance=-10.0, quality=0.52, mask_pixels=285
+2025-10-24 16:41:47,863 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:47] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:48,028 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:48,028 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:48,103 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:48,175 - __main__ - INFO - Reference HU stats: mean=71.1, std=48.2, range=[-170.0, 183.0], threshold=[-25.2, 167.4]
+2025-10-24 16:41:48,176 - __main__ - INFO - Propagation: shift=(0.1, 2.2), scale=1.03, HU_overlap=0.66, size_ratio=3.04, distance=-6.0, quality=0.64, mask_pixels=213
+2025-10-24 16:41:48,186 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:48] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:48,187 - __main__ - INFO - Propagation: shift=(0.1, 2.3), scale=1.05, HU_overlap=0.63, size_ratio=3.31, distance=-8.0, quality=0.58, mask_pixels=232
+2025-10-24 16:41:48,197 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:48] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:48,199 - __main__ - INFO - Propagation: shift=(0.1, 2.2), scale=1.03, HU_overlap=0.66, size_ratio=3.04, distance=-6.0, quality=0.64, mask_pixels=213
+2025-10-24 16:41:48,209 - __main__ - INFO - Propagation: shift=(0.1, 2.2), scale=1.03, HU_overlap=0.66, size_ratio=3.04, distance=-6.0, quality=0.64, mask_pixels=213
+2025-10-24 16:41:48,209 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:48] "POST /predict HTTP/1.1" 200 -
+2025-10-24 16:41:48,220 - werkzeug - INFO - 127.0.0.1 - - [24/Oct/2025 16:41:48] "POST /predict HTTP/1.1" 200 -

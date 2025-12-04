@@ -1,0 +1,460 @@
+2025-10-23 17:22:51,922 - __main__ - INFO - Initializing SAM service on cpu
+2025-10-23 17:22:52,603 - __main__ - INFO - Loading MedSAM model (ViT-B)
+2025-10-23 17:22:52,825 - __main__ - INFO - ✅ medsam loaded successfully!
+2025-10-23 17:22:52,825 - __main__ - INFO -    Parameters: 93.7M
+2025-10-23 17:22:52,825 - __main__ - INFO -    Device: cpu
+2025-10-23 17:22:52,825 - __main__ - INFO - Starting SAM service on 127.0.0.1:5002
+ * Serving Flask app 'sam_service'
+ * Debug mode: off
+2025-10-23 17:22:52,829 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5002
+2025-10-23 17:22:52,829 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-23 17:23:00,892 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:00] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:15,635 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:15] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:15,763 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:15] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:19,541 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:19] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:19,543 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:19] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:34,451 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:34] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:23:39,366 - __main__ - INFO - SAM prediction: quality=0.444, IoU with reference=0.215, mask sum=741
+2025-10-23 17:23:39,380 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:39] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:39,405 - __main__ - INFO - SAM prediction: quality=0.444, IoU with reference=0.215, mask sum=741
+2025-10-23 17:23:39,423 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:39] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:45,308 - __main__ - INFO - SAM prediction: quality=0.455, IoU with reference=0.316, mask sum=574
+2025-10-23 17:23:45,320 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:45] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:45,343 - __main__ - INFO - SAM prediction: quality=0.444, IoU with reference=0.215, mask sum=741
+2025-10-23 17:23:45,368 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:45] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:50,033 - __main__ - INFO - SAM prediction: quality=0.474, IoU with reference=0.444, mask sum=535
+2025-10-23 17:23:50,045 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:50] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:50,170 - __main__ - INFO - SAM prediction: quality=0.443, IoU with reference=0.342, mask sum=668
+2025-10-23 17:23:50,182 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:50] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:51,190 - __main__ - INFO - SAM prediction: quality=0.453, IoU with reference=0.243, mask sum=148
+2025-10-23 17:23:51,204 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:51] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:51,217 - __main__ - INFO - SAM prediction: quality=0.443, IoU with reference=0.342, mask sum=668
+2025-10-23 17:23:51,232 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:51] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:56,601 - __main__ - INFO - SAM prediction: quality=0.443, IoU with reference=0.342, mask sum=668
+2025-10-23 17:23:56,618 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:56] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:23:57,078 - __main__ - INFO - SAM prediction: quality=0.463, IoU with reference=0.396, mask sum=216
+2025-10-23 17:23:57,109 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:23:57] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:01,455 - __main__ - INFO - SAM prediction: quality=0.437, IoU with reference=0.343, mask sum=655
+2025-10-23 17:24:01,473 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:01] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:01,768 - __main__ - INFO - SAM prediction: quality=0.463, IoU with reference=0.418, mask sum=614
+2025-10-23 17:24:01,856 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:01] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:01,995 - __main__ - INFO - SAM prediction: quality=0.486, IoU with reference=0.374, mask sum=515
+2025-10-23 17:24:02,014 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:02] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:02,208 - __main__ - INFO - SAM prediction: quality=0.497, IoU with reference=0.454, mask sum=371
+2025-10-23 17:24:02,234 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:02] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:02,357 - __main__ - INFO - SAM prediction: quality=0.455, IoU with reference=0.319, mask sum=789
+2025-10-23 17:24:02,374 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:02] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:02,429 - __main__ - ERROR - Prediction failed: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/sam_service.py", line 173, in predict_from_contour
+    masks, scores, logits = self.model.predict(
+                            ~~~~~~~~~~~~~~~~~~^
+        point_coords=point_coords,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 154, in predict
+    masks, iou_predictions, low_res_masks = self.predict_torch(
+                                            ~~~~~~~~~~~~~~~~~~^
+        coords_torch,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 229, in predict_torch
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+                                     ~~~~~~~~~~~~~~~~~~~~~~~^
+        image_embeddings=self.features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        multimask_output=multimask_output,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 94, in forward
+    masks, iou_pred = self.predict_masks(
+                      ~~~~~~~~~~~~~~~~~~^
+        image_embeddings=image_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        dense_prompt_embeddings=dense_prompt_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 126, in predict_masks
+    src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
+TypeError: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+
+2025-10-23 17:24:02,460 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:02] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:04,968 - __main__ - INFO - SAM prediction: quality=0.463, IoU with reference=0.430, mask sum=312
+2025-10-23 17:24:04,988 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:04] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:05,553 - __main__ - INFO - SAM prediction: quality=0.439, IoU with reference=0.015, mask sum=71
+2025-10-23 17:24:05,578 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:05] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:05,584 - __main__ - INFO - SAM prediction: quality=0.486, IoU with reference=0.374, mask sum=515
+2025-10-23 17:24:05,622 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:05] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:05,978 - __main__ - INFO - SAM prediction: quality=0.464, IoU with reference=0.372, mask sum=516
+2025-10-23 17:24:05,989 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:05] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:06,023 - __main__ - INFO - SAM prediction: quality=0.443, IoU with reference=0.342, mask sum=668
+2025-10-23 17:24:06,049 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:06] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:06,229 - __main__ - INFO - SAM prediction: quality=0.461, IoU with reference=0.372, mask sum=245
+2025-10-23 17:24:06,240 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:06] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:08,577 - __main__ - INFO - SAM prediction: quality=0.476, IoU with reference=0.261, mask sum=228
+2025-10-23 17:24:08,590 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:08] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:09,354 - __main__ - INFO - SAM prediction: quality=0.480, IoU with reference=0.120, mask sum=271
+2025-10-23 17:24:09,366 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:09,396 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:09,413 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:09,670 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:09,684 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:09,839 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:09,851 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:09,860 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:09,875 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:09] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:12,198 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:12,212 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:12] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:12,618 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:12,635 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:12] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:12,831 - __main__ - ERROR - Prediction failed: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/sam_service.py", line 173, in predict_from_contour
+    masks, scores, logits = self.model.predict(
+                            ~~~~~~~~~~~~~~~~~~^
+        point_coords=point_coords,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 154, in predict
+    masks, iou_predictions, low_res_masks = self.predict_torch(
+                                            ~~~~~~~~~~~~~~~~~~^
+        coords_torch,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 229, in predict_torch
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+                                     ~~~~~~~~~~~~~~~~~~~~~~~^
+        image_embeddings=self.features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        multimask_output=multimask_output,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 94, in forward
+    masks, iou_pred = self.predict_masks(
+                      ~~~~~~~~~~~~~~~~~~^
+        image_embeddings=image_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        dense_prompt_embeddings=dense_prompt_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 126, in predict_masks
+    src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
+TypeError: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+
+2025-10-23 17:24:12,849 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:12] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:13,306 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:13,319 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:13] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:13,348 - __main__ - INFO - SAM prediction: quality=0.479, IoU with reference=0.116, mask sum=286
+2025-10-23 17:24:13,406 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:13] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:13,413 - __main__ - INFO - SAM prediction: quality=0.486, IoU with reference=0.146, mask sum=44
+2025-10-23 17:24:13,436 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:13] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:15,766 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:15,779 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:15] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:16,002 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:16,030 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:16,502 - __main__ - ERROR - Prediction failed: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/sam_service.py", line 173, in predict_from_contour
+    masks, scores, logits = self.model.predict(
+                            ~~~~~~~~~~~~~~~~~~^
+        point_coords=point_coords,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 154, in predict
+    masks, iou_predictions, low_res_masks = self.predict_torch(
+                                            ~~~~~~~~~~~~~~~~~~^
+        coords_torch,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 229, in predict_torch
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+                                     ~~~~~~~~~~~~~~~~~~~~~~~^
+        image_embeddings=self.features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        multimask_output=multimask_output,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 94, in forward
+    masks, iou_pred = self.predict_masks(
+                      ~~~~~~~~~~~~~~~~~~^
+        image_embeddings=image_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        dense_prompt_embeddings=dense_prompt_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 126, in predict_masks
+    src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
+TypeError: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+
+2025-10-23 17:24:16,519 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:16,633 - __main__ - INFO - SAM prediction: quality=0.489, IoU with reference=0.119, mask sum=96
+2025-10-23 17:24:16,646 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:16,658 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:16,696 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:16] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:18,013 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:24:18,028 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:18,047 - __main__ - INFO - SAM prediction: quality=0.479, IoU with reference=0.116, mask sum=286
+2025-10-23 17:24:18,062 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:18] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:24:38,084 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:24:38] "GET /health HTTP/1.1" 200 -
+2025-10-23 17:25:10,380 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:25:10,380 - __main__ - INFO - SAM prediction: quality=0.486, IoU with reference=0.190, mask sum=743
+2025-10-23 17:25:10,430 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:10] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:10,488 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:10] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:10,793 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:25:10,812 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:10] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:10,886 - __main__ - INFO - SAM prediction: quality=0.485, IoU with reference=0.157, mask sum=72
+2025-10-23 17:25:10,903 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:10] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:10,957 - __main__ - INFO - SAM prediction: quality=0.462, IoU with reference=0.039, mask sum=469
+2025-10-23 17:25:10,977 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:10] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:15,689 - __main__ - INFO - SAM prediction: quality=0.459, IoU with reference=0.354, mask sum=746
+2025-10-23 17:25:15,700 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:15] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:19,825 - __main__ - INFO - SAM prediction: quality=0.472, IoU with reference=0.489, mask sum=310
+2025-10-23 17:25:20,343 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:20] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:21,251 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:21,317 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:21] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:22,189 - __main__ - INFO - SAM prediction: quality=0.446, IoU with reference=0.388, mask sum=532
+2025-10-23 17:25:22,285 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:22,289 - __main__ - INFO - SAM prediction: quality=0.470, IoU with reference=0.401, mask sum=247
+2025-10-23 17:25:22,691 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:22] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:23,021 - __main__ - INFO - SAM prediction: quality=0.499, IoU with reference=0.397, mask sum=448
+2025-10-23 17:25:23,041 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:23] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:23,794 - __main__ - INFO - SAM prediction: quality=0.499, IoU with reference=0.397, mask sum=448
+2025-10-23 17:25:23,814 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:23] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:25,927 - __main__ - INFO - SAM prediction: quality=0.464, IoU with reference=0.432, mask sum=472
+2025-10-23 17:25:25,951 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:25] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:26,103 - __main__ - INFO - SAM prediction: quality=0.442, IoU with reference=0.366, mask sum=559
+2025-10-23 17:25:26,121 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:26] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:26,308 - __main__ - ERROR - Prediction failed: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/sam_service.py", line 173, in predict_from_contour
+    masks, scores, logits = self.model.predict(
+                            ~~~~~~~~~~~~~~~~~~^
+        point_coords=point_coords,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 154, in predict
+    masks, iou_predictions, low_res_masks = self.predict_torch(
+                                            ~~~~~~~~~~~~~~~~~~^
+        coords_torch,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 229, in predict_torch
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+                                     ~~~~~~~~~~~~~~~~~~~~~~~^
+        image_embeddings=self.features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        multimask_output=multimask_output,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 94, in forward
+    masks, iou_pred = self.predict_masks(
+                      ~~~~~~~~~~~~~~~~~~^
+        image_embeddings=image_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        dense_prompt_embeddings=dense_prompt_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 126, in predict_masks
+    src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
+TypeError: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+
+2025-10-23 17:25:26,324 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:26] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:26,471 - __main__ - INFO - SAM prediction: quality=0.439, IoU with reference=0.015, mask sum=71
+2025-10-23 17:25:26,484 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:26] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:26,542 - __main__ - INFO - SAM prediction: quality=0.445, IoU with reference=0.025, mask sum=71
+2025-10-23 17:25:26,590 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:26] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:27,138 - __main__ - INFO - SAM prediction: quality=0.477, IoU with reference=0.310, mask sum=180
+2025-10-23 17:25:27,153 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:27] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:29,346 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:29,359 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:29] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:29,767 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:29,792 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:29] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:30,106 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:30,129 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:30] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:30,306 - __main__ - INFO - SAM prediction: quality=0.486, IoU with reference=0.482, mask sum=354
+2025-10-23 17:25:30,328 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:30] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:30,464 - __main__ - INFO - SAM prediction: quality=0.484, IoU with reference=0.462, mask sum=303
+2025-10-23 17:25:30,481 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:30] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:30,705 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:30,718 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:30] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:33,311 - __main__ - INFO - SAM prediction: quality=0.452, IoU with reference=0.382, mask sum=547
+2025-10-23 17:25:33,327 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:33] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:33,568 - __main__ - INFO - SAM prediction: quality=0.446, IoU with reference=0.388, mask sum=532
+2025-10-23 17:25:33,584 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:33] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:33,787 - __main__ - INFO - SAM prediction: quality=0.476, IoU with reference=0.487, mask sum=327
+2025-10-23 17:25:33,803 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:33] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:34,186 - __main__ - INFO - SAM prediction: quality=0.513, IoU with reference=0.436, mask sum=372
+2025-10-23 17:25:34,203 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:34] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:34,367 - __main__ - ERROR - Prediction failed: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+Traceback (most recent call last):
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/sam_service.py", line 173, in predict_from_contour
+    masks, scores, logits = self.model.predict(
+                            ~~~~~~~~~~~~~~~~~~^
+        point_coords=point_coords,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 154, in predict
+    masks, iou_predictions, low_res_masks = self.predict_torch(
+                                            ~~~~~~~~~~~~~~~~~~^
+        coords_torch,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        return_logits=return_logits,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/predictor.py", line 229, in predict_torch
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+                                     ~~~~~~~~~~~~~~~~~~~~~~~^
+        image_embeddings=self.features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        multimask_output=multimask_output,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 94, in forward
+    masks, iou_pred = self.predict_masks(
+                      ~~~~~~~~~~~~~~~~~~^
+        image_embeddings=image_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        dense_prompt_embeddings=dense_prompt_embeddings,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/server/mem3d/venv/lib/python3.13/site-packages/segment_anything/modeling/mask_decoder.py", line 126, in predict_masks
+    src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
+TypeError: repeat_interleave() received an invalid combination of arguments - got (NoneType, int, dim=int), but expected one of:
+ * (Tensor input, Tensor repeats, int dim = None, *, int output_size = None)
+ * (Tensor repeats, *, int output_size = None)
+      didn't match because some of the keywords were incorrect: dim
+ * (Tensor input, int repeats, int dim = None, *, int output_size = None)
+
+2025-10-23 17:25:34,379 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:34] "POST /predict HTTP/1.1" 200 -
+2025-10-23 17:25:34,692 - __main__ - INFO - SAM prediction: quality=0.412, IoU with reference=0.065, mask sum=88
+2025-10-23 17:25:34,707 - werkzeug - INFO - 127.0.0.1 - - [23/Oct/2025 17:25:34] "POST /predict HTTP/1.1" 200 -
