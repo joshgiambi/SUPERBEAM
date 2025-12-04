@@ -13,8 +13,8 @@ fi
 
 # Configuration
 B2_BUCKET="${B2_BUCKET:-superbeam-test-data}"
-LOCAL_DATA_DIR="${LOCAL_DATA_DIR:-./test-data}"
-REMOTE_PATH="${B2_REMOTE_PATH:-test-patients}"
+LOCAL_DATA_DIR="${LOCAL_DATA_DIR:-./storage/patients}"
+REMOTE_PATH="${B2_REMOTE_PATH:-patients}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -79,7 +79,7 @@ do_download() {
     echo ""
     
     mkdir -p "$LOCAL_DATA_DIR"
-    b2 sync "b2://$B2_BUCKET/$REMOTE_PATH" "$LOCAL_DATA_DIR" --skipNewer
+    b2 sync "b2://$B2_BUCKET/$REMOTE_PATH" "$LOCAL_DATA_DIR" --skip-newer
     
     echo ""
     echo -e "${GREEN}✓ Download complete${NC}"
@@ -100,7 +100,7 @@ do_upload() {
     echo "  To:   b2://$B2_BUCKET/$REMOTE_PATH"
     echo ""
     
-    b2 sync "$LOCAL_DATA_DIR" "b2://$B2_BUCKET/$REMOTE_PATH" --skipNewer
+    b2 sync "$LOCAL_DATA_DIR" "b2://$B2_BUCKET/$REMOTE_PATH" --skip-newer
     
     echo ""
     echo -e "${GREEN}✓ Upload complete${NC}"
