@@ -13,9 +13,9 @@ When you click "Run" in Replit, the system will automatically:
 ## Dependencies Included
 
 ### Python Dependencies (via pyproject.toml)
-- `numpy>=2.3.2` - Numerical computing
-- `pydicom>=3.0.1` - DICOM file handling
-- `SimpleITK>=2.4.0` - Medical image processing
+- `numpy>=1.24.0,<3.0.0` - Numerical computing
+- `pydicom>=2.4.0` - DICOM file handling
+- `SimpleITK>=2.3.0` - Medical image processing
 
 ### ITK C++ Tool
 - `dicom_reg_to_h5` - Converts DICOM registration files to HDF5 format

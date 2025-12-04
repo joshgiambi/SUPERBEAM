@@ -33,5 +33,5 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "./replit-setup-and-start.sh"
 waitForPort = 3000

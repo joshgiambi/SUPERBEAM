@@ -1,0 +1,1795 @@
+
+> rest-express@1.0.0 dev:itk
+> npm run dev:setup && DICOM_REG_CONVERTER=/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/build/dicom-reg-converter/dicom_reg_to_h5 FUSEBOX_PYTHON=/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/sam_env/bin/python PORT=3000 NODE_ENV=development tsx watch server/index.ts
+
+
+> rest-express@1.0.0 dev:setup
+> node -e "console.log('🔧 Checking Fusebox setup...'); const fs = require('fs'); const path = require('path'); const helperPath = path.join(__dirname, 'build/dicom-reg-converter/dicom_reg_to_h5'); const pythonPath = path.join(__dirname, 'sam_env/bin/python'); if (!fs.existsSync(helperPath)) { console.error('❌ DICOM helper not found at:', helperPath); console.error('Run: cmake --build build/dicom-reg-converter'); process.exit(1); } if (!fs.existsSync(pythonPath)) { console.error('❌ Python venv not found at:', pythonPath); console.error('Run: python -m venv sam_env && source sam_env/bin/activate && pip install -e .'); process.exit(1); } console.log('✅ Fusebox setup verified'); console.log('🐟 DICOM helper:', helperPath); console.log('🐍 Python interpreter:', pythonPath);"
+
+🔧 Checking Fusebox setup...
+✅ Fusebox setup verified
+🐟 DICOM helper: build/dicom-reg-converter/dicom_reg_to_h5
+🐍 Python interpreter: sam_env/bin/python
+[2025-12-04T19:44:52.097Z] [server] INFO: 🚀 Server running on port 3000
+2025-12-04T19:44:53.037Z - GET /
+2025-12-04T19:44:53.045Z - GET /enhanced-viewer
+2025-12-04T19:44:53.252Z - GET /src/main.tsx
+2025-12-04T19:44:53.252Z - GET /@vite/client
+2025-12-04T19:44:53.253Z - GET /@react-refresh
+2025-12-04T19:44:53.266Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:53.267Z - GET /src/App.tsx
+2025-12-04T19:44:53.267Z - GET /src/index.css
+2025-12-04T19:44:53.284Z - GET /src/lib/queryClient.ts
+2025-12-04T19:44:53.285Z - GET /src/pages/patient-manager.tsx
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+2025-12-04T19:44:53.513Z - GET /src/components/ui/tooltip.tsx
+2025-12-04T19:44:53.516Z - GET /src/pages/fusion-test.tsx
+2025-12-04T19:44:53.518Z - GET /src/pages/prototype-module.tsx
+2025-12-04T19:44:53.519Z - GET /src/components/ui/toaster.tsx
+2025-12-04T19:44:54.089Z - GET /src/pages/viewer.tsx
+2025-12-04T19:44:54.089Z - GET /src/pages/not-found.tsx
+2025-12-04T19:44:54.089Z - GET /src/lib/utils.ts
+2025-12-04T19:44:54.089Z - GET /src/components/ui/toast.tsx
+2025-12-04T19:44:54.096Z - GET /src/hooks/use-toast.ts
+2025-12-04T19:44:54.096Z - GET /src/components/ui/input.tsx
+2025-12-04T19:44:54.097Z - GET /src/components/ui/select.tsx
+2025-12-04T19:44:54.097Z - GET /src/components/ui/card.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/ui/button.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/dicom/boolean-pipeline-prototype-v3.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/dicom/boolean-pipeline-prototype-v4.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/dicom/margin-operations-prototype.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/dicom/unified-toolbar-prototype.tsx
+2025-12-04T19:44:54.337Z - GET /src/components/dicom/contour-toolbar-prototype.tsx
+2025-12-04T19:44:54.376Z - GET /src/components/dicom/boolean-pipeline-prototype-v5.tsx
+2025-12-04T19:44:54.379Z - GET /src/components/dicom/smart-fusion-viewport-manager.tsx
+2025-12-04T19:44:54.379Z - GET /src/components/dicom/sonnet-viewport-manager.tsx
+2025-12-04T19:44:54.379Z - GET /src/components/dicom/smart-fusion-grid.tsx
+2025-12-04T19:44:54.387Z - GET /src/components/dicom/boolean-pipeline-prototype-combined.tsx
+2025-12-04T19:44:54.396Z - GET /src/components/dicom/bottom-toolbar-prototype-v3.tsx
+2025-12-04T19:44:54.396Z - GET /src/components/dicom/bottom-toolbar-prototype-v2.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/dicom/user-settings-panel.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/ui/label.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/dicom/bottom-toolbar-prototype.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/dicom/fusion-viewport-grid.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/dicom/viewer-interface.tsx
+2025-12-04T19:44:54.401Z - GET /src/components/ui/dialog.tsx
+2025-12-04T19:44:54.672Z - GET /src/lib/log.ts
+2025-12-04T19:44:54.672Z - GET /src/components/ai-status-panel.tsx
+2025-12-04T19:44:54.672Z - GET /src/components/ui/badge.tsx
+2025-12-04T19:44:54.672Z - GET /src/components/ui/checkbox.tsx
+2025-12-04T19:44:54.672Z - GET /src/components/ui/tabs.tsx
+2025-12-04T19:44:54.672Z - GET /src/components/ui/form.tsx
+2025-12-04T19:44:54.675Z - GET /src/components/ui/accordion.tsx
+2025-12-04T19:44:54.675Z - GET /src/components/dicom/dicom-uploader.tsx
+2025-12-04T19:44:54.675Z - GET /src/hooks/use-parsing-session.ts
+2025-12-04T19:44:54.675Z - GET /src/components/patient-manager/patient-card.tsx
+2025-12-04T19:44:54.676Z - GET /src/components/ui/switch.tsx
+2025-12-04T19:44:54.676Z - GET /src/components/ui/slider.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/ui/separator.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/dicom/working-viewer.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/ui/scroll-area.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/dicom/fusion-control-panel-v2.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/dicom/series-selector.tsx
+2025-12-04T19:44:54.686Z - GET /src/components/dicom/contour-edit-toolbar.tsx
+2025-12-04T19:44:54.692Z - GET /src/components/dicom/error-modal.tsx
+2025-12-04T19:44:54.692Z - GET /src/lib/dicom-utils.ts
+2025-12-04T19:44:54.708Z - GET /src/lib/undo-system.ts
+2025-12-04T19:44:54.708Z - GET /src/lib/fusion-utils.ts
+2025-12-04T19:44:54.708Z - GET /src/components/dicom/loading-progress.tsx
+2025-12-04T19:44:54.709Z - GET /src/components/ui/popover.tsx
+2025-12-04T19:44:54.709Z - GET /src/lib/cornerstone-config.ts
+2025-12-04T19:44:54.714Z - GET /src/lib/nninteractive-client.ts
+2025-12-04T19:44:54.714Z - GET /src/lib/segvol-client.ts
+2025-12-04T19:44:54.714Z - GET /src/lib/monai-client.ts
+2025-12-04T19:44:54.716Z - GET /src/components/patient-manager/dicom-thumbnail.tsx
+2025-12-04T19:44:54.717Z - GET /src/components/patient-manager/metadata-edit-dialog.tsx
+2025-12-04T19:44:54.717Z - GET /src/components/dicom/patient-preview-card.tsx
+2025-12-04T19:44:54.791Z - GET /src/components/dicom/smart-nth-settings-dialog.tsx
+2025-12-04T19:44:54.791Z - GET /src/components/dicom/prediction-tuning-panel.tsx
+2025-12-04T19:44:54.791Z - GET /src/components/ui/progress.tsx
+2025-12-04T19:44:54.791Z - GET /src/lib/blob-operations.ts
+2025-12-04T19:44:54.792Z - GET /src/components/dicom/structure-blob-list.tsx
+2025-12-04T19:44:54.792Z - GET /src/components/dicom/rt-structure-history-modal.tsx
+2025-12-04T19:44:54.792Z - GET /src/components/dicom/save-as-new-dialog.tsx
+2025-12-04T19:44:54.794Z - GET /src/components/dicom/SuperstructureManager.tsx
+2025-12-04T19:44:54.794Z - GET /src/lib/simple-polygon-operations.ts
+2025-12-04T19:44:54.795Z - GET /src/lib/dicom-spatial-helpers.ts
+2025-12-04T19:44:54.896Z - GET /src/components/dicom/simple-brush-tool.tsx
+2025-12-04T19:44:54.896Z - GET /src/components/dicom/ai-tumor-tool.tsx
+2025-12-04T19:44:54.897Z - GET /src/components/dicom/pen-tool-unified-v2.tsx
+2025-12-04T19:44:54.897Z - GET /src/components/dicom/pen-tool.tsx
+2025-12-04T19:44:54.902Z - GET /src/components/dicom/pen-tool-v2.tsx
+2025-12-04T19:44:54.902Z - GET /src/components/dicom/measurement-tool.tsx
+2025-12-04T19:44:54.904Z - GET /src/lib/smooth-ripple-animation.ts
+2025-12-04T19:44:54.904Z - GET /src/lib/contour-boolean-operations.ts
+2025-12-04T19:44:54.914Z - GET /src/components/dicom/prediction-overlay.tsx
+2025-12-04T19:44:54.914Z - GET /src/lib/contour-grow.ts
+2025-12-04T19:44:54.914Z - GET /src/components/dicom/mpr-floating.tsx
+2025-12-04T19:44:54.914Z - GET /src/lib/contour-smooth-simple.ts
+2025-12-04T19:44:54.914Z - GET /src/lib/brush-to-polygon.ts
+2025-12-04T19:44:54.916Z - GET /src/lib/contour-directional-grow.ts
+2025-12-04T19:44:54.916Z - GET /src/lib/prediction-history-manager.ts
+2025-12-04T19:44:54.917Z - GET /src/lib/polygon-union.ts
+2025-12-04T19:44:54.917Z - GET /src/lib/cornerstone3d-adapter.ts
+2025-12-04T19:44:54.917Z - GET /src/lib/dicom-worker-manager.ts
+2025-12-04T19:44:54.917Z - GET /src/lib/contour-prediction.ts
+2025-12-04T19:44:54.919Z - GET /src/components/dicom/blob-management-dialog.tsx
+2025-12-04T19:44:54.919Z - GET /src/lib/smart-brush-utils.ts
+2025-12-04T19:44:54.919Z - GET /src/lib/superseg-client.ts
+2025-12-04T19:44:54.919Z - GET /src/lib/clipper-boolean-operations.ts
+2025-12-04T19:44:54.919Z - GET /src/lib/dicom-coordinates.ts
+2025-12-04T19:44:54.919Z - GET /src/components/ui/alert-dialog.tsx
+2025-12-04T19:44:54.922Z - GET /src/lib/contour-polish.ts
+2025-12-04T19:44:54.922Z - GET /src/lib/fast-slice-prediction.ts
+2025-12-04T19:44:54.922Z - GET /src/lib/image-aware-prediction.ts
+2025-12-04T19:44:55.254Z - GET /src/lib/clipper-adapter.ts
+2025-12-04T19:44:55.314Z - GET /api/studies
+2025-12-04T19:44:55.343Z - GET /api/segvol/health
+2025-12-04T19:44:55.345Z - GET /api/monai/health
+2025-12-04T19:44:55.345Z - GET /api/nninteractive/health
+2025-12-04T19:44:55.348Z - GET /api/studies/76/series
+SegVol health check failed: FetchError: request to http://127.0.0.1:5002/health failed, reason: connect ECONNREFUSED 127.0.0.1:5002
+    at ClientRequest.<anonymous> (/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/node-fetch/lib/index.js:1501:11)
+    at ClientRequest.emit (node:events:507:28)
+    at emitErrorEvent (node:_http_client:104:11)
+    at Socket.socketErrorListener (node:_http_client:518:5)
+    at Socket.emit (node:events:507:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  type: 'system',
+  errno: 'ECONNREFUSED',
+  code: 'ECONNREFUSED'
+}
+MONAI health check failed: FetchError: request to http://127.0.0.1:5005/health failed, reason: connect ECONNREFUSED 127.0.0.1:5005
+    at ClientRequest.<anonymous> (/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/node-fetch/lib/index.js:1501:11)
+    at ClientRequest.emit (node:events:507:28)
+    at emitErrorEvent (node:_http_client:104:11)
+    at Socket.socketErrorListener (node:_http_client:518:5)
+    at Socket.emit (node:events:507:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  type: 'system',
+  errno: 'ECONNREFUSED',
+  code: 'ECONNREFUSED'
+}
+SegVol health check failed: connect ECONNREFUSED 127.0.0.1:8001
+2025-12-04T19:44:55.354Z - GET /api/studies/75/series
+2025-12-04T19:44:55.362Z - GET /api/registration/associations
+2025-12-04T19:44:55.363Z - GET /api/studies/76/rt-structures
+2025-12-04T19:44:55.364Z - GET /api/series/2629
+[2025-12-04T19:44:55.374Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51909874263518464689720335719017399170/1.2.246.352.221.523158111481636345912514684837391885758.dcm
+[2025-12-04T19:44:55.546Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544600080330635546813792045694607410091/1.2.246.352.221.463505313392652094416464283479366978476.dcm
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+2025-12-04T19:44:55.548Z - DELETE /api/fusion/cache
+2025-12-04T19:44:55.549Z - GET /api/fusion/manifest
+[2025-12-04T19:44:55.549Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","preload":"true"}
+[2025-12-04T19:44:55.549Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=
+[2025-12-04T19:44:55.550Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.560239776788899496214844231966441500067/1.2.246.352.221.461915798329414722418205574557242931098/1.2.246.352.221.489339907545104825711206335038279654790.dcm
+[2025-12-04T19:44:55.579Z] [rtstruct] DEBUG: RT structures with associations (patient-wide): [{"id":2653,"description":"ARIA RadOnc Structure Sets","referencedSeriesId":2629,"referencedSeriesDescription":"Head_Neck C+  2.0  Br38  3"},{"id":2654,"description":"","referencedSeriesId":2628,"referencedSeriesDescription":"CT Series"},{"id":2627,"description":"Image Registration","referencedSeriesId":2625,"referencedSeriesDescription":"CT STD HN 2.5mm"}]
+2025-12-04T19:44:55.579Z - GET /api/series/2629/images
+2025-12-04T19:44:55.580Z - GET /api/studies/75/rt-structures
+2025-12-04T19:44:55.605Z - GET /api/series/2629/batch-metadata
+[2025-12-04T19:44:55.609Z] INFO: ✅ Fusion manifest ready: 0 secondaries
+2025-12-04T19:44:55.697Z - GET /api/images/377397/metadata
+[2025-12-04T19:44:55.702Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51909874263518464689720335719017399170/1.2.246.352.221.523158111481636345912514684837391885758.dcm
+[2025-12-04T19:44:55.854Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544600080330635546813792045694607410091/1.2.246.352.221.463505313392652094416464283479366978476.dcm
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+[2025-12-04T19:44:55.855Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.560239776788899496214844231966441500067/1.2.246.352.221.461915798329414722418205574557242931098/1.2.246.352.221.489339907545104825711206335038279654790.dcm
+[2025-12-04T19:44:55.874Z] [rtstruct] DEBUG: RT structures with associations (patient-wide): [{"id":2653,"description":"ARIA RadOnc Structure Sets","referencedSeriesId":2629,"referencedSeriesDescription":"Head_Neck C+  2.0  Br38  3"},{"id":2654,"description":"","referencedSeriesId":2628,"referencedSeriesDescription":"CT Series"},{"id":2627,"description":"Image Registration","referencedSeriesId":2625,"referencedSeriesDescription":"CT STD HN 2.5mm"}]
+2025-12-04T19:44:55.879Z - GET /api/superstructures/2653
+2025-12-04T19:44:55.880Z - GET /api/rt-structures/2653/history
+2025-12-04T19:44:55.880Z - GET /api/rt-structures/2653/contours
+2025-12-04T19:44:56.122Z - GET /api/superstructures/2654
+2025-12-04T19:44:56.128Z - GET /api/superstructures/2627
+2025-12-04T19:44:56.133Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.145Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.146Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.147Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.148Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.148Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.150Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.152Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:44:56.164Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.165Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.168Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.169Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.169Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.170Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.173Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:44:56.178Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.51399723574694919545666599258325590455',
+  targetSeriesId: 2630,
+  sources: [
+    '1.2.246.352.221.53968866125124324069113460307963729834',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.56544312353602160245609833887575429295',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2644, 2647, 2650,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2644, 2647, 2650,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+  targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2644, 2629, 2633,
+    2634, 2636, 2637,
+    2639, 2640, 2642,
+    2648, 2649, 2650,
+    2651, 2647
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.47107871783223454141765951539006254246.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+      sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.47107871783223454141765951539006254246.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+      sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2630,
+    uid: '1.2.246.352.221.51399723574694919545666599258325590455',
+    description: '',
+    modality: 'REG',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2644,
+      uid: '1.2.246.352.221.53968866125124324069113460307963729834',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 2
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2650,
+      uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+2025-12-04T19:44:56.307Z - GET /api/superstructures/2653
+2025-12-04T19:44:56.310Z - GET /api/rt-structures/2654/history
+2025-12-04T19:44:56.336Z - GET /api/rt-structures/2627/history
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.56544312353602160245609833887575429295',
+  targetSeriesId: 2650,
+  sources: [
+    '1.2.246.352.221.510131772635738017814913482410675466123',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.544500580057704177610453666387339426459',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2643, 2647, 2631,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2643, 2647, 2631,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+  targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2647,
+    2648, 2649, 2651,
+    2631
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.50536508438063881766295327042461947798.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+      sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.50536508438063881766295327042461947798.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+      sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2650,
+    uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+    description: 'Eclipse DRRs',
+    modality: 'RTIMAGE',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2643,
+      uid: '1.2.246.352.221.510131772635738017814913482410675466123',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 5
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2631,
+      uid: '1.2.246.352.221.544500580057704177610453666387339426459',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 2
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+2025-12-04T19:44:56.425Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.56544312353602160245609833887575429295',
+  targetSeriesId: 2650,
+  sources: [
+    '1.2.246.352.221.523178733979613193415281813484254089871',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.47936617555942191882790461593057333660',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2645, 2647, 2632,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2645, 2647, 2632,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+  targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2647,
+    2648, 2649, 2651,
+    2632
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.52810088245862539895973696644000486024.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+      sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.52810088245862539895973696644000486024.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+      sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2650,
+    uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+    description: 'Eclipse DRRs',
+    modality: 'RTIMAGE',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2645,
+      uid: '1.2.246.352.221.523178733979613193415281813484254089871',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 6
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2632,
+      uid: '1.2.246.352.221.47936617555942191882790461593057333660',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 3
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+2025-12-04T19:44:56.655Z - POST /api/images/batch
+2025-12-04T19:44:56.863Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.49537297405199815191289945572223233980',
+  targetSeriesId: 2629,
+  sources: [ '1.2.246.352.221.570537758543275012911456240642628457867' ],
+  sourcesSeriesIds: [ 2628 ],
+  sourceSeriesIds: [ 2628 ],
+  sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+  targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2633, 2634, 2636,
+    2637, 2639, 2640,
+    2642, 2647, 2648,
+    2649, 2650, 2651
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.559202431043907878916475956155626236086.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+      sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.559202431043907878916475956155626236086.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+      sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2629,
+    uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+    description: 'Head_Neck C+  2.0  Br38  3',
+    modality: 'CT',
+    studyId: 76,
+    imageCount: 207
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2628,
+      uid: '1.2.246.352.221.570537758543275012911456240642628457867',
+      description: '',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 88
+    }
+  ]
+}
+2025-12-04T19:44:57.062Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.49537297405199815191289945572223233980',
+  targetSeriesId: 2629,
+  sources: [
+    '1.2.246.352.221.534437763102598122915916606648478293420',
+    '1.2.246.352.221.482497532653462080914109465315058346371'
+  ],
+  sourcesSeriesIds: [ 2625, 2626 ],
+  sourceSeriesIds: [ 2625, 2626 ],
+  sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+  targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2633, 2634, 2636,
+    2637, 2639, 2640,
+    2642, 2647, 2648,
+    2649, 2650, 2651,
+    2626
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.516840734399078479312302493491489751699.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+      sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.516840734399078479312302493491489751699.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+      sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2629,
+    uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+    description: 'Head_Neck C+  2.0  Br38  3',
+    modality: 'CT',
+    studyId: 76,
+    imageCount: 207
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2625,
+      uid: '1.2.246.352.221.534437763102598122915916606648478293420',
+      description: 'CT STD HN 2.5mm',
+      modality: 'CT',
+      studyId: 75,
+      imageCount: 135
+    },
+    {
+      id: 2626,
+      uid: '1.2.246.352.221.482497532653462080914109465315058346371',
+      description: 'QCFX MAC HN',
+      modality: 'PT',
+      studyId: 75,
+      imageCount: 83
+    }
+  ]
+}
+2025-12-04T19:44:57.284Z - GET /api/series/2629
+2025-12-04T19:44:57.292Z - DELETE /api/fusion/cache
+2025-12-04T19:44:57.293Z - GET /api/fusion/manifest
+[2025-12-04T19:44:57.293Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","secondarySeriesIds":"2628,2625,2626","preload":"true"}
+[2025-12-04T19:44:57.293Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=2628,2625,2626
+2025-12-04T19:44:57.303Z - DELETE /api/fusion/cache
+2025-12-04T19:44:57.304Z - GET /api/fusion/manifest
+[2025-12-04T19:44:57.304Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","preload":"true"}
+[2025-12-04T19:44:57.304Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=
+[2025-12-04T19:44:57.318Z] INFO: ✅ Fusion manifest ready: 0 secondaries
+[2025-12-04T19:44:57.335Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2628,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2628_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.48824712000027636665306206319449476250.h5"}
+[2025-12-04T19:44:58.958Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2625,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2625_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.498240581752208121912291777110904212880.h5"}
+[2025-12-04T19:45:00.734Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2626,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2626_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.498240581752208121912291777110904212880.h5"}
+[2025-12-04T19:45:02.132Z] INFO: ✅ Fusion manifest ready: 3 secondaries
+2025-12-04T19:45:12.901Z - GET /enhanced-viewer
+2025-12-04T19:45:12.914Z - GET /src/main.tsx
+2025-12-04T19:45:12.914Z - GET /@vite/client
+2025-12-04T19:45:12.921Z - GET /src/App.tsx
+2025-12-04T19:45:12.922Z - GET /src/index.css
+2025-12-04T19:45:12.922Z - GET /@react-refresh
+2025-12-04T19:45:12.923Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:12.925Z - GET /src/lib/queryClient.ts
+2025-12-04T19:45:12.925Z - GET /src/components/ui/toaster.tsx
+2025-12-04T19:45:12.926Z - GET /src/pages/not-found.tsx
+2025-12-04T19:45:12.926Z - GET /src/components/ui/tooltip.tsx
+2025-12-04T19:45:12.927Z - GET /src/pages/viewer.tsx
+2025-12-04T19:45:12.927Z - GET /src/pages/patient-manager.tsx
+2025-12-04T19:45:12.927Z - GET /src/pages/fusion-test.tsx
+2025-12-04T19:45:12.927Z - GET /src/pages/prototype-module.tsx
+2025-12-04T19:45:12.928Z - GET /src/components/ui/toast.tsx
+2025-12-04T19:45:12.932Z - GET /src/components/ui/card.tsx
+2025-12-04T19:45:12.933Z - GET /src/hooks/use-toast.ts
+2025-12-04T19:45:12.933Z - GET /src/lib/utils.ts
+2025-12-04T19:45:12.933Z - GET /src/components/dicom/viewer-interface.tsx
+2025-12-04T19:45:12.933Z - GET /src/components/ui/button.tsx
+2025-12-04T19:45:12.933Z - GET /src/components/ui/badge.tsx
+2025-12-04T19:45:12.934Z - GET /src/components/dicom/user-settings-panel.tsx
+2025-12-04T19:45:12.935Z - GET /src/components/ui/dialog.tsx
+2025-12-04T19:45:12.935Z - GET /src/components/ui/input.tsx
+2025-12-04T19:45:12.935Z - GET /src/components/ui/label.tsx
+2025-12-04T19:45:12.935Z - GET /src/components/ui/checkbox.tsx
+2025-12-04T19:45:12.936Z - GET /src/lib/log.ts
+2025-12-04T19:45:12.936Z - GET /src/components/ai-status-panel.tsx
+2025-12-04T19:45:12.936Z - GET /src/components/ui/select.tsx
+2025-12-04T19:45:12.936Z - GET /src/components/dicom/boolean-pipeline-prototype-v3.tsx
+2025-12-04T19:45:12.936Z - GET /src/components/dicom/boolean-pipeline-prototype-v4.tsx
+2025-12-04T19:45:12.937Z - GET /src/components/dicom/margin-operations-prototype.tsx
+2025-12-04T19:45:12.937Z - GET /src/components/dicom/bottom-toolbar-prototype.tsx
+2025-12-04T19:45:12.937Z - GET /src/components/dicom/bottom-toolbar-prototype-v2.tsx
+2025-12-04T19:45:12.937Z - GET /src/components/dicom/boolean-pipeline-prototype-v5.tsx
+2025-12-04T19:45:12.938Z - GET /src/components/dicom/boolean-pipeline-prototype-combined.tsx
+2025-12-04T19:45:12.938Z - GET /src/components/dicom/contour-toolbar-prototype.tsx
+2025-12-04T19:45:12.938Z - GET /src/components/dicom/bottom-toolbar-prototype-v3.tsx
+2025-12-04T19:45:12.940Z - GET /src/components/dicom/unified-toolbar-prototype.tsx
+2025-12-04T19:45:12.940Z - GET /src/components/dicom/smart-fusion-viewport-manager.tsx
+2025-12-04T19:45:12.940Z - GET /src/components/dicom/sonnet-viewport-manager.tsx
+2025-12-04T19:45:12.940Z - GET /src/components/dicom/fusion-viewport-grid.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/dicom/smart-fusion-grid.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/ui/tabs.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/ui/accordion.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/dicom/dicom-uploader.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/patient-manager/patient-card.tsx
+2025-12-04T19:45:12.941Z - GET /src/components/ui/form.tsx
+2025-12-04T19:45:12.942Z - GET /src/hooks/use-parsing-session.ts
+2025-12-04T19:45:12.942Z - GET /src/components/ui/switch.tsx
+2025-12-04T19:45:12.942Z - GET /src/components/ui/slider.tsx
+2025-12-04T19:45:12.943Z - GET /src/components/dicom/error-modal.tsx
+2025-12-04T19:45:12.943Z - GET /src/components/dicom/series-selector.tsx
+2025-12-04T19:45:12.943Z - GET /src/components/dicom/working-viewer.tsx
+2025-12-04T19:45:12.943Z - GET /src/components/dicom/contour-edit-toolbar.tsx
+2025-12-04T19:45:12.943Z - GET /src/components/dicom/fusion-control-panel-v2.tsx
+2025-12-04T19:45:12.944Z - GET /src/lib/dicom-utils.ts
+2025-12-04T19:45:12.944Z - GET /src/lib/fusion-utils.ts
+2025-12-04T19:45:12.944Z - GET /src/lib/undo-system.ts
+2025-12-04T19:45:12.944Z - GET /src/lib/cornerstone-config.ts
+2025-12-04T19:45:12.946Z - GET /src/components/dicom/loading-progress.tsx
+2025-12-04T19:45:12.946Z - GET /src/components/ui/popover.tsx
+2025-12-04T19:45:12.946Z - GET /src/components/ui/separator.tsx
+2025-12-04T19:45:12.947Z - GET /src/components/ui/scroll-area.tsx
+2025-12-04T19:45:12.947Z - GET /src/components/dicom/patient-preview-card.tsx
+2025-12-04T19:45:12.948Z - GET /src/lib/segvol-client.ts
+2025-12-04T19:45:12.948Z - GET /src/lib/monai-client.ts
+2025-12-04T19:45:12.948Z - GET /src/lib/nninteractive-client.ts
+2025-12-04T19:45:12.949Z - GET /src/components/patient-manager/metadata-edit-dialog.tsx
+2025-12-04T19:45:12.949Z - GET /src/components/patient-manager/dicom-thumbnail.tsx
+2025-12-04T19:45:12.950Z - GET /src/components/dicom/smart-nth-settings-dialog.tsx
+2025-12-04T19:45:12.951Z - GET /src/components/dicom/prediction-tuning-panel.tsx
+2025-12-04T19:45:12.951Z - GET /src/components/dicom/structure-blob-list.tsx
+2025-12-04T19:45:12.951Z - GET /src/components/dicom/rt-structure-history-modal.tsx
+2025-12-04T19:45:12.951Z - GET /src/components/ui/progress.tsx
+2025-12-04T19:45:12.951Z - GET /src/lib/blob-operations.ts
+2025-12-04T19:45:12.951Z - GET /src/components/dicom/save-as-new-dialog.tsx
+2025-12-04T19:45:12.952Z - GET /src/components/dicom/SuperstructureManager.tsx
+2025-12-04T19:45:12.952Z - GET /src/components/dicom/simple-brush-tool.tsx
+2025-12-04T19:45:12.952Z - GET /src/components/dicom/ai-tumor-tool.tsx
+2025-12-04T19:45:12.953Z - GET /src/components/dicom/pen-tool-unified-v2.tsx
+2025-12-04T19:45:12.953Z - GET /src/components/dicom/pen-tool.tsx
+2025-12-04T19:45:12.953Z - GET /src/components/dicom/pen-tool-v2.tsx
+2025-12-04T19:45:12.954Z - GET /src/components/dicom/measurement-tool.tsx
+2025-12-04T19:45:12.954Z - GET /src/components/dicom/mpr-floating.tsx
+2025-12-04T19:45:12.955Z - GET /src/lib/smooth-ripple-animation.ts
+2025-12-04T19:45:12.955Z - GET /src/lib/brush-to-polygon.ts
+2025-12-04T19:45:12.955Z - GET /src/lib/contour-directional-grow.ts
+2025-12-04T19:45:12.955Z - GET /src/lib/contour-grow.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/contour-smooth-simple.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/contour-prediction.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/prediction-history-manager.ts
+2025-12-04T19:45:12.956Z - GET /src/components/dicom/prediction-overlay.tsx
+2025-12-04T19:45:12.956Z - GET /src/lib/polygon-union.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/contour-boolean-operations.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/simple-polygon-operations.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/cornerstone3d-adapter.ts
+2025-12-04T19:45:12.956Z - GET /src/lib/dicom-worker-manager.ts
+2025-12-04T19:45:12.957Z - GET /src/lib/dicom-spatial-helpers.ts
+2025-12-04T19:45:12.957Z - GET /src/components/ui/alert-dialog.tsx
+2025-12-04T19:45:12.957Z - GET /src/components/dicom/blob-management-dialog.tsx
+2025-12-04T19:45:12.957Z - GET /src/lib/smart-brush-utils.ts
+2025-12-04T19:45:12.958Z - GET /src/lib/dicom-coordinates.ts
+2025-12-04T19:45:12.958Z - GET /src/lib/superseg-client.ts
+2025-12-04T19:45:12.959Z - GET /src/lib/clipper-boolean-operations.ts
+2025-12-04T19:45:12.959Z - GET /src/lib/image-aware-prediction.ts
+2025-12-04T19:45:12.960Z - GET /src/lib/fast-slice-prediction.ts
+2025-12-04T19:45:12.960Z - GET /src/lib/contour-polish.ts
+2025-12-04T19:45:12.961Z - GET /src/lib/clipper-adapter.ts
+2025-12-04T19:45:13.036Z - GET /api/studies
+2025-12-04T19:45:13.071Z - GET /api/segvol/health
+2025-12-04T19:45:13.073Z - GET /api/monai/health
+2025-12-04T19:45:13.073Z - GET /api/nninteractive/health
+2025-12-04T19:45:13.076Z - GET /api/studies/76/series
+SegVol health check failed: FetchError: request to http://127.0.0.1:5002/health failed, reason: connect ECONNREFUSED 127.0.0.1:5002
+    at ClientRequest.<anonymous> (/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/node-fetch/lib/index.js:1501:11)
+    at ClientRequest.emit (node:events:507:28)
+    at emitErrorEvent (node:_http_client:104:11)
+    at Socket.socketErrorListener (node:_http_client:518:5)
+    at Socket.emit (node:events:507:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  type: 'system',
+  errno: 'ECONNREFUSED',
+  code: 'ECONNREFUSED'
+}
+MONAI health check failed: FetchError: request to http://127.0.0.1:5005/health failed, reason: connect ECONNREFUSED 127.0.0.1:5005
+    at ClientRequest.<anonymous> (/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/node-fetch/lib/index.js:1501:11)
+    at ClientRequest.emit (node:events:507:28)
+    at emitErrorEvent (node:_http_client:104:11)
+    at Socket.socketErrorListener (node:_http_client:518:5)
+    at Socket.emit (node:events:507:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  type: 'system',
+  errno: 'ECONNREFUSED',
+  code: 'ECONNREFUSED'
+}
+SegVol health check failed: connect ECONNREFUSED 127.0.0.1:8001
+2025-12-04T19:45:13.081Z - GET /api/studies/75/series
+2025-12-04T19:45:13.089Z - GET /api/registration/associations
+2025-12-04T19:45:13.089Z - GET /api/studies/76/rt-structures
+2025-12-04T19:45:13.089Z - GET /api/series/2629
+[2025-12-04T19:45:13.096Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51909874263518464689720335719017399170/1.2.246.352.221.523158111481636345912514684837391885758.dcm
+[2025-12-04T19:45:13.296Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544600080330635546813792045694607410091/1.2.246.352.221.463505313392652094416464283479366978476.dcm
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+[2025-12-04T19:45:13.296Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.560239776788899496214844231966441500067/1.2.246.352.221.461915798329414722418205574557242931098/1.2.246.352.221.489339907545104825711206335038279654790.dcm
+[2025-12-04T19:45:13.317Z] [rtstruct] DEBUG: RT structures with associations (patient-wide): [{"id":2653,"description":"ARIA RadOnc Structure Sets","referencedSeriesId":2629,"referencedSeriesDescription":"Head_Neck C+  2.0  Br38  3"},{"id":2654,"description":"","referencedSeriesId":2628,"referencedSeriesDescription":"CT Series"},{"id":2627,"description":"Image Registration","referencedSeriesId":2625,"referencedSeriesDescription":"CT STD HN 2.5mm"}]
+2025-12-04T19:45:13.319Z - GET /api/studies/75/rt-structures
+2025-12-04T19:45:13.320Z - DELETE /api/fusion/cache
+2025-12-04T19:45:13.320Z - GET /api/fusion/manifest
+[2025-12-04T19:45:13.320Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","preload":"true"}
+[2025-12-04T19:45:13.320Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=
+[2025-12-04T19:45:13.324Z] INFO: ✅ Fusion manifest ready: 0 secondaries
+[2025-12-04T19:45:13.324Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544600080330635546813792045694607410091/1.2.246.352.221.463505313392652094416464283479366978476.dcm
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+Unsupported contour geometric type: POINT
+[2025-12-04T19:45:13.325Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.560239776788899496214844231966441500067/1.2.246.352.221.461915798329414722418205574557242931098/1.2.246.352.221.489339907545104825711206335038279654790.dcm
+[2025-12-04T19:45:13.362Z] [rtstruct] DEBUG: Checking RT structure file path: storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51909874263518464689720335719017399170/1.2.246.352.221.523158111481636345912514684837391885758.dcm
+[2025-12-04T19:45:13.529Z] [rtstruct] DEBUG: RT structures with associations (patient-wide): [{"id":2653,"description":"ARIA RadOnc Structure Sets","referencedSeriesId":2629,"referencedSeriesDescription":"Head_Neck C+  2.0  Br38  3"},{"id":2654,"description":"","referencedSeriesId":2628,"referencedSeriesDescription":"CT Series"},{"id":2627,"description":"Image Registration","referencedSeriesId":2625,"referencedSeriesDescription":"CT STD HN 2.5mm"}]
+2025-12-04T19:45:13.529Z - GET /api/series/2629/images
+2025-12-04T19:45:13.536Z - GET /api/superstructures/2653
+2025-12-04T19:45:13.536Z - GET /api/rt-structures/2653/history
+2025-12-04T19:45:13.536Z - GET /api/rt-structures/2653/contours
+2025-12-04T19:45:13.542Z - GET /api/series/2629/batch-metadata
+2025-12-04T19:45:13.542Z - GET /api/superstructures/2654
+2025-12-04T19:45:13.839Z - GET /api/superstructures/2653
+2025-12-04T19:45:13.851Z - GET /api/rt-structures/2654/history
+2025-12-04T19:45:13.852Z - GET /api/superstructures/2627
+2025-12-04T19:45:13.859Z - GET /api/rt-structures/2627/history
+2025-12-04T19:45:13.867Z - GET /api/images/377397/metadata
+2025-12-04T19:45:13.875Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.875Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.876Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.876Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.876Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.877Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.877Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.878Z - GET /src/workers/dicom-parser.worker.ts
+2025-12-04T19:45:13.887Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.887Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.888Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.888Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.889Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.889Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.891Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+2025-12-04T19:45:13.892Z - GET /@fs/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/node_modules/vite/dist/client/env.mjs
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.51399723574694919545666599258325590455',
+  targetSeriesId: 2630,
+  sources: [
+    '1.2.246.352.221.53968866125124324069113460307963729834',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.56544312353602160245609833887575429295',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2644, 2647, 2650,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2644, 2647, 2650,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+  targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2644, 2629, 2633,
+    2634, 2636, 2637,
+    2639, 2640, 2642,
+    2648, 2649, 2650,
+    2651, 2647
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.47107871783223454141765951539006254246.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+      sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.47107871783223454141765951539006254246.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.51399723574694919545666599258325590455/1.2.246.352.221.47107871783223454141765951539006254246.dcm',
+      sourceFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      targetFoR: '1.2.246.352.221.54224452871355949171627573806719280794',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2630,
+    uid: '1.2.246.352.221.51399723574694919545666599258325590455',
+    description: '',
+    modality: 'REG',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2644,
+      uid: '1.2.246.352.221.53968866125124324069113460307963729834',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 2
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2650,
+      uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+2025-12-04T19:45:14.000Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.56544312353602160245609833887575429295',
+  targetSeriesId: 2650,
+  sources: [
+    '1.2.246.352.221.510131772635738017814913482410675466123',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.544500580057704177610453666387339426459',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2643, 2647, 2631,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2643, 2647, 2631,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+  targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2647,
+    2648, 2649, 2651,
+    2631
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.50536508438063881766295327042461947798.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+      sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.50536508438063881766295327042461947798.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.544500580057704177610453666387339426459/1.2.246.352.221.50536508438063881766295327042461947798.dcm',
+      sourceFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      targetFoR: '1.2.246.352.221.50881769038897953641047496095039744139',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2650,
+    uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+    description: 'Eclipse DRRs',
+    modality: 'RTIMAGE',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2643,
+      uid: '1.2.246.352.221.510131772635738017814913482410675466123',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 5
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2631,
+      uid: '1.2.246.352.221.544500580057704177610453666387339426459',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 2
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+2025-12-04T19:45:14.221Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.56544312353602160245609833887575429295',
+  targetSeriesId: 2650,
+  sources: [
+    '1.2.246.352.221.523178733979613193415281813484254089871',
+    '1.2.246.352.221.474845609372444790715249258974209193348',
+    '1.2.246.352.221.47936617555942191882790461593057333660',
+    '1.2.246.352.221.49537297405199815191289945572223233980',
+    '1.2.246.352.221.49287335691851764302465588548402461333',
+    '1.2.246.352.221.46138085696468237982535829228268734108',
+    '1.2.246.352.221.57041051239281911635405108116224524684',
+    '1.2.246.352.221.537208229859381264810529606203967766971',
+    '1.2.246.352.221.494213048426383827018243121574355384224',
+    '1.2.246.352.221.495623300508172461111583836228939724221',
+    '1.2.246.352.221.473981318258805049512069963857613987203',
+    '1.2.246.352.221.51221724992877536554229446628611839124',
+    '1.2.246.352.221.47892706623608550707424596292359179152',
+    '1.2.246.352.221.5138306589341189415943767192210469821'
+  ],
+  sourcesSeriesIds: [
+    2645, 2647, 2632,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceSeriesIds: [
+    2645, 2647, 2632,
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2648,
+    2649, 2651
+  ],
+  sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+  targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2629, 2633, 2634,
+    2636, 2637, 2639,
+    2640, 2642, 2647,
+    2648, 2649, 2651,
+    2632
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.52810088245862539895973696644000486024.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+      sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.52810088245862539895973696644000486024.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.47936617555942191882790461593057333660/1.2.246.352.221.52810088245862539895973696644000486024.dcm',
+      sourceFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      targetFoR: '1.2.246.352.221.55612459331306417716623324215947409338',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2650,
+    uid: '1.2.246.352.221.56544312353602160245609833887575429295',
+    description: 'Eclipse DRRs',
+    modality: 'RTIMAGE',
+    studyId: 76,
+    imageCount: 1
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2645,
+      uid: '1.2.246.352.221.523178733979613193415281813484254089871',
+      description: '',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 6
+    },
+    {
+      id: 2647,
+      uid: '1.2.246.352.221.474845609372444790715249258974209193348',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2632,
+      uid: '1.2.246.352.221.47936617555942191882790461593057333660',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 3
+    },
+    {
+      id: 2629,
+      uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+      description: 'Head_Neck C+  2.0  Br38  3',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 207
+    },
+    {
+      id: 2633,
+      uid: '1.2.246.352.221.49287335691851764302465588548402461333',
+      description: '',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2634,
+      uid: '1.2.246.352.221.46138085696468237982535829228268734108',
+      description: 'Image Registration',
+      modality: 'REG',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2636,
+      uid: '1.2.246.352.221.57041051239281911635405108116224524684',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 8
+    },
+    {
+      id: 2637,
+      uid: '1.2.246.352.221.537208229859381264810529606203967766971',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2639,
+      uid: '1.2.246.352.221.494213048426383827018243121574355384224',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2640,
+      uid: '1.2.246.352.221.495623300508172461111583836228939724221',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2642,
+      uid: '1.2.246.352.221.473981318258805049512069963857613987203',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2648,
+      uid: '1.2.246.352.221.51221724992877536554229446628611839124',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2649,
+      uid: '1.2.246.352.221.47892706623608550707424596292359179152',
+      description: 'Eclipse DRRs',
+      modality: 'RTIMAGE',
+      studyId: 76,
+      imageCount: 1
+    },
+    {
+      id: 2651,
+      uid: '1.2.246.352.221.5138306589341189415943767192210469821',
+      description: 'ARIA RadOnc Plans',
+      modality: 'RTPLAN',
+      studyId: 76,
+      imageCount: 1
+    }
+  ]
+}
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.49537297405199815191289945572223233980',
+  targetSeriesId: 2629,
+  sources: [ '1.2.246.352.221.570537758543275012911456240642628457867' ],
+  sourcesSeriesIds: [ 2628 ],
+  sourceSeriesIds: [ 2628 ],
+  sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+  targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2633, 2634, 2636,
+    2637, 2639, 2640,
+    2642, 2647, 2648,
+    2649, 2650, 2651
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.559202431043907878916475956155626236086.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+      sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.559202431043907878916475956155626236086.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.49287335691851764302465588548402461333/1.2.246.352.221.559202431043907878916475956155626236086.dcm',
+      sourceFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      targetFoR: '1.2.246.352.221.48824712000027636665306206319449476250',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2629,
+    uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+    description: 'Head_Neck C+  2.0  Br38  3',
+    modality: 'CT',
+    studyId: 76,
+    imageCount: 207
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2628,
+      uid: '1.2.246.352.221.570537758543275012911456240642628457867',
+      description: '',
+      modality: 'CT',
+      studyId: 76,
+      imageCount: 88
+    }
+  ]
+}
+2025-12-04T19:45:14.407Z - POST /api/images/batch
+ASSOC: {
+  regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+  studyId: 76,
+  target: '1.2.246.352.221.49537297405199815191289945572223233980',
+  targetSeriesId: 2629,
+  sources: [
+    '1.2.246.352.221.534437763102598122915916606648478293420',
+    '1.2.246.352.221.482497532653462080914109465315058346371'
+  ],
+  sourcesSeriesIds: [ 2625, 2626 ],
+  sourceSeriesIds: [ 2625, 2626 ],
+  sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+  targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+  relationship: 'registered',
+  siblingSeriesIds: [
+    2633, 2634, 2636,
+    2637, 2639, 2640,
+    2642, 2647, 2648,
+    2649, 2650, 2651,
+    2626
+  ],
+  transformCandidates: [
+    {
+      id: '1.2.246.352.221.516840734399078479312302493491489751699.dcm::0',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+      sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    },
+    {
+      id: '1.2.246.352.221.516840734399078479312302493491489751699.dcm::1',
+      regFile: 'storage/patients/OZa7UswspYAakrgYemxMdqy1E/1.2.246.352.221.562728508619352284615748755713089003937/1.2.246.352.221.46138085696468237982535829228268734108/1.2.246.352.221.516840734399078479312302493491489751699.dcm',
+      sourceFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      targetFoR: '1.2.246.352.221.498240581752208121912291777110904212880',
+      matrix: [Array],
+      referencedSeriesInstanceUids: [Array]
+    }
+  ],
+  targetSeriesDetail: {
+    id: 2629,
+    uid: '1.2.246.352.221.49537297405199815191289945572223233980',
+    description: 'Head_Neck C+  2.0  Br38  3',
+    modality: 'CT',
+    studyId: 76,
+    imageCount: 207
+  },
+  sourceSeriesDetails: [
+    {
+      id: 2625,
+      uid: '1.2.246.352.221.534437763102598122915916606648478293420',
+      description: 'CT STD HN 2.5mm',
+      modality: 'CT',
+      studyId: 75,
+      imageCount: 135
+    },
+    {
+      id: 2626,
+      uid: '1.2.246.352.221.482497532653462080914109465315058346371',
+      description: 'QCFX MAC HN',
+      modality: 'PT',
+      studyId: 75,
+      imageCount: 83
+    }
+  ]
+}
+2025-12-04T19:45:14.596Z - GET /api/series/2629
+2025-12-04T19:45:14.612Z - GET /api/fusion/manifest
+[2025-12-04T19:45:14.612Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","secondarySeriesIds":"2628,2625,2626","preload":"true"}
+[2025-12-04T19:45:14.612Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=2628,2625,2626
+2025-12-04T19:45:14.612Z - DELETE /api/fusion/cache
+2025-12-04T19:45:14.623Z - GET /api/fusion/manifest
+[2025-12-04T19:45:14.624Z] INFO: 🔍 Fusion manifest request received: {"primarySeriesId":"2629","preload":"true"}
+[2025-12-04T19:45:14.624Z] INFO: 📋 Fusion manifest request: primary=2629, secondaries=
+2025-12-04T19:45:14.624Z - DELETE /api/fusion/cache
+[2025-12-04T19:45:14.627Z] INFO: ✅ Fusion manifest ready: 0 secondaries
+[2025-12-04T19:45:14.638Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2628,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2628_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.48824712000027636665306206319449476250.h5"}
+2025-12-04T19:45:14.649Z - POST /api/images/batch
+[2025-12-04T19:45:16.081Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2625,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2625_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.498240581752208121912291777110904212880.h5"}
+[2025-12-04T19:45:17.674Z] INFO: Using cached fusebox helper transform {"event":"fusebox.helper","primarySeriesId":2629,"secondarySeriesId":2626,"cachePath":"/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/tmp/fusebox-transforms/2629_2626_1.2.246.352.221.52438084228340170929626605573454757519_1.2.246.352.221.498240581752208121912291777110904212880.h5"}
+[2025-12-04T19:45:19.119Z] INFO: ✅ Fusion manifest ready: 3 secondaries

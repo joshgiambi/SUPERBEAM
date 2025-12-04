@@ -30,7 +30,7 @@ fi
 source sam_env/bin/activate
 echo "Installing Python dependencies..."
 pip install --upgrade pip
-pip install numpy>=2.3.2 pydicom>=3.0.1 SimpleITK>=2.4.0
+pip install "numpy>=1.24.0,<3.0.0" "pydicom>=2.4.0" "SimpleITK>=2.3.0"
 
 # Step 2: Build ITK DICOM converter tool
 echo "🔨 Building ITK DICOM converter..."
