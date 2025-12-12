@@ -4,7 +4,7 @@
  * Improved arrangement with text labels for contour, boolean, and margin buttons
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ZoomIn,
@@ -58,6 +58,12 @@ interface BottomToolbarPrototypeV2Props {
   currentHistoryIndex?: number;
   onSelectHistory?: (index: number) => void;
   className?: string;
+  // Context props for adaptive behavior
+  hasSecondaries?: boolean;      // Are there secondary series available for fusion?
+  hasRTStructures?: boolean;     // Are RT structures loaded?
+  viewMode?: 'standard' | 'fusion-layout';  // Current view mode
+  // Exit fusion layout callback
+  onExitFusionLayout?: () => void;
 }
 
 export function BottomToolbarPrototypeV2({
@@ -89,28 +95,66 @@ export function BottomToolbarPrototypeV2({
   historyItems = [],
   currentHistoryIndex = -1,
   onSelectHistory,
-  className
+  className,
+  // Context props for adaptive behavior
+  hasSecondaries = false,
+  hasRTStructures = false,
+  viewMode = 'standard',
+  onExitFusionLayout,
 }: BottomToolbarPrototypeV2Props) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const tools = [
-    { id: 'zoom-in', icon: ZoomIn, label: 'Zoom In' },
-    { id: 'zoom-out', icon: ZoomOut, label: 'Zoom Out' },
-    { id: 'fit', icon: Maximize2, label: 'Fit to Window' },
-    { id: 'separator' },
-    { id: 'pan', icon: Hand, label: 'Pan', selectable: true },
-    { id: 'crosshairs', icon: Crosshair, label: 'Crosshairs', selectable: true },
-    { id: 'measure', icon: Ruler, label: 'Measure', selectable: true },
-    { id: 'separator' },
-    { id: 'mpr', icon: Grid3x3, label: 'MPR View', selectable: true },
-    { id: 'fusion', icon: Layers, label: 'Fusion', selectable: true },
-    { id: 'dose-plan', icon: Activity, label: 'Dose/Plan Review (Coming Soon)' },
-    { id: 'separator' },
-    { id: 'localization', icon: Target, label: '🎯 Structure Localization', selectable: true },
-    { id: 'metadata', icon: Info, label: 'View DICOM Metadata' },
-    { id: 'help', icon: HelpCircle, label: 'Interaction Guide' },
-  ];
+  // Build adaptive tools list based on context
+  const tools = useMemo(() => {
+    const baseTools = [
+      // Core navigation tools - always shown
+      { id: 'zoom-in', icon: ZoomIn, label: 'Zoom In', group: 'navigation' },
+      { id: 'zoom-out', icon: ZoomOut, label: 'Zoom Out', group: 'navigation' },
+      { id: 'fit', icon: Maximize2, label: 'Fit to Window', group: 'navigation' },
+      { id: 'separator', group: 'navigation' },
+      { id: 'pan', icon: Hand, label: 'Pan', selectable: true, group: 'tools' },
+      { id: 'crosshairs', icon: Crosshair, label: 'Crosshairs', selectable: true, group: 'tools' },
+      { id: 'measure', icon: Ruler, label: 'Measure', selectable: true, group: 'tools' },
+    ];
+    
+    // View mode tools - contextual
+    const viewModeTools = [];
+    
+    // Only show MPR in standard mode (not in multi-viewport where it's handled differently)
+    if (viewMode === 'standard') {
+      viewModeTools.push({ id: 'separator', group: 'viewmode' });
+      viewModeTools.push({ id: 'mpr', icon: Grid3x3, label: 'MPR View', selectable: true, group: 'viewmode' });
+    }
+    
+    // Show fusion toggle in standard mode (split view has CompactToolbar with integrated controls)
+    if (hasSecondaries && viewMode === 'standard') {
+      viewModeTools.push({ id: 'fusion', icon: Layers, label: 'Fusion Panel', selectable: true, group: 'viewmode' });
+    }
+    
+    // Show exit button when in fusion-layout (split view) mode
+    // In split view, fusion controls are in the CompactToolbar, so we just show exit
+    if (viewMode === 'fusion-layout' && onExitFusionLayout) {
+      viewModeTools.push({ id: 'separator', group: 'viewmode' });
+      viewModeTools.push({ id: 'exit-split', icon: X, label: 'Exit Split View', group: 'viewmode', variant: 'destructive' });
+    }
+    
+    // Structure tools - only when RT structures are loaded
+    const structureTools = [];
+    if (hasRTStructures) {
+      structureTools.push({ id: 'separator', group: 'structures' });
+      structureTools.push({ id: 'localization', icon: Target, label: 'Localize Structure', selectable: true, group: 'structures' });
+    }
+    
+    // Info tools - always available
+    const infoTools = [
+      { id: 'separator', group: 'info' },
+      { id: 'metadata', icon: Info, label: 'DICOM Metadata', group: 'info' },
+      { id: 'help', icon: HelpCircle, label: 'Help', group: 'info' },
+    ];
+    
+    return [...baseTools, ...viewModeTools, ...structureTools, ...infoTools];
+  }, [viewMode, hasSecondaries, hasRTStructures]);
 
   const handleToolClick = (toolId: string) => {
     const tool = tools.find(t => t.id === toolId);
@@ -146,6 +190,9 @@ export function BottomToolbarPrototypeV2({
         break;
       case 'localization':
         onLocalization?.();
+        break;
+      case 'exit-split':
+        onExitFusionLayout?.();
         break;
     }
   };
@@ -294,6 +341,7 @@ export function BottomToolbarPrototypeV2({
 
               const IconComponent = tool.icon!;
               const isActive = tool.selectable && getActiveToolState(tool.id);
+              const isExitButton = tool.id === 'exit-split';
 
               return (
                 <div key={tool.id} className="relative group">
@@ -302,23 +350,32 @@ export function BottomToolbarPrototypeV2({
                     size="sm"
                     aria-label={tool.label}
                     className={`
-                      h-8 w-8 p-0 transition-all duration-200 rounded-lg text-white/90
-                      ${tool.id === 'mpr' && isActive
-                        ? 'bg-green-600/20 text-green-400 border-[0.5px] border-green-500/50 shadow-sm' 
-                        : tool.id === 'localization' && isActive
-                        ? 'bg-orange-600/20 text-orange-400 border-[0.5px] border-orange-500/50 shadow-sm'
-                        : isActive 
-                        ? 'bg-blue-600/20 text-blue-400 border-[0.5px] border-blue-500/50 shadow-sm' 
-                        : 'hover:bg-white/20 hover:text-white'
+                      transition-all duration-200 rounded-lg
+                      ${isExitButton 
+                        ? 'h-8 px-3 gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border border-red-500/40 hover:border-red-500/60 flex items-center'
+                        : `h-8 w-8 p-0 text-white/90 ${
+                            tool.id === 'mpr' && isActive
+                              ? 'bg-green-600/20 text-green-400 border-[0.5px] border-green-500/50 shadow-sm' 
+                              : tool.id === 'localization' && isActive
+                              ? 'bg-orange-600/20 text-orange-400 border-[0.5px] border-orange-500/50 shadow-sm'
+                              : isActive 
+                              ? 'bg-blue-600/20 text-blue-400 border-[0.5px] border-blue-500/50 shadow-sm' 
+                              : 'hover:bg-white/20 hover:text-white'
+                          }`
                       }
                     `}
                     onClick={() => handleToolClick(tool.id)}
                   >
-                    <IconComponent className="w-4 h-4" />
+                    <IconComponent className={isExitButton ? "w-3.5 h-3.5" : "w-4 h-4"} />
+                    {isExitButton && <span className="text-xs font-medium">Exit Split</span>}
                   </Button>
 
                   {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gradient-to-br from-gray-600/95 via-gray-500/95 to-gray-600/95 border border-gray-400/30 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 border text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
+                    isExitButton 
+                      ? 'bg-gradient-to-br from-red-600/95 via-red-500/95 to-red-600/95 border-red-400/30'
+                      : 'bg-gradient-to-br from-gray-600/95 via-gray-500/95 to-gray-600/95 border-gray-400/30'
+                  }`}>
                     {tool.label}
                   </div>
                 </div>

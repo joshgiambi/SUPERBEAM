@@ -2996,25 +2996,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       if (!pFoR && primaryImages[0]?.filePath) pFoR = readFoR((primaryImages[0] as any).filePath);
       if (!sFoR && secondaryImages[0]?.filePath) sFoR = readFoR((secondaryImages[0] as any).filePath);
+      
+      // IMPORTANT: Check for matching Frame of Reference FIRST, before processing REG files.
+      // When FoRs match, the series are already in the same coordinate space - identity is correct.
+      // REG files that may exist are for OTHER series pairs, not this one.
+      if (pFoR && sFoR && pFoR === sFoR) {
+        return res.json({
+          primary: { id: primarySeriesId, seriesInstanceUID: primarySeries.seriesInstanceUID },
+          secondary: { id: secondarySeriesId, seriesInstanceUID: secondarySeries.seriesInstanceUID },
+          sourceFoR: sFoR,
+          targetFoR: pFoR,
+          referencedSeriesInstanceUids: [],
+          matrixRowMajor4x4: [
+            1,0,0,0,
+            0,1,0,0,
+            0,0,1,0,
+            0,0,0,1
+          ],
+          orientationRows: { X: [1,0,0], Y: [0,1,0], Z: [0,0,1] },
+          translation: [0,0,0],
+          notes: ['Identity transform (same Frame of Reference)']
+        });
+      }
+      
       if (candidates.length === 0) {
-        if (pFoR && sFoR && pFoR === sFoR) {
-          return res.json({
-            primary: { id: primarySeriesId, seriesInstanceUID: primarySeries.seriesInstanceUID },
-            secondary: { id: secondarySeriesId, seriesInstanceUID: secondarySeries.seriesInstanceUID },
-            sourceFoR: sFoR,
-            targetFoR: pFoR,
-            referencedSeriesInstanceUids: [],
-            matrixRowMajor4x4: [
-              1,0,0,0,
-              0,1,0,0,
-              0,0,1,0,
-              0,0,0,1
-            ],
-            orientationRows: { X: [1,0,0], Y: [0,1,0], Z: [0,0,1] },
-            translation: [0,0,0],
-            notes: ['Identity transform (same Frame of Reference)']
-          });
-        }
         return res.status(404).json({ error: 'No REG file located for patient or study' });
       }
 

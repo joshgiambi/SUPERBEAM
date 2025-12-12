@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as ClipperLib from 'js-angusj-clipper';
 import { isPointInContour } from '../../lib/clipper-boolean-operations';
+import { useContourEditSafe, type ActiveDrawingPoint } from '@/contexts/contour-edit-context';
 
 interface PenToolUnifiedV2Props {
   isActive: boolean;
@@ -12,6 +13,8 @@ interface PenToolUnifiedV2Props {
   rtStructures: any;
   onContourUpdate: (action: string, data: any) => void;
   color?: string;
+  /** Unique viewport ID for cross-viewport ghost contour sync */
+  viewportId?: string;
 }
 
 export const PenToolUnifiedV2: React.FC<PenToolUnifiedV2Props> = ({
@@ -23,7 +26,8 @@ export const PenToolUnifiedV2: React.FC<PenToolUnifiedV2Props> = ({
   selectedStructure,
   rtStructures,
   onContourUpdate,
-  color
+  color,
+  viewportId = 'default-viewport'
 }) => {
   const [internalState, setInternalState] = useState<InternalPenState>({
 
@@ -31,6 +35,10 @@ export const PenToolUnifiedV2: React.FC<PenToolUnifiedV2Props> = ({
   
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  
+  // Cross-viewport contour edit context for ghost contours (safe - returns null if no provider)
+  const contourEditContext = useContourEditSafe();
+  const activeStrokeIdRef = useRef<string | null>(null);
   
   // Drawing state
   const [points, setPoints] = useState<[number, number][]>([]);
@@ -82,7 +90,59 @@ export const PenToolUnifiedV2: React.FC<PenToolUnifiedV2Props> = ({
         overlayCanvasRef.current.height
       );
     }
-  }, [currentZ]);
+    
+    // Clear any active ghost stroke on slice change
+    if (contourEditContext && activeStrokeIdRef.current) {
+      contourEditContext.endStroke(activeStrokeIdRef.current);
+      activeStrokeIdRef.current = null;
+    }
+  }, [currentZ, contourEditContext]);
+  
+  // Broadcast pen stroke to other viewports for ghost contour rendering
+  useEffect(() => {
+    if (!contourEditContext || !selectedStructure || !isActive) return;
+    
+    // Get structure color for ghost rendering
+    const structure = rtStructures?.structures?.find((s: any) => s.roiNumber === selectedStructure);
+    const structureColor: [number, number, number] = structure?.color || [255, 255, 0];
+    
+    if (points.length > 0) {
+      // Convert points to ActiveDrawingPoint format
+      const drawingPoints: ActiveDrawingPoint[] = points.map(([x, y]) => ({
+        x,
+        y,
+        z: currentZ,
+      }));
+      
+      if (!activeStrokeIdRef.current) {
+        // Start a new stroke
+        activeStrokeIdRef.current = contourEditContext.startStroke({
+          sourceViewportId: viewportId,
+          toolType: 'pen',
+          structureId: selectedStructure,
+          structureColor,
+          slicePosition: currentZ,
+          points: drawingPoints,
+          mode: startMode === 'SUBTRACT' ? 'subtract' : 'add',
+        });
+      } else {
+        // Update existing stroke
+        contourEditContext.updateStroke(activeStrokeIdRef.current, drawingPoints);
+      }
+    } else if (activeStrokeIdRef.current) {
+      // Points cleared - end the stroke
+      contourEditContext.endStroke(activeStrokeIdRef.current);
+      activeStrokeIdRef.current = null;
+    }
+  }, [points, selectedStructure, isActive, currentZ, startMode, viewportId, contourEditContext, rtStructures]);
+  
+  // Cleanup ghost stroke when tool deactivates
+  useEffect(() => {
+    if (!isActive && contourEditContext && activeStrokeIdRef.current) {
+      contourEditContext.endStroke(activeStrokeIdRef.current);
+      activeStrokeIdRef.current = null;
+    }
+  }, [isActive, contourEditContext]);
   
   // Clear/hide overlay when tool deactivates  
   useEffect(() => {

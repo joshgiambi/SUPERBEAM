@@ -55,6 +55,9 @@ interface SeriesSelectorProps {
   fusionStatuses?: Map<number, { status: 'idle' | 'loading' | 'ready' | 'error'; error?: string | null }>;
   fusionCandidatesByPrimary?: Map<number, number[]>;
   fusionSiblingMap?: Map<number, Map<'PET' | 'MR', Map<number, number[]>>>;
+  // Multi-viewport state
+  viewportAssignments?: Map<number, number | null>;  // Map of viewport number (1-indexed) → secondary series ID
+  isInSplitView?: boolean;  // Whether we're in split-view mode (FlexibleFusionLayout)
 }
 
 export function SeriesSelector({
@@ -92,6 +95,8 @@ export function SeriesSelector({
   fusionStatuses,
   fusionCandidatesByPrimary,
   fusionSiblingMap,
+  viewportAssignments,
+  isInSplitView = false,
 }: SeriesSelectorProps) {
   
   // Debug logging removed for performance
@@ -136,6 +141,15 @@ export function SeriesSelector({
   const [expandedBlobStructures, setExpandedBlobStructures] = useState<Set<number>>(new Set()); // Track which structures have blob list expanded
   const [rtSeriesWithSuperstructures, setRTSeriesWithSuperstructures] = useState<Set<number>>(new Set()); // Track which RT series have superstructures
   const { toast } = useToast();
+  
+  // Helper: Get viewport number for a given secondary series ID (returns null if not in any viewport)
+  const getViewportForSeries = (seriesId: number): number | null => {
+    if (!viewportAssignments || viewportAssignments.size === 0) return null;
+    for (const [vpNum, secId] of viewportAssignments.entries()) {
+      if (secId === seriesId) return vpNum;
+    }
+    return null;
+  };
   
   // Superstructure management
   const {
@@ -514,6 +528,10 @@ export function SeriesSelector({
         if (selectedRTSeries) {
           console.log(`⚠️ No RT structure sets reference primary series ${selectedSeries.id}, clearing selection`);
           setSelectedRTSeries(null);
+          // Also notify parent to clear loaded RT series
+          if (onLoadedRTSeriesIdChange) {
+            onLoadedRTSeriesIdChange(null);
+          }
         }
         return;
       }
@@ -1488,6 +1506,18 @@ export function SeriesSelector({
                                                     ? "border-blue-400/80 text-blue-300 bg-blue-500/20"
                                                     : "border-blue-500/60 text-blue-400 bg-blue-500/10"
                                                 )}>CT</Badge>
+                                                {/* Viewport number badge - show in split view mode */}
+                                                {isInSplitView && (() => {
+                                                  const vpNum = getViewportForSeries(ctS.id);
+                                                  if (vpNum) {
+                                                    return (
+                                                      <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
+                                                        VP {vpNum}
+                                                      </span>
+                                                    );
+                                                  }
+                                                  return null;
+                                                })()}
                                                 <span className={cn(
                                                   "truncate text-xs font-medium",
                                                   secondarySeriesId === ctS.id ? "text-blue-200" : "text-gray-100"
@@ -1691,6 +1721,18 @@ export function SeriesSelector({
                                               )}>
                                                 MR
                                               </Badge>
+                                              {/* Viewport number badge - show in split view mode */}
+                                              {isInSplitView && (() => {
+                                                const vpNum = getViewportForSeries(mrS.id);
+                                                if (vpNum) {
+                                                  return (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
+                                                      VP {vpNum}
+                                                    </span>
+                                                  );
+                                                }
+                                                return null;
+                                              })()}
                                               <span className={cn(
                                                 "truncate text-xs font-medium",
                                                 secondarySeriesId === mrS.id || selectedSeries?.id === mrS.id ? "text-purple-200" : "text-gray-100"
@@ -1925,6 +1967,18 @@ export function SeriesSelector({
                                                 ? "border-yellow-400/80 text-yellow-300 bg-yellow-500/20"
                                                 : "border-yellow-500/60 text-yellow-400 bg-yellow-500/10"
                                             )}>PT</Badge>
+                                            {/* Viewport number badge - show in split view mode */}
+                                            {isInSplitView && (() => {
+                                              const vpNum = getViewportForSeries(ptS.id);
+                                              if (vpNum) {
+                                                return (
+                                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
+                                                    VP {vpNum}
+                                                  </span>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
                                             <span className={cn(
                                               "truncate text-xs font-medium",
                                               secondarySeriesId === ptS.id || selectedSeries?.id === ptS.id ? "text-yellow-200" : "text-gray-100"

@@ -1,25 +1,26 @@
-import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/not-found";
 import Viewer from "@/pages/viewer";
 import PatientManager from "@/pages/patient-manager";
-import FusionTestPage from "@/pages/fusion-test";
+import OHIFPrototypeGemini from "@/pages/ohif-prototype";
+import FusionTest from "@/pages/fusion-test";
 import PrototypeModule from "@/pages/prototype-module";
-import NotFound from "@/pages/not-found";
+import SuperStyle from "@/pages/superstyle";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={PatientManager} />
       <Route path="/viewer" component={Viewer} />
-      <Route path="/dicom-viewer" component={Viewer} />
       <Route path="/enhanced-viewer" component={Viewer} />
-      <Route path="/fusion-test" component={FusionTestPage} />
+      <Route path="/fusion-test" component={FusionTest} />
+      <Route path="/ohif-prototype" component={OHIFPrototypeGemini} />
+      <Route path="/prototype-module" component={PrototypeModule} />
       <Route path="/prototypes" component={PrototypeModule} />
-      <Route path="/patients/:id/studies" component={PatientManager} />
+      <Route path="/superstyle" component={SuperStyle} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -28,10 +29,8 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <Router />
+      <Toaster />
     </QueryClientProvider>
   );
 }

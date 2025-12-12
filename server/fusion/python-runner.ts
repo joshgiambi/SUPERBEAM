@@ -4,9 +4,36 @@ import { spawn } from 'child_process';
 import { logger } from '../logger.ts';
 
 export function resolveFuseboxPython(): string {
-  const candidate = process.env.FUSEBOX_PYTHON?.trim();
-  if (candidate) return candidate;
-  return process.platform === 'win32' ? 'python' : 'python3';
+  // Try multiple candidates in order of preference, matching fusebox.ts logic
+  const candidateList = [
+    process.env.FUSEBOX_PYTHON?.trim(),
+    process.env.SIMPLEITK_PYTHON?.trim(),
+    process.env.PYTHON?.trim(),
+    path.join(process.cwd(), 'sam_env', 'bin', 'python'),
+    process.platform === 'win32' ? 'python' : 'python3',
+  ].filter((c): c is string => !!c);
+
+  for (const candidate of candidateList) {
+    // Check if the candidate exists (for absolute paths)
+    if (path.isAbsolute(candidate)) {
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        logger.info(`[resolveFuseboxPython] Using: "${candidate}"`);
+        return candidate;
+      } catch {
+        continue;
+      }
+    } else {
+      // For non-absolute paths (python3, python), just use them directly
+      logger.info(`[resolveFuseboxPython] Using: "${candidate}"`);
+      return candidate;
+    }
+  }
+
+  // Final fallback
+  const fallback = process.platform === 'win32' ? 'python' : 'python3';
+  logger.info(`[resolveFuseboxPython] Using final fallback: "${fallback}"`);
+  return fallback;
 }
 
 export async function runFuseboxScript<T = any>(scriptName: string, config: Record<string, unknown>): Promise<T> {

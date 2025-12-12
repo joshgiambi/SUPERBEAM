@@ -40,3 +40,6 @@ dist/
 
 # Git backups
 .git-backup*
+
+# OHIF Reference Codebase (for agent reference only - not part of this project)
+ohif-viewer/

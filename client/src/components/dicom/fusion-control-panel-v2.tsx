@@ -1,12 +1,28 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Loader2, ChevronDown, ChevronUp, SplitSquareHorizontal, Layers2, Download } from 'lucide-react';
+import { 
+  Zap, Loader2, ChevronDown, ChevronUp, SplitSquareHorizontal, Layers2, Download,
+  LayoutGrid, Columns2, Rows3, PanelLeftClose, PanelRightClose, ArrowLeftRight, GripVertical,
+  Bookmark, BookmarkPlus, Trash2, Star
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FusionSecondaryDescriptor } from '@/types/fusion';
 import { useToast } from '@/hooks/use-toast';
+import { fusionLayoutService, type FusionLayoutBookmark } from '@/lib/fusion-layout-service';
+
+// Layout preset types for flexible fusion layout
+export type FusionLayoutPreset = 
+  | 'overlay'           // Traditional overlay mode
+  | 'single'            // Single viewport only
+  | 'side-by-side'      // 50/50 horizontal
+  | 'primary-focus'     // 70/30 horizontal
+  | 'secondary-focus'   // 30/70 horizontal  
+  | 'vertical-stack'    // Vertical arrangement
+  | 'triple'            // 1+2 layout
+  | 'quad';             // 2x2 grid
 
 interface FusionControlPanelV2Props {
   opacity: number;
@@ -22,6 +38,17 @@ interface FusionControlPanelV2Props {
   displayMode?: 'overlay' | 'side-by-side';
   onDisplayModeChange?: (mode: 'overlay' | 'side-by-side') => void;
   primarySeriesId?: number | null;
+  // New flexible layout props
+  layoutPreset?: FusionLayoutPreset;
+  onLayoutPresetChange?: (preset: FusionLayoutPreset) => void;
+  onSwapViewports?: () => void;
+  enableFlexibleLayout?: boolean;
+  // Bookmark props
+  studyId?: number;
+  onLoadBookmark?: (bookmark: FusionLayoutBookmark) => void;
+  // External expanded state control
+  isExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 export function FusionControlPanelV2({
@@ -38,10 +65,86 @@ export function FusionControlPanelV2({
   displayMode = 'overlay',
   onDisplayModeChange,
   primarySeriesId,
+  layoutPreset = 'overlay',
+  onLayoutPresetChange,
+  onSwapViewports,
+  enableFlexibleLayout = false,
+  studyId,
+  onLoadBookmark,
+  isExpanded: externalExpanded,
+  onExpandedChange,
 }: FusionControlPanelV2Props) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Use external control if provided, otherwise manage internally
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isExpanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
+  const setIsExpanded = (expanded: boolean) => {
+    if (onExpandedChange) {
+      onExpandedChange(expanded);
+    } else {
+      setInternalExpanded(expanded);
+    }
+  };
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [bookmarks, setBookmarks] = useState<FusionLayoutBookmark[]>([]);
   const { toast } = useToast();
   const sidebarRef = useRef<HTMLElement | null>(null);
+  
+  // Load bookmarks on mount and when study changes
+  useEffect(() => {
+    const loadBookmarks = () => {
+      if (studyId) {
+        setBookmarks(fusionLayoutService.getStudyBookmarks(studyId));
+      } else {
+        setBookmarks(fusionLayoutService.getGlobalBookmarks());
+      }
+    };
+    loadBookmarks();
+    return fusionLayoutService.subscribe(loadBookmarks);
+  }, [studyId]);
+  
+  // Save current layout as bookmark
+  const handleSaveBookmark = useCallback(() => {
+    const name = prompt('Enter bookmark name:', `Layout ${new Date().toLocaleTimeString()}`);
+    if (!name) return;
+    
+    fusionLayoutService.createBookmark(name, {
+      layoutPreset,
+      viewports: selectedSecondaryId ? [
+        { id: 'primary', seriesId: primarySeriesId || 0, isPrimary: true, showStructures: true, showMPR: false },
+        { id: 'secondary', seriesId: selectedSecondaryId, isPrimary: false, showStructures: false, showMPR: false },
+      ] : [
+        { id: 'primary', seriesId: primarySeriesId || 0, isPrimary: true, showStructures: true, showMPR: false },
+      ],
+      fusionOpacity: opacity,
+      studyId,
+      isGlobal: !studyId,
+    });
+    
+    toast({ title: 'Bookmark Saved', description: `Layout "${name}" saved successfully` });
+  }, [layoutPreset, selectedSecondaryId, primarySeriesId, opacity, studyId, toast]);
+  
+  // Load a bookmark
+  const handleLoadBookmark = useCallback((bookmark: FusionLayoutBookmark) => {
+    onLayoutPresetChange?.(bookmark.layoutPreset);
+    onOpacityChange(bookmark.fusionOpacity);
+    
+    // Find and select secondary series from bookmark
+    const secondaryVp = bookmark.viewports.find(v => !v.isPrimary);
+    if (secondaryVp && secondaryOptions.some(opt => opt.secondarySeriesId === secondaryVp.seriesId)) {
+      onSecondarySeriesSelect(secondaryVp.seriesId);
+    }
+    
+    onLoadBookmark?.(bookmark);
+    setShowBookmarks(false);
+    toast({ title: 'Bookmark Loaded', description: `Layout "${bookmark.name}" applied` });
+  }, [onLayoutPresetChange, onOpacityChange, onSecondarySeriesSelect, secondaryOptions, onLoadBookmark, toast]);
+  
+  // Delete a bookmark
+  const handleDeleteBookmark = useCallback((bookmarkId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    fusionLayoutService.deleteBookmark(bookmarkId);
+    toast({ title: 'Bookmark Deleted' });
+  }, [toast]);
 
   // Get sidebar ref from window
   useEffect(() => {
@@ -195,7 +298,7 @@ export function FusionControlPanelV2({
       return createPortal(loadingContent, sidebarRef.current);
     }
     return (
-      <div className="absolute right-7 top-44 z-40" style={{ width: '24rem' }}>
+      <div className="absolute right-4 top-28 z-40" style={{ width: '22rem' }}>
         {loadingContent}
       </div>
     );
@@ -216,15 +319,72 @@ export function FusionControlPanelV2({
       return createPortal(errorContent, sidebarRef.current);
     }
     return (
-      <div className="absolute right-7 top-44 z-40" style={{ width: '24rem' }}>
+      <div className="absolute right-4 top-28 z-40" style={{ width: '22rem' }}>
         {errorContent}
       </div>
     );
   }
 
-  // Don't show panel if no options available
+  // Always render the panel when it exists - show minimized collapsed state if not expanded
+  // This prevents the panel from disappearing when user minimizes it
+  
+  // Show empty state if no options available
   if (!secondaryOptions.length) {
-    return null;
+    const emptyContent = isExpanded ? (
+      // Expanded empty state
+      <div className="w-full rounded-xl border border-white/40 bg-white/10 backdrop-blur-md shadow-2xl">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-semibold text-gray-200">Fusion</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-gray-400 hover:text-gray-200"
+              onClick={() => setIsExpanded(false)}
+            >
+              <ChevronUp className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="text-sm text-gray-400">
+            No fusion secondaries available for this series.
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Fusion requires compatible secondary series with DICOM registrations.
+          </div>
+        </div>
+      </div>
+    ) : (
+      // Minimized empty state - compact bar
+      <div className="w-full rounded-xl border border-white/40 bg-white/10 backdrop-blur-md shadow-2xl">
+        <div className="p-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-400">Fusion</span>
+            <span className="text-xs text-gray-500">No secondaries</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-gray-400 hover:text-gray-200"
+            onClick={() => setIsExpanded(true)}
+          >
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+    
+    if (sidebarRef.current) {
+      return createPortal(emptyContent, sidebarRef.current);
+    }
+    return (
+      <div className="absolute right-4 top-28 z-40" style={{ width: '22rem' }}>
+        {emptyContent}
+      </div>
+    );
   }
 
   // Render content
@@ -265,23 +425,21 @@ export function FusionControlPanelV2({
             </div>
           </div>
 
-          {/* Opacity slider */}
-          {displayMode === 'overlay' && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wide text-gray-400">Opacity</span>
-                <span className="text-[10px] font-semibold text-white bg-gray-800/50 px-2 py-0.5 rounded">{Math.round(opacity * 100)}%</span>
-              </div>
-              <Slider 
-                value={[opacity]} 
-                min={0} 
-                max={1} 
-                step={0.01} 
-                onValueChange={handleOpacityChange}
-                className="w-full"
-              />
+          {/* Opacity slider - always visible */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wide text-gray-400">Opacity</span>
+              <span className="text-[10px] font-semibold text-white bg-gray-800/50 px-2 py-0.5 rounded">{Math.round(opacity * 100)}%</span>
             </div>
-          )}
+            <Slider 
+              value={[opacity]} 
+              min={0} 
+              max={1} 
+              step={0.01} 
+              onValueChange={handleOpacityChange}
+              className="w-full"
+            />
+          </div>
 
           {/* Series tags */}
           <div className="flex flex-wrap gap-1.5">
@@ -336,21 +494,48 @@ export function FusionControlPanelV2({
               {secondaryOptions.length} available
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {/* Bookmark buttons */}
+            {enableFlexibleLayout && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSaveBookmark}
+                  className="h-7 w-7 p-0 text-gray-400 hover:text-yellow-400 hover:bg-yellow-900/30"
+                  title="Save current layout as bookmark"
+                >
+                  <BookmarkPlus className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBookmarks(!showBookmarks)}
+                  className={cn(
+                    "h-7 w-7 p-0",
+                    showBookmarks 
+                      ? "text-yellow-400 bg-yellow-900/30" 
+                      : "text-gray-400 hover:text-yellow-400 hover:bg-yellow-900/30"
+                  )}
+                  title={`${bookmarks.length} saved layouts`}
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                </Button>
+              </>
+            )}
             <Button
               variant="outline"
               size="sm"
               onClick={handleExport}
               disabled={!activeDescriptor || !primarySeriesId}
               className={cn(
-                'h-7 px-3 text-xs font-medium transition-all duration-200 rounded-lg backdrop-blur-sm shadow-sm',
+                'h-7 px-2 text-xs font-medium transition-all duration-200 rounded-lg backdrop-blur-sm shadow-sm',
                 !activeDescriptor || !primarySeriesId
                   ? 'bg-gray-800/30 border-gray-700/50 text-gray-500 cursor-not-allowed'
                   : 'bg-cyan-500/30 border-cyan-500/60 text-cyan-300 hover:bg-cyan-500/40 hover:border-cyan-400/70 hover:text-cyan-200'
               )}
             >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Export
+              <Download className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="ghost"
@@ -362,55 +547,217 @@ export function FusionControlPanelV2({
             </Button>
           </div>
         </div>
-
-        {/* Display mode toggle */}
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDisplayModeChange?.('overlay')}
-            className={cn(
-              'flex-1 h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
-              displayMode === 'overlay' 
-                ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
-                : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
-            )}
-          >
-            <Layers2 className="w-3.5 h-3.5 mr-1.5" />
-            Overlay
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDisplayModeChange?.('side-by-side')}
-            className={cn(
-              'flex-1 h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
-              displayMode === 'side-by-side' 
-                ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
-                : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
-            )}
-          >
-            <SplitSquareHorizontal className="w-3.5 h-3.5 mr-1.5" />
-            Side-by-Side
-          </Button>
-        </div>
-
-        {/* Opacity slider (only in overlay mode) */}
-        {displayMode === 'overlay' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-300">Overlay Opacity</span>
-              <span className="text-xs font-semibold text-white bg-gray-800/50 px-2 py-0.5 rounded">{Math.round(opacity * 100)}%</span>
+        
+        {/* Bookmarks dropdown */}
+        {showBookmarks && bookmarks.length > 0 && (
+          <div className="mt-2 p-2 bg-gray-900/80 rounded-lg border border-yellow-500/30 space-y-1">
+            <div className="text-[10px] font-semibold text-yellow-400/80 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Star className="w-3 h-3" />
+              Saved Layouts
             </div>
-            <Slider 
-              value={[opacity]} 
-              min={0} 
-              max={1} 
-              step={0.01} 
-              onValueChange={handleOpacityChange}
-            />
+            {bookmarks.map((bookmark) => (
+              <div
+                key={bookmark.id}
+                onClick={() => handleLoadBookmark(bookmark)}
+                className="flex items-center justify-between px-2 py-1.5 rounded-md bg-gray-800/50 hover:bg-yellow-900/30 cursor-pointer border border-transparent hover:border-yellow-500/30 transition-all"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <Bookmark className="w-3 h-3 text-yellow-500/70 flex-shrink-0" />
+                  <span className="text-xs text-gray-200 truncate">{bookmark.name}</span>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-gray-600/50 text-gray-400 flex-shrink-0">
+                    {bookmark.layoutPreset}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0 text-gray-500 hover:text-red-400 hover:bg-red-900/30 flex-shrink-0"
+                  onClick={(e) => handleDeleteBookmark(bookmark.id, e)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
+        
+        {showBookmarks && bookmarks.length === 0 && (
+          <div className="mt-2 p-3 bg-gray-900/60 rounded-lg border border-gray-700/50 text-center">
+            <Bookmark className="w-5 h-5 text-gray-600 mx-auto mb-1" />
+            <p className="text-xs text-gray-500">No saved layouts</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">Click + to save current layout</p>
+          </div>
+        )}
+
+        {/* Display mode toggle - Show flexible layout if enabled */}
+        {enableFlexibleLayout ? (
+          <div className="space-y-2">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Layout Mode</div>
+            <div className="grid grid-cols-3 gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('overlay');
+                  onDisplayModeChange?.('overlay');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'overlay' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="Overlay Mode"
+              >
+                <Layers2 className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('side-by-side');
+                  onDisplayModeChange?.('side-by-side');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'side-by-side' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="50/50 Split"
+              >
+                <Columns2 className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('primary-focus');
+                  onDisplayModeChange?.('side-by-side');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'primary-focus' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="70/30 Primary Focus"
+              >
+                <PanelRightClose className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('secondary-focus');
+                  onDisplayModeChange?.('side-by-side');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'secondary-focus' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="30/70 Secondary Focus"
+              >
+                <PanelLeftClose className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('vertical-stack');
+                  onDisplayModeChange?.('side-by-side');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'vertical-stack' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="Vertical Stack"
+              >
+                <Rows3 className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onLayoutPresetChange?.('quad');
+                  onDisplayModeChange?.('side-by-side');
+                }}
+                className={cn(
+                  'h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                  layoutPreset === 'quad' 
+                    ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                    : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+                )}
+                title="Quad View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            {/* Swap button for non-overlay modes */}
+            {layoutPreset !== 'overlay' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onSwapViewports}
+                className="w-full h-7 text-xs font-medium text-gray-300 hover:text-white hover:bg-gray-600/50 border border-gray-600/30 rounded-lg"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                Swap Primary ↔ Secondary
+              </Button>
+            )}
+          </div>
+        ) : (
+          /* Legacy display mode toggle */
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDisplayModeChange?.('overlay')}
+              className={cn(
+                'flex-1 h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                displayMode === 'overlay' 
+                  ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                  : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+              )}
+            >
+              <Layers2 className="w-3.5 h-3.5 mr-1.5" />
+              Overlay
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDisplayModeChange?.('side-by-side')}
+              className={cn(
+                'flex-1 h-8 text-xs font-semibold transition-all duration-200 rounded-lg',
+                displayMode === 'side-by-side' 
+                  ? 'bg-cyan-600/70 text-white border border-cyan-400/70 shadow-md shadow-cyan-500/30' 
+                  : 'bg-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-600/60 border border-gray-600/50'
+              )}
+            >
+              <SplitSquareHorizontal className="w-3.5 h-3.5 mr-1.5" />
+              Side-by-Side
+            </Button>
+          </div>
+        )}
+
+        {/* Opacity slider - always visible for fusion control */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-300">Fusion Opacity</span>
+            <span className="text-xs font-semibold text-white bg-gray-800/50 px-2 py-0.5 rounded">{Math.round(opacity * 100)}%</span>
+          </div>
+          <Slider 
+            value={[opacity]} 
+            min={0} 
+            max={1} 
+            step={0.01} 
+            onValueChange={handleOpacityChange}
+          />
+        </div>
 
         {/* Secondary series list */}
         <div className="space-y-3">
@@ -442,6 +789,12 @@ export function FusionControlPanelV2({
                 <div
                   key={descriptor.secondarySeriesId}
                   onClick={() => isReady ? onSecondarySeriesSelect(isActive ? null : descriptor.secondarySeriesId) : null}
+                  draggable={isReady && enableFlexibleLayout}
+                  onDragStart={(e) => {
+                    if (!isReady || !enableFlexibleLayout) return;
+                    e.dataTransfer.setData('seriesId', String(descriptor.secondarySeriesId));
+                    e.dataTransfer.effectAllowed = 'copy';
+                  }}
                   className={cn(
                     'group relative w-full py-2.5 px-3 rounded-lg border text-left cursor-pointer transition-all duration-200 backdrop-blur-sm',
                     isActive 
@@ -451,7 +804,8 @@ export function FusionControlPanelV2({
                       : isLoading
                       ? 'bg-gradient-to-br from-cyan-900/20 via-cyan-900/15 to-cyan-900/20 border-cyan-500/40'
                       : inactiveStyle,
-                    !isReady && !isLoading && 'opacity-70'
+                    !isReady && !isLoading && 'opacity-70',
+                    isReady && enableFlexibleLayout && 'cursor-grab active:cursor-grabbing'
                   )}
                 >
                   {/* Loading progress indicator */}
@@ -461,6 +815,10 @@ export function FusionControlPanelV2({
                   
                   <div className="relative z-10 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {/* Drag handle for flexible layout */}
+                      {enableFlexibleLayout && isReady && (
+                        <GripVertical className="w-3.5 h-3.5 text-gray-500 opacity-50 group-hover:opacity-100 flex-shrink-0" />
+                      )}
                       <Badge 
                         variant="outline" 
                         className={cn(
@@ -610,16 +968,28 @@ export function FusionControlPanelV2({
     );
   })();
 
-  // Render inside sidebar if available, otherwise absolute positioned
-  if (sidebarRef.current) {
-    return createPortal(panelContent, sidebarRef.current);
-  }
-
-  // Fallback to absolute positioning
-  return (
-    <div className="absolute right-7 top-44 z-40" style={{ width: '24rem' }}>
+  // Render as floating panel positioned below the viewer topbar
+  // Always visible when fusion data is available - expanded state controls detail level
+  const floatingPanel = (
+    <div 
+      className="fixed z-50 shadow-2xl transition-all duration-200" 
+      style={{ 
+        right: '1.5rem', 
+        top: '8rem', // Positioned below the viewer topbar area
+        width: isExpanded ? '22rem' : '18rem',
+        maxHeight: 'calc(100vh - 10rem)',
+      }}
+    >
       {panelContent}
     </div>
   );
+
+  // Render inside sidebar if available (and not in flexible layout mode), otherwise floating
+  if (sidebarRef.current && !enableFlexibleLayout) {
+    return createPortal(panelContent, sidebarRef.current);
+  }
+
+  // Render as floating panel
+  return floatingPanel;
 }
 

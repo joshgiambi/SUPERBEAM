@@ -3,6 +3,7 @@ import { canvasToWorld } from "@/lib/dicom-coordinates";
 import { createAdaptivePreview } from "@/lib/smart-brush-utils";
 import { combineContours } from "@/lib/clipper-boolean-operations";
 import { log } from '@/lib/log';
+import { useContourEditSafe, type ActiveDrawingPoint } from '@/contexts/contour-edit-context';
 
 /**
  * Check if a canvas point is inside a predicted contour
@@ -83,6 +84,8 @@ interface SimpleBrushToolProps {
   dicomImage?: any; // For accessing pixel data
   onPreviewUpdate?: (previewContours: any[] | null) => void; // New prop for smart brush preview
   activePredictions?: Map<number, any>; // Active predictions for smart click behavior
+  /** Unique viewport ID for cross-viewport ghost contour sync */
+  viewportId?: string;
 }
 
 export function SimpleBrushTool({
@@ -105,6 +108,7 @@ export function SimpleBrushTool({
   dicomImage = null,
   onPreviewUpdate,
   activePredictions,
+  viewportId = 'default-viewport',
 }: SimpleBrushToolProps) {
   log.debug(`SimpleBrushTool render: active=${isActive} selected=${selectedStructure} erase=${isEraseMode}`, 'brush');
   const [isDrawing, setIsDrawing] = useState(false);
@@ -119,6 +123,10 @@ export function SimpleBrushTool({
   
   // For smart brush - collect adaptive shapes while drawing
   const adaptiveShapesRef = useRef<Array<{ x: number; y: number }[]>>([]);
+  
+  // Cross-viewport contour edit context for ghost contours (safe - returns null if no provider)
+  const contourEditContext = useContourEditSafe();
+  const activeStrokeIdRef = useRef<string | null>(null);
   
   // Shift key detection for temporary erase mode in brush tool
   const [isShiftPressed, setIsShiftPressed] = useState(false);
@@ -144,6 +152,64 @@ export function SimpleBrushTool({
   useEffect(() => {
     setAdjustedBrushSize(brushSize);
   }, [brushSize]);
+  
+  // Broadcast brush stroke to other viewports for ghost contour rendering
+  useEffect(() => {
+    if (!contourEditContext || !selectedStructure || !isActive) return;
+    
+    // Get structure color for ghost rendering
+    const structure = rtStructures?.structures?.find((s: any) => s.roiNumber === selectedStructure);
+    const structureColor: [number, number, number] = structure?.color || [255, 255, 0];
+    
+    if (isDrawing && brushPointsRef.current.length > 0) {
+      // Convert brush points to world coordinates for cross-viewport sync
+      const transform = ctTransform?.current || { scale: 1, offsetX: 0, offsetY: 0 };
+      const imagePosition = imageMetadata?.imagePosition?.split?.('\\')?.map(Number) || [0, 0, 0];
+      const pixelSpacing = imageMetadata?.pixelSpacing?.split?.('\\')?.map(Number) || [1, 1];
+      const [rowSpacing, colSpacing] = pixelSpacing;
+      
+      const drawingPoints: ActiveDrawingPoint[] = brushPointsRef.current.map(pt => {
+        const pixelX = (pt.x - transform.offsetX) / transform.scale;
+        const pixelY = (pt.y - transform.offsetY) / transform.scale;
+        return {
+          x: imagePosition[0] + (pixelX * colSpacing),
+          y: imagePosition[1] + (pixelY * rowSpacing),
+          z: currentSlicePosition,
+        };
+      });
+      
+      const isInEraseState = isEraseMode || isTemporaryEraseMode;
+      
+      if (!activeStrokeIdRef.current) {
+        // Start a new stroke
+        activeStrokeIdRef.current = contourEditContext.startStroke({
+          sourceViewportId: viewportId,
+          toolType: isInEraseState ? 'eraser' : (smartBrushEnabled ? 'smart_brush' : 'brush'),
+          structureId: selectedStructure,
+          structureColor,
+          slicePosition: currentSlicePosition,
+          points: drawingPoints,
+          mode: isInEraseState ? 'subtract' : 'add',
+          brushSize: brushSize,
+        });
+      } else {
+        // Update existing stroke
+        contourEditContext.updateStroke(activeStrokeIdRef.current, drawingPoints);
+      }
+    } else if (!isDrawing && activeStrokeIdRef.current) {
+      // Drawing ended - end the stroke
+      contourEditContext.endStroke(activeStrokeIdRef.current);
+      activeStrokeIdRef.current = null;
+    }
+  }, [isDrawing, selectedStructure, isActive, currentSlicePosition, isEraseMode, isTemporaryEraseMode, smartBrushEnabled, brushSize, viewportId, contourEditContext, rtStructures, imageMetadata, ctTransform]);
+  
+  // Cleanup ghost stroke when tool deactivates
+  useEffect(() => {
+    if (!isActive && contourEditContext && activeStrokeIdRef.current) {
+      contourEditContext.endStroke(activeStrokeIdRef.current);
+      activeStrokeIdRef.current = null;
+    }
+  }, [isActive, contourEditContext]);
 
   // Handle shift key for temporary erase mode (only for brush tool, not erase tool)
   useEffect(() => {

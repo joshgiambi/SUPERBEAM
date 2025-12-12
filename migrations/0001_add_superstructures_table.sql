@@ -30,3 +30,4 @@ COMMENT ON COLUMN "rt_superstructures"."operation_type" IS 'Type of operation: u
 COMMENT ON COLUMN "rt_superstructures"."auto_update" IS 'Whether to automatically regenerate when source structures change';
 
 
+

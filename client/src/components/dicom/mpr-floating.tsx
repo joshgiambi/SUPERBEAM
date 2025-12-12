@@ -227,19 +227,41 @@ export const MPRFloating: React.FC<MPRFloatingProps> = ({
       })();
       const rowDir = [iop[0], iop[1], iop[2]]; 
       const colDir = [iop[3], iop[4], iop[5]];
+      
+      // Calculate the normal vector to the image plane (cross product of row and col directions)
+      const normal = [
+        rowDir[1] * colDir[2] - rowDir[2] * colDir[1],
+        rowDir[2] * colDir[0] - rowDir[0] * colDir[2],
+        rowDir[0] * colDir[1] - rowDir[1] * colDir[0]
+      ];
+      
       const dot = (a: number[], b: number[]) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+      
       const worldToPixel = (wx: number, wy: number, wz: number): { x: number; y: number } => {
         const d = [wx - pos0[0], wy - pos0[1], wz - pos0[2]];
-        // .x = Row Index (Y-axis component)
-        // .y = Column Index (X-axis component)
-        const x = (dot(d, colDir) / spacing.col) - 0.5;
-        const y = (dot(d, rowDir) / spacing.row) - 0.5;
-        return { x, y };
+        // DICOM standard:
+        // - rowDir = direction of increasing column index (along rows)
+        // - colDir = direction of increasing row index (along columns)
+        // - pixelSpacing[0] = row spacing, pixelSpacing[1] = column spacing
+        // columnIndex = dot(d, rowDir) / columnSpacing
+        // rowIndex = dot(d, colDir) / rowSpacing
+        const colIndex = dot(d, rowDir) / spacing.col;  // X position in image
+        const rowIndex = dot(d, colDir) / spacing.row;  // Y position in image
+        return { x: rowIndex, y: colIndex };
       };
-      const worldZToSliceIndex = (worldZ: number): number => {
+      
+      const worldZToSliceIndex = (worldZ: number, wx?: number, wy?: number): number => {
+        // For proper slice index calculation, project the point onto the normal vector
+        // This handles non-axial orientations correctly
+        if (wx !== undefined && wy !== undefined) {
+          const d = [wx - pos0[0], wy - pos0[1], worldZ - pos0[2]];
+          const sliceIdx = Math.round(dot(d, normal) / spacing.z);
+          return Math.min(depth - 1, Math.max(0, Math.abs(sliceIdx)));
+        }
+        // Fallback for when only Z is provided (for contour slicePosition)
         const relZ = worldZ - pos0[2];
         const sliceIdx = Math.round(relZ / spacing.z);
-        return Math.min(depth - 1, Math.max(0, sliceIdx));
+        return Math.min(depth - 1, Math.max(0, Math.abs(sliceIdx)));
       };
       
       for (const s of rtStructures.structures) {

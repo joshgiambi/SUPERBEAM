@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SeriesSelector } from './series-selector';
 import { WorkingViewer } from './working-viewer';
+import { FlexibleFusionLayout } from './flexible-fusion-layout';
 import { BottomToolbarPrototypeV2 } from './bottom-toolbar-prototype-v2';
 import { ContourEditToolbar } from './contour-edit-toolbar';
-import { FusionControlPanelV2 } from './fusion-control-panel-v2';
+import { FusionControlPanelV2, type FusionLayoutPreset } from './fusion-control-panel-v2';
 import { ErrorModal } from './error-modal';
 import { BooleanPipelinePrototypeCombined } from './boolean-pipeline-prototype-combined';
-import { X, Target } from 'lucide-react';
+import { X, Target, Bookmark, Save, LayoutGrid } from 'lucide-react';
 import { undoRedoManager } from '@/lib/undo-system';
 import { log } from '@/lib/log';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ import type { FusionManifest, FusionSecondaryDescriptor } from '@/types/fusion';
 import { fetchFusionManifest, preloadFusionSecondary, getFusionManifest, clearFusionCaches } from '@/lib/fusion-utils';
 import { cornerstoneConfig } from '@/lib/cornerstone-config';
 import { LoadingProgress } from './loading-progress';
+import { fusionLayoutService, useFusionLayoutService } from '@/lib/fusion-layout-service';
+import { ContourEditProvider } from '@/contexts/contour-edit-context';
 
 // TypeScript declaration for cornerstone
 declare global {
@@ -77,6 +80,9 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [secondarySeriesId, setSecondarySeriesId] = useState<number | null>(null);
   const [fusionOpacity, setFusionOpacity] = useState(0.5);
   const [fusionDisplayMode, setFusionDisplayMode] = useState<'overlay' | 'side-by-side'>('overlay');
+  // Flexible fusion layout state
+  const [fusionLayoutPreset, setFusionLayoutPreset] = useState<FusionLayoutPreset>('overlay');
+  const [enableFlexibleLayout, setEnableFlexibleLayout] = useState(true); // Enable by default
   // Secondary loading states for visual feedback
   const [secondaryLoadingStates, setSecondaryLoadingStates] = useState<Map<number, {progress: number, isLoading: boolean}>>(new Map());
   const [currentlyLoadingSecondary, setCurrentlyLoadingSecondary] = useState<number | null>(null);
@@ -98,6 +104,20 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [mprVisible, setMprVisible] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   
+  // Synced zoom state for multi-viewport layouts (FlexibleFusionLayout)
+  const [syncedZoom, setSyncedZoom] = useState(1);
+  
+  // Viewport assignments state - tracks which secondary series is in which viewport (1-indexed)
+  // Map key is viewport number, value is secondary series ID (null for primary-only)
+  const [viewportAssignments, setViewportAssignments] = useState<Map<number, number | null>>(new Map());
+  
+  // Handler to exit from split view back to overlay mode
+  const handleExitToOverlay = useCallback(() => {
+    setFusionLayoutPreset('overlay');
+    setFusionDisplayMode('overlay');
+    setViewportAssignments(new Map()); // Clear assignments when exiting
+  }, []);
+  
   // Watch for secondary series changes to show/hide fusion panel
   useEffect(() => {
     if (secondarySeriesId !== null) {
@@ -106,6 +126,43 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     }
   }, [secondarySeriesId]);
   
+  // Load fusion layout preference on mount and when study changes
+  useEffect(() => {
+    const studyId = studyData?.study?.id;
+    if (studyId) {
+      const savedLayout = fusionLayoutService.getLayoutForStudy(studyId);
+      setFusionLayoutPreset(savedLayout);
+      // Sync display mode with layout preset
+      if (savedLayout === 'overlay') {
+        setFusionDisplayMode('overlay');
+      } else {
+        setFusionDisplayMode('side-by-side');
+      }
+    }
+  }, [studyData?.study?.id]);
+  
+  // Save fusion layout preference when it changes
+  const handleLayoutPresetChange = useCallback((preset: FusionLayoutPreset) => {
+    setFusionLayoutPreset(preset);
+    // Sync display mode
+    if (preset === 'overlay') {
+      setFusionDisplayMode('overlay');
+    } else {
+      setFusionDisplayMode('side-by-side');
+    }
+    // Persist to storage
+    const studyId = studyData?.study?.id;
+    if (studyId) {
+      fusionLayoutService.setLayoutForStudy(studyId, preset);
+    }
+  }, [studyData?.study?.id]);
+  
+  // Handle viewport swap
+  const handleSwapViewports = useCallback(() => {
+    // This would be implemented when using FlexibleFusionLayout directly
+    console.log('Swap viewports requested');
+  }, []);
+  
   // Boolean operations state
   const [showBooleanOperations, setShowBooleanOperations] = useState(false);
   const [showMarginToolbar, setShowMarginToolbar] = useState(false);
@@ -113,17 +170,36 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [previewStructureInfo, setPreviewStructureInfo] = useState<{ targetName: string; isNewStructure: boolean } | null>(null);
   const [highlightedStructures, setHighlightedStructures] = useState<{ inputs: string[]; output: string }>({ inputs: [], output: '' });
 
-  // Clear RT structures when patient changes
+  // Use a stable patient identifier - prefer patient.id, fall back to first study's patientId
+  const stablePatientId = useMemo(() => {
+    return studyData?.patient?.id ?? studyData?.studies?.[0]?.patientId ?? null;
+  }, [studyData?.patient?.id, studyData?.studies]);
+  
+  // Track previous patient ID to detect real changes
+  const prevPatientIdRef = useRef<number | null>(null);
+  
+  // Clear RT structures when patient truly changes (not on initial load)
   useEffect(() => {
-    log.debug(`Patient changed, clearing RT structures. Patient ID: ${studyData?.patient?.id}`,'viewer-interface');
-    setRTStructures(null);
-    setStructureVisibility(new Map());
-    setSelectedStructures(new Set());
-    setSelectedForEdit(null);
-    setSelectedStructureColors([]);
-    setIsContourEditMode(false);
-    setLoadedRTSeriesId(null);  // Clear loaded RT series ID
-    }, [studyData?.patient?.id]);
+    // Skip if this is the initial load (prevPatientIdRef is null and we're setting it for the first time)
+    if (prevPatientIdRef.current === null && stablePatientId !== null) {
+      prevPatientIdRef.current = stablePatientId;
+      log.debug(`Initial patient ID set: ${stablePatientId}`, 'viewer-interface');
+      return;
+    }
+    
+    // Only clear if the patient ID actually changed to a different value
+    if (prevPatientIdRef.current !== stablePatientId && stablePatientId !== null) {
+      log.debug(`Patient changed from ${prevPatientIdRef.current} to ${stablePatientId}, clearing RT structures`, 'viewer-interface');
+      prevPatientIdRef.current = stablePatientId;
+      setRTStructures(null);
+      setStructureVisibility(new Map());
+      setSelectedStructures(new Set());
+      setSelectedForEdit(null);
+      setSelectedStructureColors([]);
+      setIsContourEditMode(false);
+      setLoadedRTSeriesId(null);  // Clear loaded RT series ID
+    }
+  }, [stablePatientId]);
 
   // Notify parent when loaded RT series changes
   useEffect(() => {
@@ -744,9 +820,15 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     }
   };
 
+  // Check if we're in multi-viewport mode (FlexibleFusionLayout)
+  const isInFlexibleFusionLayout = fusionLayoutPreset !== 'overlay' && secondarySeriesId !== null;
+
   const handleZoomIn = () => {
     try {
-      if ((window as any).currentViewerZoom?.zoomIn) {
+      // If in FlexibleFusionLayout, use synced zoom state
+      if (isInFlexibleFusionLayout) {
+        setSyncedZoom(prev => Math.min(4, prev + 0.25));
+      } else if ((window as any).currentViewerZoom?.zoomIn) {
         (window as any).currentViewerZoom.zoomIn();
       }
     } catch (error) {
@@ -756,7 +838,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
 
   const handleZoomOut = () => {
     try {
-      if ((window as any).currentViewerZoom?.zoomOut) {
+      // If in FlexibleFusionLayout, use synced zoom state
+      if (isInFlexibleFusionLayout) {
+        setSyncedZoom(prev => Math.max(0.25, prev - 0.25));
+      } else if ((window as any).currentViewerZoom?.zoomOut) {
         (window as any).currentViewerZoom.zoomOut();
       }
     } catch (error) {
@@ -766,7 +851,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
 
   const handleResetZoom = () => {
     try {
-      if ((window as any).currentViewerZoom?.resetZoom) {
+      // If in FlexibleFusionLayout, reset synced zoom
+      if (isInFlexibleFusionLayout) {
+        setSyncedZoom(1);
+      } else if ((window as any).currentViewerZoom?.resetZoom) {
         (window as any).currentViewerZoom.resetZoom();
       }
     } catch (error) {
@@ -1733,14 +1821,24 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const handleGlobalUndo = () => {
     const prev = undoRedoManager.undo();
     if (prev) {
+      console.log(`🔄 Global Undo: reverting to "${prev.action}" on structure ${prev.structureId}`);
       setRTStructures(prev.rtStructures);
+      toast({
+        title: `Undone: ${prev.action}`,
+        description: prev.structureName || `Structure ${prev.structureId}`,
+      });
     }
   };
 
   const handleGlobalRedo = () => {
     const next = undoRedoManager.redo();
     if (next) {
+      console.log(`🔄 Global Redo: re-applying "${next.action}" on structure ${next.structureId}`);
       setRTStructures(next.rtStructures);
+      toast({
+        title: `Redone: ${next.action}`,
+        description: next.structureName || `Structure ${next.structureId}`,
+      });
     }
   };
 
@@ -2039,20 +2137,26 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             fusionStatuses={fusionSecondaryStatuses}
             fusionCandidatesByPrimary={fusionCandidatesByPrimary}
             fusionSiblingMap={fusionSiblingMap}
+            viewportAssignments={viewportAssignments}
+            isInSplitView={fusionLayoutPreset !== 'overlay' && secondarySeriesId !== null}
           />
         </div>
 
         {/* DICOM Viewer with Dynamic Border - Flexible Width */}
-        <div className="flex-1 relative" style={{ overflow: 'visible' }}>
+        <div className="flex-1 flex flex-col" style={{ minHeight: 0, minWidth: 0 }}>
           {selectedSeries ? (
-            <div className="relative h-full" style={{ overflow: 'visible' }}>
+            <div className="flex-1 flex flex-col relative h-full" style={{ minHeight: 0 }}>
+              
               {/* Dynamic Border Based on Selected Structures */}
               <div 
-                className="absolute inset-0 rounded-lg pointer-events-none"
+                className="absolute inset-0 rounded-lg pointer-events-none transition-all duration-300"
                 style={{
                   border: selectedStructureColors.length > 0 
-                    ? `3px solid ${selectedStructureColors[0]}` 
-                    : '1px solid #374151',
+                    ? `2px solid ${selectedStructureColors[0]}` 
+                    : '1px solid rgba(75, 85, 99, 0.3)',
+                  boxShadow: selectedStructureColors.length > 0 
+                    ? `0 0 20px ${selectedStructureColors[0]}33, inset 0 0 0 1px ${selectedStructureColors[0]}22`
+                    : 'none',
                   zIndex: 1
                 }}
               />
@@ -2063,18 +2167,70 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   {selectedStructureColors.map((color, index) => (
                     <div
                       key={index}
-                      className="absolute inset-0 rounded-lg"
+                      className="absolute inset-0 rounded-lg transition-all duration-300"
                       style={{
-                        border: `3px solid ${color}`,
-                        transform: `scale(${1 - (index * 0.02)})`,
-                        opacity: 0.8 - (index * 0.2)
+                        border: `2px solid ${color}`,
+                        transform: `scale(${1 - (index * 0.015)})`,
+                        opacity: 0.85 - (index * 0.2),
+                        boxShadow: index === 0 ? `0 0 15px ${color}40` : 'none'
                       }}
                     />
                   ))}
                 </div>
               )}
               
-              {/* Main Viewer - always single view; MPR shown as floating windows */}
+              {/* Main Viewer - FlexibleFusionLayout OR WorkingViewer */}
+              {/* ContourEditProvider enables cross-viewport ghost contour synchronization */}
+              <ContourEditProvider>
+              {fusionLayoutPreset !== 'overlay' && secondarySeriesId ? (
+                <FlexibleFusionLayout
+                  primarySeriesId={selectedSeries.id}
+                  secondarySeriesIds={Array.from(fusionDescriptorMap.keys())}
+                  studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
+                  availableSeries={series}
+                  fusionOpacity={fusionOpacity}
+                  onFusionOpacityChange={setFusionOpacity}
+                  fusionWindowLevel={fusionWindowLevel}
+                  onFusionWindowLevelChange={setFusionWindowLevel}
+                  rtStructures={rtStructures}
+                  structureVisibility={structureVisibility}
+                  allStructuresVisible={allStructuresVisible}
+                  selectedForEdit={selectedForEdit}
+                  selectedStructures={selectedStructures}
+                  onContourUpdate={handleContourUpdate}
+                  onRTStructureUpdate={setRTStructures}
+                  contourSettings={contourSettings}
+                  brushToolState={brushToolState}
+                  onBrushSizeChange={(size) => {
+                    setBrushToolState(prev => ({ ...prev, brushSize: size }));
+                    try {
+                      const evt = new CustomEvent('brush:size:update', { detail: { brushSize: size } });
+                      window.dispatchEvent(evt);
+                    } catch {}
+                  }}
+                  windowLevel={windowLevel}
+                  onWindowLevelChange={setWindowLevel}
+                  imageCache={imageCache}
+                  registrationAssociations={registrationRelationshipMap}
+                  onLayoutChange={(layout) => {
+                    handleLayoutPresetChange(layout as FusionLayoutPreset);
+                  }}
+                  onSwapViewports={handleSwapViewports}
+                  fusionSecondaryStatuses={fusionSecondaryStatuses}
+                  fusionManifestLoading={fusionManifestLoading}
+                  fusionManifestPrimarySeriesId={fusionManifest?.primarySeriesId ?? null}
+                  selectedFusionSecondaryId={secondarySeriesId}
+                  onSecondarySeriesSelect={setSecondarySeriesId}
+                  fusionDisplayMode={fusionDisplayMode}
+                  fusionLayoutPreset={fusionLayoutPreset}
+                  isMPRVisible={mprVisible}
+                  onMPRToggle={() => setMprVisible(!mprVisible)}
+                  externalZoom={syncedZoom}
+                  onZoomChange={setSyncedZoom}
+                  onExitToOverlay={handleExitToOverlay}
+                  onViewportAssignmentsChange={setViewportAssignments}
+                />
+              ) : (
                 <WorkingViewer 
                   ref={workingViewerRef}
                   seriesId={selectedSeries.id}
@@ -2101,6 +2257,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   secondarySeriesId={secondarySeriesId}
                   fusionOpacity={fusionOpacity}
                   fusionDisplayMode={fusionDisplayMode}
+                  fusionLayoutPreset={fusionLayoutPreset}
                   onSecondarySeriesSelect={setSecondarySeriesId}
                   onFusionOpacityChange={setFusionOpacity}
                   hasSecondarySeriesForFusion={fusionDescriptorMap.size > 0}
@@ -2118,7 +2275,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   fusionManifestLoading={fusionManifestLoading}
                   fusionManifestPrimarySeriesId={fusionManifest?.primarySeriesId ?? null}
                   onActivePredictionsChange={setActivePredictions}
+                  hideSidebar
                 />
+              )}
+              </ContourEditProvider>
               
               {/* Structure Tags on Right Side - Responsive */}
               {selectedStructures.size > 0 && rtStructures?.structures && (
@@ -2149,8 +2309,14 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
               )}
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center bg-black border border-indigo-800 rounded-lg">
-              <p className="text-indigo-400">Select a series to view DICOM images</p>
+            <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-950 via-black to-gray-950 rounded-lg border border-white/5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center border border-indigo-500/20">
+                  <LayoutGrid className="w-7 h-7 text-indigo-400/50" />
+                </div>
+                <p className="text-sm font-medium text-gray-400">Select a series to view</p>
+                <p className="text-xs text-gray-600">Choose from the sidebar on the left</p>
+              </div>
             </div>
           )}
         </div>
@@ -2214,6 +2380,15 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           historyItems={undoRedoManager.getHistory().map(h => ({ timestamp: h.timestamp, action: h.action, structureId: h.structureId }))}
           currentHistoryIndex={undoRedoManager.getCurrentIndex()}
           onSelectHistory={handleJumpToHistory}
+          // Context props for adaptive toolbar
+          hasSecondaries={fusionDescriptorMap.size > 0}
+          hasRTStructures={!!(rtStructures?.structures && rtStructures.structures.length > 0)}
+          viewMode={
+            (fusionLayoutPreset !== 'overlay' && secondarySeriesId) 
+              ? 'fusion-layout' 
+              : 'standard'
+          }
+          onExitFusionLayout={handleExitToOverlay}
         />
       )}
 
@@ -2618,9 +2793,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         </div>
       )}
       
-      {/* Legacy Boolean Operations Toolbar - Commented out for now */}
+      {/* Legacy Boolean Operations Toolbar - Removed (was dead code) */}
       {false && showBooleanOperations && !showMarginToolbar && (
-        <BooleanOperationsToolbar
+        null as any /* BooleanOperationsToolbar removed */
+        /* Original props were:
           isVisible={showBooleanOperations}
           onClose={() => {
             setShowBooleanOperations(false);
@@ -3131,10 +3307,13 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                 console.error('Boolean operation failed:', err);
               }
           }}
-        />
+        */ /* End of original BooleanOperationsToolbar props */
       )}
 
-      {(fusionManifest && fusionManifest.secondaries.length > 0) || fusionManifestLoading || fusionManifestError ? (
+      {/* Fusion panel - only show in overlay mode (split view has CompactToolbar with integrated controls) */}
+      {/* Hide when in split view mode - the FlexibleFusionLayout's CompactToolbar handles fusion controls */}
+      {(showFusionPanel || fusionManifest !== null || fusionManifestLoading || fusionManifestError) && 
+       !(fusionLayoutPreset !== 'overlay' && secondarySeriesId) && (
         <FusionControlPanelV2
           opacity={fusionOpacity}
           onOpacityChange={setFusionOpacity}
@@ -3149,8 +3328,21 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           displayMode={fusionDisplayMode}
           onDisplayModeChange={setFusionDisplayMode}
           primarySeriesId={selectedSeries?.id}
+          // Flexible layout props
+          layoutPreset={fusionLayoutPreset}
+          onLayoutPresetChange={handleLayoutPresetChange}
+          onSwapViewports={handleSwapViewports}
+          enableFlexibleLayout={enableFlexibleLayout}
+          // Bookmark props
+          studyId={studyData?.study?.id}
+          onLoadBookmark={(bookmark) => {
+            log.debug(`Loading bookmark: ${bookmark.name}`, 'viewer-interface');
+          }}
+          // External expanded state control
+          isExpanded={showFusionPanel}
+          onExpandedChange={setShowFusionPanel}
         />
-      ) : null}
+      )}
 
       {/* Margin Toolbar */}
       {showMarginToolbar && rtStructures && !showBooleanOperations && !isContourEditMode && (

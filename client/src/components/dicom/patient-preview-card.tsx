@@ -110,6 +110,16 @@ export function PatientPreviewCard({ patient, rtStructures }: PatientPreviewCard
           <span className="text-gray-400">Total Studies: {patient.studies.length}</span>
           <span className="text-gray-400">Total Images: {totalImages}</span>
         </div>
+        
+        {/* Prototype Launcher */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <Button 
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+            onClick={() => window.open('/ohif-prototype?patient=OZa7UswspYAakrgYemxMdqy1E', '_blank')}
+          >
+            Launch OHIF Prototype (Gemini)
+          </Button>
+        </div>
       </div>
     </Card>
   );

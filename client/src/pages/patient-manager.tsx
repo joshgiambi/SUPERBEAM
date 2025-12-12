@@ -44,7 +44,9 @@ import {
   Clock,
   Import,
   X,
-  Beaker
+  Beaker,
+  FlaskConical,
+  Palette
 } from "lucide-react";
 
 interface Patient {
@@ -914,12 +916,30 @@ export default function PatientManager() {
                   Prototypes
                 </Button>
               </Link>
+              <Link href="/ohif-prototypes">
+                <Button 
+                  variant="outline" 
+                  className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-400/30 text-white font-medium shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
+                >
+                  <FlaskConical className="w-4 h-4 mr-2" />
+                  OHIF Prototype A
+                </Button>
+              </Link>
               <Link href="/introducing">
                 <Button 
                   variant="outline" 
                   className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-purple-500/30 text-white font-medium shadow-lg hover:shadow-purple-500/20 transition-all duration-200"
                 >
                   ✨ Introducing Superbeam
+                </Button>
+              </Link>
+              <Link href="/superstyle">
+                <Button 
+                  variant="outline" 
+                  className="bg-gradient-to-r from-pink-500/10 to-orange-500/10 hover:from-pink-500/20 hover:to-orange-500/20 border border-pink-400/30 text-white font-medium shadow-lg hover:shadow-pink-400/20 transition-all duration-200"
+                >
+                  <Palette className="w-4 h-4 mr-2" />
+                  SuperStyle
                 </Button>
               </Link>
             </div>

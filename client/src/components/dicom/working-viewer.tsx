@@ -9,6 +9,7 @@ import { PenToolUnifiedV2 } from "./pen-tool-unified-v2";
 import { EclipsePlanarContourTool } from "./eclipse-planar-contour-tool";
 import { PenTool } from "./pen-tool";
 import PenToolV2 from "./pen-tool-v2";
+import { GhostContourOverlay } from "./ghost-contour-overlay";
 
 import { MeasurementTool } from "./measurement-tool";
 import { MPRFloating } from './mpr-floating';
@@ -54,6 +55,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BlobManagementDialog } from './blob-management-dialog';
 import { groupStructureBlobs, computeBlobVolumeCc, createContourKey, type Blob, type BlobContour } from '@/lib/blob-operations';
 import { useUserSettings } from './user-settings-panel';
+import { getImageLoadPoolManager, createStackContextPrefetch, RequestPriority } from '@/lib/image-load-pool-manager';
 
 const PREDICTION_DEBUG = false;
 
@@ -93,6 +95,10 @@ type RegistrationOption = {
   sourceDetail: RegistrationSeriesDetail | null;
   targetDetail: RegistrationSeriesDetail | null;
 };
+
+// Global pending fetches map to prevent race conditions in multi-viewport scenarios
+// Key: sopInstanceUID, Value: Promise resolving to imageData
+const globalPendingFetches = new Map<string, Promise<any>>();
 
 const IDENTITY_MATRIX_4X4 = [
   1, 0, 0, 0,
@@ -158,6 +164,7 @@ interface WorkingViewerProps {
   secondarySeriesId?: number | null;
   fusionOpacity?: number;
   fusionDisplayMode?: 'overlay' | 'side-by-side';
+  fusionLayoutPreset?: 'overlay' | 'side-by-side' | 'primary-focus' | 'secondary-focus' | 'vertical-stack' | 'quad';
   onSecondarySeriesSelect?: (id: number | null) => void;
   onFusionOpacityChange?: (opacity: number) => void;
   hasSecondarySeriesForFusion?: boolean;
@@ -181,6 +188,28 @@ interface WorkingViewerProps {
   fusionSecondaryStatuses?: Map<number, { status: 'idle' | 'loading' | 'ready' | 'error'; error?: string | null }>;
   fusionManifestLoading?: boolean;
   fusionManifestPrimarySeriesId?: number | null;
+  
+  // External synchronization props for multi-viewport layouts
+  externalSliceIndex?: number;
+  onSliceIndexChange?: (index: number) => void;
+  externalZoom?: number;
+  onZoomChange?: (zoom: number) => void;
+  externalPan?: { x: number; y: number };
+  onPanChange?: (x: number, y: number) => void;
+  externalCrosshair?: { x: number; y: number };
+  onCrosshairChange?: (pos: { x: number; y: number }) => void;
+  
+  // Layout control props for flexible layouts
+  hideToolbar?: boolean;
+  hideSidebar?: boolean;
+  compactMode?: boolean;
+  
+  // Performance optimization props for multi-viewport
+  initialImages?: any[];
+  pixelDataCache?: React.MutableRefObject<Map<string, any>>;
+  
+  /** Unique viewport ID for cross-viewport ghost contour synchronization */
+  viewportId?: string;
 }
 
 // Expose sidebar ref globally for fusion panel placement
@@ -226,7 +255,22 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
     fusionManifestPrimarySeriesId = null,
     onMPRToggle,
     isMPRVisible = false,
-    onActivePredictionsChange
+    onActivePredictionsChange,
+    // External sync props
+    externalSliceIndex,
+    onSliceIndexChange,
+    externalZoom,
+    onZoomChange,
+    externalPan,
+    onPanChange,
+    externalCrosshair,
+    onCrosshairChange,
+    // Layout control props
+    hideToolbar = false,
+    hideSidebar = false,
+    compactMode = false,
+    // Cross-viewport ghost contour sync
+    viewportId = `viewport-${seriesId || 'default'}`
   } = props;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -247,6 +291,32 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
   useEffect(() => {
     rtStructuresRef.current = rtStructures;
   }, [rtStructures]);
+  
+  // Track the previous external structures reference to detect external changes
+  const prevExternalStructuresRef = useRef<any>(null);
+  
+  // Sync local RT structures when external structures change (e.g., from undo/redo or other viewports)
+  // This ensures all viewports share the same structure state
+  useEffect(() => {
+    if (!externalRTStructures) {
+      // Don't clear local structures just because external became null temporarily
+      // This prevents flickering when parent re-renders
+      return;
+    }
+    
+    // Skip if this is the same external reference we already processed
+    if (externalRTStructures === prevExternalStructuresRef.current) {
+      return;
+    }
+    
+    // Update our tracking ref
+    prevExternalStructuresRef.current = externalRTStructures;
+    
+    // Always sync external changes - the parent is the source of truth
+    // This enables undo/redo and cross-viewport sync
+    setLocalRTStructures(externalRTStructures);
+  }, [externalRTStructures]);
+  
   // Force render trigger to ensure immediate canvas updates
   const [forceRenderTrigger, setForceRenderTrigger] = useState(0);
   const structureVisibility = externalStructureVisibility || new Map();
@@ -646,6 +716,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     return () => {
       fuseboxCacheRef.current.clear();
       clearFusionSlices(activeSeriesId);
+      
+      // Cleanup ImageLoadPoolManager prefetch state
+      if (stackPrefetchRef.current) {
+        stackPrefetchRef.current.destroy();
+        stackPrefetchRef.current = null;
+      }
+      prefetchCompleteRef.current = false;
     };
   }, [seriesId]);
 
@@ -653,6 +730,67 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  
+  // External sync: Slice index
+  useEffect(() => {
+    if (externalSliceIndex !== undefined && externalSliceIndex !== currentIndex && images.length > 0) {
+      const clampedIndex = Math.max(0, Math.min(externalSliceIndex, images.length - 1));
+      setCurrentIndex(clampedIndex);
+    }
+  }, [externalSliceIndex, images.length]);
+  
+  // OHIF-style: Update ImageLoadPoolManager position for dynamic prioritization
+  // This ensures center-out loading always prioritizes slices near the current view
+  useEffect(() => {
+    if (images.length > 0 && stackPrefetchRef.current) {
+      // Notify the prefetch helper of the scroll position change
+      stackPrefetchRef.current.onScroll(currentIndex);
+    }
+    
+    // Also update the global pool manager position
+    const poolManager = getImageLoadPoolManager();
+    poolManager.setCurrentPosition(currentIndex, images.length);
+  }, [currentIndex, images.length]);
+  
+  // External sync: Zoom
+  useEffect(() => {
+    if (externalZoom !== undefined && externalZoom !== zoom) {
+      setZoom(externalZoom);
+    }
+  }, [externalZoom]);
+  
+  // External sync: Pan
+  useEffect(() => {
+    if (externalPan !== undefined && (externalPan.x !== panX || externalPan.y !== panY)) {
+      setPanX(externalPan.x);
+      setPanY(externalPan.y);
+    }
+  }, [externalPan?.x, externalPan?.y]);
+  
+  // External sync: Crosshair
+  useEffect(() => {
+    if (externalCrosshair !== undefined && 
+        (externalCrosshair.x !== crosshairPos.x || externalCrosshair.y !== crosshairPos.y)) {
+      setCrosshairPos(externalCrosshair);
+    }
+  }, [externalCrosshair?.x, externalCrosshair?.y]);
+  
+  // Notify parent of internal state changes (for sync)
+  const notifySliceChange = useCallback((index: number) => {
+    onSliceIndexChange?.(index);
+  }, [onSliceIndexChange]);
+  
+  const notifyZoomChange = useCallback((z: number) => {
+    onZoomChange?.(z);
+  }, [onZoomChange]);
+  
+  const notifyPanChange = useCallback((x: number, y: number) => {
+    onPanChange?.(x, y);
+  }, [onPanChange]);
+  
+  const notifyCrosshairChange = useCallback((pos: { x: number; y: number }) => {
+    onCrosshairChange?.(pos);
+  }, [onCrosshairChange]);
   
   const compileFusionDebug = useCallback(() => {
     try {
@@ -4814,7 +4952,27 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
   const loadImages = async () => {
     try {
-      // Check if images are already cached
+      // 1. Check for externally provided initial images (Fixed FlexibleFusionLayout optimization)
+      if (props.initialImages && props.initialImages.length > 0) {
+        console.log(`Using provided initial images for series ${seriesId}`);
+        setImages(props.initialImages);
+        
+        // Setup initial state similar to a fresh load
+        const midpointIndex = Math.floor(props.initialImages.length / 2);
+        setCurrentIndex(midpointIndex);
+        setIsLoading(false);
+        
+        // Schedule initial render
+        setTimeout(() => {
+          displayCurrentImage();
+        }, 10);
+        
+        // Start background prefetching (if enabled)
+        startBackgroundPrefetch(props.initialImages);
+        return;
+      }
+
+      // 2. Check if images are already cached
       if (imageCache?.current.has(seriesId.toString())) {
         const cached = imageCache.current.get(seriesId.toString());
         if (cached) {
@@ -5024,50 +5182,104 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   };
 
   // Single fetch/parse function to avoid double fetching
+  // Uses global pending fetches map to prevent race conditions in multi-viewport scenarios
   const fetchAndParseImage = async (sopInstanceUID: string, signal?: AbortSignal) => {
-    // Check if already in cache
+    // 1. Check shared pixel cache first (if provided)
+    if (props.pixelDataCache?.current?.has(sopInstanceUID)) {
+      return props.pixelDataCache.current.get(sopInstanceUID);
+    }
+
+    // 2. Check local cache
     if (imageCacheRef.current.has(sopInstanceUID)) {
       return imageCacheRef.current.get(sopInstanceUID);
     }
     
-    const response = await fetch(`/api/images/${sopInstanceUID}`, { signal });
-    if (!response.ok) {
-      throw new Error(`Failed to load image: ${response.status}`);
+    // 3. Check if another viewer is already fetching this image (race condition prevention)
+    if (globalPendingFetches.has(sopInstanceUID)) {
+      // Wait for the existing fetch to complete
+      return globalPendingFetches.get(sopInstanceUID);
     }
     
-    const arrayBuffer = await response.arrayBuffer();
-    const imageData = await parseDicomImage(arrayBuffer);
-    
-    if (imageData) {
-      imageCacheRef.current.set(sopInstanceUID, imageData);
-      
-      // Populate global cache for MPR
-      if (!((window as any).__WV_CACHE__)) {
-        (window as any).__WV_CACHE__ = new Map();
+    // 4. Start new fetch and register in pending map
+    const fetchPromise = (async () => {
+      try {
+        const response = await fetch(`/api/images/${sopInstanceUID}`, { signal });
+        if (!response.ok) {
+          throw new Error(`Failed to load image: ${response.status}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const imageData = await parseDicomImage(arrayBuffer);
+        
+        if (imageData) {
+          // Update local cache
+          imageCacheRef.current.set(sopInstanceUID, imageData);
+          
+          // Update shared cache (if provided)
+          if (props.pixelDataCache?.current) {
+            props.pixelDataCache.current.set(sopInstanceUID, imageData);
+          }
+          
+          // Populate global cache for MPR
+          if (!((window as any).__WV_CACHE__)) {
+            (window as any).__WV_CACHE__ = new Map();
+          }
+          (window as any).__WV_CACHE__.set(sopInstanceUID, {
+            data: imageData.data,
+            width: imageData.width,
+            height: imageData.height
+          });
+        }
+        
+        return imageData;
+      } finally {
+        // Clean up pending fetch entry
+        globalPendingFetches.delete(sopInstanceUID);
       }
-      (window as any).__WV_CACHE__.set(sopInstanceUID, {
-        data: imageData.data,
-        width: imageData.width,
-        height: imageData.height
-      });
-    }
+    })();
     
-    return imageData;
+    // Register the promise before awaiting
+    globalPendingFetches.set(sopInstanceUID, fetchPromise);
+    
+    return fetchPromise;
   };
   
   // Batch fetch multiple images at once for better performance
   const fetchBatchImages = async (sopInstanceUIDs: string[], signal?: AbortSignal): Promise<Map<string, any>> => {
     const results = new Map<string, any>();
+    const pendingPromises: Promise<void>[] = [];
     
-    // Filter out already cached images
-    const uncachedUIDs = sopInstanceUIDs.filter(uid => !imageCacheRef.current.has(uid));
+    // Filter out already cached images and pending fetches
+    const uncachedUIDs = sopInstanceUIDs.filter(uid => {
+      // Check shared cache first
+      if (props.pixelDataCache?.current?.has(uid)) {
+        results.set(uid, props.pixelDataCache.current.get(uid));
+        return false;
+      }
+      // Check local cache
+      if (imageCacheRef.current.has(uid)) {
+        results.set(uid, imageCacheRef.current.get(uid));
+        return false;
+      }
+      // Check if another viewer is already fetching this image
+      if (globalPendingFetches.has(uid)) {
+        // Wait for the pending fetch and add result
+        pendingPromises.push(
+          globalPendingFetches.get(uid)!.then(imageData => {
+            if (imageData) results.set(uid, imageData);
+          }).catch(() => {})
+        );
+        return false;
+      }
+      return true;
+    });
+    
+    // Wait for any pending fetches
+    if (pendingPromises.length > 0) {
+      await Promise.all(pendingPromises);
+    }
     
     if (uncachedUIDs.length === 0) {
-      // All images are cached
-      sopInstanceUIDs.forEach(uid => {
-        const cached = imageCacheRef.current.get(uid);
-        if (cached) results.set(uid, cached);
-      });
       return results;
     }
     
@@ -5097,7 +5309,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           
           const imageData = await parseDicomImage(bytes.buffer);
           if (imageData) {
+            // Update local cache
             imageCacheRef.current.set(uid, imageData);
+            
+            // Update shared cache
+            if (props.pixelDataCache?.current) {
+              props.pixelDataCache.current.set(uid, imageData);
+            }
+
             results.set(uid, imageData);
             
             // Populate global cache for MPR
@@ -5143,107 +5362,69 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     return results;
   };
 
-  // OHIF 3.10-style background prefetch - non-blocking and progressive
+  // OHIF 3.10-style background prefetch using ImageLoadPoolManager
+  // This provides priority queue, center-out loading, and requestIdleCallback integration
+  const stackPrefetchRef = useRef<ReturnType<typeof createStackContextPrefetch> | null>(null);
+  
   const startBackgroundPrefetch = async (imageList: any[]) => {
     if (!imageList || imageList.length === 0 || prefetchCompleteRef.current) {
       return;
     }
 
-    console.log(`🚀 OHIF-style background prefetch starting for ${imageList.length} images`);
+    console.log(`🚀 OHIF-style background prefetch starting for ${imageList.length} images (using ImageLoadPoolManager)`);
+    
+    const poolManager = getImageLoadPoolManager({
+      maxConcurrent: 6,        // Browser connection limit
+      prefetchRadius: 10,      // Slices to prioritize around current
+      batchSize: 50,           // Match server batch size
+    });
     
     setPrefetchProgress({ loaded: imageCacheRef.current.size, total: imageList.length });
     
-    const BATCH_SIZE = 50; // Match server batch size
-    const PREFETCH_RADIUS = 10; // Images to prioritize around current position
-    const COMPLETION_THRESHOLD = 0.95; // Hide progress at 95% complete
-    const MAX_PREFETCH_TIME = 30000; // 30 second timeout
+    // Create fetch factory for the pool manager
+    const fetchFactory = (sopInstanceUID: string) => async () => {
+      // Check cache first
+      if (imageCacheRef.current.has(sopInstanceUID)) {
+        return imageCacheRef.current.get(sopInstanceUID);
+      }
+      
+      // Fetch the image
+      const result = await fetchAndParseImage(sopInstanceUID, seriesAbortRef.current?.signal);
+      return result;
+    };
+    
+    // Progress tracking
     let loadedCount = imageCacheRef.current.size;
-    let failedCount = 0;
-    const startTime = Date.now();
+    const onProgress = (loaded: number, total: number) => {
+      loadedCount = loaded + imageCacheRef.current.size;
+      setPrefetchProgress({ loaded: loadedCount, total: imageList.length });
+      
+      // Check completion threshold (95%)
+      if (loadedCount / imageList.length >= 0.95) {
+        prefetchCompleteRef.current = true;
+        console.log(`✅ Background prefetch sufficient: ${loadedCount}/${imageList.length} images`);
+        setPrefetchProgress({ loaded: 0, total: 0 }); // Hide progress
+      }
+    };
+    
+    // Create stack context prefetch helper
+    stackPrefetchRef.current = createStackContextPrefetch(
+      imageList.map((img, idx) => ({ sopInstanceUID: img.sopInstanceUID, index: idx })),
+      fetchFactory,
+      { radius: 10, onProgress }
+    );
+    
+    // Initialize prefetching starting from current index
+    stackPrefetchRef.current.initialize(currentIndex);
     
     // Auto-hide progress after timeout
     setTimeout(() => {
       if (!prefetchCompleteRef.current) {
         console.log('⏱️ Background prefetch timeout - hiding progress indicator');
         prefetchCompleteRef.current = true;
-        setPrefetchProgress({ loaded: 0, total: 0 }); // Hide progress
+        setPrefetchProgress({ loaded: 0, total: 0 });
       }
-    }, MAX_PREFETCH_TIME);
-    
-    // Create priority queue based on viewing position
-    const getPriority = (index: number) => {
-      const distance = Math.abs(index - currentIndex);
-      if (distance <= PREFETCH_RADIUS) return 0; // Highest priority
-      return distance;
-    };
-    
-    // Sort images by priority
-    const prioritizedIndices = imageList
-      .map((_, idx) => idx)
-      .sort((a, b) => getPriority(a) - getPriority(b));
-    
-    // Process batches in background using requestIdleCallback for better performance
-    const processBatch = async (startIdx: number) => {
-      if (prefetchCompleteRef.current || !seriesAbortRef.current) return;
-      
-      // Check if we've loaded enough images
-      const loadedPercentage = loadedCount / imageList.length;
-      if (loadedPercentage >= COMPLETION_THRESHOLD) {
-        prefetchCompleteRef.current = true;
-        console.log(`✅ Background prefetch sufficient: ${loadedCount}/${imageList.length} images (${Math.round(loadedPercentage * 100)}%)`);
-        setPrefetchProgress({ loaded: 0, total: 0 }); // Hide progress
-        return;
-      }
-      
-      const batchIndices = prioritizedIndices.slice(startIdx, startIdx + BATCH_SIZE);
-      if (batchIndices.length === 0) {
-        prefetchCompleteRef.current = true;
-        console.log(`✅ Background prefetch complete: ${loadedCount}/${imageList.length} images, ${failedCount} failed`);
-        setPrefetchProgress({ loaded: 0, total: 0 }); // Hide progress
-        return;
-      }
-      
-      // Get uncached images in this batch
-      const uncachedImages = batchIndices
-        .filter(idx => !imageCacheRef.current.has(imageList[idx].sopInstanceUID))
-        .map(idx => imageList[idx]);
-      
-      if (uncachedImages.length > 0) {
-        try {
-          const batchUIDs = uncachedImages.map(img => img.sopInstanceUID);
-          const batchResults = await fetchBatchImages(batchUIDs, seriesAbortRef.current?.signal);
-          
-          loadedCount += batchResults.size;
-          failedCount += (batchUIDs.length - batchResults.size);
-          
-          const progress = Math.round((loadedCount / imageList.length) * 100);
-        if (PREDICTION_DEBUG) {
-          console.log(`📊 Prefetch progress: ${loadedCount}/${imageList.length} (${progress}%)`);
-        }
-          setPrefetchProgress({ loaded: loadedCount, total: imageList.length });
-          
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            console.log('Background prefetch aborted');
-            setPrefetchProgress({ loaded: 0, total: 0 }); // Hide progress
-            return;
-          }
-          console.warn('Batch prefetch error:', error.message);
-          failedCount += uncachedImages.length;
-        }
-      }
-      
-      // Schedule next batch using requestIdleCallback for non-blocking behavior
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => processBatch(startIdx + BATCH_SIZE), { timeout: 2000 });
-      } else {
-        // Fallback for browsers without requestIdleCallback
-        setTimeout(() => processBatch(startIdx + BATCH_SIZE), 100);
-      }
-    };
-    
-    // Start processing
-    processBatch(0);
+    }, 30000);
   };
 
   const preloadAllImages = async (imageList: any[]) => {
@@ -6708,6 +6889,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (prevIndex >= 0 && prevIndex < images.length) {
       console.log(`📍 Navigate: ${currentIndex} → ${prevIndex}`);
       setCurrentIndex(prevIndex);
+      notifySliceChange(prevIndex);
     }
   };
 
@@ -6727,6 +6909,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (nextIndex < maxSlices && nextIndex >= 0) {
       console.log(`📍 Navigate: ${currentIndex} → ${nextIndex} (max: ${maxSlices})`);
       setCurrentIndex(nextIndex);
+      notifySliceChange(nextIndex);
     }
   };
 
@@ -6751,11 +6934,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     const axialZ = Math.floor((x / canvasWidth) * volumeDepth);
     
     // Update crosshair position
-    setCrosshairPos(prev => ({ ...prev, y: axialY }));
+    const newCrosshair = { ...crosshairPos, y: axialY };
+    setCrosshairPos(newCrosshair);
+    notifyCrosshairChange(newCrosshair);
     
     // Navigate to the clicked axial slice
     if (axialZ >= 0 && axialZ < images.length) {
       setCurrentIndex(axialZ);
+      notifySliceChange(axialZ);
     }
   };
 
@@ -6779,11 +6965,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     const axialZ = Math.floor((y / canvasHeight) * volumeDepth);
     
     // Update crosshair position
-    setCrosshairPos(prev => ({ ...prev, x: axialX }));
+    const newCrosshair = { ...crosshairPos, x: axialX };
+    setCrosshairPos(newCrosshair);
+    notifyCrosshairChange(newCrosshair);
     
     // Navigate to the clicked axial slice
     if (axialZ >= 0 && axialZ < images.length) {
       setCurrentIndex(axialZ);
+      notifySliceChange(axialZ);
     }
   };
 
@@ -6955,8 +7144,11 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (isDragging && !isDrawingToolActive) {
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
-      setPanX(lastPanX + deltaX);
-      setPanY(lastPanY + deltaY);
+      const newPanX = lastPanX + deltaX;
+      const newPanY = lastPanY + deltaY;
+      setPanX(newPanX);
+      setPanY(newPanY);
+      notifyPanChange(newPanX, newPanY);
     }
   };
 
@@ -6983,7 +7175,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (e.ctrlKey || e.metaKey) {
       // Ctrl+scroll for zoom
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      setZoom((prev) => Math.max(0.1, Math.min(5, prev * zoomFactor)));
+      const newZoom = Math.max(0.1, Math.min(5, zoom * zoomFactor));
+      setZoom(newZoom);
+      notifyZoomChange(newZoom);
       console.log(`🔍 Zoom: ${e.deltaY > 0 ? 'out' : 'in'} (factor: ${zoomFactor})`);
     } else {
       // Regular scroll for slice navigation
@@ -7391,7 +7585,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
   if (isLoading) {
     return (
-      <Card className="h-full bg-black border-indigo-800 flex items-center justify-center">
+      <Card className="h-full bg-black border-gray-700 flex items-center justify-center">
         <div className="text-center">
           {/* Medical-themed loading animation */}
           <div className="relative w-24 h-24 mx-auto mb-4">
@@ -7421,7 +7615,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
   if (error) {
     return (
-      <Card className="h-full bg-black border-indigo-800 flex items-center justify-center">
+      <Card className="h-full bg-black border-gray-700 flex items-center justify-center">
         <div className="text-center text-red-400">
           <p className="mb-2">Error loading CT scan:</p>
           <p className="text-sm">{error}</p>
@@ -7437,8 +7631,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   }
 
   return (
-    <Card className="h-full bg-black border-indigo-800 flex flex-col overflow-hidden">
-      {/* Header with modern toolbar styling to match contour editing toolbar */}
+    <Card className={`h-full bg-black ${hideToolbar ? 'border-0' : 'border-gray-700'} flex flex-col overflow-hidden`} style={{ minHeight: 0, maxHeight: '100%' }}>
+      {/* Header with modern toolbar styling - hidden in multi-viewport mode */}
+      {!hideToolbar && (
       <div className="p-3 border-b border-gray-700/50">
         <div 
           className="backdrop-blur-md border rounded-xl px-4 py-3 shadow-lg flex items-center justify-between"
@@ -7598,8 +7793,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               <ChevronRight className="w-4 h-4" />
             </Button>
             
-            {/* Viewport Layout Buttons */}
-            {orientation === 'axial' && images.length > 0 && (
+            {/* Viewport Layout Buttons - Hidden in compactMode (viewport mode uses FlexibleFusionLayout) */}
+            {orientation === 'axial' && images.length > 0 && !compactMode && (
               <>
                 <div className="relative group">
                   <Button
@@ -7660,10 +7855,11 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           </div>
         </div>
       </div>
+      )}
 
       {/* Canvas with Right Sidebar */}
-      <div className="flex-1 pr-4 pt-4 pb-4 pl-0 relative overflow-hidden min-h-0">
-        <div className="w-full h-full flex gap-4">
+      <div className={`flex-1 ${hideSidebar ? 'p-0' : 'pr-4 pt-4 pb-4 pl-0'} relative overflow-hidden min-h-0`}>
+        <div className={`w-full h-full flex ${hideSidebar ? 'gap-0' : 'gap-4'} min-h-0`}>
           {/* Main Canvas Area - conditionally split for grid layout */}
           {viewportLayout === 'grid' && orientation === 'axial' && images.length > 0 ? (
             <>
@@ -7672,10 +7868,16 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 {/* Axial view (main) */}
                 <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
                   {fusionDisplayMode === 'side-by-side' && secondarySeriesId ? (
-                    /* Side-by-Side Layout for Axial */
-                    <div className="w-full h-full flex gap-2">
-                      {/* Primary Canvas Container */}
-                      <div className="relative flex-1 flex items-center justify-center bg-black">
+                    /* Side-by-Side Layout for Axial - supports different split ratios */
+                    <div className={`w-full h-full gap-2 ${
+                      props.fusionLayoutPreset === 'vertical-stack' ? 'flex flex-col' : 'flex'
+                    }`}>
+                      {/* Primary Canvas Container - flex ratio based on layout preset */}
+                      <div className={`relative flex items-center justify-center bg-black ${
+                        props.fusionLayoutPreset === 'primary-focus' ? 'flex-[7]' :
+                        props.fusionLayoutPreset === 'secondary-focus' ? 'flex-[3]' :
+                        'flex-1'
+                      }`}>
                         <canvas
                           ref={canvasRef}
                           width={1536}
@@ -7716,8 +7918,12 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                         />
                       </div>
                       
-                      {/* Secondary/Fusion Canvas Container */}
-                      <div className="relative flex-1 flex items-center justify-center bg-black">
+                      {/* Secondary/Fusion Canvas Container - flex ratio based on layout preset */}
+                      <div className={`relative flex items-center justify-center bg-black ${
+                        props.fusionLayoutPreset === 'primary-focus' ? 'flex-[3]' :
+                        props.fusionLayoutPreset === 'secondary-focus' ? 'flex-[7]' :
+                        'flex-1'
+                      }`}>
                         <canvas
                           ref={fusionOverlayCanvasRef}
                           width={1536}
@@ -7846,10 +8052,16 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           /* Normal Layout */
           <div className="flex-1 flex items-center justify-center relative overflow-hidden min-w-0 min-h-0">
             {fusionDisplayMode === 'side-by-side' && secondarySeriesId ? (
-              /* Side-by-Side Layout */
-              <div className="w-full h-full flex gap-2">
-                {/* Primary Canvas Container */}
-                <div className="relative flex-1 flex items-center justify-center bg-black">
+              /* Side-by-Side Layout - supports different split ratios */
+              <div className={`w-full h-full gap-2 ${
+                props.fusionLayoutPreset === 'vertical-stack' ? 'flex flex-col' : 'flex'
+              }`}>
+                {/* Primary Canvas Container - flex ratio based on layout preset */}
+                <div className={`relative flex items-center justify-center bg-black ${
+                  props.fusionLayoutPreset === 'primary-focus' ? 'flex-[7]' :
+                  props.fusionLayoutPreset === 'secondary-focus' ? 'flex-[3]' :
+                  'flex-1'
+                }`}>
               <canvas
                 ref={canvasRef}
                 width={1536}
@@ -7926,8 +8138,12 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               })()}
             </div>
             
-            {/* Secondary/Fusion Canvas Container */}
-            <div className="relative flex-1 flex items-center justify-center bg-black">
+            {/* Secondary/Fusion Canvas Container - flex ratio based on layout preset */}
+            <div className={`relative flex items-center justify-center bg-black ${
+              props.fusionLayoutPreset === 'primary-focus' ? 'flex-[3]' :
+              props.fusionLayoutPreset === 'secondary-focus' ? 'flex-[7]' :
+              'flex-1'
+            }`}>
               <canvas
                 ref={fusionOverlayCanvasRef}
                 width={1536}
@@ -8039,10 +8255,56 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
             })()}
           </div>
         )}
+          
+          {/* Compact MPR Overlay - shown when sidebar is hidden but MPR is enabled */}
+          {hideSidebar && mprVisible && orientation === 'axial' && images.length > 0 && (
+            <div className="absolute bottom-2 right-2 flex gap-2 z-30">
+              {/* Sagittal mini view */}
+              <div className="w-32 h-32 bg-black/90 rounded-lg border border-cyan-500/50 overflow-hidden shadow-lg">
+                <div className="text-[10px] text-cyan-400 font-semibold px-1.5 py-0.5 bg-black/80 border-b border-cyan-500/30">
+                  Sagittal
+                </div>
+                <div className="w-full h-[calc(100%-20px)]">
+                  <MPRFloating
+                    images={images}
+                    orientation="sagittal"
+                    sliceIndex={Math.max(0, Math.min(crosshairPos.x, (images[0]?.columns || 512) - 1))}
+                    windowWidth={currentWindowLevel.width}
+                    windowCenter={currentWindowLevel.center}
+                    crosshairPos={crosshairPos}
+                    rtStructures={rtStructures}
+                    currentZIndex={currentIndex}
+                    onClick={handleSagittalClick}
+                  />
+                </div>
+              </div>
+              
+              {/* Coronal mini view */}
+              <div className="w-32 h-32 bg-black/90 rounded-lg border border-purple-500/50 overflow-hidden shadow-lg">
+                <div className="text-[10px] text-purple-400 font-semibold px-1.5 py-0.5 bg-black/80 border-b border-purple-500/30">
+                  Coronal
+                </div>
+                <div className="w-full h-[calc(100%-20px)]">
+                  <MPRFloating
+                    images={images}
+                    orientation="coronal"
+                    sliceIndex={Math.max(0, Math.min(crosshairPos.y, (images[0]?.rows || 512) - 1))}
+                    windowWidth={currentWindowLevel.width}
+                    windowCenter={currentWindowLevel.center}
+                    crosshairPos={crosshairPos}
+                    rtStructures={rtStructures}
+                    currentZIndex={currentIndex}
+                    onClick={handleCoronalClick}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           </div>
           )}
 
-          {/* Invisible Right Sidebar - 24rem width for MPR windows and Fusion panel */}
+          {/* Invisible Right Sidebar - 24rem width for MPR windows and Fusion panel - hidden in compact mode */}
+          {!hideSidebar && (
           <div 
             ref={(el) => {
               // Expose sidebar ref for fusion panel placement
@@ -8110,9 +8372,36 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               </>
             )}
           </div>
+          )}
         </div>
 
-        <div>
+        {/* Ghost Contour Overlay Container - needs relative positioning for absolute child */}
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 15 }}>
+          {/* Ghost Contour Overlay - shows strokes from other viewports */}
+          <GhostContourOverlay
+            viewportId={viewportId}
+            canvasRef={canvasRef}
+            currentSlicePosition={(() => {
+              if (images.length === 0 || !images[currentIndex]) return 0;
+              const rawSlicePos =
+                images[currentIndex].sliceZ ??
+                images[currentIndex].parsedSliceLocation ??
+                images[currentIndex].parsedZPosition ??
+                0;
+              const parsedSlicePos =
+                typeof rawSlicePos === "string"
+                  ? parseFloat(rawSlicePos)
+                  : rawSlicePos;
+              return Number.isFinite(parsedSlicePos) ? parsedSlicePos : 0;
+            })()}
+            sliceTolerance={imageMetadata?.sliceThickness ? parseFloat(imageMetadata.sliceThickness) / 2 : 1.0}
+            enabled={true}
+            ghostOpacity={0.5}
+            imageMetadata={imageMetadata}
+            ctTransform={ctTransform}
+          />
+        </div>
+          
           {/* Simple Brush Tool overlay */}
           {brushToolState?.isActive &&
             brushToolState?.tool === "brush" && (
@@ -8173,6 +8462,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                   setPreviewContours(contours || []);
                 }}
                 activePredictions={activePredictions}
+                viewportId={viewportId}
               />
             )}
 
@@ -8237,6 +8527,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                   setPreviewContours(contours || []);
                 }}
                 activePredictions={activePredictions}
+                viewportId={viewportId}
               />
             )}
 
@@ -8287,6 +8578,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 imageMetadata={imageMetadata}
                 worldToCanvas={worldToCanvas}
                 canvasToWorld={canvasToWorld}
+                viewportId={viewportId}
               />
             )}
 
@@ -8466,7 +8758,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           </AlertDialogContent>
         </AlertDialog>
 
-        </div>
       </div>
     </Card>
   );

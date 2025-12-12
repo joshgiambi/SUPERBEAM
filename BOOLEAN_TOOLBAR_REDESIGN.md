@@ -437,3 +437,4 @@ This design positions SuperBeam as a leader in contour manipulation capabilities
 - Should intermediate results be automatically cleaned up?
 - Do we need a visual graph editor mode (node-based)?
 
+
