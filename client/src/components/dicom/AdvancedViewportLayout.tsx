@@ -41,6 +41,15 @@ import {
   MonitorUp,
   Zap,
   SlidersHorizontal,
+  PanelLeftClose,
+  PanelRightClose,
+  BookmarkPlus,
+  Bookmark,
+  Focus,
+  Minimize2,
+  Save,
+  FolderOpen,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,8 +155,7 @@ interface LayoutButtonConfig {
 }
 
 const LAYOUT_BUTTONS: LayoutButtonConfig[] = [
-  { preset: '1x1', icon: <Maximize2 className="w-3.5 h-3.5" />, label: '1×1', description: 'Single viewport', shortcut: '1' },
-  { preset: '1x2', icon: <Columns className="w-3.5 h-3.5" />, label: '1×2', description: 'Side by side', shortcut: '2' },
+  { preset: '1x2', icon: <Columns className="w-3.5 h-3.5" />, label: 'Side by Side', description: 'Multi-viewport side by side', shortcut: '2' },
   { preset: '2x1', icon: <Rows className="w-3.5 h-3.5" />, label: '2×1', description: 'Stacked', shortcut: '3' },
   { preset: '2x2', icon: <Grid2x2 className="w-3.5 h-3.5" />, label: '2×2', description: '2×2 grid', shortcut: '4' },
   { preset: '3x3', icon: <Grid3X3 className="w-3.5 h-3.5" />, label: '3×3', description: '3×3 grid', shortcut: '5' },
@@ -398,32 +406,34 @@ const ViewportPane: React.FC<ViewportPaneProps> = ({
 
         {/* ===== VIEWPORT TOP BAR - Matching App Design ===== */}
         <div className="absolute top-0 left-0 right-0 z-40 pointer-events-auto">
-          <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#0f1219]/95 backdrop-blur-sm border-b border-white/[0.06]">
+          <div className="flex items-center justify-between px-2.5 py-1.5 backdrop-blur-xl border-b"
+            style={{ backgroundColor: '#1e2533f0', borderColor: '#4a5568a0' }}
+          >
             {/* Left: Modality + Orientation + Status */}
             <div className="flex items-center gap-2">
-              {/* Modality badge - matching sidebar badges */}
+              {/* Modality badge - vibrant pill style */}
               <span className={cn(
-                "text-[10px] px-2 py-0.5 rounded-md font-semibold",
+                "text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-sm",
                 series?.modality === 'CT' 
-                  ? "bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30"
+                  ? "bg-blue-600/80 text-white border border-blue-400/60 shadow-blue-500/20"
                   : series?.modality === 'PT' || series?.modality === 'PET'
-                  ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30"
+                  ? "bg-amber-600/80 text-white border border-amber-400/60 shadow-amber-500/20"
                   : series?.modality === 'MR' || series?.modality === 'MRI'
-                  ? "bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/30"
-                  : "bg-gray-500/20 text-gray-300 ring-1 ring-gray-500/30"
+                  ? "bg-purple-600/80 text-white border border-purple-400/60 shadow-purple-500/20"
+                  : "bg-gray-600/80 text-white border border-gray-400/60 shadow-gray-500/20"
               )}>
                 {viewportLabel}
               </span>
               
               {/* Orientation - subtle */}
-              <span className="text-[10px] text-gray-500 font-medium uppercase">
+              <span className="text-[10px] text-gray-300 font-medium uppercase">
                 {orientation === 'axial' ? 'AX' : orientation === 'sagittal' ? 'SAG' : 'COR'}
               </span>
               
               {/* Fusion indicator */}
               {viewport.secondarySeriesIds && viewport.secondarySeriesIds.length > 0 && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-600/80 text-white border border-emerald-400/60 shadow-sm shadow-emerald-500/20 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
                   FUSED
                 </span>
               )}
@@ -431,8 +441,8 @@ const ViewportPane: React.FC<ViewportPaneProps> = ({
             
             {/* Center: Opacity slider (for fusion viewports) */}
             {viewport.secondarySeriesIds && viewport.secondarySeriesIds.length > 0 && (
-              <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-md border border-white/10">
-                <span className="text-[9px] text-gray-400 uppercase tracking-wide">Opacity</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-600/30 rounded-full border border-cyan-400/50 shadow-sm shadow-cyan-500/20">
+                <span className="text-[9px] text-white uppercase tracking-wide font-semibold">Opacity</span>
                 <input
                   type="range"
                   min="0"
@@ -440,11 +450,11 @@ const ViewportPane: React.FC<ViewportPaneProps> = ({
                   step="0.05"
                   value={fusionOpacity ?? 0.5}
                   onChange={(e) => { e.stopPropagation(); onFusionOpacityChange?.(parseFloat(e.target.value)); }}
-                  className="w-20 h-1 accent-cyan-500 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  className="w-20 h-1 accent-cyan-400 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   title={`Fusion opacity: ${Math.round((fusionOpacity ?? 0.5) * 100)}%`}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <span className="text-[10px] text-cyan-300 font-medium min-w-[32px] text-center">
+                <span className="text-[10px] text-white font-semibold min-w-[32px] text-center">
                   {Math.round((fusionOpacity ?? 0.5) * 100)}%
                 </span>
               </div>
@@ -458,11 +468,11 @@ const ViewportPane: React.FC<ViewportPaneProps> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button 
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-[10px] text-indigo-300 ring-1 ring-indigo-500/20"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600/80 hover:bg-indigo-600/90 transition-colors text-[10px] text-white border border-indigo-400/60 shadow-sm shadow-indigo-500/20"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Layers className="w-3 h-3" />
-                    <span className="font-medium">Add Fusion</span>
+                    <span className="font-semibold">Add Fusion</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -584,6 +594,26 @@ const ViewportPane: React.FC<ViewportPaneProps> = ({
 // LAYOUT TOOLBAR COMPONENT - Harmonized Design
 // ============================================================================
 
+interface ViewportOpacity {
+  viewportId: string;
+  viewportNumber: number;
+  modality: string;
+  opacity: number;
+}
+
+// Saved layout preset interface
+interface SavedLayoutPreset {
+  id: string;
+  name: string;
+  layout: GridLayoutPreset;
+  viewportConfigs: Array<{
+    seriesId?: number;
+    secondarySeriesIds?: number[];
+    modality?: string;
+  }>;
+  createdAt: string;
+}
+
 interface LayoutToolbarProps {
   currentLayout: GridLayoutPreset;
   onLayoutChange: (preset: GridLayoutPreset) => void;
@@ -599,6 +629,24 @@ interface LayoutToolbarProps {
   showFusionPanel?: boolean;
   onToggleFusionPanel?: () => void;
   fusionPanelActive?: boolean;
+  // Global opacity slider
+  viewportOpacities?: ViewportOpacity[];
+  onGlobalOpacityChange?: (opacity: number) => void;
+  onResetAllOpacities?: () => void;
+  // Focus controls
+  onFocusLeft?: () => void;
+  onFocusRight?: () => void;
+  // Single/Maximize - temporary maximize of one viewport
+  isMaximized?: boolean;
+  maximizedViewportId?: string | null;
+  onToggleMaximize?: () => void;
+  // Add viewport
+  onAddViewport?: (seriesId: number) => void;
+  // Save/Load with persistence
+  savedLayouts?: SavedLayoutPreset[];
+  onSaveLayout?: (name: string) => void;
+  onLoadLayout?: (preset: SavedLayoutPreset) => void;
+  onDeleteLayout?: (id: string) => void;
 }
 
 const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
@@ -614,7 +662,34 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
   showFusionPanel = true,
   onToggleFusionPanel,
   fusionPanelActive = false,
+  viewportOpacities = [],
+  onGlobalOpacityChange,
+  onResetAllOpacities,
+  onFocusLeft,
+  onFocusRight,
+  isMaximized = false,
+  maximizedViewportId,
+  onToggleMaximize,
+  onAddViewport,
+  savedLayouts = [],
+  onSaveLayout,
+  onLoadLayout,
+  onDeleteLayout,
 }) => {
+  const [hoveredNub, setHoveredNub] = useState<string | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [layoutName, setLayoutName] = useState('');
+  
+  // Calculate if we need to show multiple nubs (different opacity values)
+  const uniqueOpacities = new Set(viewportOpacities.map(v => Math.round(v.opacity * 100)));
+  const showMultipleNubs = uniqueOpacities.size > 1 && viewportOpacities.length > 1;
+  
+  // Average opacity for the main slider
+  const averageOpacity = viewportOpacities.length > 0
+    ? viewportOpacities.reduce((sum, v) => sum + v.opacity, 0) / viewportOpacities.length
+    : 0.5;
   // Determine which preset is active based on current layout
   const isPresetActive = (preset: GridLayoutPreset) => {
     return currentLayout === preset;
@@ -651,6 +726,33 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
         <span className="text-xs font-semibold text-gray-300 tracking-wide">Multi-View</span>
       </div>
 
+      {/* Single/Maximize button - temporarily expands one viewport */}
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleMaximize}
+              className={cn(
+                "h-7 px-3 rounded-md transition-all duration-200 flex items-center gap-1.5 text-xs font-medium border",
+                isMaximized
+                  ? "bg-gradient-to-r from-cyan-600/30 to-blue-600/30 text-cyan-300 border-cyan-500/40 shadow-lg shadow-cyan-500/10"
+                  : "text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/10 border-transparent hover:border-cyan-500/30"
+              )}
+            >
+              {isMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Focus className="w-3.5 h-3.5" />}
+              <span>Single</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="bg-gray-900/95 backdrop-blur-sm border-gray-700/50 px-3 py-2">
+            <p className="font-semibold text-white">{isMaximized ? 'Restore Layout' : 'Maximize Active Viewport'}</p>
+            <p className="text-gray-400 text-[11px]">{isMaximized ? 'Return to multi-viewport layout' : 'Temporarily expand the active viewport'}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Separator */}
+      <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
       {/* Layout buttons - pill group style */}
       <div className="flex items-center bg-black/30 rounded-lg p-0.5 border border-white/5">
         <TooltipProvider delayDuration={200}>
@@ -661,7 +763,7 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
                   onClick={() => onLayoutChange(preset)}
                   className={cn(
                     "relative h-7 px-2.5 rounded-md transition-all duration-200 flex items-center gap-1.5 text-xs font-medium",
-                    isPresetActive(preset)
+                    isPresetActive(preset) && !isMaximized
                       ? "bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-lg shadow-indigo-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5"
                   )}
@@ -669,9 +771,9 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
                   {icon}
                   <span className={cn(
                     "transition-all duration-200",
-                    isPresetActive(preset) ? "opacity-100" : "opacity-70"
+                    isPresetActive(preset) && !isMaximized ? "opacity-100" : "opacity-70"
                   )}>{label}</span>
-                  {isPresetActive(preset) && (
+                  {isPresetActive(preset) && !isMaximized && (
                     <motion.div
                       layoutId="activeLayout"
                       className="absolute inset-0 rounded-md bg-gradient-to-r from-indigo-600/80 to-purple-600/80 -z-10"
@@ -697,8 +799,124 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
         </TooltipProvider>
       </div>
 
+      {/* Focus left/right buttons */}
+      {(onFocusLeft || onFocusRight) && (
+        <>
+          <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onFocusLeft}
+                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px]">Enlarge Left</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onFocusRight}
+                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px]">Enlarge Right</TooltipContent>
+            </Tooltip>
+          </div>
+        </>
+      )}
+
       {/* Separator */}
       <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
+      {/* Add Viewport Button with Series Dropdown */}
+      {availableSeries.length > 0 && onAddViewport && (
+        <div className="relative">
+          <button
+            onClick={() => setShowAddDialog(!showAddDialog)}
+            className={cn(
+              "h-7 px-3 flex items-center gap-1.5 rounded-md border text-xs font-medium transition-all duration-200",
+              showAddDialog
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/50"
+                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/40"
+            )}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add</span>
+            <ChevronDown className={cn("w-3 h-3 transition-transform", showAddDialog && "rotate-180")} />
+          </button>
+          
+          {/* Add Viewport Dialog - positioned below */}
+          <AnimatePresence>
+            {showAddDialog && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                className="absolute top-full left-0 mt-2 w-72 z-50"
+              >
+                <div className="bg-gray-950 border border-gray-800/50 rounded-xl shadow-xl p-3">
+                  <div className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-emerald-400" />
+                    Add Series to New Viewport
+                  </div>
+                  <div className="text-[10px] text-gray-500 mb-3">
+                    Select a series to add to the layout
+                  </div>
+                  
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {availableSeries.map((series) => {
+                      const colorClass = getModalityColor(series.modality);
+                      return (
+                        <button
+                          key={series.id}
+                          onClick={() => {
+                            onAddViewport(series.id);
+                            setShowAddDialog(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-left",
+                            "bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70 hover:border-gray-600/50"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-2.5 h-2.5 rounded-full",
+                            colorClass === 'amber' ? "bg-amber-400" :
+                            colorClass === 'purple' ? "bg-purple-400" : "bg-cyan-400"
+                          )} />
+                          <span className={cn(
+                            "font-semibold text-xs",
+                            colorClass === 'amber' ? "text-amber-400" :
+                            colorClass === 'purple' ? "text-purple-400" : "text-cyan-400"
+                          )}>
+                            {series.modality}
+                          </span>
+                          <span className="text-gray-400 text-xs truncate flex-1">
+                            {series.seriesDescription || `Series ${series.seriesNumber}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="flex justify-end mt-3 pt-2 border-t border-gray-800">
+                    <button
+                      onClick={() => setShowAddDialog(false)}
+                      className="h-7 px-3 rounded-lg text-gray-400 hover:text-white text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Add Fusion Viewport - Secondary Series Selection */}
       {secondarySeries.length > 0 && onAddFusionViewport && (
@@ -778,13 +996,256 @@ const LayoutToolbar: React.FC<LayoutToolbarProps> = ({
         </>
       )}
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Center: Global Opacity Slider */}
+      <div className="flex-1 flex justify-center">
+        {viewportOpacities.length > 0 && (
+          <div className="flex items-center gap-2 px-4">
+            <Layers className="w-4 h-4 text-yellow-400" />
+            <div className="relative w-40">
+              {/* Track */}
+              <div className="h-2 bg-gray-700/60 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-yellow-600 to-yellow-400"
+                  style={{ width: `${averageOpacity * 100}%` }}
+                />
+              </div>
+              
+              {/* Nubs for each viewport (only if different opacities) */}
+              {showMultipleNubs ? (
+                viewportOpacities.map((vp) => (
+                  <div
+                    key={vp.viewportId}
+                    className="absolute top-1/2 -translate-y-1/2"
+                    style={{ left: `calc(${vp.opacity * 100}% - 6px)` }}
+                    onMouseEnter={() => setHoveredNub(vp.viewportId)}
+                    onMouseLeave={() => setHoveredNub(null)}
+                  >
+                    <div className={cn(
+                      "w-3 h-3 rounded-full border-2 shadow-md cursor-pointer transition-transform",
+                      hoveredNub === vp.viewportId ? "scale-125" : "",
+                      vp.modality === 'PT' ? "bg-amber-400 border-amber-200" :
+                      vp.modality === 'MR' ? "bg-purple-400 border-purple-200" :
+                      "bg-cyan-400 border-cyan-200"
+                    )} />
+                    {/* Tooltip on hover */}
+                    {hoveredNub === vp.viewportId && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-gray-900 border border-gray-700 rounded text-[9px] text-white whitespace-nowrap">
+                        Viewport {vp.viewportNumber}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                /* Single thumb when all opacities are the same */
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-yellow-400 shadow-lg pointer-events-none"
+                  style={{ left: `calc(${averageOpacity * 100}% - 8px)` }}
+                />
+              )}
+              
+              {/* Invisible range input for interaction */}
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={averageOpacity * 100}
+                onChange={(e) => onGlobalOpacityChange?.(parseInt(e.target.value) / 100)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </div>
+            <span className="text-[10px] font-semibold text-yellow-300 w-8">
+              {Math.round(averageOpacity * 100)}%
+            </span>
+            
+            {/* Reset button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onResetAllOpacities}
+                  className="h-6 w-6 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px]">Reset all to 50%</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+      </div>
 
       {/* Viewport count badge */}
       <div className="flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-md border border-white/5">
         <span className="text-[10px] text-gray-500 uppercase tracking-wide">Viewports</span>
         <span className="text-xs font-bold text-indigo-300">{viewportCount}</span>
+      </div>
+
+      {/* Separator */}
+      <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
+      {/* Save/Load Buttons */}
+      <div className="relative flex items-center gap-2">
+        {/* Save button */}
+        <button 
+          onClick={() => {
+            setShowSaveDialog(!showSaveDialog);
+            setShowLoadDialog(false);
+          }}
+          className={cn(
+            "h-7 px-3 flex items-center gap-1.5 rounded-md border text-xs font-medium transition-all duration-200",
+            showSaveDialog 
+              ? "bg-amber-500/20 text-amber-300 border-amber-400/50" 
+              : "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/40"
+          )}
+        >
+          <Save className="w-3.5 h-3.5" />
+          <span>Save</span>
+        </button>
+        
+        {/* Save Dialog Popup */}
+        <AnimatePresence>
+          {showSaveDialog && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              className="absolute top-full right-0 mt-2 w-72 z-50"
+            >
+              <div className="bg-gray-950 border border-gray-800/50 rounded-xl shadow-xl p-3">
+                <div className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <Save className="w-4 h-4 text-amber-400" />
+                  Save Custom Layout Preset
+                </div>
+                <p className="text-[10px] text-gray-500 mb-3">
+                  Save this layout configuration to use across any patient
+                </p>
+                <input
+                  type="text"
+                  placeholder="My Custom Layout..."
+                  value={layoutName}
+                  onChange={(e) => setLayoutName(e.target.value)}
+                  className="w-full h-8 px-2 rounded-lg bg-gray-900 border border-gray-700 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500/50"
+                  autoFocus
+                />
+                <div className="text-[10px] text-gray-600 mt-2">
+                  Current: {currentLayout} layout with {viewportCount} viewport{viewportCount !== 1 ? 's' : ''}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      if (layoutName.trim()) {
+                        onSaveLayout?.(layoutName.trim());
+                        setShowSaveDialog(false);
+                        setLayoutName('');
+                      }
+                    }}
+                    disabled={!layoutName.trim()}
+                    className={cn(
+                      "flex-1 h-7 rounded-lg text-xs font-medium transition-colors",
+                      layoutName.trim()
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
+                        : "bg-gray-800/50 text-gray-500 border border-gray-700/30 cursor-not-allowed"
+                    )}
+                  >
+                    Save Preset
+                  </button>
+                  <button
+                    onClick={() => { setShowSaveDialog(false); setLayoutName(''); }}
+                    className="h-7 px-3 rounded-lg text-gray-400 hover:text-white text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Load button */}
+        <button 
+          onClick={() => {
+            setShowLoadDialog(!showLoadDialog);
+            setShowSaveDialog(false);
+          }}
+          className={cn(
+            "h-7 px-3 flex items-center gap-1.5 rounded-md border text-xs font-medium transition-all duration-200",
+            showLoadDialog 
+              ? "bg-blue-500/20 text-blue-300 border-blue-400/50" 
+              : "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40"
+          )}
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span>Load</span>
+        </button>
+        
+        {/* Load Dialog Popup */}
+        <AnimatePresence>
+          {showLoadDialog && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              className="absolute top-full right-0 mt-2 w-80 z-50"
+            >
+              <div className="bg-gray-950 border border-gray-800/50 rounded-xl shadow-xl p-3">
+                <div className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-blue-400" />
+                  Load Saved Layout Preset
+                </div>
+                
+                {savedLayouts.length > 0 ? (
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                    {savedLayouts.map((preset) => (
+                      <div
+                        key={preset.id}
+                        className="flex items-center gap-2 p-2 rounded-lg bg-gray-900/60 border border-gray-800/50 hover:bg-gray-800/80 hover:border-gray-700/50 transition-all group"
+                      >
+                        <button
+                          onClick={() => {
+                            onLoadLayout?.(preset);
+                            setShowLoadDialog(false);
+                          }}
+                          className="flex-1 text-left"
+                        >
+                          <div className="text-xs font-medium text-white">{preset.name}</div>
+                          <div className="text-[10px] text-gray-500">
+                            {preset.layout} • {preset.viewportConfigs.length} viewport{preset.viewportConfigs.length !== 1 ? 's' : ''} • {new Date(preset.createdAt).toLocaleDateString()}
+                          </div>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteLayout?.(preset.id);
+                          }}
+                          className="h-6 w-6 flex items-center justify-center rounded-md text-gray-600 hover:text-red-400 hover:bg-red-900/30 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Delete preset"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Save className="w-8 h-8 mx-auto mb-2 text-gray-700" />
+                    <p className="text-xs text-gray-500">No saved presets yet</p>
+                    <p className="text-[10px] text-gray-600 mt-1">
+                      Save your current layout to create a reusable preset
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex justify-end mt-3 pt-2 border-t border-gray-800">
+                  <button
+                    onClick={() => setShowLoadDialog(false)}
+                    className="h-7 px-3 rounded-lg text-gray-400 hover:text-white text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Separator */}
@@ -876,7 +1337,22 @@ export const AdvancedViewportLayout: React.FC<AdvancedViewportLayoutProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [dragOverViewportId, setDragOverViewportId] = useState<string | null>(null);
-  const [currentPreset, setCurrentPreset] = useState<GridLayoutPreset>('1x1');
+  const [currentPreset, setCurrentPreset] = useState<GridLayoutPreset>('1x2');
+  
+  // Maximize/Focus state - temporarily show single viewport while staying in multi-viewport mode
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [maximizedViewportId, setMaximizedViewportId] = useState<string | null>(null);
+  const [preMaximizeLayout, setPreMaximizeLayout] = useState<GridLayoutPreset | null>(null);
+  
+  // Saved layout presets - persist to localStorage
+  const [savedLayouts, setSavedLayouts] = useState<SavedLayoutPreset[]>(() => {
+    try {
+      const stored = localStorage.getItem('superbeam-multiviewport-presets');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   
   // Use external fusion panel state if provided, otherwise manage internally
   const [internalShowFusionPanel, setInternalShowFusionPanel] = useState(false);
@@ -888,6 +1364,15 @@ export const AdvancedViewportLayout: React.FC<AdvancedViewportLayoutProps> = ({
       setInternalShowFusionPanel(show);
     }
   };
+  
+  // Save layouts to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('superbeam-multiviewport-presets', JSON.stringify(savedLayouts));
+    } catch (e) {
+      console.warn('Failed to save layout presets to localStorage:', e);
+    }
+  }, [savedLayouts]);
 
   // Subscribe to viewport grid service
   const {
@@ -1088,6 +1573,154 @@ export const AdvancedViewportLayout: React.FC<AdvancedViewportLayoutProps> = ({
     }
   }, [viewportsArray, availableSeries]);
 
+  // Handle toggle maximize - temporarily expand active viewport while staying in multi-viewport mode
+  const handleToggleMaximize = useCallback(() => {
+    if (isMaximized) {
+      // Restore previous layout
+      if (preMaximizeLayout) {
+        setLayout(preMaximizeLayout, {
+          studyId,
+          preserveContent: true,
+        });
+        setCurrentPreset(preMaximizeLayout);
+      }
+      setIsMaximized(false);
+      setMaximizedViewportId(null);
+      setPreMaximizeLayout(null);
+    } else {
+      // Save current layout and switch to 1x1 temporarily
+      setPreMaximizeLayout(currentPreset);
+      setMaximizedViewportId(activeViewportId);
+      
+      // Get the active viewport's series
+      const activeVp = viewportsArray.find(vp => vp.id === activeViewportId);
+      if (activeVp?.seriesId) {
+        setLayout('1x1', {
+          seriesId: activeVp.seriesId,
+          studyId,
+          secondarySeriesIds: activeVp.secondarySeriesIds,
+          preserveContent: false,
+        });
+      } else {
+        setLayout('1x1', { studyId, preserveContent: true });
+      }
+      setIsMaximized(true);
+    }
+  }, [isMaximized, preMaximizeLayout, currentPreset, activeViewportId, viewportsArray, studyId, setLayout]);
+
+  // Handle add viewport with a specific series
+  const handleAddViewport = useCallback((seriesId: number) => {
+    // Determine which layout to use based on current viewport count
+    const numViewports = viewportsArray.length;
+    let newLayout: GridLayoutPreset = currentPreset;
+    
+    if (numViewports === 1) {
+      newLayout = '1x2';
+    } else if (numViewports === 2) {
+      newLayout = '2x2';
+    } else if (numViewports <= 4) {
+      newLayout = '2x2';
+    } else {
+      newLayout = '3x3';
+    }
+    
+    // If we need to expand the layout
+    if (newLayout !== currentPreset) {
+      setLayout(newLayout, {
+        studyId,
+        preserveContent: true,
+      });
+      setCurrentPreset(newLayout);
+    }
+    
+    // Find an empty viewport to assign the series to
+    setTimeout(() => {
+      const state = viewportGridService.getState();
+      const viewportIds = Array.from(state.viewports.keys());
+      
+      // Find a viewport without a series
+      const emptyViewportId = viewportIds.find(id => {
+        const vp = state.viewports.get(id);
+        return !vp?.seriesId;
+      });
+      
+      if (emptyViewportId) {
+        assignSeries(emptyViewportId, seriesId, studyId);
+      }
+    }, 100);
+  }, [viewportsArray.length, currentPreset, studyId, setLayout, assignSeries]);
+
+  // Handle save layout preset
+  const handleSaveLayout = useCallback((name: string) => {
+    const newPreset: SavedLayoutPreset = {
+      id: `preset-${Date.now()}`,
+      name,
+      layout: currentPreset,
+      viewportConfigs: viewportsArray.map(vp => ({
+        seriesId: vp.seriesId ?? undefined,
+        secondarySeriesIds: vp.secondarySeriesIds,
+        modality: availableSeries.find(s => s.id === vp.seriesId)?.modality,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+    
+    setSavedLayouts(prev => [...prev, newPreset]);
+    console.log('📁 Saved layout preset:', newPreset);
+  }, [currentPreset, viewportsArray, availableSeries]);
+
+  // Handle load layout preset
+  const handleLoadLayout = useCallback((preset: SavedLayoutPreset) => {
+    setLayout(preset.layout, {
+      studyId,
+      preserveContent: false,
+    });
+    setCurrentPreset(preset.layout);
+    
+    // Attempt to restore series assignments if they exist in the current study
+    setTimeout(() => {
+      const state = viewportGridService.getState();
+      const viewportIds = Array.from(state.viewports.keys());
+      
+      preset.viewportConfigs.forEach((config, index) => {
+        if (viewportIds[index] && config.modality) {
+          // Find a series with matching modality
+          const matchingSeries = availableSeries.find(s => s.modality === config.modality);
+          if (matchingSeries) {
+            assignSeries(viewportIds[index], matchingSeries.id, studyId);
+            
+            // If there were secondary series, try to restore fusion
+            if (config.secondarySeriesIds?.length) {
+              const secondaryModalities = config.secondarySeriesIds.map(id => 
+                availableSeries.find(s => s.id === id)?.modality
+              ).filter(Boolean);
+              
+              // Find matching secondary series by modality
+              secondaryModalities.forEach(mod => {
+                const matchingSecondary = availableSeries.find(s => 
+                  s.modality === mod && s.id !== matchingSeries.id
+                );
+                if (matchingSecondary) {
+                  viewportGridService.updateViewport(viewportIds[index], {
+                    secondarySeriesIds: [matchingSecondary.id],
+                    type: 'FUSION',
+                  });
+                }
+              });
+            }
+          }
+        }
+      });
+    }, 100);
+    
+    console.log('📂 Loaded layout preset:', preset);
+  }, [studyId, setLayout, availableSeries, assignSeries]);
+
+  // Handle delete layout preset
+  const handleDeleteLayout = useCallback((id: string) => {
+    setSavedLayouts(prev => prev.filter(p => p.id !== id));
+    console.log('🗑️ Deleted layout preset:', id);
+  }, []);
+
   return (
     <div className={cn("flex flex-col bg-black overflow-hidden", className)} style={{ flex: '1 1 0', minHeight: 0, minWidth: 0, width: '100%' }}>
       {/* Layout toolbar */}
@@ -1105,6 +1738,17 @@ export const AdvancedViewportLayout: React.FC<AdvancedViewportLayoutProps> = ({
           showFusionPanel={fusionSecondaryOptions.length > 0}
           onToggleFusionPanel={() => setShowFusionControlPanel(!showFusionControlPanel)}
           fusionPanelActive={showFusionControlPanel}
+          // Maximize/Focus controls
+          isMaximized={isMaximized}
+          maximizedViewportId={maximizedViewportId}
+          onToggleMaximize={handleToggleMaximize}
+          // Add viewport
+          onAddViewport={handleAddViewport}
+          // Save/Load with persistence
+          savedLayouts={savedLayouts}
+          onSaveLayout={handleSaveLayout}
+          onLoadLayout={handleLoadLayout}
+          onDeleteLayout={handleDeleteLayout}
         />
       )}
       

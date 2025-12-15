@@ -846,166 +846,142 @@ export default function PatientManager() {
 
   return (
     <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
-      {/* Header matching viewer interface */}
-      <header className="fixed top-4 left-4 right-4 bg-gray-950/90 backdrop-blur-xl border border-gray-600/60 rounded-2xl px-6 py-3 z-50 shadow-2xl shadow-black/50">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center space-x-6">
-              <div>
-                <style>{`
-                  @keyframes superWave {
-                    0% { 
-                      color: white; 
-                      filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
-                      transform: translateY(0px);
-                    }
-                    50% { 
-                      color: #06b6d4; 
-                      filter: drop-shadow(0 0 12px #06b6d4);
-                      transform: translateY(-3px);
-                    }
-                    100% { 
-                      color: white; 
-                      filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
-                      transform: translateY(0px);
-                    }
-                  }
-                  @keyframes beamWave {
-                    0% { 
-                      filter: drop-shadow(0 0 6px currentColor);
-                      transform: translateY(0px);
-                    }
-                    50% { 
-                      filter: drop-shadow(0 0 14px currentColor);
-                      transform: translateY(-3px);
-                    }
-                    100% { 
-                      filter: drop-shadow(0 0 6px currentColor);
-                      transform: translateY(0px);
-                    }
-                  }
-                  .letter-s { animation: superWave 1s ease-in-out forwards; }
-                  .letter-u { animation: superWave 1s ease-in-out forwards 0.08s; }
-                  .letter-p { animation: superWave 1s ease-in-out forwards 0.16s; }
-                  .letter-e1 { animation: superWave 1s ease-in-out forwards 0.24s; }
-                  .letter-r { animation: superWave 1s ease-in-out forwards 0.32s; }
-                  .letter-b { color: #06b6d4; animation: beamWave 1s ease-in-out forwards 0.4s; }
-                  .letter-e2 { color: #ec4899; animation: beamWave 1s ease-in-out forwards 0.48s; }
-                  .letter-a { color: #f97316; animation: beamWave 1s ease-in-out forwards 0.56s; }
-                  .letter-m { color: #fbbf24; animation: beamWave 1s ease-in-out forwards 0.64s; }
-                `}</style>
-                <h1 className="text-2xl tracking-widest" style={{ letterSpacing: '0.12em', fontFamily: "'Doto', monospace", fontWeight: 900 }}>
-                  <span className="letter-s inline-block">S</span>
-                  <span className="letter-u inline-block">U</span>
-                  <span className="letter-p inline-block">P</span>
-                  <span className="letter-e1 inline-block">E</span>
-                  <span className="letter-r inline-block">R</span>
-                  <span className="letter-b inline-block">B</span>
-                  <span className="letter-e2 inline-block">E</span>
-                  <span className="letter-a inline-block">A</span>
-                  <span className="letter-m inline-block">M</span>
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/prototypes">
-                <Button 
-                  variant="outline" 
-                  className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border border-purple-400/30 text-white font-medium shadow-lg hover:shadow-purple-400/20 transition-all duration-200"
-                >
-                  <Beaker className="w-4 h-4 mr-2" />
-                  Prototypes
-                </Button>
-              </Link>
-              <Link href="/ohif-prototypes">
-                <Button 
-                  variant="outline" 
-                  className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-400/30 text-white font-medium shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
-                >
-                  <FlaskConical className="w-4 h-4 mr-2" />
-                  OHIF Prototype A
-                </Button>
-              </Link>
-              <Link href="/introducing">
-                <Button 
-                  variant="outline" 
-                  className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-purple-500/30 text-white font-medium shadow-lg hover:shadow-purple-500/20 transition-all duration-200"
-                >
-                  ✨ Introducing Superbeam
-                </Button>
-              </Link>
-              <Link href="/superstyle">
-                <Button 
-                  variant="outline" 
-                  className="bg-gradient-to-r from-pink-500/10 to-orange-500/10 hover:from-pink-500/20 hover:to-orange-500/20 border border-pink-400/30 text-white font-medium shadow-lg hover:shadow-pink-400/20 transition-all duration-200"
-                >
-                  <Palette className="w-4 h-4 mr-2" />
-                  SuperStyle
-                </Button>
-              </Link>
+      {/* Animation styles for logo */}
+      <style>{`
+        @keyframes superWave {
+          0% { 
+            color: white; 
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+            transform: translateY(0px);
+          }
+          50% { 
+            color: #06b6d4; 
+            filter: drop-shadow(0 0 12px #06b6d4);
+            transform: translateY(-3px);
+          }
+          100% { 
+            color: white; 
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+            transform: translateY(0px);
+          }
+        }
+        @keyframes beamWave {
+          0% { 
+            filter: drop-shadow(0 0 6px currentColor);
+            transform: translateY(0px);
+          }
+          50% { 
+            filter: drop-shadow(0 0 14px currentColor);
+            transform: translateY(-3px);
+          }
+          100% { 
+            filter: drop-shadow(0 0 6px currentColor);
+            transform: translateY(0px);
+          }
+        }
+        .letter-s { animation: superWave 1s ease-in-out forwards; }
+        .letter-u { animation: superWave 1s ease-in-out forwards 0.08s; }
+        .letter-p { animation: superWave 1s ease-in-out forwards 0.16s; }
+        .letter-e1 { animation: superWave 1s ease-in-out forwards 0.24s; }
+        .letter-r { animation: superWave 1s ease-in-out forwards 0.32s; }
+        .letter-b { color: #06b6d4; animation: beamWave 1s ease-in-out forwards 0.4s; }
+        .letter-e2 { color: #ec4899; animation: beamWave 1s ease-in-out forwards 0.48s; }
+        .letter-a { color: #f97316; animation: beamWave 1s ease-in-out forwards 0.56s; }
+        .letter-m { color: #fbbf24; animation: beamWave 1s ease-in-out forwards 0.64s; }
+      `}</style>
+
+      {/* Fixed Topbar */}
+      <header className="fixed top-4 left-4 right-4 z-50 bg-gray-950/95 backdrop-blur-xl border border-gray-700/50 rounded-xl px-5 py-2.5 shadow-xl">
+        <div className="flex items-center justify-between w-full">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <h1 className="text-2xl tracking-wider" style={{ letterSpacing: '0.1em', fontFamily: "'Doto', monospace", fontWeight: 900 }}>
+                <span className="letter-s inline-block">S</span>
+                <span className="letter-u inline-block">U</span>
+                <span className="letter-p inline-block">P</span>
+                <span className="letter-e1 inline-block">E</span>
+                <span className="letter-r inline-block">R</span>
+                <span className="letter-b inline-block">B</span>
+                <span className="letter-e2 inline-block">E</span>
+                <span className="letter-a inline-block">A</span>
+                <span className="letter-m inline-block">M</span>
+              </h1>
             </div>
           </div>
-        </header>
+          
+          {/* Center: Search Bar */}
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search patients, studies..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 h-9 w-full bg-black/30 border border-gray-700/50 text-white placeholder:text-gray-500 
+                       focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 rounded-lg
+                       transition-all duration-200 text-sm"
+            />
+          </div>
 
-      {/* Main layout with content and sidebar */}
-      <div className="flex flex-1 pt-20 overflow-hidden">
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Unified Control Panel with proper height management */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
+          {/* Right: Quick Links */}
+          <div className="flex items-center gap-2">
+            <Link href="/prototypes">
+              <Button variant="ghost" size="sm" className="h-8 px-3 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20">
+                <Beaker className="w-4 h-4 mr-1.5" />
+                Prototypes
+              </Button>
+            </Link>
+            <Link href="/introducing">
+              <Button variant="ghost" size="sm" className="h-8 px-3 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20">
+                ✨ Intro
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Layout */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden pt-20">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Content Area */}
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* Tab Navigation Bar */}
             <div className="px-4 pt-4 pb-2 flex-shrink-0">
-              {/* Combined Container for Tabs, Search, and Tags */}
-              <div className="bg-gray-950/90 backdrop-blur-xl border border-gray-600/70 rounded-2xl shadow-2xl shadow-black/40 p-3 mb-4">
-                {/* Tabs Row */}
-                <TabsList className="grid w-full grid-cols-6 bg-black/40 rounded-xl p-1 mb-4">
-                  <TabsTrigger value="patients" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+              <div className="bg-gray-900/80 backdrop-blur-xl border border-gray-700/40 rounded-xl p-2">
+                <TabsList className="flex bg-transparent gap-1 w-full">
+                  <TabsTrigger value="patients" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <User className="h-4 w-4" />
                     Patients
                   </TabsTrigger>
-                  <TabsTrigger value="import" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+                  <TabsTrigger value="import" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <Upload className="h-4 w-4" />
-                    <span>Import</span>
-                    {hasActiveParsingSession ? (
-                      <svg className="h-3.5 w-3.5 animate-spin text-green-400" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"/>
-                      </svg>
-                    ) : hasPendingData ? (
-                      <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
-                    ) : null}
+                    Import
+                    {hasActiveParsingSession && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
                   </TabsTrigger>
-                  <TabsTrigger value="pacs" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+                  <TabsTrigger value="pacs" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <Network className="h-4 w-4" />
                     PACS
                   </TabsTrigger>
-                  <TabsTrigger value="query" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+                  <TabsTrigger value="query" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <Database className="h-4 w-4" />
                     Query
                   </TabsTrigger>
-                  <TabsTrigger value="fusion" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+                  <TabsTrigger value="fusion" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <Merge className="h-4 w-4" />
                     Fusion
                   </TabsTrigger>
-                  <TabsTrigger value="metadata" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:backdrop-blur-xl data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-white/10 text-gray-400 hover:text-gray-200 rounded-lg transition-all duration-200 py-2 px-3 hover:bg-white/5 text-sm font-medium">
+                  <TabsTrigger value="metadata" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
                     <FileText className="h-4 w-4" />
                     Metadata
                   </TabsTrigger>
                 </TabsList>
-                
-                {/* Search Bar - Full Width */}
-                <div className="relative w-full mb-3">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search patients, studies, or modalities..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-9 w-full bg-black/30 border border-gray-700/50 text-white placeholder:text-gray-500 
-                             focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 rounded-lg
-                             transition-all duration-200 text-sm"
-                  />
-                </div>
-                
-                {/* Tag Filters - Under Search */}
-                {uniqueTags.length > 0 && (
+              </div>
+              
+              {/* Tag Filters */}
+              {uniqueTags.length > 0 && (
+                <div className="bg-gray-900/60 border border-gray-700/30 rounded-lg p-2 mt-2">
                   <div className="flex gap-1.5 items-center flex-wrap">
+                    <span className="text-xs text-gray-500 uppercase tracking-wider mr-2">Tags:</span>
                     {uniqueTags.map(tag => {
                       // Define tag colors based on tag type - matching patient card colors
                       const getTagStyle = (tagName: string) => {
@@ -1078,8 +1054,8 @@ export default function PatientManager() {
                       </button>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Scrollable Content Area */}
@@ -1790,124 +1766,117 @@ export default function PatientManager() {
               <MetadataViewer />
             </TabsContent>
             </div>
-          </Tabs>
-        </div>
+          </div>
 
-        {/* Right Sidebar with glassmorphic design - increased thickness */}
-        <div className="w-96 flex flex-col h-full">
-          <div className="m-4 space-y-3 overflow-y-auto flex-1">
-            <Accordion type="multiple" defaultValue={["recently-opened", "favorites", "recently-imported"]} className="space-y-3">
-              {/* Recently Opened - Blue Theme */}
-              <AccordionItem value="recently-opened" className="bg-gray-950/95 backdrop-blur-2xl border border-blue-500/40 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
-                <AccordionTrigger className="px-4 py-3 hover:bg-blue-500/10 transition-all">
+          {/* Right Sidebar */}
+          <aside 
+            className="w-80 flex-shrink-0 border-l border-gray-800 bg-gray-950/50 overflow-y-auto"
+          >
+            <div className="p-4 space-y-4">
+              {/* Recently Opened Section */}
+              <div className="bg-gray-900/80 border border-blue-500/30 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-blue-500/20 bg-blue-500/5">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-400" />
                     <span className="text-white font-medium text-sm">Recently Opened</span>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-2">
-                    {recentlyOpenedPatients.length === 0 ? (
-                      <p className="text-gray-500 text-sm py-3 px-3">No recently opened patients</p>
-                    ) : (
-                      recentlyOpenedPatients.map(patientId => {
-                        const patient = patients.find(p => p.id === patientId);
-                        return patient ? (
-                          <Link 
-                            key={patientId}
-                            href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                            className="block p-3 rounded-lg bg-blue-500/5 hover:bg-blue-500/15 transition-all border border-blue-500/20 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/10"
-                            onClick={() => trackPatientOpened(patientId)}
-                          >
-                            <div className="text-white text-sm font-medium">{patient.patientName}</div>
-                            <div className="text-blue-400 text-xs mt-1">ID: {patient.patientID}</div>
-                          </Link>
-                        ) : null;
-                      })
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                </div>
+                <div className="p-3 space-y-2">
+                  {recentlyOpenedPatients.length === 0 ? (
+                    <p className="text-gray-500 text-sm py-2">No recently opened patients</p>
+                  ) : (
+                    recentlyOpenedPatients.slice(0, 5).map(patientId => {
+                      const patient = patients.find(p => p.id === patientId);
+                      return patient ? (
+                        <Link 
+                          key={patientId}
+                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                          className="block p-2.5 rounded-lg bg-blue-500/5 hover:bg-blue-500/15 transition-all border border-blue-500/20 hover:border-blue-500/30"
+                          onClick={() => trackPatientOpened(patientId)}
+                        >
+                          <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
+                          <div className="text-blue-400 text-xs mt-0.5">ID: {patient.patientID}</div>
+                        </Link>
+                      ) : null;
+                    })
+                  )}
+                </div>
+              </div>
 
-              {/* Favorites - Yellow Theme */}
-              <AccordionItem value="favorites" className="bg-gray-950/95 backdrop-blur-2xl border border-yellow-500/40 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
-                <AccordionTrigger className="px-4 py-3 hover:bg-yellow-500/10 transition-all">
+              {/* Favorites Section */}
+              <div className="bg-gray-900/80 border border-yellow-500/30 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-yellow-500/20 bg-yellow-500/5">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-yellow-400" />
                     <span className="text-white font-medium text-sm">Favorites</span>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-2">
-                    {favoritePatients.size === 0 ? (
-                      <p className="text-gray-500 text-sm py-3 px-3">No favorite patients</p>
-                    ) : (
-                      Array.from(favoritePatients).map(patientId => {
-                        const patient = patients.find(p => p.id === patientId);
-                        return patient ? (
-                          <Link 
-                            key={patientId}
-                            href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                            className="block p-3 rounded-lg bg-yellow-500/5 hover:bg-yellow-500/15 transition-all border border-yellow-500/20 hover:border-yellow-500/30 hover:shadow-lg hover:shadow-yellow-500/10"
-                            onClick={() => trackPatientOpened(patientId)}
-                          >
-                            <div className="text-white text-sm font-medium">{patient.patientName}</div>
-                            <div className="text-yellow-400 text-xs mt-1">ID: {patient.patientID}</div>
-                          </Link>
-                        ) : null;
-                      })
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                </div>
+                <div className="p-3 space-y-2">
+                  {favoritePatients.size === 0 ? (
+                    <p className="text-gray-500 text-sm py-2">No favorite patients</p>
+                  ) : (
+                    Array.from(favoritePatients).slice(0, 5).map(patientId => {
+                      const patient = patients.find(p => p.id === patientId);
+                      return patient ? (
+                        <Link 
+                          key={patientId}
+                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                          className="block p-2.5 rounded-lg bg-yellow-500/5 hover:bg-yellow-500/15 transition-all border border-yellow-500/20 hover:border-yellow-500/30"
+                          onClick={() => trackPatientOpened(patientId)}
+                        >
+                          <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
+                          <div className="text-yellow-400 text-xs mt-0.5">ID: {patient.patientID}</div>
+                        </Link>
+                      ) : null;
+                    })
+                  )}
+                </div>
+              </div>
 
-              {/* Recently Imported - Green Theme */}
-              <AccordionItem value="recently-imported" className="bg-gray-950/95 backdrop-blur-2xl border border-green-500/40 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
-                <AccordionTrigger className="px-4 py-3 hover:bg-green-500/10 transition-all">
+              {/* Recently Imported Section */}
+              <div className="bg-gray-900/80 border border-green-500/30 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-green-500/20 bg-green-500/5">
                   <div className="flex items-center gap-2">
                     <Import className="h-4 w-4 text-green-400" />
                     <span className="text-white font-medium text-sm">Recently Imported</span>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-2">
-                    {recentlyImportedPatients.length === 0 ? (
-                      <p className="text-gray-500 text-sm py-3 px-3">No recently imported patients</p>
-                    ) : (
-                      recentlyImportedPatients.map(importEntry => {
-                        const patient = patients.find(p => p.id === importEntry.patientId || p.patientID === importEntry.patientId);
-                        return patient ? (
-                          <Link 
-                            key={importEntry.patientId}
-                            href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                            className="block p-4 rounded-lg bg-gradient-to-r from-green-500/5 to-emerald-500/5 hover:from-green-500/15 hover:to-emerald-500/15 transition-all border border-green-500/20 hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10"
-                            onClick={() => trackPatientOpened(typeof importEntry.patientId === 'number' ? importEntry.patientId : parseInt(importEntry.patientId.toString()))}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="text-white text-sm font-medium">{patient.patientName}</div>
-                                <div className="text-green-400 text-xs mt-1">ID: {patient.patientID}</div>
+                </div>
+                <div className="p-3 space-y-2">
+                  {recentlyImportedPatients.length === 0 ? (
+                    <p className="text-gray-500 text-sm py-2">No recently imported patients</p>
+                  ) : (
+                    recentlyImportedPatients.slice(0, 5).map(importEntry => {
+                      const patient = patients.find(p => p.id === importEntry.patientId || p.patientID === importEntry.patientId);
+                      return patient ? (
+                        <Link 
+                          key={importEntry.patientId}
+                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                          className="block p-2.5 rounded-lg bg-green-500/5 hover:bg-green-500/15 transition-all border border-green-500/20 hover:border-green-500/30"
+                          onClick={() => trackPatientOpened(typeof importEntry.patientId === 'number' ? importEntry.patientId : parseInt(importEntry.patientId.toString()))}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
+                              <div className="text-green-400 text-xs mt-0.5">ID: {patient.patientID}</div>
+                            </div>
+                            <div className="text-right ml-3">
+                              <div className="text-green-300 text-xs font-medium">
+                                {new Date(importEntry.importDate).toLocaleDateString()}
                               </div>
-                              <div className="text-right ml-3">
-                                <div className="text-green-300 text-xs font-medium">
-                                  {new Date(importEntry.importDate).toLocaleDateString()}
-                                </div>
-                                <div className="text-green-400/70 text-[10px] mt-0.5">
-                                  {new Date(importEntry.importDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
+                              <div className="text-green-400/70 text-[10px] mt-0.5">
+                                {new Date(importEntry.importDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
-                          </Link>
-                        ) : null;
-                      })
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
+                          </div>
+                        </Link>
+                      ) : null;
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
-      </div>
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
@@ -2010,7 +1979,7 @@ export default function PatientManager() {
               Cancel
             </Button>
             <Button
-              onClick={() => handleMergeConfirm('existing')}
+              onClick={() => handleMergeConfirm(Array.from(selectedPatients)[0])}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               Merge Patients
@@ -2018,6 +1987,7 @@ export default function PatientManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </Tabs>
     </div>
   );
 }

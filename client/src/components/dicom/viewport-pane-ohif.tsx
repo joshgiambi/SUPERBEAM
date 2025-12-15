@@ -14,6 +14,7 @@
 import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { pillClass } from '@/lib/pills';
 import { useViewportHoverRef } from '@/hooks/use-viewport-hover';
 import { ViewportActionCorners } from './viewport-action-corners';
 import { ViewportActionBar, WINDOW_LEVEL_PRESETS } from './viewport-action-bar';
@@ -399,19 +400,19 @@ export function ViewportPaneOHIF({
         </div>
 
         {/* ===== ALWAYS VISIBLE: Modality badge at top-left ===== */}
-        <div className="absolute top-2 left-2 z-30 pointer-events-auto">
+        <div className="absolute top-2 left-2 z-30 pointer-events-auto flex items-center gap-1.5">
           {isPrimary ? (
-            <Badge className="bg-cyan-900/80 text-cyan-200 border border-cyan-600/40 backdrop-blur-sm shadow-lg">
+            <Badge className="bg-cyan-600/80 text-white border border-cyan-400/60 backdrop-blur-sm shadow-lg shadow-cyan-500/20 rounded-full px-2.5 font-semibold">
               {primarySeries?.modality || 'CT'}
             </Badge>
           ) : (
             <Badge className={cn(
-              "border backdrop-blur-sm shadow-lg flex items-center gap-1.5",
+              "border backdrop-blur-sm shadow-lg flex items-center gap-1.5 rounded-full px-2.5 font-semibold",
               secondarySeries?.modality === 'PT' || secondarySeries?.modality === 'PET'
-                ? "bg-yellow-900/80 text-yellow-200 border-yellow-600/40"
+                ? "bg-amber-600/80 text-white border-amber-400/60 shadow-amber-500/20"
                 : secondarySeries?.modality === 'MR' || secondarySeries?.modality === 'MRI'
-                ? "bg-purple-900/80 text-purple-200 border-purple-600/40"
-                : "bg-blue-900/80 text-blue-200 border-blue-600/40"
+                ? "bg-purple-600/80 text-white border-purple-400/60 shadow-purple-500/20"
+                : "bg-blue-600/80 text-white border-blue-400/60 shadow-blue-500/20"
             )}>
               <span className={cn(
                 "w-1.5 h-1.5 rounded-full",
@@ -423,6 +424,12 @@ export function ViewportPaneOHIF({
               )} />
               {secondarySeries?.modality || 'SEC'}
             </Badge>
+          )}
+
+          {typeof viewportNumber === 'number' && Number.isFinite(viewportNumber) && (
+            <span className={pillClass('gray')}>
+              VP {viewportNumber}
+            </span>
           )}
         </div>
 
@@ -436,8 +443,8 @@ export function ViewportPaneOHIF({
               transition={{ duration: 0.15 }}
               className="absolute top-2 left-2 right-2 z-40 pointer-events-auto"
             >
-              <div className="backdrop-blur-md border rounded-xl px-3 py-2 shadow-lg flex items-center justify-between"
-                style={{ backgroundColor: '#1a1a1a95', borderColor: '#4a5568' }}
+              <div className="backdrop-blur-xl border rounded-xl px-3 py-2 shadow-xl flex items-center justify-between"
+                style={{ backgroundColor: '#1e2533f0', borderColor: '#4a5568a0' }}
               >
                 {/* Left: Windowing dropdown + Series info */}
                 <div className="flex items-center gap-2">
@@ -445,11 +452,11 @@ export function ViewportPaneOHIF({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button 
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-orange-900/50 text-orange-200 border border-orange-600/30 backdrop-blur-sm hover:bg-orange-900/70 transition-colors cursor-pointer"
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-600/70 text-white border border-orange-400/50 backdrop-blur-sm hover:bg-orange-600/90 transition-colors cursor-pointer shadow-sm shadow-orange-500/20"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <SunMedium className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-medium">W/L</span>
+                        <span className="text-[10px] font-semibold">W/L</span>
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
@@ -482,7 +489,7 @@ export function ViewportPaneOHIF({
                   
                   {isPrimary ? (
                     /* Primary viewport: Static badge */
-                    <Badge className="bg-cyan-900/60 text-cyan-200 border border-cyan-600/30 backdrop-blur-sm">
+                    <Badge className="bg-cyan-600/80 text-white border border-cyan-400/60 backdrop-blur-sm rounded-full px-2.5 font-semibold shadow-sm shadow-cyan-500/20">
                       {primarySeries?.modality || 'CT'} {orientation !== 'axial' && `- ${orientation.charAt(0).toUpperCase() + orientation.slice(1)}`}
                     </Badge>
                   ) : (
@@ -491,12 +498,12 @@ export function ViewportPaneOHIF({
                       <DropdownMenuTrigger asChild>
                         <button 
                           className={cn(
-                            "flex items-center gap-2 px-2.5 py-1 rounded-lg border backdrop-blur-sm transition-colors cursor-pointer",
+                            "flex items-center gap-2 px-2.5 py-1 rounded-full border backdrop-blur-sm transition-colors cursor-pointer font-semibold shadow-sm",
                             secondarySeries?.modality === 'PT' || secondarySeries?.modality === 'PET'
-                              ? "bg-yellow-900/60 text-yellow-200 border-yellow-600/30 hover:bg-yellow-900/80"
+                              ? "bg-amber-600/80 text-white border-amber-400/60 hover:bg-amber-600/90 shadow-amber-500/20"
                               : secondarySeries?.modality === 'MR' || secondarySeries?.modality === 'MRI'
-                              ? "bg-purple-900/60 text-purple-200 border-purple-600/30 hover:bg-purple-900/80"
-                              : "bg-blue-900/60 text-blue-200 border-blue-600/30 hover:bg-blue-900/80"
+                              ? "bg-purple-600/80 text-white border-purple-400/60 hover:bg-purple-600/90 shadow-purple-500/20"
+                              : "bg-blue-600/80 text-white border-blue-400/60 hover:bg-blue-600/90 shadow-blue-500/20"
                           )}
                           onClick={(e) => e.stopPropagation()}
                         >

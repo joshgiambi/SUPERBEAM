@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supersegClient } from '@/lib/superseg-client';
+import { samController } from '@/lib/sam-controller';
 import { log } from '@/lib/log';
 import { Button } from '@/components/ui/button';
 import { Sparkles, X, Loader2, MousePointer2 } from 'lucide-react';
@@ -326,6 +327,9 @@ interface AITumorToolProps {
   smoothOutput?: boolean; // Whether to apply 2x smoothing to output
   onSegmentTrigger?: () => void; // External trigger for Generate button
   onClearTrigger?: () => void; // External trigger for Clear button
+  
+  // SAM mode: use SAM for single-slice 2D segmentation instead of 3D SuperSeg
+  useSAM?: boolean;
 }
 
 export function AITumorTool({
@@ -346,7 +350,11 @@ export function AITumorTool({
   smoothOutput = false,
   onSegmentTrigger,
   onClearTrigger,
+  useSAM = false,
 }: AITumorToolProps) {
+  
+  // Debug log
+  console.log('🧠 AITumorTool render, useSAM prop:', useSAM);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [serviceAvailable, setServiceAvailable] = useState<boolean | null>(null);
@@ -395,8 +403,19 @@ export function AITumorTool({
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const canvasX = event.clientX - rect.left;
-    const canvasY = event.clientY - rect.top;
+    
+    // Get CSS display coordinates
+    const cssX = event.clientX - rect.left;
+    const cssY = event.clientY - rect.top;
+    
+    // Scale from CSS display space to canvas internal pixel space
+    // Canvas is 1536x1536 internally but CSS may display it smaller
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const canvasX = cssX * scaleX;
+    const canvasY = cssY * scaleY;
+    
+    log.info(`[ai-tumor] CSS coords: (${cssX.toFixed(1)}, ${cssY.toFixed(1)}) -> Canvas coords: (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)}) [scale: ${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}]`);
 
     // Convert canvas to world coordinates
     const [worldX, worldY] = canvasToWorld(canvasX, canvasY);
@@ -517,8 +536,127 @@ export function AITumorTool({
     };
   }, [isActive, canvasRef, handleCanvasClick]);
 
-  // Run segmentation
+  // SAM-based 2D single-slice segmentation
+  const handleSAMSegment = async () => {
+    if (!clickPoint || !selectedStructure || !imageMetadata) {
+      toast({
+        title: 'Cannot Segment',
+        description: 'Please select a structure and click on the target',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      log.info('[ai-tumor] 🤖 Starting SAM segmentation...');
+      
+      // Initialize SAM if needed
+      if (!samController.isReady()) {
+        toast({
+          title: 'Loading SAM Model',
+          description: 'Downloading ~200MB model (first time only)...',
+        });
+        await samController.initialize();
+      }
+      
+      // Get current image pixel data
+      const currentImage = dicomImages?.[currentIndex];
+      if (!currentImage) {
+        throw new Error('No current image available');
+      }
+
+      // Get pixel data from cache
+      const cacheKey = currentImage.id || currentImage.sopInstanceUID || `image_${currentIndex}`;
+      const cachedData = imageCacheRef.current?.get(cacheKey);
+      
+      if (!cachedData?.pixelData) {
+        throw new Error('No pixel data available for current slice');
+      }
+
+      const width = currentImage.columns || currentImage.width || 512;
+      const height = currentImage.rows || currentImage.height || 512;
+
+      // Convert click point to pixel coordinates
+      const pixelX = clickPoint.pixelX ?? width / 2;
+      const pixelY = clickPoint.pixelY ?? height / 2;
+
+      log.info(`[ai-tumor] SAM click at pixel (${pixelX}, ${pixelY})`);
+
+      // Call SAM pointToContour
+      const result = await samController.pointToContour(
+        { x: pixelX, y: pixelY },
+        { pixels: cachedData.pixelData, width, height }
+      );
+
+      if (result.contour.length < 3) {
+        throw new Error('SAM did not produce a valid contour');
+      }
+
+      log.info(`[ai-tumor] SAM produced ${result.contour.length} points with confidence ${result.confidence.toFixed(3)}`);
+
+      // Convert pixel contour to world coordinates
+      const worldContour: number[] = [];
+      for (const point of result.contour) {
+        // Use the pixelToWorld from imageMetadata or calculate from image properties
+        const imagePosition = parseDICOMVector(imageMetadata.imagePositionPatient, 3);
+        const orientation = getOrientationVectors(imageMetadata);
+        const spacing = getPixelSpacingFromImage(imageMetadata);
+
+        if (imagePosition && orientation && spacing) {
+          const worldX = imagePosition[0] 
+            + orientation.rowDir[0] * spacing[1] * point.x
+            + orientation.colDir[0] * spacing[0] * point.y;
+          const worldY = imagePosition[1]
+            + orientation.rowDir[1] * spacing[1] * point.x
+            + orientation.colDir[1] * spacing[0] * point.y;
+          worldContour.push(worldX, worldY, currentSlicePosition);
+        }
+      }
+
+      // Create contour update
+      if (onContourUpdate && worldContour.length >= 9) {
+        onContourUpdate({
+          roiNumber: selectedStructure.roiNumber,
+          structureName: selectedStructure.structureName,
+          color: selectedStructure.color,
+          contour: {
+            slicePosition: currentSlicePosition,
+            points: worldContour,
+          },
+        });
+
+        toast({
+          title: 'SAM Segmentation Complete',
+          description: `Generated contour with ${result.contour.length} points (${(result.confidence * 100).toFixed(0)}% confidence)`,
+        });
+      }
+
+    } catch (error: any) {
+      console.error('[ai-tumor] SAM segmentation failed:', error);
+      toast({
+        title: 'SAM Segmentation Failed',
+        description: error.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Run segmentation (SuperSeg 3D or SAM 2D based on mode)
   const handleSegment = async () => {
+    console.log('🧠 AITumorTool handleSegment called, useSAM:', useSAM);
+    
+    // Use SAM for 2D single-slice segmentation if enabled
+    if (useSAM) {
+      console.log('🧠 Using SAM 2D mode');
+      return handleSAMSegment();
+    }
+
+    console.log('🧠 Using SuperSeg 3D mode');
+
     if (!clickPoint || !selectedStructure || !imageMetadata) {
       toast({
         title: 'Cannot Segment',
@@ -531,7 +669,7 @@ export function AITumorTool({
     if (serviceAvailable === false) {
       toast({
         title: 'Service Unavailable',
-        description: 'SuperSeg service is not running',
+        description: 'SuperSeg service is not running. Switch to 2D mode for client-side SAM.',
         variant: 'destructive',
       });
       return;

@@ -56,6 +56,9 @@ import { BlobManagementDialog } from './blob-management-dialog';
 import { groupStructureBlobs, computeBlobVolumeCc, createContourKey, type Blob, type BlobContour } from '@/lib/blob-operations';
 import { useUserSettings } from './user-settings-panel';
 import { getImageLoadPoolManager, createStackContextPrefetch, RequestPriority } from '@/lib/image-load-pool-manager';
+import { globalSeriesCache, type CachedImage } from '@/lib/global-series-cache';
+import { globalFusionCache } from '@/lib/global-fusion-cache';
+import { viewportScrollSync } from '@/lib/viewport-scroll-sync';
 
 const PREDICTION_DEBUG = false;
 
@@ -140,7 +143,7 @@ interface WorkingViewerProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'fast' | 'balanced' | 'segvol' | 'monai' | 'fast-raycast';
+    predictionMode?: 'geometric' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'monai' | 'fast-raycast';
     mem3dParams?: import('@/lib/fast-slice-prediction').PredictionParams;
   };
   selectedForEdit?: number | null;
@@ -152,7 +155,7 @@ interface WorkingViewerProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'fast' | 'balanced' | 'segvol' | 'monai' | 'fast-raycast';
+    predictionMode?: 'geometric' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'monai' | 'fast-raycast';
     mem3dParams?: import('@/lib/fast-slice-prediction').PredictionParams;
   }) => void;
   onContourUpdate?: (updatedStructures: any) => void;
@@ -280,6 +283,37 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
   const coronalCanvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Ref-based index for high-frequency scroll updates (bypasses React during rapid scrolling)
+  const currentIndexRef = useRef(currentIndex);
+  // Keep ref in sync
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+  
+  // Register with viewport scroll sync for multi-viewport synchronization
+  useEffect(() => {
+    // Handler for when other viewports update the position
+    const handleSyncUpdate = (state: { sliceIndex?: number; zoom?: number; panX?: number; panY?: number }) => {
+      if (state.sliceIndex !== undefined && state.sliceIndex !== currentIndexRef.current) {
+        currentIndexRef.current = state.sliceIndex;
+        // Sync React state after a short debounce (handled by scroll sync manager)
+        setCurrentIndex(state.sliceIndex);
+      }
+      if (state.zoom !== undefined) setZoom(state.zoom);
+      if (state.panX !== undefined) setPanX(state.panX);
+      if (state.panY !== undefined) setPanY(state.panY);
+    };
+    
+    // Register viewport and get unregister function
+    const unregister = viewportScrollSync.register(
+      viewportId,
+      handleSyncUpdate,
+      () => scheduleRender() // Direct canvas redraw callback
+    );
+    
+    return unregister;
+  }, [viewportId]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Use external RT structures if provided, otherwise load our own
@@ -323,6 +357,12 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
   // Use prop directly instead of local state
   const showStructures = allStructuresVisible ?? true;
   const [renderTrigger, setRenderTrigger] = useState(0);
+  
+  // Re-render when allStructuresVisible changes - ensures RT structure toggle works
+  useEffect(() => {
+    // Trigger a render update by incrementing forceRenderTrigger
+    setForceRenderTrigger(prev => prev + 1);
+  }, [allStructuresVisible]);
   const [animationTime, setAnimationTime] = useState(0);
   const [predictedContours, setPredictedContours] = useState<Map<string, any>>(new Map());
   const [previewContours, setPreviewContours] = useState<PreviewContour[]>([]);
@@ -638,8 +678,23 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   }, [convertSliceToCanvas, secondaryModality]);
 
-  const FUSION_CACHE_MAX_AGE_MS = 45000;
-  const FUSION_PREFETCH_RADIUS = 3;
+  // Fusion cache/prefetch tuning:
+  // - We keep a capped in-memory cache (LRU-ish via timestamp) for seamless swapping.
+  // - We also prefetch a wider radius around the current slice.
+  // NOTE: Storing canvases is memory-heavy; cap protects against runaway usage.
+  const FUSION_CACHE_MAX_ITEMS = 400;
+  const FUSION_PREFETCH_RADIUS = 8;
+
+  const pruneFuseboxCache = useCallback(() => {
+    const cache = fuseboxCacheRef.current;
+    if (cache.size <= FUSION_CACHE_MAX_ITEMS) return;
+    const entries = Array.from(cache.entries()).sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const removeCount = cache.size - FUSION_CACHE_MAX_ITEMS;
+    for (let i = 0; i < removeCount; i++) {
+      const key = entries[i]?.[0];
+      if (key) cache.delete(key);
+    }
+  }, []);
 
   const prefetchFusionSlices = useCallback(
     (centerIndex: number) => {
@@ -686,6 +741,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
             const prepared = convertSliceToCanvas(slice, secondaryModality);
             if (prepared) {
               fuseboxCacheRef.current.set(key, { ...prepared, timestamp: Date.now() });
+              pruneFuseboxCache();
             }
           })
           .catch((error) => {
@@ -702,6 +758,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       buildFuseboxCacheKey,
       convertSliceToCanvas,
       images,
+      pruneFuseboxCache,
       secondaryModality,
       secondarySeriesId,
       selectedRegistrationId,
@@ -943,7 +1000,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         const expectedX = imageWidth / 2;
         const expectedY = imageHeight / 2;
         if (Math.abs(prev.x - expectedX) > 1 || Math.abs(prev.y - expectedY) > 1) {
-          console.log(`🐟 FUSION: Updating crosshair position to image center: ${expectedX}, ${expectedY}`);
+          if (DEBUG) console.log(`🐟 FUSION: Updating crosshair position to image center: ${expectedX}, ${expectedY}`);
           return { x: expectedX, y: expectedY };
         }
         return prev;
@@ -959,7 +1016,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     
     // Detect large jumps that weren't triggered by user navigation
     const jumpSize = Math.abs(current - prev);
-    if (jumpSize > 10 && images.length > 0) {
+    if (DEBUG && jumpSize > 10 && images.length > 0) {
       console.warn(`🚨 UNEXPECTED SLICE JUMP: ${prev} → ${current} (jump: ${jumpSize})`);
       console.trace('Slice jump stack trace');
     }
@@ -977,6 +1034,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const RENDER_THROTTLE_MS = 16; // 60fps max
   const fusionRenderDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollingRef = useRef(false);
+  // NOTE: We no longer hide the fusion overlay during scrolling.
+  // Instead, we show cached fusion data and only skip network fetches.
+  // This provides a much better user experience in multi-viewport mode.
   
   const scheduleRender = useCallback((immediate = false) => {
     if (needsRenderRef.current && !immediate) return;
@@ -990,12 +1050,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       lastRenderTimeRef.current = performance.now();
       return;
-    }
-    
-    // Mark as scrolling for fusion optimization
-    isScrollingRef.current = true;
-    if (fusionRenderDebounceRef.current) {
-      clearTimeout(fusionRenderDebounceRef.current);
     }
     
     // Throttle renders during rapid scrolling
@@ -1018,18 +1072,22 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           await displayCurrentImageRef.current();
         }
         lastRenderTimeRef.current = performance.now();
-        
-        // Debounce fusion rendering for smoother scrolling
-        fusionRenderDebounceRef.current = setTimeout(() => {
-          isScrollingRef.current = false;
-          // Re-render with full quality fusion after scrolling stops
-          if (fusionOpacity > 0 && secondarySeriesId) {
-            scheduleRender();
-          }
-        }, 100);
       });
     }
-  }, [fusionOpacity, secondarySeriesId]);
+  }, []);
+
+  const interactionEndTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const markInteracting = useCallback(() => {
+    isScrollingRef.current = true;
+    if (interactionEndTimerRef.current) {
+      clearTimeout(interactionEndTimerRef.current);
+    }
+    interactionEndTimerRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      // Force a render at rest so fusion can update with full quality.
+      scheduleRender();
+    }, 120);
+  }, [scheduleRender]);
 
   useEffect(() => {
     scheduleRenderRef.current = scheduleRender;
@@ -2481,7 +2539,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       
       if (targetImageData) {
-        // Extract ~50 slices around reference and target for SegVol (to avoid payload size issues)
+        // Extract slices around reference and target for volumetric context
         const volumeSlices: any[] = [];
         const volumePositions: number[] = [];
 
@@ -2530,47 +2588,27 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     
     // Map UI prediction mode to algorithm mode
     const rawPredictionMode = brushToolState?.predictionMode;
-    const uiMode: 'fast' | 'balanced' | 'segvol' | 'monai' | 'fast-raycast' =
-      rawPredictionMode === 'fast' ||
-      rawPredictionMode === 'balanced' ||
-      rawPredictionMode === 'segvol' ||
-      rawPredictionMode === 'monai' ||
-      rawPredictionMode === 'fast-raycast'
-        ? rawPredictionMode
-        : (rawPredictionMode ? 'segvol' : 'balanced');
-    let algorithmMode: 'simple' | 'adaptive' | 'trend-based' | 'segvol' | 'monai' | 'fast-raycast' = 'adaptive';
+    let algorithmMode: 'geometric' | 'sam' | 'simple' | 'adaptive' | 'trend-based' | 'fast-raycast' = 'geometric';
 
-    switch (uiMode) {
+    switch (rawPredictionMode) {
+      case 'geometric':
+        algorithmMode = 'geometric';
+        break;
+      case 'sam':
+        algorithmMode = 'sam';
+        break;
       case 'fast':
-        // Use simple/adaptive based on history
-        algorithmMode = 'adaptive';
-        break;
       case 'balanced':
-        // Use trend-based if enough history, else adaptive
-        algorithmMode = historyManager.size() >= 2 ? 'trend-based' : 'adaptive';
-        break;
-      case 'segvol':
-        // Use SegVol volumetric AI model (advanced)
-        algorithmMode = 'segvol';
-        break;
-      case 'monai':
-        algorithmMode = 'monai';
-        break;
       case 'fast-raycast':
-        algorithmMode = 'fast-raycast';
+        algorithmMode = 'geometric'; // Map legacy modes to 'geometric'
         break;
       default:
-        algorithmMode = historyManager.size() >= 2 ? 'trend-based' : 'adaptive';
+        algorithmMode = 'geometric';
     }
     
-    // SegVol requires image data - don't fallback, fail clearly
-    if (algorithmMode === 'segvol' && (!imageData || !coordinateTransforms)) {
-      console.error(`❌ SegVol prediction unavailable: DICOM pixel data not accessible. Images must be loaded first.`);
-      updateActivePredictions(new Map());
-      return;
-    }
-    if (algorithmMode === 'monai' && (!imageData || !imageData.currentSlice?.pixels || !imageData.targetSlice?.pixels || !coordinateTransforms)) {
-      console.error(`❌ MONAI prediction unavailable: DICOM pixel data not accessible. Images must be loaded first.`);
+    // SAM requires image data
+    if (algorithmMode === 'sam' && (!imageData || !coordinateTransforms)) {
+      console.error(`❌ SAM prediction unavailable: DICOM pixel data not accessible. Images must be loaded first.`);
       updateActivePredictions(new Map());
       return;
     }
@@ -5919,15 +5957,18 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (!ctx) return;
 
     try {
+      // OPTIMIZED: Use ref for index during rapid scrolling to avoid stale closures
+      const activeIndex = currentIndexRef.current;
+      
       // Get the appropriate slice based on orientation
       let currentImage;
       if (orientation === 'axial') {
         // Ensure currentIndex is valid
-        const safeIndex = Math.max(0, Math.min(currentIndex, images.length - 1));
+        const safeIndex = Math.max(0, Math.min(activeIndex, images.length - 1));
         currentImage = images[safeIndex];
       } else {
         // For sagittal/coronal, use MPR reconstruction
-        const mprSlice = await getMPRSlice(orientation, currentIndex);
+        const mprSlice = await getMPRSlice(orientation, activeIndex);
         currentImage = mprSlice;
       }
       
@@ -5938,9 +5979,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       const cacheKey = currentImage.sopInstanceUID;
 
-      // Clear canvas
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Only clear canvas when NOT scrolling to prevent flashing
+      // During scrolling, the new image will draw over the old one anyway
+      // The black border areas are only visible with certain zoom/pan states
+      if (!isScrollingRef.current) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
 
       let imageData;
       
@@ -5980,12 +6025,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
       }
 
-      // Keep fixed canvas size for consistent display (1.5x larger for better quality)
-      canvas.width = 1536;
-      canvas.height = 1536;
-
-      // Always use CPU rendering for now - GPU integration needs more work
-      render16BitImage(ctx, imageData.data, imageData.width, imageData.height);
+      // NOTE: Do NOT resize the canvas here; changing canvas.width/height clears context and is very expensive.
+      // The canvas intrinsic size is set by the JSX attributes. Interactions should only redraw.
+      await render16BitImage(ctx, cacheKey, imageData.data, imageData.width, imageData.height);
       
       // Render secondary image overlay for fusion if available
       if (secondarySeriesId) {
@@ -5997,7 +6039,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           // Continue without fusion rather than failing entire image display
         }
       } else {
-        console.log('🐟 FUSION: No secondarySeriesId in main render');
+        if (DEBUG) console.log('🐟 FUSION: No secondarySeriesId in main render');
       }
 
       // Render RT structures and crosshairs on separate canvas above fusion
@@ -6108,8 +6150,118 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   };
 
-  const render16BitImage = (
+  // ============================================================================
+  // FAST CPU RENDER PATH (major perf win)
+  // - Cache the “base” grayscale render per-slice + window/level (ImageBitmap if available)
+  // - During pan/zoom, just drawImage() the cached base
+  // ============================================================================
+  const BASE_BITMAP_CACHE_LIMIT = 48;
+  const baseBitmapCacheRef = useRef<
+    Map<string, { bitmap: ImageBitmap | HTMLCanvasElement; lastUsed: number }>
+  >(new Map());
+  const baseBitmapGenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const baseBitmapGenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const reusableRgbaRef = useRef<{ w: number; h: number; rgba: Uint8ClampedArray; imageData: ImageData } | null>(null);
+
+  const evictOldestBaseBitmaps = useCallback(() => {
+    const cache = baseBitmapCacheRef.current;
+    if (cache.size <= BASE_BITMAP_CACHE_LIMIT) return;
+
+    const entries = Array.from(cache.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    const toRemove = entries.slice(0, Math.max(0, cache.size - BASE_BITMAP_CACHE_LIMIT));
+    for (const [key, entry] of toRemove) {
+      const bmp: any = entry.bitmap;
+      if (bmp && typeof bmp.close === 'function') {
+        try { bmp.close(); } catch { /* ignore */ }
+      }
+      cache.delete(key);
+    }
+  }, []);
+
+  const getReusableImageData = useCallback((w: number, h: number) => {
+    const existing = reusableRgbaRef.current;
+    if (existing && existing.w === w && existing.h === h) return existing;
+
+    const rgba = new Uint8ClampedArray(w * h * 4);
+    const imageData = new ImageData(rgba, w, h);
+    const next = { w, h, rgba, imageData };
+    reusableRgbaRef.current = next;
+    return next;
+  }, []);
+
+  const getOrCreateBaseBitmap = useCallback(async (
+    baseKey: string,
+    pixelArray: Float32Array,
+    width: number,
+    height: number,
+    lut: Uint8Array,
+  ): Promise<ImageBitmap | HTMLCanvasElement | null> => {
+    const cache = baseBitmapCacheRef.current;
+    const cached = cache.get(baseKey);
+    if (cached) {
+      cached.lastUsed = performance.now();
+      return cached.bitmap;
+    }
+
+    if (!baseBitmapGenCanvasRef.current) {
+      baseBitmapGenCanvasRef.current = document.createElement('canvas');
+    }
+    const genCanvas = baseBitmapGenCanvasRef.current;
+    if (genCanvas.width !== width || genCanvas.height !== height) {
+      genCanvas.width = width;
+      genCanvas.height = height;
+      baseBitmapGenCtxRef.current = genCanvas.getContext('2d');
+    }
+    const genCtx = baseBitmapGenCtxRef.current || genCanvas.getContext('2d');
+    if (!genCtx) return null;
+    baseBitmapGenCtxRef.current = genCtx;
+
+    const { rgba, imageData } = getReusableImageData(width, height);
+    const n = pixelArray.length;
+    for (let i = 0; i < n; i++) {
+      let pv = (pixelArray[i] + 32768.5) | 0;
+      if (pv < 0) pv = 0;
+      else if (pv > 65535) pv = 65535;
+      const gray = lut[pv];
+      const j = i << 2;
+      rgba[j] = gray;
+      rgba[j + 1] = gray;
+      rgba[j + 2] = gray;
+      rgba[j + 3] = 255;
+    }
+    genCtx.putImageData(imageData, 0, 0);
+
+    let bitmap: ImageBitmap | HTMLCanvasElement;
+    if (typeof createImageBitmap === 'function') {
+      try {
+        bitmap = await createImageBitmap(genCanvas);
+      } catch {
+        // Fall back to copying the generator canvas into a standalone canvas
+        // (so cache entries don't all point at the same mutable generator canvas).
+        const copy = document.createElement('canvas');
+        copy.width = width;
+        copy.height = height;
+        const copyCtx = copy.getContext('2d');
+        copyCtx?.drawImage(genCanvas, 0, 0);
+        bitmap = copy;
+      }
+    } else {
+      const copy = document.createElement('canvas');
+      copy.width = width;
+      copy.height = height;
+      const copyCtx = copy.getContext('2d');
+      copyCtx?.drawImage(genCanvas, 0, 0);
+      bitmap = copy;
+    }
+
+    cache.set(baseKey, { bitmap, lastUsed: performance.now() });
+    evictOldestBaseBitmaps();
+    return bitmap;
+  }, [evictOldestBaseBitmaps, getReusableImageData]);
+
+  const render16BitImage = async (
     ctx: CanvasRenderingContext2D,
+    sopInstanceUID: string,
     pixelArray: Float32Array,
     width: number,
     height: number,
@@ -6145,38 +6297,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       cachedLUTRef.current = { key: lutKey, lut };
     }
-    
-    // Create image data at original size
-    const imageData = ctx.createImageData(width, height);
-    const data = imageData.data;
 
-    // Apply LUT to pixel data
-    for (let i = 0; i < pixelArray.length; i++) {
-      // Convert Float32 to Uint16 index for LUT
-      const pixelValue = Math.max(0, Math.min(65535, Math.round(pixelArray[i] + 32768)));
-      const gray = lut[pixelValue];
-
-      const pixelIndex = i * 4;
-      data[pixelIndex] = gray; // R
-      data[pixelIndex + 1] = gray; // G
-      data[pixelIndex + 2] = gray; // B
-      data[pixelIndex + 3] = 255; // A
-    }
-
-    // Reuse offscreen canvas if possible
-    if (!offscreenCanvasRef.current || 
-        offscreenCanvasRef.current.width !== width || 
-        offscreenCanvasRef.current.height !== height) {
-      offscreenCanvasRef.current = document.createElement("canvas");
-      offscreenCanvasRef.current.width = width;
-      offscreenCanvasRef.current.height = height;
-    }
-    
-    const tempCanvas = offscreenCanvasRef.current;
-    const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
-    if (!tempCtx) return;
-
-    tempCtx.putImageData(imageData, 0, 0);
+    const baseKey = `${sopInstanceUID}|${width}x${height}|${lutKey}`;
+    const base = await getOrCreateBaseBitmap(baseKey, pixelArray, width, height, lut);
+    if (!base) return;
 
     // Scale and draw to the main canvas with zoom and pan
     const canvasWidth = ctx.canvas.width;
@@ -6201,10 +6325,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       imageHeight: height
     };
 
-    // Enable smooth scaling for better zoom quality while preserving medical image integrity
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(tempCanvas, x, y, scaledWidth, scaledHeight);
+    const smooth = !isScrollingRef.current;
+    ctx.imageSmoothingEnabled = smooth;
+    ctx.imageSmoothingQuality = smooth ? "high" : "low";
+    ctx.drawImage(base as any, x, y, scaledWidth, scaledHeight);
   };
 
   const render8BitImage = (
@@ -6228,24 +6352,147 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     ctx.putImageData(imageData, 0, 0);
   };
   
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const interval = window.setInterval(() => {
-      const now = Date.now();
-      for (const [key, entry] of fuseboxCacheRef.current.entries()) {
-        if (now - entry.timestamp > FUSION_CACHE_MAX_AGE_MS) {
-          fuseboxCacheRef.current.delete(key);
-        }
-      }
-    }, 5000);
-    return () => window.clearInterval(interval);
-  }, []);
+  // NOTE: We intentionally do NOT age-expire fusion cache entries anymore.
+  // The previous short TTL caused fused overlays to disappear/reload, making switching feel laggy.
+  // We cap memory via `FUSION_CACHE_MAX_ITEMS` in `pruneFuseboxCache()`.
 
   useEffect(() => {
     if (!secondarySeriesId) return;
     prefetchFusionSlices(currentIndex);
   }, [secondarySeriesId, selectedRegistrationId, currentIndex, prefetchFusionSlices]);
+
+  // Background warm prefetch: progressively load fused slices so switching feels instant.
+  // Runs only once fusion is "ready" for the selected secondary.
+  useEffect(() => {
+    if (!secondarySeriesId || !images.length) return;
+    if (fusionManifestLoading) return;
+
+    const status = fusionSecondaryStatuses?.get(secondarySeriesId);
+    const manifestMatches = Number(fusionManifestPrimarySeriesId) === Number(seriesId);
+    const localManifest = getFusionManifest(seriesId);
+    const localReady = !!localManifest && localManifest.secondaries.some(
+      (s) => s.secondarySeriesId === secondarySeriesId && s.status === 'ready'
+    );
+    if (status?.status !== 'ready' || !manifestMatches || !localReady) return;
+
+    let cancelled = false;
+    const primaryId = seriesId;
+    const secondaryId = secondarySeriesId;
+    const registrationId = selectedRegistrationId ?? null;
+
+    // Center-out order from currentIndex
+    const order: number[] = [];
+    for (let d = 0; d < images.length; d++) {
+      const a = currentIndex - d;
+      const b = currentIndex + d;
+      if (a >= 0) order.push(a);
+      if (b !== a && b < images.length) order.push(b);
+    }
+
+    const MAX_CONCURRENT = 2;
+    let inFlight = 0;
+    let ptr = 0;
+
+    const pump = () => {
+      if (cancelled) return;
+      if (isScrollingRef.current) {
+        setTimeout(pump, 200);
+        return;
+      }
+
+      while (!cancelled && inFlight < MAX_CONCURRENT && ptr < order.length) {
+        const idx = order[ptr++];
+        const img = images[idx];
+        const sop = img?.sopInstanceUID;
+        if (!sop) continue;
+
+        const key = buildFuseboxCacheKey(sop, secondaryId, registrationId);
+        if (fuseboxCacheRef.current.has(key) || fusionPrefetchSetRef.current.has(key)) continue;
+        
+        // Check global cache first (shared across viewports)
+        const globalSlice = globalFusionCache.getSlice(primaryId, secondaryId, sop, registrationId);
+        if (globalSlice) {
+          // Found in global cache - convert and store locally
+          const prepared = convertSliceToCanvas(globalSlice, globalSlice.secondaryModality ?? secondaryModality);
+          if (prepared) {
+            fuseboxCacheRef.current.set(key, { ...prepared, timestamp: Date.now() });
+          }
+          continue;
+        }
+
+        fusionPrefetchSetRef.current.add(key);
+        inFlight++;
+
+        (async () => {
+          try {
+            let slice: FuseboxSlice;
+            const preferredPosition = parseImagePosition(img);
+            try {
+              slice = await getFusedSlice(primaryId, secondaryId, sop);
+            } catch {
+              const instNumber = Number(img.instanceNumber ?? img.metadata?.instanceNumber ?? NaN);
+              const preferredIndex = Number.isFinite(instNumber) ? instNumber - 1 : idx;
+              slice = await getFusedSliceSmart(
+                primaryId,
+                secondaryId,
+                sop,
+                Number.isFinite(instNumber) ? instNumber : null,
+                preferredIndex,
+                preferredPosition,
+              );
+            }
+
+            if (cancelled) return;
+            
+            // Store in global cache for sharing across viewports
+            globalFusionCache.addSlice(primaryId, secondaryId, sop, slice, registrationId);
+            
+            const prepared = convertSliceToCanvas(slice, secondaryModality);
+            if (prepared) {
+              fuseboxCacheRef.current.set(key, { ...prepared, timestamp: Date.now() });
+              pruneFuseboxCache();
+            }
+          } catch {
+            // Ignore warm errors; on-demand render will still attempt.
+          } finally {
+            fusionPrefetchSetRef.current.delete(key);
+            inFlight--;
+
+            if (!cancelled) {
+              if ('requestIdleCallback' in window) {
+                (window as any).requestIdleCallback(() => pump(), { timeout: 1000 });
+              } else {
+                setTimeout(pump, 0);
+              }
+            }
+          }
+        })();
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => pump(), { timeout: 1000 });
+    } else {
+      setTimeout(pump, 0);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    secondarySeriesId,
+    seriesId,
+    selectedRegistrationId,
+    images,
+    currentIndex,
+    fusionManifestLoading,
+    fusionSecondaryStatuses,
+    fusionManifestPrimarySeriesId,
+    buildFuseboxCacheKey,
+    convertSliceToCanvas,
+    pruneFuseboxCache,
+    secondaryModality,
+  ]);
 
   useEffect(() => {
     if (secondarySeriesId) return;
@@ -6263,6 +6510,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       return;
     }
+
+    // During scrolling, we still show cached fusion data but skip network fetches.
+    // This provides a smoother user experience in multi-viewport mode.
+    const isScrolling = isScrollingRef.current;
 
     if (fusionManifestLoading) {
       // Gate rendering while the manifest is still loading
@@ -6321,7 +6572,32 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     );
     let cached = fuseboxCacheRef.current.get(cacheKey);
 
+    // Check global fusion cache first (shared across all viewports)
     if (!cached) {
+      const globalSlice = globalFusionCache.getSlice(
+        seriesId,
+        secondarySeriesId,
+        primaryImage.sopInstanceUID,
+        selectedRegistrationId ?? null
+      );
+      if (globalSlice) {
+        // Found in global cache - convert to canvas and store locally
+        const prepared = convertSliceToCanvas(globalSlice, globalSlice.secondaryModality ?? secondaryModality);
+        if (prepared) {
+          cached = { ...prepared, timestamp: Date.now() };
+          fuseboxCacheRef.current.set(cacheKey, cached);
+        }
+      }
+    }
+
+    if (!cached) {
+      // During scrolling, skip network fetches - just keep showing whatever overlay is there
+      // This prevents blank frames during rapid scrolling
+      if (isScrolling) {
+        // Don't clear the overlay, don't fetch - just return and keep showing current overlay
+        return;
+      }
+      
       try {
         // Try exact SOP match first; if not found, fall back by instance number or index
         let slice: FuseboxSlice;
@@ -6349,6 +6625,15 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           setSecondaryModality(slice.secondaryModality);
         }
 
+        // Store in global cache for sharing across viewports
+        globalFusionCache.addSlice(
+          seriesId,
+          secondarySeriesId,
+          primaryImage.sopInstanceUID,
+          slice,
+          selectedRegistrationId ?? null
+        );
+
         const prepared = convertSliceToCanvas(slice, secondaryModality);
         if (!prepared) {
           if (ensureActive()) {
@@ -6360,6 +6645,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
         cached = { ...prepared, timestamp: Date.now() };
         fuseboxCacheRef.current.set(cacheKey, cached);
+        pruneFuseboxCache();
         if (!prepared.hasSignal) {
           pushFusionLog('Fused slice had no visible signal', {
             sop: primaryImage.sopInstanceUID,
@@ -6455,7 +6741,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     if (!structuresRef || !currentImage) return;
 
     // FIXED: Get current slice position from actual DICOM metadata with fallbacks
-    let currentSlicePosition: number = currentIndex + 1; // Default fallback
+    // Use ref-based index for performance during rapid scrolling
+    let currentSlicePosition: number = currentIndexRef.current + 1; // Default fallback
 
     // Priority 1: Use parsed slice location from DICOM (check for null/undefined)
     if (
@@ -6692,7 +6979,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     // Restore context state
     ctx.restore();
-  }, [currentIndex, structureVisibility, showStructures, highlightedBlobId, blobDialogData, smoothAnimation, previewContours, animationTime]);
+  }, [structureVisibility, showStructures, highlightedBlobId, blobDialogData, smoothAnimation, previewContours, animationTime]);
 
   const drawContour = (
     ctx: CanvasRenderingContext2D,
@@ -7107,6 +7394,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
       const handleWindowLevelDrag = (moveEvent: MouseEvent) => {
         moveEvent.preventDefault();
+        markInteracting();
         const deltaX = moveEvent.clientX - startX;
         const deltaY = moveEvent.clientY - startY;
 
@@ -7142,6 +7430,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     // Only handle pan if drawing/measurement tool is NOT active
     if (isDragging && !isDrawingToolActive) {
+      markInteracting();
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
       const newPanX = lastPanX + deltaX;
@@ -7171,6 +7460,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     // Always handle wheel events
     e.preventDefault();
     e.stopPropagation();
+    markInteracting();
 
     if (e.ctrlKey || e.metaKey) {
       // Ctrl+scroll for zoom
@@ -7178,16 +7468,33 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newZoom = Math.max(0.1, Math.min(5, zoom * zoomFactor));
       setZoom(newZoom);
       notifyZoomChange(newZoom);
-      console.log(`🔍 Zoom: ${e.deltaY > 0 ? 'out' : 'in'} (factor: ${zoomFactor})`);
     } else {
-      // Regular scroll for slice navigation
-      // Scroll up (deltaY < 0) → towards head (superior) → increase index
-      // Scroll down (deltaY > 0) → towards feet (inferior) → decrease index
-      console.log(`🖱️ Scroll: deltaY=${e.deltaY} currentIndex=${currentIndex}`);
+      // OPTIMIZED: Use ref-based scroll for high-frequency updates
+      // This bypasses React state during rapid scrolling for smooth performance
+      const maxIndex = images.length - 1;
+      const current = currentIndexRef.current;
+      let newIndex: number;
+      
       if (e.deltaY > 0) {
-        goToPrevious(); // Scroll down → towards feet
+        // Scroll down → towards feet (previous)
+        newIndex = Math.max(0, current - 1);
       } else {
-        goToNext(); // Scroll up → towards head
+        // Scroll up → towards head (next)
+        newIndex = Math.min(maxIndex, current + 1);
+      }
+      
+      if (newIndex !== current) {
+        // Update ref immediately (no React re-render)
+        currentIndexRef.current = newIndex;
+        
+        // Schedule canvas redraw using existing throttled system
+        scheduleRender();
+        
+        // Notify parent through scroll sync (debounced React state update)
+        viewportScrollSync.update(viewportId, { sliceIndex: newIndex });
+        
+        // Also notify via callback for components not using scroll sync
+        notifySliceChange(newIndex);
       }
     }
   };
@@ -7235,6 +7542,53 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [currentIndex, images]);
+
+  // Listen for slice navigation events from topbar arrows
+  useEffect(() => {
+    const handleNavigateSlice = (e: CustomEvent<{ direction: 'prev' | 'next' }>) => {
+      if (e.detail.direction === 'prev') {
+        goToPrevious();
+      } else if (e.detail.direction === 'next') {
+        goToNext();
+      }
+    };
+
+    window.addEventListener('navigate:slice', handleNavigateSlice as EventListener);
+
+    return () => {
+      window.removeEventListener('navigate:slice', handleNavigateSlice as EventListener);
+    };
+  }, [currentIndex, images]);
+
+  // Listen for viewer reset event from topbar
+  useEffect(() => {
+    const handleViewerReset = () => {
+      // Reset zoom
+      setZoom(1);
+      // Reset pan
+      setPanX(0);
+      setPanY(0);
+      setLastPanX(0);
+      setLastPanY(0);
+      // Reset to first slice
+      setCurrentIndex(0);
+      notifySliceChange(0);
+      // Reset crosshair to center
+      if (images.length > 0 && images[0]) {
+        const centerX = Math.floor((images[0].columns || 512) / 2);
+        const centerY = Math.floor((images[0].rows || 512) / 2);
+        setCrosshairPos({ x: centerX, y: centerY });
+        notifyCrosshairChange({ x: centerX, y: centerY });
+      }
+      console.log('🔄 Viewer reset to default state');
+    };
+
+    window.addEventListener('viewer:reset', handleViewerReset);
+
+    return () => {
+      window.removeEventListener('viewer:reset', handleViewerReset);
+    };
+  }, [images]);
 
   // Animation loop for dashed borders on predicted contours
   useEffect(() => {
@@ -8658,6 +9012,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 secondarySeriesId={secondarySeriesId}
                 registrationMatrix={registrationMatrix}
                 smoothOutput={(brushToolState as any)?.aiTumorSmoothOutput ?? false}
+                useSAM={(brushToolState as any)?.aiTumorUseSAM ?? false}
                 onShowPrimarySeries={() => {
                   // Switch back to primary series to show CT contours
                   if (onSecondarySeriesSelect) {

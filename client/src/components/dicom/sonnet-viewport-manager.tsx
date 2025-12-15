@@ -350,7 +350,7 @@ const ScanCard: React.FC<{
     const classes = {
       CT: 'bg-blue-900/60 text-blue-200 border-blue-600/30',
       MRI: 'bg-purple-900/60 text-purple-200 border-purple-600/30',
-      PET: 'bg-orange-900/60 text-orange-200 border-orange-600/30',
+      PET: 'bg-amber-900/60 text-amber-200 border-amber-600/30',
       SPECT: 'bg-green-900/60 text-green-200 border-green-600/30',
       US: 'bg-teal-900/60 text-teal-200 border-teal-600/30',
       RT: 'bg-red-900/60 text-red-200 border-red-600/30'
@@ -547,7 +547,7 @@ const ViewportSlotComponent: React.FC<{
                 className={`${
                   scan.modality === 'CT' ? 'bg-blue-900/80 text-blue-200 border-blue-600/50' :
                   scan.modality === 'MRI' ? 'bg-purple-900/80 text-purple-200 border-purple-600/50' :
-                  scan.modality === 'PET' ? 'bg-orange-900/80 text-orange-200 border-orange-600/50' :
+                  scan.modality === 'PET' ? 'bg-amber-900/80 text-amber-200 border-amber-600/50' :
                   'bg-gray-900/80 text-gray-200 border-gray-600/50'
                 } backdrop-blur-md border text-xs`}
               >
@@ -566,7 +566,7 @@ const ViewportSlotComponent: React.FC<{
                 className={`${
                   scan.modality === 'CT' ? 'bg-blue-900/60 text-blue-200 border-blue-600/30' :
                   scan.modality === 'MRI' ? 'bg-purple-900/60 text-purple-200 border-purple-600/30' :
-                  scan.modality === 'PET' ? 'bg-orange-900/60 text-orange-200 border-orange-600/30' :
+                  scan.modality === 'PET' ? 'bg-amber-900/60 text-amber-200 border-amber-600/30' :
                   'bg-gray-900/60 text-gray-200 border-gray-600/30'
                 } backdrop-blur-sm border text-xs`}
               >

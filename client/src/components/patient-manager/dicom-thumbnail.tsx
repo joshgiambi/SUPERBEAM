@@ -71,7 +71,7 @@ export function DicomThumbnail({ seriesId, modality, imageCount }: DicomThumbnai
         className={`w-16 h-16 rounded-lg overflow-hidden border ${
           modality === 'CT' ? 'bg-gradient-to-br from-blue-950 to-blue-900 border-blue-700' :
           modality === 'MR' ? 'bg-gradient-to-br from-purple-950 to-purple-900 border-purple-700' :
-          modality === 'PT' ? 'bg-gradient-to-br from-yellow-950 to-yellow-900 border-yellow-700' :
+          (modality === 'PT' || modality === 'PET') ? 'bg-gradient-to-br from-amber-950 to-amber-900 border-amber-700' :
           'bg-gradient-to-br from-gray-950 to-gray-900 border-gray-700'
         } flex items-center justify-center`}
       >

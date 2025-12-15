@@ -1,31 +1,35 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+/**
+ * Contour Edit Toolbar - V4 Aurora Edition
+ * 
+ * Clean two-row design with inline tool settings:
+ * - Row 1: Structure info + Tools + Inline Settings
+ * - Row 2: Quick action buttons (undo/redo, delete, interpolate, etc.)
+ * - Draggable with position memory
+ * - Adaptive color theming based on structure color
+ */
+
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Brush,
   Pen,
   Scissors,
-  Settings,
   X,
   Check,
   Trash2,
-  Layers,
-  RotateCcw,
-  ArrowUpFromLine,
-  ArrowDownFromLine,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  Maximize2,
-  Minimize2,
-  Plus,
-  Minus,
   Undo,
   Redo,
   GitBranch,
@@ -33,22 +37,111 @@ import {
   Eraser,
   ChevronDown,
   Sparkles,
-  Workflow,
-  Eye,
   Zap,
-  Keyboard,
   SplitSquareHorizontal,
-  Info,
+  Maximize2,
+  GripVertical,
+  RotateCcw,
   MousePointer2
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { undoRedoManager } from '@/lib/undo-system';
-import { growContourSimple } from '@/lib/simple-polygon-operations';
 import { log } from '@/lib/log';
 import { useToast } from '@/hooks/use-toast';
+import { samController } from '@/lib/sam-controller';
 import { SmartNthSettingsDialog } from './smart-nth-settings-dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { PredictionTuningPanel, DEFAULT_PARAMS, type PredictionParams as TuningParams } from './prediction-tuning-panel';
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+interface Position { x: number; y: number; }
+
+const rgbToHex = (rgb: number[]) => '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+const hexToRgb = (hex: string): number[] => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [255, 255, 255];
+};
+
+const rgbToHsl = (r: number, g: number, b: number): [number, number, number] => {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h * 360, s * 100, l * 100];
+};
+
+const STORAGE_KEY = 'contour-toolbar-v4-position';
+const getStoredPosition = (): Position | null => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
+};
+const savePosition = (pos: Position) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pos)); } catch {}
+};
+
+// ============================================================================
+// DRAGGABLE HOOK
+// ============================================================================
+
+function useDraggable(initialPosition: Position, onPositionChange?: (pos: Position) => void) {
+  const [position, setPosition] = useState<Position>(initialPosition);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
+      e.preventDefault();
+      setIsDragging(true);
+      dragStart.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+    }
+  }, [position]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStart.current) return;
+      setPosition({
+        x: dragStart.current.posX + (e.clientX - dragStart.current.x),
+        y: dragStart.current.posY + (e.clientY - dragStart.current.y),
+      });
+    };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      dragStart.current = null;
+      savePosition(position);
+      onPositionChange?.(position);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, position, onPositionChange]);
+
+  const resetPosition = useCallback(() => {
+    const newPos = { x: 0, y: 0 };
+    setPosition(newPos);
+    savePosition(newPos);
+  }, []);
+
+  return { position, isDragging, handleMouseDown, resetPosition };
+}
+
+// ============================================================================
+// PROPS
+// ============================================================================
 
 interface ContourEditToolbarProps {
   selectedStructure: {
@@ -66,9 +159,10 @@ interface ContourEditToolbarProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'fast-raycast';
+    predictionMode?: 'geometric' | 'sam';
     mem3dParams?: TuningParams;
     aiTumorSmoothOutput?: boolean;
+    aiTumorUseSAM?: boolean;
   }) => void;
   currentSlicePosition?: number;
   onContourUpdate?: (updatedStructures: any) => void;
@@ -91,7 +185,13 @@ interface ContourEditToolbarProps {
   propagationMode?: 'conservative' | 'moderate' | 'aggressive';
   onPropagationModeChange?: (mode: 'conservative' | 'moderate' | 'aggressive') => void;
   workingViewerRef?: React.RefObject<any>;
+  // Positioning prop for viewport centering (accounts for sidebar)
+  viewerOffsetLeft?: number;
 }
+
+// ============================================================================
+// MAIN TOOLBAR
+// ============================================================================
 
 export function ContourEditToolbar({ 
   selectedStructure, 
@@ -111,69 +211,125 @@ export function ContourEditToolbar({
   activePredictions,
   propagationMode = 'moderate',
   onPropagationModeChange,
-  workingViewerRef
+  workingViewerRef,
+  viewerOffsetLeft = 0,
 }: ContourEditToolbarProps) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [brushThickness, setBrushThickness] = useState([9]); // ~1cm at 1.171875mm pixel spacing
-  const [is3D, setIs3D] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState(selectedStructure?.structureName || '');
+  const [brushThickness, setBrushThickness] = useState([9]);
   const [smartBrush, setSmartBrush] = useState(false);
-  const [targetSliceNumber, setTargetSliceNumber] = useState('');
-  const [growDistance, setGrowDistance] = useState('');
-  const [autoZoomEnabled, setAutoZoomEnabled] = useState(true);
-  const [autoLocalizeEnabled, setAutoLocalizeEnabled] = useState(true);
-  const [zoomFillFactor, setZoomFillFactor] = useState([40]); // 40% fill factor
-  const [growMode, setGrowMode] = useState<'grow' | 'shrink'>('grow');
-  const [growDirection, setGrowDirection] = useState<'all' | 'anterior' | 'posterior' | 'left' | 'right' | 'superior' | 'inferior'>('all');
-  const [booleanOperation, setBooleanOperation] = useState<'combine' | 'subtract'>('combine');
-  const [targetStructure, setTargetStructure] = useState<number | null>(null);
-  const [isPredictionEnabled, setIsPredictionEnabled] = useState(false); // Next slice prediction toggle
-  const predictionMode: 'fast-raycast' = 'fast-raycast'; // Only fast-raycast mode supported
-  const [mem3dParams, setMem3dParams] = useState<TuningParams>(DEFAULT_PARAMS); // MEM3D tuning parameters
-  const [showNthSliceMenu, setShowNthSliceMenu] = useState(false);
+  const [isPredictionEnabled, setIsPredictionEnabled] = useState(false);
+  const [predictionMode, setPredictionMode] = useState<'geometric' | 'sam'>('geometric');
+  const [samLoading, setSamLoading] = useState(false);
+  const [mem3dParams, setMem3dParams] = useState<TuningParams>(DEFAULT_PARAMS);
+  const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
+  const [aiTumorUseSAM, setAiTumorUseSAM] = useState(false); // AI tumor mode: false = SuperSeg, true = SAM
+  
+  // Dropdown states
+  const [showNthMenu, setShowNthMenu] = useState(false);
   const [showClearMenu, setShowClearMenu] = useState(false);
   const [showBlobMenu, setShowBlobMenu] = useState(false);
-  const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false); // AI tumor tool smoothing option
+  const nthMenuRef = useRef<NodeJS.Timeout | null>(null);
+  const clearMenuRef = useRef<NodeJS.Timeout | null>(null);
+  const blobMenuRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // SmartNth dialog
+  const [showSmartNthDialog, setShowSmartNthDialog] = useState(false);
+  const [totalSlicesForSmartNth, setTotalSlicesForSmartNth] = useState(0);
 
-  // Keyboard shortcuts for Accept (A) and Reject (X) predictions
+  // Position for dragging
+  const defaultPos = useMemo(() => getStoredPosition() || { x: 0, y: 0 }, []);
+  const { position, isDragging, handleMouseDown, resetPosition } = useDraggable(defaultPos);
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Sync temp name when structure changes
   useEffect(() => {
-    if (!isVisible || !activePredictions || activePredictions.size === 0) return;
+    setTempName(selectedStructure?.structureName || '');
+  }, [selectedStructure?.structureName]);
 
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Only trigger if not typing in an input field
+  // Color computations
+  const accentHex = useMemo(() => selectedStructure ? rgbToHex(selectedStructure.color) : '#ffffff', [selectedStructure]);
+  const accentRgb = useMemo(() => selectedStructure ? `rgb(${selectedStructure.color.join(',')})` : 'rgb(255,255,255)', [selectedStructure]);
+  const [accentHue] = useMemo(() => selectedStructure ? rgbToHsl(selectedStructure.color[0], selectedStructure.color[1], selectedStructure.color[2]) : [0, 0, 100], [selectedStructure]);
+
+  // Pixel spacing for brush size display
+  const pixelSpacing = useMemo(() => {
+    const spacing = imageMetadata?.pixelSpacing?.split('\\').map(Number) || [0.9765625, 0.9765625];
+    return (spacing[0] + spacing[1]) / 2;
+  }, [imageMetadata]);
+  
+  const brushSizeCm = ((brushThickness[0] * pixelSpacing) / 10).toFixed(2);
+
+  const sliceSpacing = useMemo(() => {
+    let spacing = 2.5;
+    const parsedSpacing = parseFloat(imageMetadata?.spacingBetweenSlices ?? imageMetadata?.sliceThickness);
+    if (!Number.isNaN(parsedSpacing) && parsedSpacing > 0) {
+      spacing = parsedSpacing;
+    }
+    return spacing;
+  }, [imageMetadata?.spacingBetweenSlices, imageMetadata?.sliceThickness]);
+
+  const normalizedCurrentSlice = useMemo(() => {
+    if (currentSlicePosition == null || !Number.isFinite(currentSlicePosition)) return null;
+    return Math.round(currentSlicePosition * 1000) / 1000;
+  }, [currentSlicePosition]);
+
+  const hasPredictionForCurrentSlice = useMemo(() => {
+    if (!isPredictionEnabled || !activePredictions || activePredictions.size === 0) return false;
+    if (normalizedCurrentSlice == null) return false;
+    const tolerance = sliceSpacing * 0.4;
+    return Array.from(activePredictions.keys()).some(slicePos => 
+      Math.abs(slicePos - normalizedCurrentSlice) <= tolerance
+    );
+  }, [isPredictionEnabled, activePredictions, normalizedCurrentSlice, sliceSpacing]);
+
+  // Undo/Redo
+  const canUndo = undoRedoManager.canUndo();
+  const canRedo = undoRedoManager.canRedo();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       
-      const key = e.key.toLowerCase();
-      
-      if (key === 'a') {
+      if (e.key === 'Delete' || e.key === 'Del') {
         e.preventDefault();
-        if (onContourUpdate) {
-          onContourUpdate({ 
-            action: 'accept_predictions', 
-            structureId: selectedStructure?.roiNumber 
-          });
-        }
-        toast({ title: 'Prediction accepted' });
-      } else if (key === 'x') {
+        handleDeleteCurrentSlice();
+      }
+      if (e.key.toLowerCase() === 'a' && hasPredictionForCurrentSlice) {
         e.preventDefault();
-        if (onContourUpdate) {
-          onContourUpdate({ 
-            action: 'reject_predictions', 
-            structureId: selectedStructure?.roiNumber 
-          });
-        }
-        toast({ title: 'Prediction rejected' });
+        handleAcceptPrediction();
+      }
+      if (e.key.toLowerCase() === 'x' && hasPredictionForCurrentSlice) {
+        e.preventDefault();
+        handleRejectPrediction();
       }
     };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isVisible, hasPredictionForCurrentSlice, selectedStructure, currentSlicePosition]);
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isVisible, activePredictions, onContourUpdate, selectedStructure]);
-
+  // Sync brush size from external updates
+  useEffect(() => {
+    const handler = (e: any) => {
+      const newSize = Number(e?.detail?.brushSize);
+      if (Number.isFinite(newSize)) {
+        setBrushThickness([newSize]);
+      }
+    };
+    window.addEventListener('brush:size:update', handler as EventListener);
+    return () => window.removeEventListener('brush:size:update', handler as EventListener);
+  }, []);
 
   // Notify parent when prediction mode or params change
   useEffect(() => {
     if (onToolChange && activeTool === 'brush' && isPredictionEnabled) {
-      console.log('🎛️ Toolbar: Sending updated params to viewer:', mem3dParams);
       onToolChange({
         tool: 'brush',
         brushSize: brushThickness[0],
@@ -186,114 +342,7 @@ export function ContourEditToolbar({
     }
   }, [predictionMode, mem3dParams, onToolChange, activeTool, isPredictionEnabled, brushThickness, smartBrush]);
 
-  const [showInfoDialog, setShowInfoDialog] = useState(false);
-  const [showSmartNthDialog, setShowSmartNthDialog] = useState(false);
-  const [totalSlicesForSmartNth, setTotalSlicesForSmartNth] = useState(0);
-  
-  const normalizedCurrentSlice = useMemo(() => {
-    if (currentSlicePosition == null || !Number.isFinite(currentSlicePosition)) return null;
-    return Math.round(currentSlicePosition * 1000) / 1000;
-  }, [currentSlicePosition]);
-
-  const sliceSpacing = useMemo(() => {
-    let spacing = 2.5;
-    const parsedSpacing = parseFloat(imageMetadata?.spacingBetweenSlices ?? imageMetadata?.sliceThickness);
-    if (!Number.isNaN(parsedSpacing) && parsedSpacing > 0) {
-      spacing = parsedSpacing;
-    }
-    return spacing;
-  }, [imageMetadata?.spacingBetweenSlices, imageMetadata?.sliceThickness]);
-
-  const hasPredictionForCurrentSlice = useMemo(() => {
-    if (!isPredictionEnabled || !activePredictions || activePredictions.size === 0) return false;
-    if (normalizedCurrentSlice == null) return false;
-    
-    const tolerance = sliceSpacing * 0.4;
-    
-    return Array.from(activePredictions.keys()).some(slicePos => 
-      Math.abs(slicePos - normalizedCurrentSlice) <= tolerance
-    );
-  }, [isPredictionEnabled, activePredictions, normalizedCurrentSlice, sliceSpacing]);
-
-  // Refs for dropdown close timers
-  const nthMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const clearMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const blobMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [isPreviewEnabled, setIsPreviewEnabled] = useState(true); // Preview mode for grow/shrink operations
-  const [previewContours, setPreviewContours] = useState<number[][] | null>(null); // Store preview contours for rendering
-  const [isShowingPreview, setIsShowingPreview] = useState(false); // Track if preview is currently shown
-
-  // Keyboard shortcut handling
-  useEffect(() => {
-    if (!isVisible) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete key shortcut for deleting current slice
-      if (e.key === 'Delete' || e.key === 'Del') {
-        e.preventDefault();
-        handleDeleteCurrentSlice();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible, selectedStructure, currentSlicePosition]);
-
-  // Sync brush size from parent tool state when it changes externally (e.g., right-drag)
-  useEffect(() => {
-    // If the parent (viewer) updates brushToolState.brushSize, we receive it via onToolChange invocations to us.
-    // To keep the slider in sync, we mirror selected structure's brush size through imageMetadata unit context if available via props.
-    // Since ContourEditToolbar owns the activation and initial size, we listen for window events dispatched by viewer when brush size changes.
-    const handler = (e: any) => {
-      const newSize = Number(e?.detail?.brushSize);
-      if (Number.isFinite(newSize)) {
-        setBrushThickness([newSize]);
-      }
-    };
-    window.addEventListener('brush:size:update', handler as EventListener);
-    return () => window.removeEventListener('brush:size:update', handler as EventListener);
-  }, []);
-
-  // Notify parent when tool is activated
-  const handleToolActivation = (toolId: string) => {
-    log.debug(`TOOLBAR: Tool activated: ${toolId}`, 'toolbar');
-    
-    // Special handling for margin button - directly open the panel
-    if (toolId === 'margin') {
-      if (onOpenAdvancedMarginTool) {
-        onOpenAdvancedMarginTool();
-      }
-      return;
-    }
-    
-    const isActive = activeTool === toolId;
-    const newTool = isActive ? null : toolId;
-    setActiveTool(newTool);
-    
-    log.debug(`TOOLBAR: Setting tool to: ${newTool} active=${newTool !== null}`, 'toolbar');
-    
-    // Pass tool state to parent
-    if (onToolChange) {
-      const toolState = {
-        tool: newTool,
-        brushSize: brushThickness[0],
-        isActive: newTool !== null,
-        predictionEnabled: isPredictionEnabled,
-        predictionMode: predictionMode,
-        mem3dParams: mem3dParams
-      };
-      log.debug('TOOLBAR: Sending tool state to parent', 'toolbar');
-      onToolChange(toolState);
-    }
-    
-    // Close info dialog when switching tools
-    setShowInfoDialog(false);
-  };
-
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  // Mutation for updating structure name
+  // Mutations
   const updateNameMutation = useMutation({
     mutationFn: async ({ structureId, name }: { structureId: number; name: string }) => {
       const response = await fetch(`/api/rt-structures/${structureId}/name`, {
@@ -313,7 +362,6 @@ export function ContourEditToolbar({
     }
   });
 
-  // Mutation for updating structure color
   const updateColorMutation = useMutation({
     mutationFn: async ({ structureId, color }: { structureId: number; color: number[] }) => {
       const response = await fetch(`/api/rt-structures/${structureId}/color`, {
@@ -333,1125 +381,932 @@ export function ContourEditToolbar({
     }
   });
 
-  // New undo/redo handlers using the revamped system
+  // Tool handlers
+  const handleToolClick = (toolId: string) => {
+    if (toolId === 'margin') {
+      onOpenAdvancedMarginTool?.();
+      return;
+    }
+    
+    const newTool = activeTool === toolId ? null : toolId;
+    setActiveTool(newTool);
+    
+    if (onToolChange) {
+      onToolChange({
+        tool: newTool,
+        brushSize: brushThickness[0],
+        isActive: newTool !== null,
+        predictionEnabled: isPredictionEnabled,
+        predictionMode: predictionMode,
+        mem3dParams: mem3dParams,
+        smartBrushEnabled: smartBrush,
+        aiTumorSmoothOutput: aiTumorSmoothOutput
+      });
+    }
+  };
+
+  const handleNameSubmit = () => {
+    if (tempName.trim() && tempName !== selectedStructure?.structureName && selectedStructure) {
+      onStructureNameChange(tempName.trim());
+      updateNameMutation.mutate({ structureId: selectedStructure.roiNumber, name: tempName.trim() });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleColorChange = (hexColor: string) => {
+    if (!selectedStructure) return;
+    const rgbColor = hexToRgb(hexColor);
+    onStructureColorChange(hexColor);
+    updateColorMutation.mutate({ structureId: selectedStructure.roiNumber, color: rgbColor });
+  };
+
+  // Undo/Redo handlers
   const handleUndo = () => {
     if (!seriesId) return;
-    
     const previousState = undoRedoManager.undo();
     if (previousState) {
       log.debug(`Undoing to: ${previousState.action} on structure ${previousState.structureId}`, 'toolbar');
       if (onContourUpdate) {
         onContourUpdate(previousState.rtStructures);
       }
-      const sliceInfo = previousState.slicePosition !== undefined ? ` @ slice ${previousState.slicePosition.toFixed(1)}` : '';
       toast({ 
         title: `Undone: ${previousState.action}`,
-        description: `${previousState.structureName || `Structure ${previousState.structureId}`}${sliceInfo}`
+        description: `${previousState.structureName || `Structure ${previousState.structureId}`}`
       });
-    } else {
-      toast({ title: "Nothing to undo", variant: "destructive" });
     }
   };
 
   const handleRedo = () => {
     if (!seriesId) return;
-    
     const nextState = undoRedoManager.redo();
     if (nextState) {
       log.debug(`Redoing to: ${nextState.action} on structure ${nextState.structureId}`, 'toolbar');
       if (onContourUpdate) {
         onContourUpdate(nextState.rtStructures);
       }
-      const sliceInfo = nextState.slicePosition !== undefined ? ` @ slice ${nextState.slicePosition.toFixed(1)}` : '';
       toast({ 
         title: `Redone: ${nextState.action}`,
-        description: `${nextState.structureName || `Structure ${nextState.structureId}`}${sliceInfo}`
+        description: `${nextState.structureName || `Structure ${nextState.structureId}`}`
       });
-    } else {
-      toast({ title: "Nothing to redo", variant: "destructive" });
     }
   };
 
-  // Check undo/redo availability
-  const canUndo = undoRedoManager.canUndo();
-  const canRedo = undoRedoManager.canRedo();
-
-
-
-  // Delete operations functions
+  // Action handlers
   const handleDeleteCurrentSlice = () => {
     if (!selectedStructure || currentSlicePosition == null) return;
-    
-    log.debug(`Deleting contour for structure ${selectedStructure.roiNumber} at slice ${currentSlicePosition}`, 'toolbar');
-    
-    // Create notification for local update
     if (onContourUpdate) {
-      // This would trigger a local update to remove the contour from current slice
-      const updatePayload = {
+      onContourUpdate({
         action: 'delete_slice',
         structureId: selectedStructure.roiNumber,
         slicePosition: currentSlicePosition
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
-    toast({ title: `Deleted contour from current slice (${currentSlicePosition})` });
+    toast({ title: `Deleted contour from current slice` });
   };
 
-  const handleDeleteNthSlice = () => {
-    if (!selectedStructure || !targetSliceNumber) return;
-    
-    const sliceNum = parseFloat(targetSliceNumber);
-    if (isNaN(sliceNum)) {
-      toast({ title: "Please enter a valid slice number", variant: "destructive" });
-      return;
-    }
-    
-    log.debug(`Deleting contour for structure ${selectedStructure.roiNumber} at slice ${sliceNum}`, 'toolbar');
-    
-    if (onContourUpdate) {
-      const updatePayload = {
-        action: 'delete_slice',
-        structureId: selectedStructure.roiNumber,
-        slicePosition: sliceNum
-      };
-      onContourUpdate(updatePayload);
-    }
-    
-    toast({ title: `Deleted contour from slice ${sliceNum}` });
-    setTargetSliceNumber('');
-  };
-
-  const handleClearAllSlices = () => {
-    if (!selectedStructure) return;
-    
-    log.debug(`Clearing all contours for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
-    if (onContourUpdate) {
-      const updatePayload = {
-        action: 'clear_all',
-        structureId: selectedStructure.roiNumber
-      };
-      onContourUpdate(updatePayload);
-    }
-    
-    toast({ title: `Cleared all contours for ${selectedStructure.structureName}` });
-  };
-  
   const handleInterpolate = () => {
     if (!selectedStructure) return;
-    
-    log.debug(`Interpolating missing slices for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
     if (onContourUpdate) {
-      const updatePayload = {
+      onContourUpdate({
         action: 'interpolate',
         structureId: selectedStructure.roiNumber
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
     toast({ title: "Interpolating...", description: `Processing ${selectedStructure.structureName}` });
   };
-  
+
   const handleDeleteEveryNthSlice = (n: number) => {
     if (!selectedStructure) return;
-    
-    log.debug(`Deleting every ${n} slice for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
     if (onContourUpdate) {
-      const updatePayload = {
+      onContourUpdate({
         action: 'delete_nth_slice',
         structureId: selectedStructure.roiNumber,
         nth: n
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
     toast({ title: `Deleted every ${n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice for ${selectedStructure.structureName}` });
-    setShowNthSliceMenu(false);
+    setShowNthMenu(false);
   };
-  
+
   const handleOpenSmartNthDialog = () => {
     if (!selectedStructure) return;
-    
-    // Request total slice count from viewer
     if (onContourUpdate) {
-      const updatePayload = {
+      onContourUpdate({
         action: 'get_slice_count',
         structureId: selectedStructure.roiNumber,
         callback: (count: number) => {
           setTotalSlicesForSmartNth(count);
           setShowSmartNthDialog(true);
         }
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
-    setShowNthSliceMenu(false);
+    setShowNthMenu(false);
   };
-  
+
   const handleApplySmartNth = (threshold: number) => {
     if (!selectedStructure) return;
-    
-    log.debug(`Applying SmartNth with threshold ${threshold}% for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
     if (onContourUpdate) {
-      const updatePayload = {
+      onContourUpdate({
         action: 'smart_nth_slice',
         structureId: selectedStructure.roiNumber,
         threshold: threshold
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
     toast({ 
       title: `SmartNth applied to ${selectedStructure.structureName}`,
       description: `Removed slices with <${threshold}% area change (max gap: 3)`
     });
   };
-  
-  const handleClearBelowSlice = () => {
-    if (!selectedStructure || currentSlicePosition == null) return;
-    
-    log.debug(`Clearing all contours below slice ${currentSlicePosition} for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
+
+  const handleSmooth = () => {
+    if (!selectedStructure) return;
     if (onContourUpdate) {
-      const updatePayload = {
-        action: 'clear_below',
+      onContourUpdate({
+        action: 'smooth',
         structureId: selectedStructure.roiNumber,
-        slicePosition: currentSlicePosition
-      };
-      onContourUpdate(updatePayload);
+        smoothingFactor: 0.35,
+        triggerAnimation: true
+      });
     }
-    
-    toast({ title: `Cleared contours below slice ${currentSlicePosition} for ${selectedStructure.structureName}` });
+    toast({ title: `Smoothed ${selectedStructure.structureName}` });
+  };
+
+  const handleClearAll = () => {
+    if (!selectedStructure) return;
+    if (onContourUpdate) {
+      onContourUpdate({ action: 'clear_all', structureId: selectedStructure.roiNumber });
+    }
+    toast({ title: `Cleared all contours for ${selectedStructure.structureName}` });
     setShowClearMenu(false);
   };
-  
-  const handleClearAboveSlice = () => {
+
+  const handleClearAbove = () => {
     if (!selectedStructure || currentSlicePosition == null) return;
-    
-    log.debug(`Clearing all contours above slice ${currentSlicePosition} for structure ${selectedStructure.roiNumber}`, 'toolbar');
-    
     if (onContourUpdate) {
-      const updatePayload = {
+      onContourUpdate({
         action: 'clear_above',
         structureId: selectedStructure.roiNumber,
         slicePosition: currentSlicePosition
-      };
-      onContourUpdate(updatePayload);
+      });
     }
-    
-    toast({ title: `Cleared contours above slice ${currentSlicePosition} for ${selectedStructure.structureName}` });
+    toast({ title: `Cleared contours above current slice` });
     setShowClearMenu(false);
   };
 
-  // Preview grow/shrink operation
-  const handlePreviewGrowContour = async () => {
-    if (!selectedStructure || !growDistance || currentSlicePosition == null) return;
-    
-    const distanceCm = parseFloat(growDistance);
-    if (isNaN(distanceCm) || distanceCm <= 0) {
-      toast({ title: "Please enter a valid positive distance in cm", variant: "destructive" });
-      return;
-    }
-    
-    // Convert cm to mm for the grow function  
-    let distanceMm = distanceCm * 10;
-    
-    // If shrink mode, make distance negative
-    if (growMode === 'shrink') {
-      distanceMm = -distanceMm;
-    }
-    
-    log.debug(`🔹 Previewing ${growMode === 'grow' ? 'grow' : 'shrink'} operation: ${distanceMm}mm`, 'toolbar');
-    
-    // Trigger preview request through the callback mechanism
+  const handleClearBelow = () => {
+    if (!selectedStructure || currentSlicePosition == null) return;
     if (onContourUpdate) {
-      const previewPayload = {
-        action: 'preview_grow_contour',
+      onContourUpdate({
+        action: 'clear_below',
         structureId: selectedStructure.roiNumber,
-        slicePosition: currentSlicePosition,
-        distance: distanceMm,
-        direction: growDirection
-      };
-      onContourUpdate(previewPayload);
+        slicePosition: currentSlicePosition
+      });
     }
-    
-    toast({ title: `Preview: ${growMode === 'grow' ? 'Growing' : 'Shrinking'} by ${distanceCm}cm` });
+    toast({ title: `Cleared contours below current slice` });
+    setShowClearMenu(false);
   };
 
-  // Clear preview contours
-  const clearPreview = () => {
-    setPreviewContours(null);
-    setIsShowingPreview(false);
+  const handleAcceptPrediction = () => {
     if (onContourUpdate) {
-      onContourUpdate({ action: 'clear_preview' });
+      onContourUpdate({
+        action: 'accept_predictions',
+        structureId: selectedStructure?.roiNumber,
+        slicePosition: currentSlicePosition
+      });
     }
+    toast({ title: 'Prediction accepted (A)' });
   };
 
-  // Grow/Shrink contour function - apply the previewed operation
-  const handleGrowContour = () => {
-    if (!selectedStructure || !growDistance || currentSlicePosition == null) return;
-    
-    const distanceCm = parseFloat(growDistance);
-    if (isNaN(distanceCm) || distanceCm <= 0) {
-      toast({ title: "Please enter a valid positive distance in cm", variant: "destructive" });
-      return;
-    }
-    
-    // Convert cm to mm for the grow function
-    let distanceMm = distanceCm * 10;
-    
-    // If shrink mode, make distance negative
-    if (growMode === 'shrink') {
-      distanceMm = -distanceMm;
-    }
-    
-    log.debug(`${growMode === 'grow' ? 'Growing' : 'Shrinking'} contour for structure ${selectedStructure.roiNumber} by ${distanceCm}cm (${Math.abs(distanceMm)}mm) dir: ${growDirection} @ slice ${currentSlicePosition}`, 'toolbar');
-    
+  const handleRejectPrediction = () => {
     if (onContourUpdate) {
-      const updatePayload = {
-        action: 'apply_grow_contour',
-        structureId: selectedStructure.roiNumber,
-        slicePosition: currentSlicePosition,
-        distance: distanceMm, // in millimeters (negative for shrink)
-        direction: growDirection, // 'all', 'anterior', 'posterior', 'left', 'right', 'superior', 'inferior'
-        usePreview: isShowingPreview // Use preview data if available
-      };
-      onContourUpdate(updatePayload);
+      onContourUpdate({ 
+        action: 'reject_predictions', 
+        structureId: selectedStructure?.roiNumber,
+        slicePosition: currentSlicePosition
+      });
     }
-
-    // Clear preview after applying
-    clearPreview();
-    
-    toast({ title: `${growMode === 'grow' ? 'Growing' : 'Shrinking'} contour by ${distanceCm}cm (${growDirection}) on current slice` });
+    toast({ title: 'Prediction rejected (X)' });
   };
 
-  if (!isVisible || !selectedStructure) return null;
-
-  const rgbToHex = (rgb: number[]) => {
-    return '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
-  };
-
-  const hexToRgb = (hex: string): number[] => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-      parseInt(result[1], 16),
-      parseInt(result[2], 16),
-      parseInt(result[3], 16)
-    ] : [255, 255, 255];
-  };
-
-  const handleNameChange = (name: string) => {
-    onStructureNameChange(name); // Update UI immediately
-    updateNameMutation.mutate({ 
-      structureId: selectedStructure.roiNumber, 
-      name 
-    });
-  };
-
-  const handleColorChange = (hexColor: string) => {
-    const rgbColor = hexToRgb(hexColor);
-    onStructureColorChange(hexColor); // Update UI immediately
-    updateColorMutation.mutate({ 
-      structureId: selectedStructure.roiNumber, 
-      color: rgbColor 
-    });
-  };
-
-  const currentColor = rgbToHex(selectedStructure.color || [255, 255, 255]);
-  const structureColorRgb = `rgb(${selectedStructure.color.join(',')})`;
-  
-  // Convert RGB to HSL for background hue blending
-  const rgbToHsl = (r: number, g: number, b: number) => {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
-    }
-    return [h * 360, s * 100, l * 100];
-  };
-  
-  const structureHsl = rgbToHsl(selectedStructure.color[0], selectedStructure.color[1], selectedStructure.color[2]);
-  const backgroundHue = structureHsl[0];
-
+  // Tool definitions
   const mainTools = [
-    { id: 'brush', icon: Brush, label: 'Brush' },
-    { id: 'pen', icon: Pen, label: 'Pen' },
-    { id: 'erase', icon: Scissors, label: 'Erase' },
-    { id: 'margin', icon: Maximize2, label: 'Margin' },
-    { id: 'interactive-tumor', icon: Sparkles, label: 'AI Tumor' }
+    { id: 'brush', icon: Brush, label: 'Brush', shortcut: 'B' },
+    { id: 'pen', icon: Pen, label: 'Pen', shortcut: 'P' },
+    { id: 'erase', icon: Scissors, label: 'Erase', shortcut: 'E' },
+    { id: 'margin', icon: Maximize2, label: 'Margin', shortcut: 'M' },
+    { id: 'interactive-tumor', icon: Sparkles, label: 'AI', shortcut: 'T' },
   ];
 
-  // Render inline settings on the bottom toolbar row
+  // Inline settings renderer
   const renderInlineSettings = () => {
-    if (!activeTool) return null;
+    if (!activeTool || activeTool === 'margin') return null;
 
-    if (activeTool === 'brush') {
+    if (activeTool === 'brush' || activeTool === 'erase') {
       return (
-        <div className="flex items-center gap-2 ml-3 pl-3 border-l border-white/20">
-          {/* Brush Size Control - Compact */}
-          <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-md border border-white/20">
-            <Label className="text-[11px] text-gray-200 whitespace-nowrap">Size</Label>
-            <span className="text-[11px] font-semibold text-blue-300 min-w-[3.2rem] text-right">
-              {(() => {
-                const pixelSpacing = imageMetadata?.pixelSpacing?.split('\\').map(Number) || [0.9765625, 0.9765625];
-                const avgPixelSpacing = (pixelSpacing[0] + pixelSpacing[1]) / 2;
-                const brushSizeMM = brushThickness[0] * avgPixelSpacing;
-                const brushSizeCM = brushSizeMM / 10;
-                return `${brushSizeCM.toFixed(2)} cm`;
-              })()}
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: 'auto' }}
+          exit={{ opacity: 0, width: 0 }}
+          transition={{ duration: 0.15 }}
+          className="flex items-center gap-3 overflow-hidden"
+        >
+          <div className="w-px h-5 bg-white/10" />
+          
+          <div className="flex items-center gap-2">
+            <Slider
+              value={brushThickness}
+              onValueChange={(val) => {
+                setBrushThickness(val);
+                if (onToolChange && activeTool) {
+                  onToolChange({
+                    tool: activeTool,
+                    brushSize: val[0],
+                    isActive: true,
+                    predictionEnabled: isPredictionEnabled,
+                    predictionMode: predictionMode,
+                    mem3dParams: mem3dParams,
+                    smartBrushEnabled: smartBrush
+                  });
+                }
+              }}
+              max={100}
+              min={1}
+              step={1}
+              className="w-20 [&>span:first-child]:h-1 [&>span:first-child]:bg-white/10 [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:bg-white [&_[role=slider]]:border-0"
+            />
+            <span className="text-xs font-semibold tabular-nums min-w-[38px]" style={{ color: accentRgb }}>
+              {brushSizeCm}cm
             </span>
-            <div className="w-28">
-              <Slider
-                value={brushThickness}
-                onValueChange={(value) => {
-                  setBrushThickness(value);
-                  if (onToolChange && activeTool === 'brush') {
+          </div>
+
+          {activeTool === 'brush' && (
+            <>
+              <button
+                onClick={() => {
+                  const enabled = !smartBrush;
+                  setSmartBrush(enabled);
+                  if (onToolChange) {
                     onToolChange({
                       tool: 'brush',
-                      brushSize: value[0],
+                      brushSize: brushThickness[0],
                       isActive: true,
+                      smartBrushEnabled: enabled,
                       predictionEnabled: isPredictionEnabled,
                       predictionMode: predictionMode,
                       mem3dParams: mem3dParams
                     });
                   }
                 }}
-                max={102}
-                min={0.1}
-                step={0.1}
-                className="h-1 [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-blue-400"
-              />
-            </div>
-            <span className="text-[11px] text-gray-400">({brushThickness[0]}px)</span>
-          </div>
+                className={cn(
+                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all',
+                  smartBrush
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5'
+                )}
+              >
+                <Zap className="w-3 h-3" />
+                Smart
+              </button>
 
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const enabled = !smartBrush;
-                setSmartBrush(enabled);
-                if (onToolChange && activeTool === 'brush') {
-                  onToolChange({
-                    tool: 'brush',
-                    brushSize: brushThickness[0],
-                    isActive: true,
-                    smartBrushEnabled: enabled,
-                    predictionEnabled: isPredictionEnabled,
-                    predictionMode: predictionMode,
-                    mem3dParams: mem3dParams
-                  });
-                }
-              }}
-              title="Smart Brush (edge-aware)"
-              className={`h-7 px-2 rounded-md border-[0.5px] ${smartBrush ? 'border-green-400/60 bg-green-900/30 text-green-200' : 'border-white/20 text-gray-300 hover:bg-white/10'}`}
-            >
-              <Zap className="w-3.5 h-3.5" />
-            </Button>
+              <button
+                onClick={() => {
+                  const enabled = !isPredictionEnabled;
+                  setIsPredictionEnabled(enabled);
+                  if (onToolChange) {
+                    onToolChange({
+                      tool: 'brush',
+                      brushSize: brushThickness[0],
+                      isActive: true,
+                      smartBrushEnabled: smartBrush,
+                      predictionEnabled: enabled,
+                      predictionMode: predictionMode,
+                      mem3dParams: mem3dParams
+                    });
+                  }
+                }}
+                className={cn(
+                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all',
+                  isPredictionEnabled
+                    ? 'bg-violet-500/20 text-violet-400'
+                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5'
+                )}
+              >
+                <Sparkles className="w-3 h-3" />
+                Predict
+              </button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const enabled = !isPredictionEnabled;
-                setIsPredictionEnabled(enabled);
-                if (onToolChange && activeTool === 'brush') {
-                  onToolChange({
-                    tool: 'brush',
-                    brushSize: brushThickness[0],
-                    isActive: true,
-                    smartBrushEnabled: smartBrush,
-                    predictionEnabled: enabled,
-                    predictionMode: predictionMode,
-                    mem3dParams: mem3dParams
-                  });
-                }
-              }}
-              title="Toggle next slice prediction"
-              className={`h-7 px-2 rounded-md border-[0.5px] ${isPredictionEnabled ? 'border-purple-400/60 bg-purple-900/30 text-purple-200' : 'border-white/20 text-gray-300 hover:bg-white/10'}`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-            </Button>
+              {/* Prediction Mode Toggle */}
+              {isPredictionEnabled && (
+                <div className="flex items-center gap-0.5 bg-white/5 rounded p-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setPredictionMode('geometric');
+                          if (onToolChange) {
+                            onToolChange({
+                              tool: 'brush',
+                              brushSize: brushThickness[0],
+                              isActive: true,
+                              smartBrushEnabled: smartBrush,
+                              predictionEnabled: isPredictionEnabled,
+                              predictionMode: 'geometric',
+                              mem3dParams: mem3dParams
+                            });
+                          }
+                        }}
+                        className={cn(
+                          'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                          predictionMode === 'geometric'
+                            ? 'bg-blue-500/30 text-blue-300'
+                            : 'text-gray-500 hover:text-gray-400'
+                        )}
+                      >
+                        GEO
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Geometric prediction - Fast, runs locally
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={async () => {
+                          if (predictionMode !== 'sam') {
+                            // Initialize SAM if needed
+                            if (!samController.isReady()) {
+                              setSamLoading(true);
+                              toast({ 
+                                title: "Loading SAM Model", 
+                                description: "Downloading ~200MB model (first time only)..." 
+                              });
+                              try {
+                                await samController.initialize();
+                                toast({ 
+                                  title: "SAM Ready", 
+                                  description: "AI prediction model loaded successfully" 
+                                });
+                              } catch (err) {
+                                console.error('Failed to load SAM:', err);
+                                toast({ 
+                                  title: "SAM Failed to Load", 
+                                  description: String(err),
+                                  variant: "destructive" 
+                                });
+                                setSamLoading(false);
+                                return;
+                              }
+                              setSamLoading(false);
+                            }
+                            setPredictionMode('sam');
+                            if (onToolChange) {
+                              onToolChange({
+                                tool: 'brush',
+                                brushSize: brushThickness[0],
+                                isActive: true,
+                                smartBrushEnabled: smartBrush,
+                                predictionEnabled: isPredictionEnabled,
+                                predictionMode: 'sam',
+                                mem3dParams: mem3dParams
+                              });
+                            }
+                          }
+                        }}
+                        disabled={samLoading}
+                        className={cn(
+                          'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                          predictionMode === 'sam'
+                            ? 'bg-purple-500/30 text-purple-300'
+                            : 'text-gray-500 hover:text-gray-400',
+                          samLoading && 'opacity-50 cursor-wait'
+                        )}
+                      >
+                        {samLoading ? '...' : 'SAM'}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      SAM AI prediction - More accurate, ~200MB download on first use
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
 
-            {/* Prediction Mode - Fast Raycast Only */}
-            {isPredictionEnabled && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md border border-white/20">
-                <Sparkles className="w-3 h-3 text-cyan-400" />
-                <span className="text-[11px] text-gray-200">Fast Raycast</span>
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-cyan-400/40 text-cyan-300">~50ms</Badge>
-              </div>
-            )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (onContourUpdate) {
-                  onContourUpdate({
-                    action: 'accept_predictions',
-                    structureId: selectedStructure?.roiNumber,
-                    slicePosition: currentSlicePosition
-                  });
-                }
-                toast({ title: 'Prediction accepted (A)' });
-              }}
-              disabled={!hasPredictionForCurrentSlice}
-              title={hasPredictionForCurrentSlice ? "Accept prediction (A)" : "No prediction on current slice"}
-              className={`h-7 w-7 p-0 ${hasPredictionForCurrentSlice ? 'text-green-300 hover:bg-green-800/40' : 'text-gray-600 cursor-not-allowed'}`}
-            >
-              <Check className="w-3.5 h-3.5" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (onContourUpdate) {
-                  onContourUpdate({ 
-                    action: 'reject_predictions', 
-                    structureId: selectedStructure?.roiNumber,
-                    slicePosition: currentSlicePosition
-                  });
-                }
-                toast({ title: 'Prediction rejected (X)' });
-              }}
-              disabled={!hasPredictionForCurrentSlice}
-              title={hasPredictionForCurrentSlice ? "Reject prediction (X)" : "No prediction on current slice"}
-              className={`h-7 w-7 p-0 ${hasPredictionForCurrentSlice ? 'text-red-300 hover:bg-red-800/40' : 'text-gray-600 cursor-not-allowed'}`}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
+              <AnimatePresence>
+                {isPredictionEnabled && hasPredictionForCurrentSlice && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="flex items-center gap-1"
+                  >
+                    <button
+                      onClick={handleAcceptPrediction}
+                      className="h-6 px-2 flex items-center gap-1 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-medium hover:bg-emerald-500/30"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={handleRejectPrediction}
+                      className="h-6 px-2 flex items-center gap-1 rounded bg-red-500/20 text-red-400 text-[11px] font-medium hover:bg-red-500/30"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </motion.div>
       );
     }
 
     if (activeTool === 'pen') {
       return (
-        <div className="flex items-center gap-2 ml-3 pl-3 border-l border-white/20">
-          <span className="text-[11px] text-gray-300">Eclipse Pen Tool V2</span>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md border border-white/20">
-            <Label className="text-[10px] text-gray-300">Auto-close</Label>
-            <span className="text-[10px] text-gray-400">8px</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md border border-white/20">
-            <Label className="text-[10px] text-gray-300">Vertex Snap</Label>
-            <Switch
-              checked={true}
-              onCheckedChange={() => {}}
-              className="data-[state=checked]:bg-blue-500 scale-75"
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTool === 'erase') {
-      return (
-        <div className="flex items-center gap-2 ml-3 pl-3 border-l border-white/20">
-          <span className="text-[11px] text-gray-300">Erase size uses brush settings</span>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex items-center gap-2 overflow-hidden"
+        >
+          <div className="w-px h-5 bg-white/10" />
+          <span className="text-[11px] text-gray-500">Click to place • Right-click to close</span>
+        </motion.div>
       );
     }
 
     if (activeTool === 'interactive-tumor') {
       return (
-        <div className="flex items-center gap-3 ml-3 pl-3 border-l border-white/20">
-          {/* Instruction */}
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: 'auto' }}
+          exit={{ opacity: 0, width: 0 }}
+          transition={{ duration: 0.15 }}
+          className="flex items-center gap-3 overflow-hidden"
+        >
+          <div className="w-px h-5 bg-white/10" />
+          
           <div className="flex items-center gap-1.5">
-            <MousePointer2 className="w-3.5 h-3.5" style={{ color: structureColorRgb }} />
-            <span className="text-[11px] text-gray-300">Click tumor center</span>
+            <MousePointer2 className="w-3 h-3" style={{ color: accentRgb }} />
+            <span className="text-[11px] text-gray-400">Click center</span>
           </div>
 
-          {/* Smooth toggle - no box */}
-          <div className="flex items-center gap-1.5">
+          {/* Mode toggle: SuperSeg (3D) vs SAM (2D) */}
+          <div className="flex items-center gap-1 bg-black/20 rounded-md p-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setAiTumorUseSAM(false);
+                    if (onToolChange) {
+                      onToolChange({
+                        tool: 'interactive-tumor',
+                        brushSize: 0,
+                        isActive: true,
+                        aiTumorSmoothOutput,
+                        aiTumorUseSAM: false
+                      });
+                    }
+                  }}
+                  className={cn(
+                    'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                    !aiTumorUseSAM
+                      ? 'bg-blue-500/30 text-blue-300'
+                      : 'text-gray-500 hover:text-gray-400'
+                  )}
+                >
+                  3D
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                SuperSeg 3D (server-side, brain metastasis)
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setAiTumorUseSAM(true);
+                    if (onToolChange) {
+                      onToolChange({
+                        tool: 'interactive-tumor',
+                        brushSize: 0,
+                        isActive: true,
+                        aiTumorSmoothOutput,
+                        aiTumorUseSAM: true
+                      });
+                    }
+                  }}
+                  className={cn(
+                    'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                    aiTumorUseSAM
+                      ? 'bg-purple-500/30 text-purple-300'
+                      : 'text-gray-500 hover:text-gray-400'
+                  )}
+                >
+                  2D
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                SAM 2D (client-side, ~200MB download first use)
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          <label className="flex items-center gap-1.5 cursor-pointer">
             <Switch
-              id="ai-smooth-output"
               checked={aiTumorSmoothOutput}
               onCheckedChange={(checked) => {
                 setAiTumorSmoothOutput(checked);
-                if (onToolChange && activeTool === 'interactive-tumor') {
+                if (onToolChange) {
                   onToolChange({
                     tool: 'interactive-tumor',
                     brushSize: 0,
                     isActive: true,
-                    aiTumorSmoothOutput: checked
+                    aiTumorSmoothOutput: checked,
+                    aiTumorUseSAM
                   });
                 }
               }}
-              className="data-[state=checked]:bg-emerald-500 scale-90"
+              className="scale-75 data-[state=checked]:bg-emerald-500"
             />
-            <Label 
-              htmlFor="ai-smooth-output" 
-              className="text-[10px] text-gray-400 cursor-pointer select-none whitespace-nowrap"
-            >
-              Smooth
-            </Label>
-          </div>
+            <span className="text-[11px] text-gray-500">Smooth</span>
+          </label>
 
-          {/* Generate button - cleaner */}
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => {
-              console.log('🎯 TOOLBAR: Generate button clicked');
-              console.log('🎯 workingViewerRef:', workingViewerRef);
-              console.log('🎯 workingViewerRef?.current:', workingViewerRef?.current);
               const canvas = workingViewerRef?.current?.canvasRef?.current;
-              console.log('🎯 Extracted canvas:', canvas);
               if (canvas) {
-                console.log('🎯 Dispatching ai-tumor-segment event to canvas');
                 const event = new Event('ai-tumor-segment');
                 canvas.dispatchEvent(event);
-                console.log('🎯 Event dispatched successfully');
               } else {
-                console.error('🎯 ERROR: Could not get canvas from workingViewerRef!');
-                console.error('🎯 workingViewerRef exists:', !!workingViewerRef);
-                console.error('🎯 workingViewerRef.current exists:', !!workingViewerRef?.current);
-                console.error('🎯 canvasRef exists:', !!workingViewerRef?.current?.canvasRef);
-                console.error('🎯 canvas exists:', !!canvas);
-                toast({
-                  title: 'Canvas Error',
-                  description: 'Canvas reference not available. Try refreshing.',
-                  variant: 'destructive'
-                });
+                toast({ title: 'Canvas Error', description: 'Canvas reference not available.', variant: 'destructive' });
               }
             }}
-            className="h-7 px-3 bg-emerald-600/80 hover:bg-emerald-500/80 border-[0.5px] border-emerald-500/50 text-white rounded-md transition-colors"
-            title="Generate 3D segmentation"
+            className="h-6 px-2.5 flex items-center gap-1.5 rounded text-[11px] font-semibold text-white transition-all"
+            style={{ background: accentRgb }}
           >
-            <Sparkles className="w-3 h-3 mr-1.5" />
-            <span className="text-xs font-medium">Generate</span>
-          </Button>
-
-          {/* Clear button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const canvas = workingViewerRef?.current?.canvasRef?.current;
-              if (canvas) {
-                const event = new Event('ai-tumor-clear');
-                canvas.dispatchEvent(event);
-              }
-            }}
-            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-white/10 rounded-md"
-            title="Clear click point"
-          >
-            <X className="w-3.5 h-3.5" />
-          </Button>
-        </div>
+            <Sparkles className="w-3 h-3" />
+            Generate
+          </button>
+        </motion.div>
       );
     }
 
     return null;
   };
 
-  // Info dialog content for the active tool
-  const renderInfoDialog = () => {
-    if (!showInfoDialog) return null;
-
-    let infoContent = null;
-
-    if (activeTool === 'brush') {
-      infoContent = (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white">Brush Tool</h3>
-          <ul className="text-xs text-gray-300 space-y-1 list-disc list-inside">
-            <li>Click and drag to paint contours</li>
-            <li>Hold Shift to temporarily switch to erase mode</li>
-            <li>Right-drag to adjust brush size on-the-fly</li>
-            <li>Smart Brush: edge-aware painting</li>
-            <li>AI Predict: auto-predict contour on next slice</li>
-          </ul>
-        </div>
-      );
-    } else if (activeTool === 'pen') {
-      infoContent = (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white">Eclipse Pen Tool V2</h3>
-          <ul className="text-xs text-gray-300 space-y-1 list-disc list-inside">
-            <li>Click to place vertices or hold+drag for continuous drawing</li>
-            <li>Right-click to complete polygon</li>
-            <li>Draw inside structure: union operation</li>
-            <li>Draw crossing boundary: subtract (carve hole)</li>
-            <li>Draw outside: create new blob</li>
-            <li>Click & drag vertices to morph existing contours</li>
-          </ul>
-        </div>
-      );
-    } else if (activeTool === 'erase') {
-      infoContent = (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white">Erase Tool</h3>
-          <ul className="text-xs text-gray-300 space-y-1 list-disc list-inside">
-            <li>Click and drag to erase contour areas</li>
-            <li>Uses the same size settings as the brush tool</li>
-            <li>Hold Shift while using brush tool for quick erase mode</li>
-          </ul>
-        </div>
-      );
-    } else if (activeTool === 'interactive-tumor') {
-      infoContent = (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            Interactive AI Tumor Segmentation
-          </h3>
-          <ul className="text-xs text-gray-300 space-y-1 list-disc list-inside">
-            <li>Draw scribbles on tumor in 3-5 key slices</li>
-            <li>AI generates full 3D segmentation automatically</li>
-            <li>Use "Draw" mode for tumor, "Erase" for background</li>
-            <li>System recommends which slice to annotate next</li>
-            <li>Preview and refine before accepting</li>
-            <li>Much faster than slice-by-slice contouring</li>
-          </ul>
-          <div className="text-xs text-yellow-300 bg-yellow-900/20 p-2 rounded border border-yellow-500/30 mt-2">
-            ⚠️ Requires nnInteractive service to be running
-          </div>
-        </div>
-      );
-    } else if (activeTool === 'margin') {
-      infoContent = (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white">Margin Tool</h3>
-          <p className="text-xs text-gray-300">
-            Opens the Advanced Margin Tool for precise margin operations including grow, shrink, and directional expansions.
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md border border-white/30 rounded-lg p-3 shadow-2xl z-[60] w-80">
-        <div className="flex items-start justify-between mb-2">
-          <Info className="w-4 h-4 text-blue-400 mt-0.5" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowInfoDialog(false)}
-            className="text-gray-400 hover:text-white h-5 w-5 p-0 -mt-1"
-          >
-            <X size={12} />
-          </Button>
-        </div>
-        {infoContent}
-      </div>
-    );
-  };
+  if (!isVisible || !selectedStructure) return null;
 
   return (
-    <div className="relative w-full">
-      <div className="relative">
-        <div 
-          className="backdrop-blur-md border rounded-xl px-4 py-3 shadow-2xl"
-          style={{ 
-            backgroundColor: `hsla(${backgroundHue}, 20%, 10%, 0.75)`,
-            borderColor: `${structureColorRgb}60` 
-          }}
+    <TooltipProvider delayDuration={200}>
+      {/* 
+        IMPORTANT: Framer Motion writes an inline `transform` for animation (scale/translateY).
+        If we also use `transform` for horizontal drag/centering, Motion will overwrite it,
+        making horizontal drag appear broken. 
+        So: outer wrapper handles positioning + drag translateX, inner motion handles animation.
+      */}
+      <div
+        className={cn("fixed z-50 select-none left-1/2", isDragging && "cursor-grabbing")}
+        style={{
+          bottom: `calc(96px - ${position.y}px)`,
+          transform: `translateX(calc(-50% + ${position.x}px))`,
+        }}
+        onMouseDown={handleMouseDown}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            {/* Structure info and controls */}
-            <div 
-              className="w-4 h-4 rounded border-[0.5px] border-white/60 shadow-sm"
-              style={{ backgroundColor: structureColorRgb }}
-            />
-            <span className="text-white text-sm font-medium drop-shadow-sm">Editing:</span>
-            <Input
-              value={selectedStructure.structureName || ''}
-              onChange={(e) => handleNameChange(e.target.value)}
-              className="w-32 h-7 bg-white/10 border-white/30 text-white text-sm rounded-lg backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-0 focus:border-blue-500/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 hover:border-white/50"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-              disabled={updateNameMutation.isPending}
-            />
-            {/* Improved Color Picker */}
-            <div className="relative group">
-              <div className="flex items-center gap-2 bg-white/10 border-[0.5px] border-white/30 rounded-lg px-2 py-1 h-7">
-                <div 
-                  className="w-5 h-5 rounded border-[0.5px] border-white/40 shadow-sm cursor-pointer transition-all hover:border-white/60 hover:scale-105"
-                  style={{ backgroundColor: currentColor }}
+          <div 
+            className={cn(
+              "rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl transition-all",
+              isDragging && "ring-2"
+            )}
+            style={{
+              background: `linear-gradient(180deg, hsla(${accentHue}, 12%, 13%, 0.97) 0%, hsla(${accentHue}, 8%, 9%, 0.99) 100%)`,
+              boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${accentRgb}20, 0 0 60px -15px ${accentRgb}20`,
+              ...(isDragging ? { ringColor: `${accentRgb}40` } : {}),
+            }}
+          >
+            {/* ===== ROW 1: Tools + Inline Settings ===== */}
+            <div className="flex items-center gap-3 px-3 py-2">
+              {/* Drag Handle */}
+              <div 
+                data-drag-handle
+                className="flex items-center justify-center w-6 h-7 cursor-grab active:cursor-grabbing rounded transition-all hover:bg-white/5"
+                style={{ color: `${accentRgb}50` }}
+              >
+                <GripVertical className="w-4 h-4" />
+              </div>
+
+              <div className="w-px h-6 bg-white/10" />
+
+              {/* Structure Color + Name */}
+              <div className="flex items-center gap-2">
+                <button
                   onClick={() => {
-                    if (updateColorMutation.isPending) return;
-                    const colorInput = document.createElement('input');
-                    colorInput.type = 'color';
-                    colorInput.value = currentColor;
-                    colorInput.onchange = (e) => {
-                      const target = e.target as HTMLInputElement;
-                      handleColorChange(target.value);
-                    };
-                    colorInput.click();
+                    const input = document.createElement('input');
+                    input.type = 'color';
+                    input.value = accentHex;
+                    input.onchange = (e) => handleColorChange((e.target as HTMLInputElement).value);
+                    input.click();
+                  }}
+                  className="w-4 h-4 rounded cursor-pointer transition-transform hover:scale-110"
+                  style={{ 
+                    backgroundColor: accentRgb,
+                    boxShadow: `0 0 12px -2px ${accentRgb}60`,
                   }}
                 />
-                <input
-                  type="color"
-                  value={currentColor}
-                  onChange={(e) => handleColorChange(e.target.value)}
-                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                  id={`color-picker-contour-${selectedStructure?.roiNumber}`}
-                  disabled={updateColorMutation.isPending}
-                />
-                <span className="text-xs text-white/90 font-medium">Color</span>
+                {isEditingName ? (
+                  <Input
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onBlur={handleNameSubmit}
+                    onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+                    autoFocus
+                    className="h-6 w-24 px-1.5 text-xs bg-black/40 border-white/20 text-white rounded"
+                  />
+                ) : (
+                  <button
+                    onClick={() => { setTempName(selectedStructure.structureName); setIsEditingName(true); }}
+                    className="text-xs font-semibold text-white/90 hover:text-white transition-colors max-w-[100px] truncate"
+                  >
+                    {selectedStructure.structureName}
+                  </button>
+                )}
               </div>
-              <div className="absolute bottom-full left-0 mb-2 px-2 py-1 bg-gray-900/95 border border-gray-600/60 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
-                Click to change color
+
+              <div className="w-px h-6 bg-white/10" />
+
+              {/* Tool Buttons */}
+              <div className="flex items-center gap-0.5">
+                {mainTools.map((tool) => {
+                  const IconComponent = tool.icon;
+                  const isActive = activeTool === tool.id;
+                  return (
+                    <Tooltip key={tool.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => handleToolClick(tool.id)}
+                          className={cn(
+                            'h-7 px-2.5 flex items-center gap-1.5 rounded-md transition-all text-xs font-medium',
+                            isActive ? 'text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                          )}
+                          style={isActive ? {
+                            background: `${accentRgb}20`,
+                            boxShadow: `inset 0 0 0 1px ${accentRgb}30`,
+                          } : {}}
+                        >
+                          <IconComponent className="w-3.5 h-3.5" style={isActive ? { color: accentRgb } : {}} />
+                          <span>{tool.label}</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
+                        {tool.label} ({tool.shortcut})
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+
+              {/* Inline Settings */}
+              <AnimatePresence mode="wait">
+                {renderInlineSettings()}
+              </AnimatePresence>
+
+              <div className="flex-1" />
+
+              {/* Utilities */}
+              <div className="flex items-center gap-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={resetPosition} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-400 hover:bg-white/5 transition-all">
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Reset position</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-red-500/20 transition-all">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Close (Esc)</TooltipContent>
+                </Tooltip>
               </div>
             </div>
-            
-            {/* Separator */}
-            <div className="w-px h-6 bg-white/30 mx-2" />
-            
-            {/* Undo/Redo buttons */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              className="h-7 w-7 p-0 bg-white/10 border-[0.5px] border-white/30 text-white hover:text-white hover:bg-white/20 disabled:opacity-50 rounded-lg backdrop-blur-sm shadow-sm"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo className="w-3 h-3" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              className="h-7 w-7 p-0 bg-white/10 border-[0.5px] border-white/30 text-white hover:text-white hover:bg-white/20 disabled:opacity-50 rounded-lg backdrop-blur-sm shadow-sm"
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo className="w-3 h-3" />
-            </Button>
-            
-            {/* Separator */}
-            <div className="w-px h-6 bg-white/30 mx-2" />
-            
-            {/* Delete button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeleteCurrentSlice}
-              className="h-7 px-2 bg-red-900/30 border-[0.5px] border-red-400/60 text-red-200 hover:text-red-100 hover:bg-red-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-              title="Delete Current Slice (Del)"
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              <span className="text-xs font-medium">Del Slice</span>
-            </Button>
-            
-            {/* Interpolate button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleInterpolate}
-              className="h-7 px-2 bg-blue-900/30 border-[0.5px] border-blue-400/60 text-blue-200 hover:text-blue-100 hover:bg-blue-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-              title="Interpolate missing slices (fast)"
-            >
-              <GitBranch className="w-3 h-3 mr-1" />
-              <span className="text-xs font-medium">Interp</span>
-            </Button>
-            
-            {/* Nth Slice Delete button with hover menu */}
-            <div 
-              className="relative" 
-              onMouseEnter={() => {
-                if (nthMenuTimerRef.current) {
-                  clearTimeout(nthMenuTimerRef.current);
-                  nthMenuTimerRef.current = null;
-                }
-                setShowNthSliceMenu(true);
-              }}
-              onMouseLeave={() => {
-                nthMenuTimerRef.current = setTimeout(() => {
-                  setShowNthSliceMenu(false);
-                }, 150);
-              }}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 bg-orange-900/30 border-[0.5px] border-orange-400/60 text-orange-200 hover:text-orange-100 hover:bg-orange-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-                title="Delete every nth slice"
-              >
-                <Grid3x3 className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Nth</span>
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-              
-              {showNthSliceMenu && (
-                <div className="absolute top-full left-0 mt-0.5 bg-black/90 border border-gray-600 rounded-lg shadow-xl p-1 z-50 min-w-[140px]">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteEveryNthSlice(2)}
-                    className="w-full justify-start h-7 px-2 text-xs text-orange-400 hover:bg-orange-900/20"
-                  >
-                    Every 2nd slice
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteEveryNthSlice(3)}
-                    className="w-full justify-start h-7 px-2 text-xs text-orange-400 hover:bg-orange-900/20"
-                  >
-                    Every 3rd slice
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteEveryNthSlice(4)}
-                    className="w-full justify-start h-7 px-2 text-xs text-orange-400 hover:bg-orange-900/20"
-                  >
-                    Every 4th slice
-                  </Button>
-                  <div className="h-px bg-gray-600 my-1" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleOpenSmartNthDialog}
-                    className="w-full justify-start h-7 px-2 text-xs text-orange-300 hover:bg-orange-900/20 font-medium"
-                  >
-                    SmartNth...
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* Smoothing button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (!selectedStructure) return;
-                log.debug(`Smoothing contours for structure ${selectedStructure.roiNumber}`, 'toolbar');
-                
-                if (onContourUpdate) {
-                  const updatePayload = {
-                    action: 'smooth',
-                    structureId: selectedStructure.roiNumber,
-                    smoothingFactor: 0.35, // Increased from 0.15 for more noticeable effect
-                    triggerAnimation: true // Trigger the ripple animation
-                  };
-                  onContourUpdate(updatePayload);
-                }
-                
-                toast({ 
-                  title: `Smoothed ${selectedStructure.structureName}`,
-                  description: 'Contours refined and polished'
-                });
-              }}
-              className="h-7 px-2 bg-green-900/30 border-[0.5px] border-green-400/60 text-green-200 hover:text-green-100 hover:bg-green-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-              title="Smooth contours (increased strength)"
-            >
-              <Sparkles className="w-3 h-3 mr-1" />
-              <span className="text-xs font-medium">Smooth</span>
-            </Button>
 
-            {/* Blob tools dropdown - always enabled, checks on click like original */}
+            {/* ===== ROW 2: Quick Actions ===== */}
             <div 
-              className="relative" 
-              onMouseEnter={() => {
-                if (blobMenuTimerRef.current) {
-                  clearTimeout(blobMenuTimerRef.current);
-                  blobMenuTimerRef.current = null;
-                }
-                setShowBlobMenu(true);
-              }}
-              onMouseLeave={() => {
-                blobMenuTimerRef.current = setTimeout(() => {
-                  setShowBlobMenu(false);
-                }, 150);
-              }}
+              className="flex items-center gap-3 px-3 py-2"
+              style={{ background: `hsla(${accentHue}, 6%, 8%, 1)` }}
             >
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 bg-purple-900/30 border-[0.5px] border-purple-400/60 text-purple-200 hover:text-purple-100 hover:bg-purple-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-                title="Blob tools"
-              >
-                <SplitSquareHorizontal className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Blob</span>
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-
-              {showBlobMenu && (
-                <div className="absolute top-full left-0 mt-0.5 bg-black/90 border border-gray-600 rounded-lg shadow-xl p-1 z-50 min-w-[180px]">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (!selectedStructure) return;
-                      setShowBlobMenu(false);
-                      onContourUpdate?.({ action: 'open_remove_blobs_dialog', structureId: selectedStructure.roiNumber });
-                    }}
-                    className="w-full justify-start h-7 px-2 text-xs text-purple-300 hover:bg-purple-900/20"
+            {/* Undo/Redo */}
+            <div className="flex items-center gap-0.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleUndo}
+                    disabled={!canUndo}
+                    className={cn(
+                      'h-7 w-7 flex items-center justify-center rounded-md transition-all',
+                      canUndo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
+                    )}
                   >
-                    Remove blobs…
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (!selectedStructure) return;
-                      setShowBlobMenu(false);
-                      onContourUpdate?.({ action: 'separate_blobs', structureId: selectedStructure.roiNumber });
-                    }}
-                    className="w-full justify-start h-7 px-2 text-xs text-purple-300 hover:bg-purple-900/20"
+                    <Undo className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Undo (Ctrl+Z)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleRedo}
+                    disabled={!canRedo}
+                    className={cn(
+                      'h-7 w-7 flex items-center justify-center rounded-md transition-all',
+                      canRedo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
+                    )}
                   >
-                    Blob separator
-                  </Button>
-                </div>
-              )}
+                    <Redo className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Redo (Ctrl+Y)</TooltipContent>
+              </Tooltip>
             </div>
 
-            {/* Clear button with hover menu */}
-            <div 
-              className="relative" 
-              onMouseEnter={() => {
-                if (clearMenuTimerRef.current) {
-                  clearTimeout(clearMenuTimerRef.current);
-                  clearMenuTimerRef.current = null;
-                }
-                setShowClearMenu(true);
-              }}
-              onMouseLeave={() => {
-                clearMenuTimerRef.current = setTimeout(() => {
-                  setShowClearMenu(false);
-                }, 150);
-              }}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 bg-red-900/30 border-[0.5px] border-red-400/60 text-red-200 hover:text-red-100 hover:bg-red-800/40 rounded-lg backdrop-blur-sm shadow-sm"
-                title="Clear contours"
+            <div className="w-px h-5 bg-white/10" />
+
+            {/* Actions */}
+            <div className="flex items-center gap-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleDeleteCurrentSlice}
+                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Delete slice (Del)</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleInterpolate}
+                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
+                  >
+                    <GitBranch className="w-3 h-3" />
+                    Interp
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Interpolate</TooltipContent>
+              </Tooltip>
+
+              {/* Nth Menu */}
+              <div 
+                className="relative"
+                onMouseEnter={() => { if (nthMenuRef.current) clearTimeout(nthMenuRef.current); setShowNthMenu(true); }}
+                onMouseLeave={() => { nthMenuRef.current = setTimeout(() => setShowNthMenu(false), 150); }}
               >
-                <Eraser className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Clear</span>
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-              
-              {showClearMenu && (
-                <div className="absolute top-full left-0 mt-0.5 bg-black/90 border border-gray-600 rounded-lg shadow-xl p-1 z-50 min-w-[160px]">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearAllSlices}
-                    className="w-full justify-start h-7 px-2 text-xs text-red-500 hover:bg-red-950/20"
+                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all">
+                  <Grid3x3 className="w-3 h-3" />
+                  Nth
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                <AnimatePresence>
+                  {showNthMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="absolute bottom-full left-0 mb-1 rounded-lg shadow-xl overflow-hidden"
+                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
+                    >
+                      {[2, 3, 4].map(n => (
+                        <button
+                          key={n}
+                          onClick={() => handleDeleteEveryNthSlice(n)}
+                          className="w-full px-3 py-2 text-left text-xs text-amber-300/90 hover:text-amber-200 hover:bg-amber-500/10 transition-colors font-medium whitespace-nowrap"
+                        >
+                          Every {n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice
+                        </button>
+                      ))}
+                      <div className="h-px bg-white/10 mx-2" />
+                      <button
+                        onClick={handleOpenSmartNthDialog}
+                        className="w-full px-3 py-2 text-left text-xs text-amber-200 hover:text-amber-100 hover:bg-amber-500/10 transition-colors font-semibold whitespace-nowrap"
+                      >
+                        SmartNth...
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleSmooth}
+                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-all"
                   >
-                    Delete all slices
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearBelowSlice}
-                    className="w-full justify-start h-7 px-2 text-xs text-red-500 hover:bg-red-950/20"
-                  >
-                    Delete below current
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearAboveSlice}
-                    className="w-full justify-start h-7 px-2 text-xs text-red-500 hover:bg-red-950/20"
-                  >
-                    Delete above current
-                  </Button>
-                </div>
-              )}
+                    <Sparkles className="w-3 h-3" />
+                    Smooth
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Smooth contours</TooltipContent>
+              </Tooltip>
+
+              {/* Blob Menu */}
+              <div 
+                className="relative"
+                onMouseEnter={() => { if (blobMenuRef.current) clearTimeout(blobMenuRef.current); setShowBlobMenu(true); }}
+                onMouseLeave={() => { blobMenuRef.current = setTimeout(() => setShowBlobMenu(false), 150); }}
+              >
+                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
+                  <SplitSquareHorizontal className="w-3 h-3" />
+                  Blob
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                <AnimatePresence>
+                  {showBlobMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="absolute bottom-full left-0 mb-1 rounded-lg shadow-xl overflow-hidden"
+                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
+                    >
+                      <button
+                        onClick={() => {
+                          setShowBlobMenu(false);
+                          onContourUpdate?.({ action: 'open_remove_blobs_dialog', structureId: selectedStructure.roiNumber });
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs text-violet-300/90 hover:text-violet-200 hover:bg-violet-500/10 transition-colors font-medium whitespace-nowrap"
+                      >
+                        Remove blobs…
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowBlobMenu(false);
+                          onContourUpdate?.({ action: 'separate_blobs', structureId: selectedStructure.roiNumber });
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs text-violet-300/90 hover:text-violet-200 hover:bg-violet-500/10 transition-colors font-medium whitespace-nowrap"
+                      >
+                        Blob separator
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Clear Menu */}
+              <div 
+                className="relative"
+                onMouseEnter={() => { if (clearMenuRef.current) clearTimeout(clearMenuRef.current); setShowClearMenu(true); }}
+                onMouseLeave={() => { clearMenuRef.current = setTimeout(() => setShowClearMenu(false), 150); }}
+              >
+                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
+                  <Eraser className="w-3 h-3" />
+                  Clear
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                <AnimatePresence>
+                  {showClearMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="absolute bottom-full right-0 mb-1 rounded-lg shadow-xl overflow-hidden"
+                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
+                    >
+                      <button onClick={handleClearAbove} className="w-full px-3 py-2 text-left text-xs text-rose-300/90 hover:text-rose-200 hover:bg-rose-500/10 transition-colors font-medium whitespace-nowrap">
+                        Clear above
+                      </button>
+                      <button onClick={handleClearBelow} className="w-full px-3 py-2 text-left text-xs text-rose-300/90 hover:text-rose-200 hover:bg-rose-500/10 transition-colors font-medium whitespace-nowrap">
+                        Clear below
+                      </button>
+                      <div className="h-px bg-white/10 mx-2" />
+                      <button onClick={handleClearAll} className="w-full px-3 py-2 text-left text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors font-semibold whitespace-nowrap">
+                        Clear all
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
             </div>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-white/70 hover:text-white hover:bg-white/20 h-7 w-7 p-0 rounded-lg backdrop-blur-sm shadow-sm"
-          >
-            <X size={14} />
-          </Button>
-        </div>
-
-        <Separator className="my-2 bg-gray-700" />
-
-        {/* Tool Buttons with Inline Settings */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            {/* Main tool buttons */}
-            {mainTools.map((tool) => {
-              const IconComponent = tool.icon;
-              const isActive = activeTool === tool.id;
-              return (
-                <div key={tool.id} className="relative group">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleToolActivation(tool.id)}
-                    className={`h-8 px-3 transition-all duration-200 rounded-lg text-gray-300 ${
-                      isActive 
-                        ? 'text-white border-[0.5px] shadow-sm' 
-                        : 'hover:bg-gray-700/50 hover:text-white'
-                    }`}
-                    style={isActive ? { 
-                      borderColor: `${structureColorRgb}`,
-                      backgroundColor: `${structureColorRgb}20`,
-                      color: 'white'
-                    } : {}}
-                  >
-                    <IconComponent className="w-4 h-4 mr-2" />
-                    <span className="text-sm">{tool.label}</span>
-                  </Button>
-
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black bg-opacity-90 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[9999]">
-                    {tool.label}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Inline Settings Area */}
-            {renderInlineSettings()}
-          </div>
-
-          {/* Info Button */}
-          {activeTool && (
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowInfoDialog(!showInfoDialog)}
-                className={`h-8 w-8 p-0 rounded-lg transition-all duration-200 ${
-                  showInfoDialog 
-                    ? 'bg-blue-500/20 text-blue-300 border-[0.5px] border-blue-400/60' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/10'
-                }`}
-                title="Tool help"
-              >
-                <Info className="w-4 h-4" />
-              </Button>
-              
-              {/* Info Dialog */}
-              {renderInfoDialog()}
-            </div>
-          )}
-        </div>
-        </div>
+        </motion.div>
       </div>
-      
+
       {/* SmartNth Settings Dialog */}
       <SmartNthSettingsDialog
         isOpen={showSmartNthDialog}
@@ -1462,13 +1317,13 @@ export function ContourEditToolbar({
       />
 
       {/* Prediction Tuning Panel */}
-      {predictionMode === 'fast-raycast' && isPredictionEnabled && (
+      {predictionMode === 'geometric' && isPredictionEnabled && (
         <PredictionTuningPanel
           params={mem3dParams}
           onParamsChange={setMem3dParams}
           onReset={() => setMem3dParams(DEFAULT_PARAMS)}
         />
       )}
-    </div>
+    </TooltipProvider>
   );
 }

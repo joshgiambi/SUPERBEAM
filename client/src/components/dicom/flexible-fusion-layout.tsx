@@ -32,6 +32,11 @@ import type { DICOMSeries } from '@/lib/dicom-utils';
 import { useViewportToolState } from '@/lib/tool-state-manager';
 // OHIF-style viewport components
 import { ViewportPaneOHIF } from './viewport-pane-ohif';
+import { FusionDropdown } from './unified-fusion-topbar';
+import type { FusionLayoutPreset } from './fusion-control-panel-v2';
+// Performance optimizations
+import { viewportScrollSync, type ViewportSyncState } from '@/lib/viewport-scroll-sync';
+import { globalFusionCache } from '@/lib/global-fusion-cache';
 
 export type LayoutPreset = 
   | 'single'            // Single viewport only
@@ -589,6 +594,11 @@ interface CompactToolbarProps {
   fusionSecondaryStatuses?: Map<number, { status: 'idle' | 'loading' | 'ready' | 'error'; error?: string | null }>;
   // Exit callback
   onExitToOverlay?: () => void;
+  // Fusion dropdown props (for right side)
+  selectedFusionSecondaryId?: number | null;
+  onSecondarySeriesSelect?: (id: number | null) => void;
+  fusionWindowLevel?: { window: number; level: number } | null;
+  onFusionWindowLevelChange?: (wl: { window: number; level: number } | null) => void;
 }
 
 const CompactToolbar: React.FC<CompactToolbarProps> = ({
@@ -609,10 +619,16 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
   availableSeries,
   fusionSecondaryStatuses,
   onExitToOverlay,
+  selectedFusionSecondaryId,
+  onSecondarySeriesSelect,
+  fusionWindowLevel,
+  onFusionWindowLevelChange,
 }) => {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  
   // Get modality color helper
   const getModalityColor = (modality: string) => {
-    if (modality === 'PT' || modality === 'PET') return 'yellow';
+    if (modality === 'PT' || modality === 'PET') return 'amber';
     if (modality === 'MR' || modality === 'MRI') return 'purple';
     if (modality === 'CT') return 'blue';
     return 'slate';
@@ -620,239 +636,224 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
   
   // Check if a secondary is already assigned to a viewport
   const isSecondaryAssigned = (secId: number) => assignedSecondaryIds.includes(secId);
+  
+  // Get available scans for adding
+  const availableScansForAdd = secondarySeriesIds.filter(id => !isSecondaryAssigned(id)).map(secId => {
+    const series = availableSeries.find(s => s.id === secId);
+    const status = fusionSecondaryStatuses?.get(secId);
+    return {
+      id: secId,
+      modality: series?.modality || 'SEC',
+      description: series?.seriesDescription || `Series ${secId}`,
+      isReady: status?.status === 'ready' || status?.status === 'idle',
+    };
+  });
 
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#0f1219]/95 backdrop-blur-sm border-b border-white/[0.06]">
-      {/* Left: Layout presets */}
-      <div className="flex items-center gap-1 bg-black/30 rounded-lg p-0.5 border border-white/5">
-        {LAYOUT_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            className={cn(
-              "h-7 w-7 flex items-center justify-center rounded-md transition-all",
-              currentLayout === preset.id
-                ? "bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40"
-                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-            )}
-            onClick={() => onLayoutChange(preset.id)}
-            title={`${preset.description} (${preset.viewports} viewport${preset.viewports > 1 ? 's' : ''})`}
-          >
-            {preset.icon}
-          </button>
-        ))}
-      </div>
-      
-      <div className="w-px h-5 bg-white/10" />
-      
-      <div className="flex items-center gap-1">
+    <motion.div 
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex items-center h-12 px-4 bg-gray-950/95 backdrop-blur-md border border-gray-600/40 rounded-xl shadow-lg"
+    >
+      {/* Left section: Layout buttons + Swap + Add */}
+      <div className="flex items-center gap-2">
+        {/* Layout preset buttons */}
+        <div className="flex items-center gap-0.5">
+          {LAYOUT_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => onLayoutChange(preset.id)}
+              className={cn(
+                "h-7 w-7 flex items-center justify-center rounded-md transition-all duration-150",
+                currentLayout === preset.id
+                  ? "bg-indigo-500/30 text-indigo-200 border border-indigo-500/30"
+                  : "text-gray-500 hover:text-gray-300"
+              )}
+              title={`${preset.description} (${preset.viewports} viewports)`}
+            >
+              {preset.icon}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
+        {/* Swap button */}
         {viewportCount >= 2 && (
           <button
-            className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors"
             onClick={onSwap}
+            className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
             title="Swap viewports"
           >
-            <ArrowLeftRight className="w-3.5 h-3.5" />
+            <ArrowLeftRight className="w-4 h-4" />
           </button>
         )}
-        
-        {viewportCount < maxViewports && (
+
+        <div className="w-px h-5 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
+        {/* Add viewport button with dialog */}
+        <div className="relative">
           <button
-            className="h-7 w-7 flex items-center justify-center rounded-md text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
-            onClick={onAddViewport}
-            title="Add viewport"
+            onClick={() => setShowAddDialog(!showAddDialog)}
+            disabled={viewportCount >= maxViewports}
+            className={cn(
+              "h-7 px-3 flex items-center gap-1.5 rounded-md border text-xs font-medium transition-all duration-200",
+              showAddDialog
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/50"
+                : viewportCount >= maxViewports
+                  ? "bg-gray-800/30 text-gray-600 border-gray-700/30 cursor-not-allowed"
+                  : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/40"
+            )}
           >
             <Plus className="w-3.5 h-3.5" />
+            <span>Add</span>
+            <ChevronDown className={cn("w-3 h-3 transition-transform", showAddDialog && "rotate-180")} />
           </button>
-        )}
+          
+          {/* Add Viewport Dialog */}
+          <AnimatePresence>
+            {showAddDialog && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                className="absolute top-full left-0 mt-2 w-72 z-50"
+              >
+                <div className="bg-gray-950 border border-gray-800/50 rounded-xl shadow-xl p-3">
+                  <div className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-emerald-400" />
+                    Add Viewport
+                  </div>
+                  <div className="text-[10px] text-gray-500 mb-3">
+                    Select a scan to add to a new viewport
+                  </div>
+                  
+                  {availableScansForAdd.length > 0 ? (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {availableScansForAdd.map((scan) => {
+                        const colorClass = getModalityColor(scan.modality);
+                        const dotColor = colorClass === 'amber' ? 'bg-amber-400' : colorClass === 'purple' ? 'bg-purple-400' : 'bg-cyan-400';
+                        const textColor = colorClass === 'amber' ? 'text-amber-400' : colorClass === 'purple' ? 'text-purple-400' : 'text-cyan-400';
+                        return (
+                          <button
+                            key={scan.id}
+                            onClick={() => {
+                              onAddViewportWithSecondary(scan.id);
+                              setShowAddDialog(false);
+                            }}
+                            disabled={!scan.isReady}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-left",
+                              scan.isReady
+                                ? "bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70 hover:border-gray-600/50"
+                                : "bg-gray-900/30 border-gray-800/30 opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
+                            <span className={cn("font-semibold text-xs", textColor)}>
+                              {scan.modality}
+                            </span>
+                            <span className="text-gray-400 text-xs truncate flex-1">
+                              {scan.description}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 text-xs">
+                      All available scans are loaded
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end mt-3 pt-2 border-t border-gray-800">
+                    <button
+                      onClick={() => setShowAddDialog(false)}
+                      className="h-7 px-3 rounded-lg text-gray-400 hover:text-white text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-      
-      {/* Center: Opacity + Available Secondaries */}
-      <div className="flex items-center gap-4 flex-1 justify-center">
-        {/* Global Opacity Control */}
-        <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-md border border-white/10">
-          <span className="text-[9px] text-gray-400 uppercase tracking-wide">Opacity</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={fusionOpacity}
-            onChange={(e) => onFusionOpacityChange?.(parseFloat(e.target.value))}
-            className="w-20 h-1 accent-cyan-500 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-            title={`Global fusion opacity: ${Math.round(fusionOpacity * 100)}%`}
-          />
-          <span className="text-[10px] text-cyan-300 font-medium min-w-[32px] text-center">
+
+      {/* Center section: Global Opacity Slider */}
+      <div className="flex-1 flex justify-center">
+        <div className="flex items-center gap-2 px-4">
+          <Layers className="w-4 h-4 text-amber-400" />
+          <div className="relative w-40">
+            {/* Track */}
+            <div className="h-2 bg-gray-700/60 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400"
+                style={{ width: `${fusionOpacity * 100}%` }}
+              />
+            </div>
+            {/* Thumb */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-amber-400 shadow-lg pointer-events-none"
+              style={{ left: `calc(${fusionOpacity * 100}% - 8px)` }}
+            />
+            {/* Input */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={fusionOpacity * 100}
+              onChange={(e) => onFusionOpacityChange?.(parseInt(e.target.value) / 100)}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+          <span className="text-[10px] font-semibold text-amber-300 w-8">
             {Math.round(fusionOpacity * 100)}%
           </span>
-        </div>
-        
-        <div className="w-px h-4 bg-white/20" />
-        
-        {/* Available Secondaries - Click to add viewport */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Add</span>
-          {secondarySeriesIds.length === 0 ? (
-            <span className="text-[10px] text-gray-600">No secondaries</span>
-          ) : (
-            secondarySeriesIds.slice(0, 6).map(secId => {
-              const series = availableSeries.find(s => s.id === secId);
-              const status = fusionSecondaryStatuses?.get(secId);
-              const modality = series?.modality || 'SEC';
-              const colorClass = getModalityColor(modality);
-              const isAssigned = isSecondaryAssigned(secId);
-              const canAdd = viewportCount < maxViewports && !isAssigned;
-              const isReady = status?.status === 'ready';
-              
-              // Color schemes based on modality - matching app theme
-              const colorSchemes = {
-                yellow: {
-                  base: 'text-amber-300 ring-amber-500/30',
-                  active: 'bg-amber-500/20 hover:bg-amber-500/30',
-                  assigned: 'bg-amber-500/30 ring-amber-400/50',
-                  disabled: 'bg-amber-900/10 text-amber-500/40 ring-amber-700/20',
-                },
-                purple: {
-                  base: 'text-purple-300 ring-purple-500/30',
-                  active: 'bg-purple-500/20 hover:bg-purple-500/30',
-                  assigned: 'bg-purple-500/30 ring-purple-400/50',
-                  disabled: 'bg-purple-900/10 text-purple-500/40 ring-purple-700/20',
-                },
-                blue: {
-                  base: 'text-indigo-300 ring-indigo-500/30',
-                  active: 'bg-indigo-500/20 hover:bg-indigo-500/30',
-                  assigned: 'bg-indigo-500/30 ring-indigo-400/50',
-                  disabled: 'bg-indigo-900/10 text-indigo-500/40 ring-indigo-700/20',
-                },
-                slate: {
-                  base: 'text-gray-300 ring-gray-500/30',
-                  active: 'bg-gray-500/20 hover:bg-gray-500/30',
-                  assigned: 'bg-gray-500/30 ring-gray-400/50',
-                  disabled: 'bg-gray-900/10 text-gray-500/40 ring-gray-700/20',
-                },
-              };
-              
-              const colors = colorSchemes[colorClass as keyof typeof colorSchemes] || colorSchemes.slate;
-              
-              return (
-                <button
-                  key={secId}
-                  onClick={() => canAdd && onAddViewportWithSecondary(secId)}
-                  disabled={!canAdd || !isReady}
-                  className={cn(
-                    "px-2.5 py-1 text-[10px] font-semibold rounded-md ring-1 transition-all flex items-center gap-1",
-                    colors.base,
-                    isAssigned 
-                      ? colors.assigned + " cursor-default"
-                      : canAdd && isReady
-                        ? colors.active + " cursor-pointer"
-                        : colors.disabled + " cursor-not-allowed"
-                  )}
-                  title={
-                    isAssigned 
-                      ? `${modality} is already in a viewport`
-                      : !isReady
-                        ? `${modality} is loading...`
-                        : viewportCount >= maxViewports
-                          ? 'Max viewports reached'
-                          : `Click to add ${modality} fusion viewport`
-                  }
-                >
-                  {modality}
-                  {status?.status === 'loading' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                  )}
-                  {isAssigned && (
-                    <Eye className="w-2.5 h-2.5" />
-                  )}
-                  {!isAssigned && isReady && canAdd && (
-                    <Plus className="w-2.5 h-2.5" />
-                  )}
-                </button>
-              );
-            })
-          )}
-          {viewportCount >= maxViewports && secondarySeriesIds.some(id => !isSecondaryAssigned(id)) && (
-            <span className="text-[9px] text-gray-500 ml-1">(max viewports)</span>
-          )}
+          
+          {/* Reset opacity button */}
+          <button
+            onClick={() => onFusionOpacityChange?.(0.5)}
+            className="h-6 w-6 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+            title="Reset opacity to 50%"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
         </div>
       </div>
-      
-      {/* Right: Zoom controls + Slice info + Reset */}
-      <div className="flex items-center gap-3">
-        {/* Zoom controls that sync to ALL viewports */}
-        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-black/40 rounded-md border border-white/10">
-          <span className="text-[9px] text-gray-400 uppercase tracking-wide">Zoom</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0 text-gray-400 hover:text-white hover:bg-white/10 rounded"
-            onClick={() => onSyncUpdate({ zoom: Math.max(0.25, syncState.zoom - 0.25) })}
-            title="Zoom out (all viewports)"
-          >
-            <ZoomOut className="w-3 h-3" />
-          </Button>
-          <input
-            type="range"
-            min="0.25"
-            max="4"
-            step="0.05"
-            value={syncState.zoom}
-            onChange={(e) => onSyncUpdate({ zoom: parseFloat(e.target.value) })}
-            className="w-16 h-1 accent-cyan-500 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-            title={`Zoom: ${Math.round(syncState.zoom * 100)}%`}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0 text-gray-400 hover:text-white hover:bg-white/10 rounded"
-            onClick={() => onSyncUpdate({ zoom: Math.min(4, syncState.zoom + 0.25) })}
-            title="Zoom in (all viewports)"
-          >
-            <ZoomIn className="w-3 h-3" />
-          </Button>
-          <span className="text-[10px] text-cyan-300 font-medium min-w-[32px] text-center">
-            {Math.round(syncState.zoom * 100)}%
-          </span>
-        </div>
-        
-        <div className="w-px h-4 bg-white/20" />
-        
+
+      {/* Right section: Reset + Exit */}
+      <div className="flex items-center gap-2">
         {/* Slice info */}
-        <span className="text-[10px] text-gray-500">
+        <span className="text-[10px] text-gray-500 mr-2">
           Slice <span className="text-gray-300 font-medium">{syncState.currentIndex + 1}</span>
         </span>
         
-        <div className="w-px h-4 bg-white/20" />
-        
         {/* Reset button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+        <button
           onClick={onReset}
-          title="Reset view (zoom, pan, position)"
+          className="h-7 px-2.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 flex items-center gap-1.5 text-xs font-medium"
+          title="Reset view"
         >
-          <RotateCcw className="w-3 h-3" />
-        </Button>
+          <RotateCcw className="w-3.5 h-3.5" />
+          Reset
+        </button>
         
-        {/* Exit to overlay/single button - made more prominent */}
+        {/* Exit button */}
         {onExitToOverlay && (
-          <>
-            <div className="w-px h-5 bg-red-500/30" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-3 gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border border-red-500/40 hover:border-red-500/60 rounded-md"
-              onClick={onExitToOverlay}
-              title="Exit split view and return to single viewport"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Exit Split</span>
-            </Button>
-          </>
+          <button
+            onClick={onExitToOverlay}
+            className="h-7 px-3 rounded-md bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 transition-all duration-200 flex items-center gap-1.5 text-xs font-medium"
+            title="Exit split view"
+          >
+            <X className="w-3.5 h-3.5" />
+            Exit
+          </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -978,6 +979,63 @@ export function FlexibleFusionLayout({
     return () => { mounted = false; };
   }, [primarySeriesId]);
 
+  // Preload fusion data for all secondary series when entering multi-viewport mode
+  // This dramatically improves scrolling performance by sharing cached fusion slices across viewports
+  const [fusionPreloadProgress, setFusionPreloadProgress] = useState<Map<number, number>>(new Map());
+  
+  useEffect(() => {
+    if (isImagesLoading || !primaryImages.length || !secondarySeriesIds.length) return;
+    
+    // Start preloading fusion data for each secondary series
+    const preloadPromises = secondarySeriesIds.map(async (secondaryId) => {
+      // Check if already preloading or mostly loaded
+      if (globalFusionCache.isPreloading(primarySeriesId, secondaryId)) {
+        console.log(`[FlexibleFusionLayout] Already preloading fusion for secondary ${secondaryId}`);
+        return;
+      }
+      
+      const existingProgress = globalFusionCache.getProgress(primarySeriesId, secondaryId);
+      if (existingProgress > 0.9) {
+        console.log(`[FlexibleFusionLayout] Fusion already loaded for secondary ${secondaryId} (${(existingProgress * 100).toFixed(0)}%)`);
+        return;
+      }
+      
+      console.log(`[FlexibleFusionLayout] 🚀 Starting fusion preload for secondary ${secondaryId} (${primaryImages.length} slices)`);
+      
+      try {
+        await globalFusionCache.preloadFusionPair(
+          primarySeriesId,
+          secondaryId,
+          primaryImages.map((img, idx) => ({
+            sopInstanceUID: img.sopInstanceUID,
+            instanceNumber: img.instanceNumber ?? img.parsedInstanceNumber,
+            imagePosition: img.imagePositionPatient ?? img.metadata?.imagePositionPatient,
+            metadata: img.metadata,
+          })),
+          null, // registrationId - use default
+          {
+            onProgress: (loaded, total) => {
+              setFusionPreloadProgress(prev => {
+                const next = new Map(prev);
+                next.set(secondaryId, loaded / total);
+                return next;
+              });
+            },
+          }
+        );
+        console.log(`[FlexibleFusionLayout] ✅ Fusion preload complete for secondary ${secondaryId}`);
+      } catch (error) {
+        console.warn(`[FlexibleFusionLayout] Failed to preload fusion for secondary ${secondaryId}:`, error);
+      }
+    });
+    
+    // Start all preloads in parallel
+    Promise.allSettled(preloadPromises);
+    
+    // No cleanup needed - preloading should continue even if component unmounts
+    // The global cache persists across component lifecycles
+  }, [primarySeriesId, secondarySeriesIds, primaryImages, isImagesLoading]);
+
   // Get expected viewport count from layout preset
   const expectedViewportCount = useMemo(() => {
     const preset = LAYOUT_PRESETS.find(p => p.id === fusionLayoutPreset);
@@ -1016,6 +1074,44 @@ export function FlexibleFusionLayout({
     windowLevel: windowLevel || { window: 400, level: 40 },
     crosshairPos: { x: 0, y: 0 },
   });
+
+  // Ref-based sync state for high-frequency scroll updates (bypasses React during scrolling)
+  const syncStateRef = useRef<SyncState>(syncState);
+  
+  // Keep ref in sync with state (for when React state is the source of truth)
+  useEffect(() => {
+    syncStateRef.current = syncState;
+  }, [syncState]);
+
+  // Register React state sync callback with the scroll sync manager
+  useEffect(() => {
+    viewportScrollSync.setReactSyncCallback((state: ViewportSyncState) => {
+      // Only update React state when scrolling has stopped
+      setSyncState(prev => ({
+        ...prev,
+        currentIndex: state.sliceIndex,
+        zoom: state.zoom,
+        panX: state.panX,
+        panY: state.panY,
+        windowLevel: state.windowLevel.width !== undefined 
+          ? { window: state.windowLevel.width, level: state.windowLevel.center }
+          : prev.windowLevel,
+      }));
+    });
+    
+    // Initialize scroll sync with current state
+    viewportScrollSync.setState({
+      sliceIndex: syncState.currentIndex,
+      zoom: syncState.zoom,
+      panX: syncState.panX,
+      panY: syncState.panY,
+      windowLevel: { width: syncState.windowLevel.window, center: syncState.windowLevel.level },
+    });
+    
+    return () => {
+      viewportScrollSync.setReactSyncCallback(null);
+    };
+  }, []);
 
   const maxViewports = 4;
 
@@ -1070,8 +1166,30 @@ export function FlexibleFusionLayout({
     }
   }, [viewports, onViewportAssignmentsChange]);
 
-  const handleSyncUpdate = useCallback((updates: Partial<SyncState>) => {
-    setSyncState(prev => ({ ...prev, ...updates }));
+  const handleSyncUpdate = useCallback((updates: Partial<SyncState>, sourceViewportId?: string) => {
+    // Update the ref immediately (for other viewports to read)
+    Object.assign(syncStateRef.current, updates);
+    
+    // Convert to ViewportSyncState format and use ref-based sync
+    const syncUpdates: Partial<ViewportSyncState> = {};
+    if (updates.currentIndex !== undefined) syncUpdates.sliceIndex = updates.currentIndex;
+    if (updates.zoom !== undefined) syncUpdates.zoom = updates.zoom;
+    if (updates.panX !== undefined) syncUpdates.panX = updates.panX;
+    if (updates.panY !== undefined) syncUpdates.panY = updates.panY;
+    if (updates.windowLevel !== undefined) {
+      syncUpdates.windowLevel = { 
+        width: updates.windowLevel.window, 
+        center: updates.windowLevel.level 
+      };
+    }
+    
+    // Use the ref-based sync system (bypasses React during rapid scrolling)
+    viewportScrollSync.update(
+      sourceViewportId || 'unknown',
+      syncUpdates,
+      { skipSource: true }
+    );
+    
     // Notify parent of zoom changes for external sync (bottom toolbar)
     if (updates.zoom !== undefined && onZoomChange) {
       onZoomChange(updates.zoom);
@@ -1237,27 +1355,96 @@ export function FlexibleFusionLayout({
     return {};
   }, [fusionLayoutPreset]);
 
+  // Build secondary descriptors for the FusionDropdown
+  const secondaryDescriptors = useMemo(() => {
+    return secondarySeriesIds.map(secId => {
+      const series = availableSeries.find(s => s.id === secId);
+      return {
+        secondarySeriesId: secId,
+        secondaryModality: series?.modality || 'CT',
+        secondarySeriesDescription: series?.seriesDescription || `Series ${secId}`,
+        registrationType: 'rigid' as const,
+      };
+    });
+  }, [secondarySeriesIds, availableSeries]);
+  
+  const selectedSecondaryDescriptor = useMemo(() => {
+    if (!selectedFusionSecondaryId) return null;
+    return secondaryDescriptors.find(d => d.secondarySeriesId === selectedFusionSecondaryId) || null;
+  }, [selectedFusionSecondaryId, secondaryDescriptors]);
+  
+  // Fusion dropdown state
+  const [isFusionPanelOpen, setIsFusionPanelOpen] = useState(false);
+  const fusionPanelRef = useRef<HTMLDivElement>(null);
+  
+  // Close fusion panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (fusionPanelRef.current && !fusionPanelRef.current.contains(e.target as Node)) {
+        setIsFusionPanelOpen(false);
+      }
+    };
+    if (isFusionPanelOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isFusionPanelOpen]);
+  
+  const handleSecondaryChange = useCallback((sec: typeof secondaryDescriptors[0] | null) => {
+    onSecondarySeriesSelect?.(sec?.secondarySeriesId ?? null);
+  }, [onSecondarySeriesSelect]);
+
   return (
     <div className="flex flex-col h-full w-full">
-      <CompactToolbar
-        currentLayout={fusionLayoutPreset}
-        onLayoutChange={onLayoutChange || (() => {})}
-        onSwap={handleSwap}
-        onAddViewport={handleAddViewport}
-        onAddViewportWithSecondary={handleAddViewportWithSecondary}
-        viewportCount={viewports.length}
-        maxViewports={maxViewports}
-        assignedSecondaryIds={assignedSecondaryIds}
-        syncState={syncState}
-        onSyncUpdate={handleSyncUpdate}
-        onReset={handleResetView}
-        fusionOpacity={fusionOpacity}
-        onFusionOpacityChange={onFusionOpacityChange}
-        secondarySeriesIds={secondarySeriesIds}
-        availableSeries={availableSeries}
-        fusionSecondaryStatuses={fusionSecondaryStatuses}
-        onExitToOverlay={onExitToOverlay}
-      />
+      {/* Toolbar row: Multi-viewport bar on left + Fusion dropdown on right */}
+      <div className="flex items-start gap-2 p-2">
+        {/* Left: CompactToolbar */}
+        <div className="flex-1">
+          <CompactToolbar
+            currentLayout={fusionLayoutPreset}
+            onLayoutChange={onLayoutChange || (() => {})}
+            onSwap={handleSwap}
+            onAddViewport={handleAddViewport}
+            onAddViewportWithSecondary={handleAddViewportWithSecondary}
+            viewportCount={viewports.length}
+            maxViewports={maxViewports}
+            assignedSecondaryIds={assignedSecondaryIds}
+            syncState={syncState}
+            onSyncUpdate={handleSyncUpdate}
+            onReset={handleResetView}
+            fusionOpacity={fusionOpacity}
+            onFusionOpacityChange={onFusionOpacityChange}
+            secondarySeriesIds={secondarySeriesIds}
+            availableSeries={availableSeries}
+            fusionSecondaryStatuses={fusionSecondaryStatuses}
+            onExitToOverlay={onExitToOverlay}
+            selectedFusionSecondaryId={selectedFusionSecondaryId}
+            onSecondarySeriesSelect={onSecondarySeriesSelect}
+            fusionWindowLevel={fusionWindowLevel}
+            onFusionWindowLevelChange={onFusionWindowLevelChange}
+          />
+        </div>
+        
+        {/* Right: Fusion Dropdown (same as in UnifiedFusionTopbar) */}
+        <div className="flex-shrink-0" ref={fusionPanelRef}>
+          <FusionDropdown
+            isOpen={isFusionPanelOpen}
+            onToggle={() => setIsFusionPanelOpen(!isFusionPanelOpen)}
+            hasFusionActive={!!selectedFusionSecondaryId}
+            selectedSecondary={selectedSecondaryDescriptor}
+            fusionOpacity={fusionOpacity}
+            onFusionOpacityChange={onFusionOpacityChange || (() => {})}
+            onSecondaryChange={handleSecondaryChange}
+            availableSecondaries={secondaryDescriptors}
+            secondaryStatuses={fusionSecondaryStatuses || new Map()}
+            manifestLoading={fusionManifestLoading}
+            fusionLayoutPreset={fusionLayoutPreset as FusionLayoutPreset}
+            onLayoutPresetChange={(preset) => onLayoutChange?.(preset as LayoutPreset)}
+            fusionWindowLevel={fusionWindowLevel}
+            onFusionWindowLevelChange={onFusionWindowLevelChange}
+          />
+        </div>
+      </div>
       
       {isImagesLoading ? (
         <div className="flex items-center justify-center flex-1 bg-black text-cyan-500">

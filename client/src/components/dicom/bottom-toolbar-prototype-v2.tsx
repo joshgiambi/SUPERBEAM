@@ -1,11 +1,19 @@
 /**
  * Bottom Toolbar Prototype V2
  * 
- * Improved arrangement with text labels for contour, boolean, and margin buttons
+ * V4 Aurora Edition - Improved arrangement with text labels for contour, boolean, and margin buttons
+ * Using the V4 Aurora design language with dark gradients, subtle glows, and refined styling.
  */
 
 import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   ZoomIn,
   ZoomOut,
@@ -15,7 +23,6 @@ import {
   Ruler,
   Grid3x3,
   Layers,
-  Activity,
   Target,
   Info,
   HelpCircle,
@@ -54,7 +61,7 @@ interface BottomToolbarPrototypeV2Props {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
-  historyItems?: Array<{ timestamp: number; action: string; structureId?: number }>;
+  historyItems?: Array<{ timestamp: number; action: string; structureId?: number; structureName?: string; slicePosition?: number }>;
   currentHistoryIndex?: number;
   onSelectHistory?: (index: number) => void;
   className?: string;
@@ -64,6 +71,8 @@ interface BottomToolbarPrototypeV2Props {
   viewMode?: 'standard' | 'fusion-layout';  // Current view mode
   // Exit fusion layout callback
   onExitFusionLayout?: () => void;
+  // Positioning props - offset to center relative to viewer area (accounting for sidebar)
+  viewerOffsetLeft?: number;     // Left offset in pixels (e.g., sidebar width)
 }
 
 export function BottomToolbarPrototypeV2({
@@ -101,9 +110,14 @@ export function BottomToolbarPrototypeV2({
   hasRTStructures = false,
   viewMode = 'standard',
   onExitFusionLayout,
+  // Positioning - offset to center relative to viewer (accounts for sidebar)
+  viewerOffsetLeft = 0,
 }: BottomToolbarPrototypeV2Props) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  // Visual tuning: nudge the whole toolbar slightly to the right from true center.
+  // Increase/decrease this if you want it more/less offset.
+  const centerNudgePx = 24;
 
   // Build adaptive tools list based on context
   const tools = useMemo(() => {
@@ -132,12 +146,6 @@ export function BottomToolbarPrototypeV2({
       viewModeTools.push({ id: 'fusion', icon: Layers, label: 'Fusion Panel', selectable: true, group: 'viewmode' });
     }
     
-    // Show exit button when in fusion-layout (split view) mode
-    // In split view, fusion controls are in the CompactToolbar, so we just show exit
-    if (viewMode === 'fusion-layout' && onExitFusionLayout) {
-      viewModeTools.push({ id: 'separator', group: 'viewmode' });
-      viewModeTools.push({ id: 'exit-split', icon: X, label: 'Exit Split View', group: 'viewmode', variant: 'destructive' });
-    }
     
     // Structure tools - only when RT structures are loaded
     const structureTools = [];
@@ -146,14 +154,9 @@ export function BottomToolbarPrototypeV2({
       structureTools.push({ id: 'localization', icon: Target, label: 'Localize Structure', selectable: true, group: 'structures' });
     }
     
-    // Info tools - always available
-    const infoTools = [
-      { id: 'separator', group: 'info' },
-      { id: 'metadata', icon: Info, label: 'DICOM Metadata', group: 'info' },
-      { id: 'help', icon: HelpCircle, label: 'Help', group: 'info' },
-    ];
+    // Info tools are now in a separate right subpanel, so removed from main array
     
-    return [...baseTools, ...viewModeTools, ...structureTools, ...infoTools];
+    return [...baseTools, ...viewModeTools, ...structureTools];
   }, [viewMode, hasSecondaries, hasRTStructures]);
 
   const handleToolClick = (toolId: string) => {
@@ -191,9 +194,6 @@ export function BottomToolbarPrototypeV2({
       case 'localization':
         onLocalization?.();
         break;
-      case 'exit-split':
-        onExitFusionLayout?.();
-        break;
     }
   };
 
@@ -217,80 +217,129 @@ export function BottomToolbarPrototypeV2({
   };
 
   return (
-    <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 animate-in slide-in-from-bottom-2 duration-300 ${className || ''}`}>
-      {/* Toolbar Container */}
-      <div className="relative flex items-center gap-6">
-        {/* Undo/Redo/History Group - Separate Container */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/40 rounded-xl px-2 py-2 shadow-2xl">
-          <div className="flex items-center gap-1.5">
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Undo"
-                className="h-8 w-8 p-0 transition-all duration-200 rounded-lg text-white/90 hover:bg-white/20 hover:text-white disabled:opacity-50"
-                disabled={!canUndo}
-                onClick={onUndo}
-              >
-                <Undo className="w-4 h-4" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gradient-to-br from-gray-600/95 via-gray-500/95 to-gray-600/95 border border-gray-400/30 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-                Undo
-              </div>
-            </div>
+    <TooltipProvider delayDuration={200}>
+      {/* 
+        IMPORTANT: Framer Motion sets an inline `transform` during animation.
+        If we put Tailwind's `-translate-x-1/2` on the motion element, it gets overwritten,
+        causing the toolbar to appear shifted to the right.
+        So we center with a non-animated wrapper, and animate only the inner content.
+      */}
+      <div
+        className={`fixed bottom-6 left-1/2 z-40 ${className || ''}`}
+        style={{ transform: `translateX(calc(-50% + ${centerNudgePx}px))` }}
+      >
+        <motion.div 
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.16, 1, 0.3, 1], // Custom spring-like easing
+            opacity: { duration: 0.3 },
+            scale: { duration: 0.35 }
+          }}
+        >
+          {/* Toolbar Container */}
+          <div className="relative flex items-center gap-3">
+          {/* Undo/Redo/History Group - Separate Container */}
+          <div 
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 32, 44, 0.95) 0%, rgba(20, 22, 30, 0.98) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+            }}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                  className={cn(
+                    'h-8 w-8 flex items-center justify-center rounded-lg transition-all',
+                    canUndo 
+                      ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                      : 'text-white/30 cursor-not-allowed'
+                  )}
+                >
+                  <Undo className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Undo (Ctrl+Z)</TooltipContent>
+            </Tooltip>
 
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Redo"
-                className="h-8 w-8 p-0 transition-all duration-200 rounded-lg text-white/90 hover:bg-white/20 hover:text-white disabled:opacity-50"
-                disabled={!canRedo}
-                onClick={onRedo}
-              >
-                <Redo className="w-4 h-4" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gradient-to-br from-gray-600/95 via-gray-500/95 to-gray-600/95 border border-gray-400/30 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-                Redo
-              </div>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                  className={cn(
+                    'h-8 w-8 flex items-center justify-center rounded-lg transition-all',
+                    canRedo 
+                      ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                      : 'text-white/30 cursor-not-allowed'
+                  )}
+                >
+                  <Redo className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Redo (Ctrl+Y)</TooltipContent>
+            </Tooltip>
+
+            <div className="w-px h-5 bg-white/10 mx-0.5" />
 
             <div className="relative">
-              <div className="relative group">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 w-8 p-0 transition-all duration-200 rounded-lg ${showHistory ? 'bg-orange-600/20 text-orange-400 border-[0.5px] border-orange-500/50 shadow-sm' : 'text-white/90 hover:bg-white/20 hover:text-white'} disabled:opacity-50`}
-                  onClick={() => setShowHistory(!showHistory)}
-                >
-                  <History className="w-4 h-4" />
-                </Button>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gradient-to-br from-orange-600/95 via-orange-500/95 to-orange-600/95 border border-orange-400/30 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-                  History
-                </div>
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className={cn(
+                      'h-8 w-8 flex items-center justify-center rounded-lg transition-all',
+                      showHistory 
+                        ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40' 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    )}
+                  >
+                    <History className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Edit History</TooltipContent>
+              </Tooltip>
 
+              {/* History Dropdown */}
               {showHistory && (
-                <div className="absolute bottom-full left-0 mb-2 bg-black/95 border border-orange-400/50 rounded-lg shadow-2xl backdrop-blur-sm w-96 max-h-96 overflow-y-auto z-[100]">
-                  <div className="sticky top-0 bg-gray-900/95 border-b border-orange-400/30 p-3 backdrop-blur-sm">
+                <div 
+                  className="absolute bottom-full left-0 mb-2 w-80 max-h-80 overflow-y-auto rounded-xl z-[100]"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(30, 32, 44, 0.98) 0%, rgba(20, 22, 30, 0.99) 100%)',
+                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 40px -10px rgba(251, 191, 36, 0.15)',
+                  }}
+                >
+                  <div 
+                    className="sticky top-0 p-3 border-b"
+                    style={{
+                      background: 'rgba(30, 32, 44, 0.98)',
+                      borderColor: 'rgba(251, 191, 36, 0.2)',
+                    }}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <History className="w-4 h-4 text-orange-400" />
-                        <span className="text-sm text-orange-200 font-semibold">Edit History</span>
+                        <History className="w-4 h-4 text-amber-400" />
+                        <span className="text-sm text-amber-200 font-semibold">Edit History</span>
                       </div>
                       <button 
-                        className="text-gray-400 hover:text-gray-200 transition-colors"
+                        className="text-gray-400 hover:text-white transition-colors h-6 w-6 flex items-center justify-center rounded-md hover:bg-white/10"
                         onClick={() => setShowHistory(false)}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   
-                  <div className="p-3">
+                  <div className="p-2">
                     {historyItems.length === 0 ? (
                       <div className="text-center py-8 text-gray-400">
-                        <History className="w-10 h-10 mx-auto mb-2 text-gray-600" />
+                        <History className="w-8 h-8 mx-auto mb-2 text-gray-600" />
                         <p className="text-xs font-medium">No history yet</p>
                         <p className="text-[10px] mt-1 text-gray-500">Edit actions will appear here</p>
                       </div>
@@ -303,11 +352,12 @@ export function BottomToolbarPrototypeV2({
                               onSelectHistory?.(index);
                               setShowHistory(false);
                             }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                            className={cn(
+                              'w-full text-left px-3 py-2 rounded-lg text-xs transition-all',
                               index === currentHistoryIndex
-                                ? 'bg-orange-600/20 text-orange-200 border border-orange-500/50'
-                                : 'text-gray-300 hover:bg-gray-800/50'
-                            }`}
+                                ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/40'
+                                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                            )}
                           >
                             <div className="font-medium">{item.action}</div>
                             <div className="text-[10px] text-gray-400 mt-0.5">
@@ -326,119 +376,165 @@ export function BottomToolbarPrototypeV2({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Main Toolbar with Contour/Boolean/Margin attached */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/40 rounded-xl px-4 py-2.5 shadow-2xl flex items-center gap-3">
-          {/* Main Tool Buttons */}
-          <div className="flex items-center gap-1">
-            {tools.map((tool, index) => {
-              if (tool.id === 'separator') {
+          {/* Main Toolbar with Contour/Boolean/Margin attached */}
+          <div 
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 32, 44, 0.95) 0%, rgba(20, 22, 30, 0.98) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+            }}
+          >
+            {/* Main Tool Buttons */}
+            <div className="flex items-center gap-0.5">
+              {tools.map((tool, index) => {
+                if (tool.id === 'separator') {
+                  return (
+                    <div key={index} className="w-px h-5 bg-white/10 mx-1.5" />
+                  );
+                }
+
+                const IconComponent = tool.icon!;
+                const isActive = tool.selectable && getActiveToolState(tool.id);
+
+                // Determine active color scheme based on tool type
+                const getActiveStyles = () => {
+                  if (tool.id === 'mpr' && isActive) {
+                    return 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40';
+                  }
+                  if (tool.id === 'fusion' && isActive) {
+                    return 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40';
+                  }
+                  if (tool.id === 'localization' && isActive) {
+                    return 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40';
+                  }
+                  if (isActive) {
+                    return 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/40';
+                  }
+                  return 'text-white/70 hover:text-white hover:bg-white/10';
+                };
+
                 return (
-                  <div key={index} className="w-px h-5 bg-white/30 mx-1" />
+                  <Tooltip key={tool.id}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleToolClick(tool.id)}
+                        className={cn(
+                          'h-8 w-8 flex items-center justify-center rounded-lg transition-all',
+                          getActiveStyles()
+                        )}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">{tool.label}</TooltipContent>
+                  </Tooltip>
                 );
-              }
+              })}
+            </div>
 
-              const IconComponent = tool.icon!;
-              const isActive = tool.selectable && getActiveToolState(tool.id);
-              const isExitButton = tool.id === 'exit-split';
+            {/* Separator before Contour/Boolean/Margin */}
+            <div className="w-px h-6 bg-white/10 mx-1" />
 
-              return (
-                <div key={tool.id} className="relative group">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={tool.label}
-                    className={`
-                      transition-all duration-200 rounded-lg
-                      ${isExitButton 
-                        ? 'h-8 px-3 gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border border-red-500/40 hover:border-red-500/60 flex items-center'
-                        : `h-8 w-8 p-0 text-white/90 ${
-                            tool.id === 'mpr' && isActive
-                              ? 'bg-green-600/20 text-green-400 border-[0.5px] border-green-500/50 shadow-sm' 
-                              : tool.id === 'localization' && isActive
-                              ? 'bg-orange-600/20 text-orange-400 border-[0.5px] border-orange-500/50 shadow-sm'
-                              : isActive 
-                              ? 'bg-blue-600/20 text-blue-400 border-[0.5px] border-blue-500/50 shadow-sm' 
-                              : 'hover:bg-white/20 hover:text-white'
-                          }`
-                      }
-                    `}
-                    onClick={() => handleToolClick(tool.id)}
+            {/* Contour/Boolean/Margin Group */}
+            <div className="flex items-center gap-1">
+              {/* Contour Edit Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onContourEdit}
+                    className={cn(
+                      'h-8 px-3 flex items-center gap-2 rounded-lg transition-all text-sm font-medium',
+                      isContourEditActive 
+                        ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40' 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    )}
                   >
-                    <IconComponent className={isExitButton ? "w-3.5 h-3.5" : "w-4 h-4"} />
-                    {isExitButton && <span className="text-xs font-medium">Exit Split</span>}
-                  </Button>
+                    <Highlighter className="w-4 h-4" />
+                    <span>Contour</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Edit Contours</TooltipContent>
+              </Tooltip>
+              
+              {/* Boolean Operations Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onContourOperations}
+                    className={cn(
+                      'h-8 px-3 flex items-center gap-2 rounded-lg transition-all text-sm font-medium',
+                      isContourOperationsActive 
+                        ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/40' 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    )}
+                  >
+                    <SquaresSubtract className="w-4 h-4" />
+                    <span>Boolean</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Boolean Operations</TooltipContent>
+              </Tooltip>
 
-                  {/* Tooltip */}
-                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 border text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
-                    isExitButton 
-                      ? 'bg-gradient-to-br from-red-600/95 via-red-500/95 to-red-600/95 border-red-400/30'
-                      : 'bg-gradient-to-br from-gray-600/95 via-gray-500/95 to-gray-600/95 border-gray-400/30'
-                  }`}>
-                    {tool.label}
-                  </div>
-                </div>
-              );
-            })}
+              {/* Advanced Margin Tool Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onAdvancedMarginTool}
+                    className={cn(
+                      'h-8 px-3 flex items-center gap-2 rounded-lg transition-all text-sm font-medium',
+                      isAdvancedMarginToolActive 
+                        ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40' 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    )}
+                  >
+                    <Expand className="w-4 h-4" />
+                    <span>Margin</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Advanced Margins</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
-          {/* Contour/Boolean/Margin Group - Attached to Main Toolbar */}
-          <div className="flex items-center gap-2 pl-2 border-l border-white/20">
-            {/* Contour Edit Button */}
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onContourEdit}
-                className={`h-8 px-3 transition-all duration-200 rounded-lg flex items-center gap-2 ${
-                  isContourEditActive
-                    ? 'bg-green-600/20 text-green-300 border-[0.5px] border-green-500/50 shadow-sm'
-                    : 'text-white/90 hover:bg-white/20 hover:text-white border-[0.5px] border-transparent'
-                }`}
-              >
-                <Highlighter className="w-4 h-4" />
-                <span className="text-sm font-medium">Contour</span>
-              </Button>
-            </div>
-            
-            {/* Boolean Operations Button */}
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onContourOperations}
-                className={`h-8 px-3 transition-all duration-200 rounded-lg flex items-center gap-2 ${
-                  isContourOperationsActive
-                    ? 'bg-blue-600/20 text-blue-300 border-[0.5px] border-blue-500/50 shadow-sm'
-                    : 'text-white/90 hover:bg-white/20 hover:text-white border-[0.5px] border-transparent'
-                }`}
-              >
-                <SquaresSubtract className="w-4 h-4" />
-                <span className="text-sm font-medium">Boolean</span>
-              </Button>
-            </div>
+          {/* Info/Help Group - Right Subpanel (mirrors Undo/History on left) */}
+          <div 
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 32, 44, 0.95) 0%, rgba(20, 22, 30, 0.98) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+            }}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="h-8 w-8 flex items-center justify-center rounded-lg transition-all text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">DICOM Metadata</TooltipContent>
+            </Tooltip>
 
-            {/* Advanced Margin Tool Button */}
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onAdvancedMarginTool}
-                className={`h-8 px-3 transition-all duration-200 rounded-lg flex items-center gap-2 ${
-                  isAdvancedMarginToolActive
-                    ? 'bg-purple-600/20 text-purple-300 border-[0.5px] border-purple-500/50 shadow-sm'
-                    : 'text-white/90 hover:bg-white/20 hover:text-white border-[0.5px] border-transparent'
-                }`}
-              >
-                <Expand className="w-4 h-4" />
-                <span className="text-sm font-medium">Margin</span>
-              </Button>
-            </div>
+            <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="h-8 w-8 flex items-center justify-center rounded-lg transition-all text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Help & Shortcuts</TooltipContent>
+            </Tooltip>
           </div>
         </div>
+        </motion.div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 

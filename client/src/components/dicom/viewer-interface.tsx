@@ -6,6 +6,7 @@ import { FlexibleFusionLayout } from './flexible-fusion-layout';
 import { BottomToolbarPrototypeV2 } from './bottom-toolbar-prototype-v2';
 import { ContourEditToolbar } from './contour-edit-toolbar';
 import { FusionControlPanelV2, type FusionLayoutPreset } from './fusion-control-panel-v2';
+import { UnifiedFusionTopbar } from './unified-fusion-topbar';
 import { ErrorModal } from './error-modal';
 import { BooleanPipelinePrototypeCombined } from './boolean-pipeline-prototype-combined';
 import { X, Target, Bookmark, Save, LayoutGrid } from 'lucide-react';
@@ -25,6 +26,8 @@ import { cornerstoneConfig } from '@/lib/cornerstone-config';
 import { LoadingProgress } from './loading-progress';
 import { fusionLayoutService, useFusionLayoutService } from '@/lib/fusion-layout-service';
 import { ContourEditProvider } from '@/contexts/contour-edit-context';
+import { globalSeriesCache } from '@/lib/global-series-cache';
+import { globalFusionCache } from '@/lib/global-fusion-cache';
 
 // TypeScript declaration for cornerstone
 declare global {
@@ -68,7 +71,8 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     isActive: false,
     predictionEnabled: false
   });
-  const [currentSlicePosition, setCurrentSlicePosition] = useState<number>(0);
+  const [currentSlicePosition, setCurrentSlicePosition] = useState<number>(0); // Z position (mm)
+  const [currentSliceIndex, setCurrentSliceIndex] = useState<number>(0); // Slice index (0-based)
   const [autoZoomLevel, setAutoZoomLevel] = useState<number | undefined>(undefined);
   const [autoLocalizeTarget, setAutoLocalizeTarget] = useState<{ x: number; y: number; z: number } | undefined>(undefined);
   const workingViewerRef = useRef<any>(null);
@@ -104,8 +108,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [mprVisible, setMprVisible] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   
-  // Synced zoom state for multi-viewport layouts (FlexibleFusionLayout)
+  // Synced state for multi-viewport layouts (FlexibleFusionLayout and side-by-side)
   const [syncedZoom, setSyncedZoom] = useState(1);
+  const [syncedPan, setSyncedPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [syncedSliceIdx, setSyncedSliceIdx] = useState(0);
   
   // Viewport assignments state - tracks which secondary series is in which viewport (1-indexed)
   // Map key is viewport number, value is secondary series ID (null for primary-only)
@@ -118,13 +124,9 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     setViewportAssignments(new Map()); // Clear assignments when exiting
   }, []);
   
-  // Watch for secondary series changes to show/hide fusion panel
-  useEffect(() => {
-    if (secondarySeriesId !== null) {
-      log.debug('Secondary series selected, showing fusion panel', 'viewer-interface');
-      setShowFusionPanel(true);
-    }
-  }, [secondarySeriesId]);
+  // Note: We intentionally do NOT auto-open the fusion panel when secondary changes.
+  // This allows quick-swap in minimized mode without opening the full panel.
+  // The panel only opens when user explicitly clicks the Fusion button.
   
   // Load fusion layout preference on mount and when study changes
   useEffect(() => {
@@ -822,6 +824,142 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
 
   // Check if we're in multi-viewport mode (FlexibleFusionLayout)
   const isInFlexibleFusionLayout = fusionLayoutPreset !== 'overlay' && secondarySeriesId !== null;
+  
+  // State for preload progress
+  const [preloadProgress, setPreloadProgress] = useState<{ loaded: number; total: number } | null>(null);
+  
+  // Eager preload when entering multi-viewport mode for smooth scrolling
+  useEffect(() => {
+    if (!isInFlexibleFusionLayout || !selectedSeries?.id) return;
+    
+    // Check if already loaded or loading
+    if (globalSeriesCache.isFullyLoaded(selectedSeries.id) || globalSeriesCache.isLoading(selectedSeries.id)) {
+      return;
+    }
+    
+    // Start preloading the primary series
+    const preloadPrimarySeries = async () => {
+      try {
+        // First, get the image list for the series
+        const response = await fetch(`/api/dicom/series/${selectedSeries.id}/images`);
+        if (!response.ok) {
+          console.warn('Failed to fetch image list for preload');
+          return;
+        }
+        
+        const imageList = await response.json();
+        if (!Array.isArray(imageList) || imageList.length === 0) return;
+        
+        console.log(`🚀 Starting eager preload for multi-viewport mode: ${imageList.length} images`);
+        setPreloadProgress({ loaded: 0, total: imageList.length });
+        
+        // Create fetch function for each image
+        const fetchImage = async (sopInstanceUID: string) => {
+          try {
+            const imageResponse = await fetch(`/api/dicom/images/${sopInstanceUID}/pixel-data`);
+            if (!imageResponse.ok) return null;
+            
+            const arrayBuffer = await imageResponse.arrayBuffer();
+            // Basic parsing - the full parsing happens in WorkingViewer
+            return {
+              sopInstanceUID,
+              data: new Float32Array(arrayBuffer),
+              width: 512, // Will be updated when actually used
+              height: 512,
+              metadata: {},
+              timestamp: Date.now(),
+            } as any;
+          } catch (error) {
+            console.warn(`Failed to preload image ${sopInstanceUID}:`, error);
+            return null;
+          }
+        };
+        
+        // Use global cache for preloading
+        await globalSeriesCache.preloadSeries(
+          selectedSeries.id,
+          imageList.map((img: any, idx: number) => ({ 
+            sopInstanceUID: img.sopInstanceUID, 
+            sliceIndex: idx 
+          })),
+          fetchImage,
+          {
+            priority: 'high',
+            onProgress: (loaded, total) => {
+              setPreloadProgress({ loaded, total });
+              if (loaded >= total) {
+                // Preload complete, hide progress after a brief delay
+                setTimeout(() => setPreloadProgress(null), 500);
+              }
+            }
+          }
+        );
+        
+        console.log('✅ Multi-viewport preload complete');
+      } catch (error) {
+        console.error('Preload failed:', error);
+        setPreloadProgress(null);
+      }
+    };
+    
+    preloadPrimarySeries();
+  }, [isInFlexibleFusionLayout, selectedSeries?.id]);
+
+  // Preload fusion data when a secondary is selected (before entering multi-viewport mode)
+  // This dramatically improves scrolling performance by sharing fusion slices across viewports
+  const [fusionPreloadProgress, setFusionPreloadProgress] = useState<number>(0);
+  
+  useEffect(() => {
+    if (!secondarySeriesId || !selectedSeries?.id) return;
+    
+    // Check if already preloading or mostly loaded
+    if (globalFusionCache.isPreloading(selectedSeries.id, secondarySeriesId)) {
+      return;
+    }
+    
+    const existingProgress = globalFusionCache.getProgress(selectedSeries.id, secondarySeriesId);
+    if (existingProgress > 0.9) {
+      setFusionPreloadProgress(1);
+      return;
+    }
+    
+    // Get image list for preloading
+    const preloadFusion = async () => {
+      try {
+        const response = await fetch(`/api/series/${selectedSeries.id}/images`);
+        if (!response.ok) return;
+        
+        const imageList = await response.json();
+        if (!Array.isArray(imageList) || imageList.length === 0) return;
+        
+        console.log(`[ViewerInterface] 🚀 Starting fusion preload for secondary ${secondarySeriesId}`);
+        
+        await globalFusionCache.preloadFusionPair(
+          selectedSeries.id,
+          secondarySeriesId,
+          imageList.map((img: any) => ({
+            sopInstanceUID: img.sopInstanceUID,
+            instanceNumber: img.instanceNumber,
+            imagePosition: img.imagePositionPatient,
+            metadata: img.metadata,
+          })),
+          null, // registrationId
+          {
+            onProgress: (loaded, total) => {
+              setFusionPreloadProgress(loaded / total);
+            },
+          }
+        );
+        
+        console.log(`[ViewerInterface] ✅ Fusion preload complete for secondary ${secondarySeriesId}`);
+        setFusionPreloadProgress(1);
+      } catch (error) {
+        console.warn('[ViewerInterface] Fusion preload failed:', error);
+      }
+    };
+    
+    preloadFusion();
+  }, [secondarySeriesId, selectedSeries?.id]);
 
   const handleZoomIn = () => {
     try {
@@ -2095,6 +2233,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             rtStructures={rtStructures}
             onRTStructureLoad={handleRTStructureLoad}
             onStructureVisibilityChange={handleStructureVisibilityChange}
+            externalStructureVisibility={structureVisibility}
             onStructureColorChange={handleStructureColorChange}
             onStructureSelection={handleStructureSelection}
             selectedForEdit={selectedForEdit}
@@ -2147,6 +2286,79 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           {selectedSeries ? (
             <div className="flex-1 flex flex-col relative h-full" style={{ minHeight: 0 }}>
               
+              {/* Unified Fusion Topbar - Above viewport, combines topbar info with fusion dropdown */}
+              {/* ALWAYS show for overlay and side-by-side modes, hide when in true multi-viewport mode */}
+              {!(fusionLayoutPreset !== 'overlay' && fusionLayoutPreset !== 'side-by-side' && secondarySeriesId) && (
+                <UnifiedFusionTopbar
+                  primaryModality={selectedSeries?.modality || 'CT'}
+                  primarySeriesDescription={selectedSeries?.seriesDescription}
+                  currentSlice={currentSliceIndex + 1}
+                  totalSlices={selectedSeries?.imageCount || selectedSeries?.images?.length || 1}
+                  windowLevel={windowLevel ? { window: windowLevel.window, level: windowLevel.level } : undefined}
+                  zPosition={currentSlicePosition}
+                  orientation="axial"
+                  // Slice navigation - directly update state, working-viewer will respond via externalSliceIndex
+                  onPrevSlice={() => {
+                    if (currentSliceIndex > 0) {
+                      const newIndex = currentSliceIndex - 1;
+                      setCurrentSliceIndex(newIndex);
+                      setSyncedSliceIdx(newIndex);
+                    }
+                  }}
+                  onNextSlice={() => {
+                    const maxSlice = (selectedSeries?.imageCount || selectedSeries?.images?.length || 1) - 1;
+                    if (currentSliceIndex < maxSlice) {
+                      const newIndex = currentSliceIndex + 1;
+                      setCurrentSliceIndex(newIndex);
+                      setSyncedSliceIdx(newIndex);
+                    }
+                  }}
+                  onReset={() => {
+                    // Reset to first slice
+                    setCurrentSliceIndex(0);
+                    setSyncedSliceIdx(0);
+                    // Reset window/level to default
+                    if (selectedSeries?.modality === 'CT') {
+                      setWindowLevel({ window: 400, level: 40 }); // Default CT soft tissue
+                    }
+                  }}
+                  rtStructuresCount={rtStructures?.structures?.length || 0}
+                  rtStructuresVisible={allStructuresVisible}
+                  onToggleStructures={() => {
+                    const newVisible = !allStructuresVisible;
+                    handleAllStructuresVisibilityChange(newVisible);
+                    // Also update individual structure visibility to stay in sync with series-selector
+                    if (rtStructures?.structures) {
+                      setStructureVisibility(prev => {
+                        const newMap = new Map(prev);
+                        rtStructures.structures.forEach((structure: any) => {
+                          newMap.set(structure.roiNumber, newVisible);
+                        });
+                        return newMap;
+                      });
+                    }
+                  }}
+                  showMPR={mprVisible}
+                  onToggleMPR={() => setMprVisible(!mprVisible)}
+                  secondarySeriesId={secondarySeriesId}
+                  onSecondarySeriesSelect={setSecondarySeriesId}
+                  fusionOpacity={fusionOpacity}
+                  onFusionOpacityChange={setFusionOpacity}
+                  fusionWindowLevel={fusionWindowLevel}
+                  onFusionWindowLevelChange={setFusionWindowLevel}
+                  secondaryOptions={fusionManifest?.secondaries || []}
+                  secondaryStatuses={fusionSecondaryStatuses}
+                  manifestLoading={fusionManifestLoading}
+                  manifestError={fusionManifestError}
+                  hasPotentialFusions={(registrationRelationshipMap.get(selectedSeries?.id ?? 0)?.length ?? 0) > 0}
+                  fusionLayoutPreset={fusionLayoutPreset}
+                  onLayoutPresetChange={handleLayoutPresetChange}
+                  isExpanded={showFusionPanel}
+                  onExpandedChange={setShowFusionPanel}
+                  className="z-20"
+                />
+              )}
+              
               {/* Dynamic Border Based on Selected Structures */}
               <div 
                 className="absolute inset-0 rounded-lg pointer-events-none transition-all duration-300"
@@ -2179,10 +2391,28 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                 </div>
               )}
               
-              {/* Main Viewer - FlexibleFusionLayout OR WorkingViewer */}
+              {/* Main Viewer - FlexibleFusionLayout OR Side-by-Side OR WorkingViewer */}
               {/* ContourEditProvider enables cross-viewport ghost contour synchronization */}
               <ContourEditProvider>
-              {fusionLayoutPreset !== 'overlay' && secondarySeriesId ? (
+              
+              {/* Preload progress indicator for multi-viewport mode */}
+              {preloadProgress && preloadProgress.total > 0 && preloadProgress.loaded < preloadProgress.total && (
+                <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 border border-cyan-500/30 rounded-lg px-4 py-2 flex items-center gap-3 shadow-lg">
+                  <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-cyan-400">
+                    Preloading for smooth scrolling... {Math.round((preloadProgress.loaded / preloadProgress.total) * 100)}%
+                  </span>
+                  <div className="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-150"
+                      style={{ width: `${(preloadProgress.loaded / preloadProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Multi-viewport modes (triple, quad, etc.) use FlexibleFusionLayout - NOT side-by-side */}
+              {fusionLayoutPreset !== 'overlay' && fusionLayoutPreset !== 'side-by-side' && secondarySeriesId ? (
                 <FlexibleFusionLayout
                   primarySeriesId={selectedSeries.id}
                   secondarySeriesIds={Array.from(fusionDescriptorMap.keys())}
@@ -2230,6 +2460,119 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   onExitToOverlay={handleExitToOverlay}
                   onViewportAssignmentsChange={setViewportAssignments}
                 />
+              ) : fusionLayoutPreset === 'side-by-side' && secondarySeriesId ? (
+                /* Side-by-Side: Two viewports - left=primary only, right=secondary only */
+                /* Primary viewport drives sync (scroll, zoom, pan), secondary follows */
+                <div className="flex-1 flex gap-1" style={{ minHeight: 0 }}>
+                  {/* Left: Primary CT only - DRIVES sync */}
+                  <div className="flex-1 relative" style={{ minHeight: 0 }}>
+                    <WorkingViewer 
+                      seriesId={selectedSeries.id}
+                      studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
+                      windowLevel={windowLevel}
+                      onWindowLevelChange={setWindowLevel}
+                      rtStructures={rtStructures}
+                      structureVisibility={structureVisibility}
+                      brushToolState={brushToolState}
+                      selectedForEdit={selectedForEdit}
+                      selectedStructures={selectedStructures}
+                      onBrushSizeChange={(size) => {
+                        setBrushToolState(prev => ({ ...prev, brushSize: size }));
+                        try {
+                          const evt = new CustomEvent('brush:size:update', { detail: { brushSize: size } });
+                          window.dispatchEvent(evt);
+                        } catch {}
+                      }}
+                      onContourUpdate={handleContourUpdate}
+                      onSlicePositionChange={setCurrentSlicePosition}
+                      onSliceIndexChange={(idx) => {
+                        setCurrentSliceIndex(idx);
+                        setSyncedSliceIdx(idx); // Sync to secondary
+                      }}
+                      contourSettings={contourSettings}
+                      autoZoomLevel={autoZoomLevel}
+                      autoLocalizeTarget={autoLocalizeTarget}
+                      secondarySeriesId={null}
+                      fusionOpacity={0}
+                      fusionDisplayMode="overlay"
+                      fusionLayoutPreset="overlay"
+                      onSecondarySeriesSelect={() => {}}
+                      onFusionOpacityChange={() => {}}
+                      hasSecondarySeriesForFusion={false}
+                      onImageMetadataChange={setImageMetadata}
+                      allStructuresVisible={allStructuresVisible}
+                      imageCache={imageCache}
+                      onMPRToggle={() => setMprVisible(!mprVisible)}
+                      isMPRVisible={mprVisible}
+                      allowedSecondaryIds={[]}
+                      registrationAssociations={registrationRelationshipMap}
+                      availableSeries={series}
+                      fusionWindowLevel={null}
+                      fusionSecondaryStatuses={fusionSecondaryStatuses}
+                      fusionManifestLoading={false}
+                      fusionManifestPrimarySeriesId={null}
+                      onActivePredictionsChange={setActivePredictions}
+                      // Sync callbacks - primary drives
+                      onZoomChange={setSyncedZoom}
+                      onPanChange={(x, y) => setSyncedPan({ x, y })}
+                      hideSidebar
+                      hideToolbar
+                    />
+                  </div>
+                  {/* Right: Secondary scan only - FOLLOWS primary sync */}
+                  <div className="flex-1 relative" style={{ minHeight: 0 }}>
+                    <WorkingViewer 
+                      seriesId={selectedSeries.id}
+                      studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
+                      windowLevel={windowLevel}
+                      onWindowLevelChange={setWindowLevel}
+                      rtStructures={rtStructures}
+                      structureVisibility={structureVisibility}
+                      brushToolState={brushToolState}
+                      selectedForEdit={selectedForEdit}
+                      selectedStructures={selectedStructures}
+                      onBrushSizeChange={(size) => {
+                        setBrushToolState(prev => ({ ...prev, brushSize: size }));
+                        try {
+                          const evt = new CustomEvent('brush:size:update', { detail: { brushSize: size } });
+                          window.dispatchEvent(evt);
+                        } catch {}
+                      }}
+                      onContourUpdate={handleContourUpdate}
+                      onSlicePositionChange={() => {}}
+                      onSliceIndexChange={() => {}}
+                      contourSettings={contourSettings}
+                      autoZoomLevel={autoZoomLevel}
+                      autoLocalizeTarget={autoLocalizeTarget}
+                      secondarySeriesId={secondarySeriesId}
+                      fusionOpacity={1}
+                      fusionDisplayMode="overlay"
+                      fusionLayoutPreset="overlay"
+                      onSecondarySeriesSelect={setSecondarySeriesId}
+                      onFusionOpacityChange={() => {}}
+                      hasSecondarySeriesForFusion={fusionDescriptorMap.size > 0}
+                      onImageMetadataChange={() => {}}
+                      allStructuresVisible={allStructuresVisible}
+                      imageCache={imageCache}
+                      onMPRToggle={() => {}}
+                      isMPRVisible={false}
+                      allowedSecondaryIds={Array.from(fusionDescriptorMap.keys())}
+                      registrationAssociations={registrationRelationshipMap}
+                      availableSeries={series}
+                      fusionWindowLevel={fusionWindowLevel}
+                      fusionSecondaryStatuses={fusionSecondaryStatuses}
+                      fusionManifestLoading={fusionManifestLoading}
+                      fusionManifestPrimarySeriesId={fusionManifest?.primarySeriesId ?? null}
+                      onActivePredictionsChange={() => {}}
+                      // External sync - follows primary
+                      externalSliceIndex={syncedSliceIdx}
+                      externalZoom={syncedZoom}
+                      externalPan={syncedPan}
+                      hideSidebar
+                      hideToolbar
+                    />
+                  </div>
+                </div>
               ) : (
                 <WorkingViewer 
                   ref={workingViewerRef}
@@ -2251,6 +2594,9 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   }}
                   onContourUpdate={handleContourUpdate}
                   onSlicePositionChange={setCurrentSlicePosition}
+                  onSliceIndexChange={setCurrentSliceIndex}
+                  // Pass external slice index for topbar navigation control
+                  externalSliceIndex={currentSliceIndex}
                   contourSettings={contourSettings}
                   autoZoomLevel={autoZoomLevel}
                   autoLocalizeTarget={autoLocalizeTarget}
@@ -2276,6 +2622,8 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   fusionManifestPrimarySeriesId={fusionManifest?.primarySeriesId ?? null}
                   onActivePredictionsChange={setActivePredictions}
                   hideSidebar
+                  // Always hide internal toolbar - UnifiedFusionTopbar is now the main topbar
+                  hideToolbar
                 />
               )}
               </ContourEditProvider>
@@ -2321,8 +2669,9 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           )}
         </div>
       </div>
+      </div>
 
-      {/* Floating Toolbar */}
+      {/* Floating Toolbar - Outside animate-in container so fixed positioning works correctly */}
       {selectedSeries && (
         <BottomToolbarPrototypeV2
           onZoomIn={handleZoomIn}
@@ -2389,15 +2738,16 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
               : 'standard'
           }
           onExitFusionLayout={handleExitToOverlay}
+          // Offset to center toolbar relative to viewer (sidebar is md:w-96 = 384px)
+          viewerOffsetLeft={384}
         />
       )}
 
       {/* Contour Edit Toolbar and Fusion Control are handled inside WorkingViewer */}
 
-      {/* Contour Edit Toolbar */}
+      {/* Contour Edit Toolbar - V4 Aurora Edition */}
       {isContourEditMode && rtStructures && rtStructures.structures && rtStructures.structures.length > 0 && !showBooleanOperations && !showMarginToolbar && (
-        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50" style={{ animationName: 'fadeInScale', animationDuration: '300ms', animationTimingFunction: 'ease-out', animationFillMode: 'both', width: '1200px', minWidth: '1200px', maxWidth: '1200px' }}>
-          <ContourEditToolbar
+        <ContourEditToolbar
           selectedStructure={selectedForEdit ? rtStructures.structures.find((s: any) => s.roiNumber === selectedForEdit) : rtStructures.structures[0]}
           isVisible={isContourEditMode}
           onClose={() => {
@@ -2474,7 +2824,6 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           activePredictions={activePredictions}
           workingViewerRef={workingViewerRef}
         />
-        </div>
       )}
 
       {/* Boolean Operations Toolbar (integrated panel mode toggle inside) */}
@@ -3310,10 +3659,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         */ /* End of original BooleanOperationsToolbar props */
       )}
 
-      {/* Fusion panel - only show in overlay mode (split view has CompactToolbar with integrated controls) */}
-      {/* Hide when in split view mode - the FlexibleFusionLayout's CompactToolbar handles fusion controls */}
-      {(showFusionPanel || fusionManifest !== null || fusionManifestLoading || fusionManifestError) && 
-       !(fusionLayoutPreset !== 'overlay' && secondarySeriesId) && (
+
+      {/* Fusion Control Panel - Deprecated: UnifiedFusionTopbar now handles fusion controls */}
+      {/* Keep this for fallback but never show since UnifiedFusionTopbar is always active */}
+      {false && (
         <FusionControlPanelV2
           opacity={fusionOpacity}
           onOpacityChange={setFusionOpacity}
@@ -3328,17 +3677,14 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           displayMode={fusionDisplayMode}
           onDisplayModeChange={setFusionDisplayMode}
           primarySeriesId={selectedSeries?.id}
-          // Flexible layout props
           layoutPreset={fusionLayoutPreset}
           onLayoutPresetChange={handleLayoutPresetChange}
           onSwapViewports={handleSwapViewports}
           enableFlexibleLayout={enableFlexibleLayout}
-          // Bookmark props
           studyId={studyData?.study?.id}
           onLoadBookmark={(bookmark) => {
             log.debug(`Loading bookmark: ${bookmark.name}`, 'viewer-interface');
           }}
-          // External expanded state control
           isExpanded={showFusionPanel}
           onExpandedChange={setShowFusionPanel}
         />
@@ -3459,7 +3805,6 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         loadingStates={secondaryLoadingStates as any}
         className="animate-in slide-in-from-right-2 duration-300"
       />
-    </div>
     </>
   );
 }

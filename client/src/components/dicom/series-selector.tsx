@@ -10,10 +10,11 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, ExternalLink, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes } from 'lucide-react';
+import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, Maximize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes } from 'lucide-react';
 import { DICOMSeries, WindowLevel, WINDOW_LEVEL_PRESETS } from '@/lib/dicom-utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { pillClass, pillClassForModality } from '@/lib/pills';
 import { StructureBlobList } from './structure-blob-list';
 import { groupStructureBlobs, computeBlobVolumeCc, createContourKey, type Blob } from '@/lib/blob-operations';
 import { SaveAsNewDialog } from './save-as-new-dialog';
@@ -58,6 +59,8 @@ interface SeriesSelectorProps {
   // Multi-viewport state
   viewportAssignments?: Map<number, number | null>;  // Map of viewport number (1-indexed) → secondary series ID
   isInSplitView?: boolean;  // Whether we're in split-view mode (FlexibleFusionLayout)
+  // External structure visibility state (for sync with topbar toggle)
+  externalStructureVisibility?: Map<number, boolean>;
 }
 
 export function SeriesSelector({
@@ -97,6 +100,7 @@ export function SeriesSelector({
   fusionSiblingMap,
   viewportAssignments,
   isInSplitView = false,
+  externalStructureVisibility,
 }: SeriesSelectorProps) {
   
   // Debug logging removed for performance
@@ -149,6 +153,21 @@ export function SeriesSelector({
       if (secId === seriesId) return vpNum;
     }
     return null;
+  };
+  
+  // Helper: Open series preview in a lightweight popup window
+  const openSeriesPreview = (seriesItem: DICOMSeries) => {
+    const previewUrl = `/preview?seriesId=${seriesItem.id}&studyId=${seriesItem.studyId}`;
+    const popupWidth = 700;
+    const popupHeight = 600;
+    const left = (window.screen.width - popupWidth) / 2;
+    const top = (window.screen.height - popupHeight) / 2;
+    
+    window.open(
+      previewUrl,
+      `preview-${seriesItem.id}`,
+      `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
+    );
   };
   
   // Superstructure management
@@ -303,6 +322,8 @@ export function SeriesSelector({
       : fallback;
     return seriesNumber ? `${seriesNumber} · ${baseLabel}` : baseLabel;
   };
+
+  // Subtle pill styling is centralized in `@/lib/pills` (keeps pills consistent across the app)
   
   // Use external selectedForEdit if provided, otherwise use local state
   const selectedForEdit = externalSelectedForEdit !== undefined ? externalSelectedForEdit : localSelectedForEdit;
@@ -507,6 +528,12 @@ export function SeriesSelector({
     }
   }, [rtStructures]);
 
+  // Sync with external visibility state (from topbar toggle)
+  useEffect(() => {
+    if (externalStructureVisibility && externalStructureVisibility.size > 0) {
+      setStructureVisibility(new Map(externalStructureVisibility));
+    }
+  }, [externalStructureVisibility]);
 
   // Auto-select most recent RT structure set and sync with loadedRTSeriesId
   useEffect(() => {
@@ -1207,15 +1234,7 @@ export function SeriesSelector({
                 <div className="px-4 py-2 space-y-1.5 border-t border-gray-800/50 bg-gray-900/30 transition-all duration-150 ease-out opacity-100">
                   {selectedSeries && (
                     <div className="flex items-center gap-2 text-xs">
-                      <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 ${
-                        selectedSeries.modality === 'CT' 
-                          ? 'border-blue-400/80 text-blue-300 bg-blue-500/20'
-                          : selectedSeries.modality === 'MR'
-                          ? 'border-purple-500/80 text-purple-400 bg-purple-500/20'
-                          : selectedSeries.modality === 'PT' || selectedSeries.modality === 'PET'
-                          ? 'border-orange-500/80 text-orange-400 bg-orange-500/20'
-                          : 'border-blue-400/80 text-blue-300 bg-blue-500/20'
-                      }`}>
+                      <Badge className={pillClassForModality(selectedSeries.modality)}>
                         {selectedSeries.modality}
                       </Badge>
                       <span className="text-gray-200 truncate font-medium">
@@ -1224,34 +1243,72 @@ export function SeriesSelector({
                     </div>
                   )}
                   
-                  {secondarySeriesId && (() => {
-                    const secondarySeries = series.find(s => s.id === secondarySeriesId);
-                    if (!secondarySeries) return null;
-                    const modality = secondarySeries.modality?.toUpperCase();
-                    return (
-                      <div className="flex items-center gap-2 text-xs pl-4 border-l-2 border-cyan-500/40">
-                        <Zap className="h-3 w-3 text-cyan-400" />
-                        <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 ${
-                          modality === 'CT' 
-                            ? 'border-blue-400/80 text-blue-300 bg-blue-500/20'
-                            : modality === 'MR'
-                            ? 'border-purple-500/80 text-purple-400 bg-purple-500/20'
-                            : modality === 'PT' || modality === 'PET'
-                            ? 'border-orange-500/80 text-orange-400 bg-orange-500/20'
-                            : 'border-cyan-400/80 text-cyan-300 bg-cyan-500/20'
-                        }`}>
-                          {secondarySeries.modality}
-                        </Badge>
-                        <span className="text-gray-200 truncate font-medium">
-                          {formatSeriesLabel(secondarySeries)}
-                        </span>
-                      </div>
-                    );
+                  {(() => {
+                    // Multi-viewport mode: show ALL active fusion overlays (one per viewport assignment)
+                    if (isInSplitView && viewportAssignments && viewportAssignments.size > 0) {
+                      const activeAssignments = Array.from(viewportAssignments.entries())
+                        .filter(([vpNum, secId]) => Number.isFinite(vpNum) && secId != null && Number.isFinite(secId))
+                        .map(([vpNum, secId]) => {
+                          const seriesEntry = seriesById.get(Number(secId)) || series.find((s) => s.id === secId);
+                          return { vpNum: Number(vpNum), seriesEntry };
+                        })
+                        .filter((x) => Boolean(x.seriesEntry)) as Array<{ vpNum: number; seriesEntry: DICOMSeries }>;
+
+                      if (activeAssignments.length === 0) return null;
+
+                      const maxShown = 4;
+                      const shown = activeAssignments.slice(0, maxShown);
+                      const remaining = activeAssignments.length - shown.length;
+
+                      return (
+                        <div className="space-y-1">
+                          {shown.map(({ vpNum, seriesEntry }) => (
+                            <div key={`${vpNum}-${seriesEntry.id}`} className="flex items-center gap-2 text-xs pl-4 border-l-2 border-blue-500/40">
+                              <Zap className="h-3 w-3 text-blue-400" />
+                              <span className={cn(pillClass('blue'), 'h-5 px-2')}>
+                                VP {vpNum}
+                              </span>
+                              <Badge className={pillClassForModality(seriesEntry.modality)}>
+                                {seriesEntry.modality}
+                              </Badge>
+                              <span className="text-gray-200 truncate font-medium">
+                                {formatSeriesLabel(seriesEntry)}
+                              </span>
+                            </div>
+                          ))}
+                          {remaining > 0 && (
+                            <div className="text-[10px] text-gray-400 pl-4">
+                              +{remaining} more fusion overlay{remaining === 1 ? '' : 's'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    // Single-viewport mode: keep legacy single fusion summary
+                    if (secondarySeriesId) {
+                      const secondarySeries = seriesById.get(Number(secondarySeriesId)) || series.find((s) => s.id === secondarySeriesId);
+                      if (!secondarySeries) return null;
+                      const modality = secondarySeries.modality?.toUpperCase();
+                      return (
+                        <div className="flex items-center gap-2 text-xs pl-4 border-l-2 border-blue-500/40">
+                          <Zap className="h-3 w-3 text-blue-400" />
+                          <Badge className={pillClassForModality(modality)}>
+                            {secondarySeries.modality}
+                          </Badge>
+                          <span className="text-gray-200 truncate font-medium">
+                            {formatSeriesLabel(secondarySeries)}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return null;
                   })()}
                   
                   {selectedRTSeries && (
                     <div className="flex items-center gap-2 text-xs pl-4 border-l-2 border-green-500/40">
-                      <Badge variant="outline" className="border-green-500/80 text-green-400 bg-green-500/20 text-xs font-semibold px-2 py-0.5">
+                      <Badge className={pillClassForModality('RT')}>
                         RT
                       </Badge>
                       <span className="text-gray-200 truncate font-medium">
@@ -1267,7 +1324,7 @@ export function SeriesSelector({
               )}
               
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-2 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                <div className="space-y-1 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
                   {/* Organize series hierarchically */}
                   {(() => {
                     // Build top-level modality buckets
@@ -1403,12 +1460,12 @@ export function SeriesSelector({
                                 e.dataTransfer.effectAllowed = 'copy';
                               }}
                               className={`
-                                group relative py-2.5 px-2 rounded-lg border cursor-pointer transition-all duration-200 backdrop-blur-sm
+                                group relative py-1.5 px-2 min-h-9 rounded-lg border cursor-pointer transition-all duration-150
                                 ${selectedSeries?.id === seriesItem.id
-                                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-500/15 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20'
+                                  ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-sm shadow-blue-500/10'
                                   : hoveredRegSeries && (ctSeriesTop.length > 0 || mrSeries.length > 0 || ptSeries.length > 0)
-                                  ? 'bg-gradient-to-br from-green-500/15 via-green-500/8 to-green-600/12 border-green-400/50 shadow-sm shadow-green-500/15'
-                                  : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                  ? 'bg-gradient-to-r from-green-500/15 to-green-600/10 border-green-400/40'
+                                  : 'bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50 hover:border-gray-600/40'
                                 }
                               `}
                               onClick={() => onSeriesSelect(seriesItem)}
@@ -1416,30 +1473,20 @@ export function SeriesSelector({
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   <Badge 
-                                    variant="outline" 
-                                    className={`
-                                      text-xs font-semibold px-2.5 py-0.5 flex-shrink-0
-                                      ${selectedSeries?.id === seriesItem.id
-                                        ? 'border-blue-400/80 text-blue-300 bg-blue-500/20'
-                                        : 'border-blue-500/60 text-blue-400 bg-blue-500/10'
-                                      }
-                                    `}
+                                    className={cn("flex-shrink-0", pillClassForModality(seriesItem.modality))}
                                   >
                                     {seriesItem.modality}
                                     {modalityOf(seriesItem) === 'CT' && ctSeriesTop.length > 0 && seriesItem.id === ctSeriesTop[0].id ? ' • Planning' : ''}
                                   </Badge>
                                   <span className={`
                                     text-xs font-medium truncate
-                                    ${selectedSeries?.id === seriesItem.id ? 'text-blue-200' : 'text-gray-100'}
+                                    ${selectedSeries?.id === seriesItem.id ? 'text-blue-100' : 'text-gray-200'}
                                     group-hover:text-white transition-colors
                                   `}>
                                     {formatSeriesLabel(seriesItem)}
                                   </span>
-                                  <span className={`
-                                    text-xs flex-shrink-0
-                                    ${selectedSeries?.id === seriesItem.id ? 'text-blue-300/80' : 'text-gray-400'}
-                                  `}>
-                                    ({seriesItem.imageCount})
+                                  <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                    {seriesItem.imageCount}
                                   </span>
                                 </div>
                                 
@@ -1460,7 +1507,7 @@ export function SeriesSelector({
                                 if (registeredCtAssoc.length === 0) return null;
                                 return (
                                   <div className="space-y-2 border-l-2 border-blue-500/40 pl-2">
-                                    <div className="text-xs text-blue-300 mb-1 font-semibold uppercase tracking-wider">Registered CT</div>
+                                    <div className="text-[10px] text-blue-300/80 uppercase tracking-wider font-semibold px-1 pb-0.5">Registered CT</div>
                                     {registeredCtAssoc.map((ctS) => {
                                       const loadingState = secondaryLoadingStates?.get(ctS.id);
                                       const fusionStatus = fusionStatuses?.get(ctS.id);
@@ -1481,12 +1528,12 @@ export function SeriesSelector({
                                         <div key={ctS.id} className="space-y-1">
                                           <div
                                             className={cn(
-                                              "group relative overflow-hidden w-full py-2.5 px-2 rounded-lg transition-all duration-200 border text-left text-xs cursor-pointer backdrop-blur-sm",
+                                              "group relative overflow-hidden w-full py-1.5 px-2 min-h-9 rounded-lg transition-all duration-150 border text-left text-xs cursor-pointer backdrop-blur-sm",
                                               secondarySeriesId === ctS.id
-                                                ? 'bg-gradient-to-br from-blue-500/25 via-blue-500/15 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20'
+                                                ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20'
                                                 : hasError
-                                                  ? 'bg-gradient-to-br from-amber-900/20 via-amber-900/15 to-amber-900/20 border-amber-500/40'
-                                                  : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                                  ? 'bg-amber-900/15 border-amber-500/30'
+                                                  : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
                                             )}
                                             onClick={() => {
                                               if (onSecondarySeriesSelect) onSecondarySeriesSelect(ctS.id);
@@ -1501,81 +1548,94 @@ export function SeriesSelector({
                                             <div className="relative z-10 flex items-center justify-between gap-2">
                                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                                 <Badge variant="outline" className={cn(
-                                                  "text-xs font-semibold px-2.5 py-0.5 flex-shrink-0",
-                                                  secondarySeriesId === ctS.id
-                                                    ? "border-blue-400/80 text-blue-300 bg-blue-500/20"
-                                                    : "border-blue-500/60 text-blue-400 bg-blue-500/10"
+                                                  "flex-shrink-0",
+                                                  pillClassForModality('CT')
                                                 )}>CT</Badge>
-                                                {/* Viewport number badge - show in split view mode */}
-                                                {isInSplitView && (() => {
-                                                  const vpNum = getViewportForSeries(ctS.id);
-                                                  if (vpNum) {
-                                                    return (
-                                                      <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
-                                                        VP {vpNum}
-                                                      </span>
-                                                    );
-                                                  }
-                                                  return null;
-                                                })()}
+                                                {/*
+                                                  Multi-viewport mode: we show the active viewport (VP #) in the right-side action slot
+                                                  instead of duplicating it inline here.
+                                                */}
                                                 <span className={cn(
                                                   "truncate text-xs font-medium",
-                                                  secondarySeriesId === ctS.id ? "text-blue-200" : "text-gray-100"
+                                                  (isInSplitView ? Boolean(getViewportForSeries(ctS.id)) : secondarySeriesId === ctS.id) ? "text-blue-100" : "text-gray-200"
                                                 )}>
                                                   {formatSeriesLabel(ctS)}
                                                 </span>
-                                                <span className={cn(
-                                                  "text-xs flex-shrink-0",
-                                                  secondarySeriesId === ctS.id ? "text-blue-300/80" : "text-gray-400"
-                                                )}>
-                                                  ({ctS.imageCount})
+                                                <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                                  {ctS.imageCount}
                                                 </span>
                                               </div>
                                             {onSecondarySeriesSelect && (
                                               <TooltipProvider delayDuration={0}>
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
-                                                    {secondarySeriesId === ctS.id ? (
-                                                      <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 flex-shrink-0 bg-green-600 hover:bg-green-700 animate-pulse"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (onSecondarySeriesSelect) {
-                                                            onSecondarySeriesSelect(null);
-                                                          }
-                                                        }}
-                                                      >
-                                                        <Zap className="h-3.5 w-3.5 text-white" />
-                                                      </Button>
-                                                    ) : (
-                                                      <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className={`h-7 w-7 flex-shrink-0 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-green-700/30'}`}
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          // Only rebuild manifest if not ready yet
-                                                          if (!isReady && onRebuildFusionManifest) {
-                                                            onRebuildFusionManifest();
-                                                          }
-                                                          onSecondarySeriesSelect(ctS.id);
-                                                        }}
-                                                        disabled={false}
-                                                      >
-                                                        {isLoading ? (
-                                                          <Loader2 className="h-3.5 w-3.5 animate-spin text-green-200" />
-                                                        ) : hasError ? (
-                                                          <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
-                                                        ) : (
-                                                          <Zap className="h-3.5 w-3.5 text-green-300" />
-                                                        )}
-                                                      </Button>
-                                                    )}
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(ctS.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ctS.id;
+
+                                                      // Multi-viewport: show VP assignment instead of a pulsing "active fusion" icon.
+                                                      if (isInSplitView && assignedVp) {
+                                                        return (
+                                                          <span className={cn(pillClass('blue'), "h-7 px-2.5 flex-shrink-0")}>
+                                                            VP {assignedVp}
+                                                          </span>
+                                                        );
+                                                      }
+
+                                                      // Single viewport: keep a clear active-state toggle.
+                                                      if (isActiveFusion) {
+                                                        return (
+                                                          <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-7 w-7 flex-shrink-0 bg-blue-600 hover:bg-blue-700 animate-pulse"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (onSecondarySeriesSelect) {
+                                                                onSecondarySeriesSelect(null);
+                                                              }
+                                                            }}
+                                                          >
+                                                            <Zap className="h-3.5 w-3.5 text-white" />
+                                                          </Button>
+                                                        );
+                                                      }
+
+                                                      return (
+                                                        <Button
+                                                          size="icon"
+                                                          variant="ghost"
+                                                          className={`h-7 w-7 flex-shrink-0 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-blue-700/30'}`}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            // Only rebuild manifest if not ready yet
+                                                            if (!isReady && onRebuildFusionManifest) {
+                                                              onRebuildFusionManifest();
+                                                            }
+                                                            onSecondarySeriesSelect(ctS.id);
+                                                          }}
+                                                          disabled={false}
+                                                        >
+                                                          {isLoading ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-200" />
+                                                          ) : hasError ? (
+                                                            <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                                                          ) : (
+                                                            <Zap className="h-3.5 w-3.5 text-blue-300" />
+                                                          )}
+                                                        </Button>
+                                                      );
+                                                    })()}
                                                   </TooltipTrigger>
-                                                  <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                    <p className="font-medium">{secondarySeriesId === ctS.id ? 'Fusion Active - Click to disable' : (isReady ? statusLabel : 'Click to initialize fusion')}</p>
+                                                  <TooltipContent className="bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(ctS.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ctS.id;
+                                                      const message = isInSplitView && assignedVp
+                                                        ? `Assigned to VP ${assignedVp}`
+                                                        : (isActiveFusion ? 'Fusion Active - Click to disable' : (isReady ? statusLabel : 'Click to initialize fusion'));
+                                                      return <p className="font-medium">{message}</p>;
+                                                    })()}
                                                   </TooltipContent>
                                                 </Tooltip>
                                               </TooltipProvider>
@@ -1601,20 +1661,15 @@ export function SeriesSelector({
                                       key={rtS.id}
                                       variant="ghost"
                                       className={cn(
-                                        "group w-full px-2 py-1.5 h-auto text-left justify-between text-xs rounded-lg transition-all duration-200 border backdrop-blur-sm",
+                                        "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
                                         selectedRTSeries?.id === rtS.id 
-                                          ? 'bg-gradient-to-br from-green-500/25 via-green-500/15 to-green-600/20 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
-                                          : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50 text-gray-300'
+                                          ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                          : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
                                       )}
                                       onClick={() => handleRTSeriesSelect(rtS)}
                                     >
                                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <Badge variant="outline" className={cn(
-                                          "text-xs font-semibold px-2 py-0.5 flex-shrink-0",
-                                          selectedRTSeries?.id === rtS.id
-                                            ? "border-green-400/80 text-green-300 bg-green-500/20"
-                                            : "border-green-500/60 text-green-400 bg-green-500/10"
-                                        )}>
+                                        <Badge className={cn("flex-shrink-0", pillClassForModality('RT'))}>
                                           RT
                                         </Badge>
                                         <span className={cn(
@@ -1687,16 +1742,16 @@ export function SeriesSelector({
                                         {/* Secondary MR Series Card */}
                                         <div
                                           className={cn(
-                                            "group relative overflow-hidden w-full py-2.5 px-2 rounded-lg transition-all duration-200 border text-left text-xs cursor-pointer backdrop-blur-sm",
+                                            "group relative overflow-hidden w-full py-1.5 px-2 min-h-9 rounded-lg transition-all duration-150 border text-left text-xs cursor-pointer backdrop-blur-sm",
                                             secondarySeriesId === mrS.id
-                                              ? 'bg-gradient-to-br from-purple-500/25 via-purple-500/15 to-purple-600/20 border-purple-400/60 shadow-md shadow-purple-500/20'
+                                              ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/10 border-purple-400/60 shadow-md shadow-purple-500/20'
                                               : selectedSeries?.id === mrS.id
-                                              ? 'bg-gradient-to-br from-purple-500/25 via-purple-500/15 to-purple-600/20 border-purple-400/60 shadow-md shadow-purple-500/20'
+                                              ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/10 border-purple-400/60 shadow-md shadow-purple-500/20'
                                               : hoveredRegSeries
                                               ? 'bg-gradient-to-br from-green-500/15 via-green-500/8 to-green-600/12 border-green-400/50 shadow-sm shadow-green-500/15'
                                               : hasError
-                                              ? 'bg-gradient-to-br from-amber-900/20 via-amber-900/15 to-amber-900/20 border-amber-500/40'
-                                              : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                              ? 'bg-amber-900/15 border-amber-500/30'
+                                              : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
                                           )}
                                           onClick={() => {
                                             if (!isReady) return;
@@ -1714,36 +1769,25 @@ export function SeriesSelector({
                                           <div className="relative z-10 flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                               <Badge variant="outline" className={cn(
-                                                "text-xs font-semibold px-2.5 py-0.5 flex-shrink-0",
-                                                secondarySeriesId === mrS.id || selectedSeries?.id === mrS.id
-                                                  ? "border-purple-400/80 text-purple-300 bg-purple-500/20"
-                                                  : "border-purple-500/60 text-purple-400 bg-purple-500/10"
+                                                "flex-shrink-0",
+                                                pillClassForModality('MR')
                                               )}>
                                                 MR
                                               </Badge>
-                                              {/* Viewport number badge - show in split view mode */}
-                                              {isInSplitView && (() => {
-                                                const vpNum = getViewportForSeries(mrS.id);
-                                                if (vpNum) {
-                                                  return (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
-                                                      VP {vpNum}
-                                                    </span>
-                                                  );
-                                                }
-                                                return null;
-                                              })()}
+                                              {/*
+                                                Multi-viewport mode: we show the active viewport (VP #) in the right-side action slot
+                                                instead of duplicating it inline here.
+                                              */}
                                               <span className={cn(
                                                 "truncate text-xs font-medium",
-                                                secondarySeriesId === mrS.id || selectedSeries?.id === mrS.id ? "text-purple-200" : "text-gray-100"
+                                                ((isInSplitView ? Boolean(getViewportForSeries(mrS.id)) : secondarySeriesId === mrS.id) || selectedSeries?.id === mrS.id)
+                                                  ? "text-purple-100"
+                                                  : "text-gray-200"
                                               )}>
                                                 {formatSeriesLabel(mrS)}
                                               </span>
-                                              <span className={cn(
-                                                "text-xs flex-shrink-0",
-                                                secondarySeriesId === mrS.id || selectedSeries?.id === mrS.id ? "text-purple-300/80" : "text-gray-400"
-                                              )}>
-                                                ({mrS.imageCount})
+                                              <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                                {mrS.imageCount}
                                               </span>
                                             </div>
                                             <div className="flex items-center gap-1">
@@ -1756,80 +1800,94 @@ export function SeriesSelector({
                                                       className="h-6 w-6 hover:bg-purple-700/30"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onSeriesSelect(mrS);
-                                                        if (onSecondarySeriesSelect) {
-                                                          onSecondarySeriesSelect(null);
-                                                        }
+                                                        openSeriesPreview(mrS);
                                                       }}
                                                     >
-                                                      <ExternalLink className="h-3.5 w-3.5 text-purple-300" />
+                                                      <Maximize2 className="h-3.5 w-3.5 text-purple-300" />
                                                     </Button>
                                                   </TooltipTrigger>
                                                   <TooltipContent className="bg-gradient-to-br from-purple-600/95 via-purple-500/95 to-purple-600/95 border border-purple-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                    <p>View MRI standalone</p>
+                                                    <p>Quick Preview</p>
                                                   </TooltipContent>
                                                 </Tooltip>
                                               </TooltipProvider>
-                                              {secondarySeriesId === mrS.id ? (
-                                                <TooltipProvider delayDuration={0}>
-                                                  <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                      <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-6 w-6 bg-green-600 hover:bg-green-700 animate-pulse"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (onSecondarySeriesSelect) {
-                                                            onSecondarySeriesSelect(null);
-                                                          }
-                                                        }}
-                                                      >
-                                                        <Zap className="h-3.5 w-3.5 text-white" />
-                                                      </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                      <p className="font-medium">Fusion Active - Click to disable</p>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                </TooltipProvider>
-                                              ) : (
-                                                <TooltipProvider delayDuration={0}>
-                                                  <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                      <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className={`h-6 w-6 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-green-700/30'}`}
-                                                        disabled={false}
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (!isReady && onRebuildFusionManifest) {
-                                                            onRebuildFusionManifest();
-                                                          }
-                                                          if (onSecondarySeriesSelect) {
-                                                            onSecondarySeriesSelect(mrS.id);
-                                                          }
-                                                        }}
-                                                      >
-                                                        {isLoading ? (
-                                                          <Loader2 className="h-3.5 w-3.5 animate-spin text-green-200" />
-                                                        ) : hasError ? (
-                                                          <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
-                                                        ) : (
-                                                          <Zap className="h-3.5 w-3.5 text-green-300" />
-                                                        )}
-                                                      </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                      <p className="font-medium">{statusLabel}</p>
-                                                      {isLoading && (
-                                                        <p className="text-[10px] opacity-80">Preparing fused MRI…</p>
-                                                      )}
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                </TooltipProvider>
-                                              )}
+                                              <TooltipProvider delayDuration={0}>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(mrS.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === mrS.id;
+
+                                                      if (isInSplitView && assignedVp) {
+                                                        return (
+                                                          <span className={cn(pillClass('blue'), "h-6 px-2.5 flex-shrink-0")}>
+                                                            VP {assignedVp}
+                                                          </span>
+                                                        );
+                                                      }
+
+                                                      if (isActiveFusion) {
+                                                        return (
+                                                          <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-6 w-6 bg-blue-600 hover:bg-blue-700 animate-pulse"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (onSecondarySeriesSelect) {
+                                                                onSecondarySeriesSelect(null);
+                                                              }
+                                                            }}
+                                                          >
+                                                            <Zap className="h-3.5 w-3.5 text-white" />
+                                                          </Button>
+                                                        );
+                                                      }
+
+                                                      return (
+                                                        <Button
+                                                          size="icon"
+                                                          variant="ghost"
+                                                          className={`h-6 w-6 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-blue-700/30'}`}
+                                                          disabled={false}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!isReady && onRebuildFusionManifest) {
+                                                              onRebuildFusionManifest();
+                                                            }
+                                                            if (onSecondarySeriesSelect) {
+                                                              onSecondarySeriesSelect(mrS.id);
+                                                            }
+                                                          }}
+                                                        >
+                                                          {isLoading ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-200" />
+                                                          ) : hasError ? (
+                                                            <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                                                          ) : (
+                                                            <Zap className="h-3.5 w-3.5 text-blue-300" />
+                                                          )}
+                                                        </Button>
+                                                      );
+                                                    })()}
+                                                  </TooltipTrigger>
+                                                  <TooltipContent className="bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(mrS.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === mrS.id;
+                                                      if (isInSplitView && assignedVp) {
+                                                        return <p className="font-medium">Assigned to VP {assignedVp}</p>;
+                                                      }
+                                                      return (
+                                                        <>
+                                                          <p className="font-medium">{isActiveFusion ? 'Fusion Active - Click to disable' : statusLabel}</p>
+                                                          {isLoading && <p className="text-[10px] opacity-80">Preparing fused MRI…</p>}
+                                                        </>
+                                                      );
+                                                    })()}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
                                             </div>
                                           </div>
                                         </div>
@@ -1842,10 +1900,10 @@ export function SeriesSelector({
                                               <Button
                                                 variant={selectedRTSeries?.id === rtS.id ? "default" : "ghost"}
                                                 className={cn(
-                                                  "group w-full px-2 py-1.5 h-auto text-left justify-start text-xs border rounded-lg transition-all duration-200 backdrop-blur-sm",
+                                                  "group w-full px-2 py-1.5 h-auto text-left justify-start text-xs leading-3 border rounded-lg transition-all duration-150 backdrop-blur-sm",
                                                   selectedRTSeries?.id === rtS.id 
-                                                    ? 'bg-gradient-to-br from-green-500/25 via-green-500/15 to-green-600/20 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
-                                                    : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50 text-gray-300'
+                                                    ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                                    : 'bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50 hover:border-gray-600/40 text-gray-300'
                                                 )}
                                                 onClick={() => handleRTSeriesSelect(rtS)}
                                               >
@@ -1935,16 +1993,16 @@ export function SeriesSelector({
                                       <div
                                         key={`pt-${ptS.id}`}
                                         className={cn(
-                                          "group relative overflow-hidden w-full py-2.5 px-2 rounded-lg transition-all duration-200 border text-left text-xs cursor-pointer backdrop-blur-sm",
+                                          "group relative overflow-hidden w-full py-1.5 px-2 min-h-9 rounded-lg transition-all duration-150 border text-left text-xs cursor-pointer backdrop-blur-sm",
                                           secondarySeriesId === ptS.id
                                             ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-500/15 to-yellow-600/20 border-yellow-400/60 shadow-md shadow-yellow-500/20'
                                             : selectedSeries?.id === ptS.id
                                             ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-500/15 to-yellow-600/20 border-yellow-400/60 shadow-md shadow-yellow-500/20'
                                             : hasError
-                                            ? 'bg-gradient-to-br from-amber-900/20 via-amber-900/15 to-amber-900/20 border-amber-500/40'
+                                            ? 'bg-amber-900/15 border-amber-500/30'
                                             : hoveredRegSeries
                                             ? 'bg-gradient-to-br from-green-500/15 via-green-500/8 to-green-600/12 border-green-400/50 shadow-sm shadow-green-500/15'
-                                            : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                            : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
                                         )}
                                         onClick={() => {
                                           if (!isReady) return;
@@ -1962,103 +2020,113 @@ export function SeriesSelector({
                                         <div className="relative z-10 flex items-center justify-between gap-2">
                                           <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <Badge variant="outline" className={cn(
-                                              "text-xs font-semibold px-2.5 py-0.5 flex-shrink-0",
-                                              secondarySeriesId === ptS.id || selectedSeries?.id === ptS.id
-                                                ? "border-yellow-400/80 text-yellow-300 bg-yellow-500/20"
-                                                : "border-yellow-500/60 text-yellow-400 bg-yellow-500/10"
+                                              "flex-shrink-0",
+                                              pillClassForModality('PT')
                                             )}>PT</Badge>
-                                            {/* Viewport number badge - show in split view mode */}
-                                            {isInSplitView && (() => {
-                                              const vpNum = getViewportForSeries(ptS.id);
-                                              if (vpNum) {
-                                                return (
-                                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40 flex-shrink-0">
-                                                    VP {vpNum}
-                                                  </span>
-                                                );
-                                              }
-                                              return null;
-                                            })()}
+                                            {/*
+                                              Multi-viewport mode: we show the active viewport (VP #) in the right-side fusion slot
+                                              instead of duplicating it inline here.
+                                            */}
                                             <span className={cn(
                                               "truncate text-xs font-medium",
-                                              secondarySeriesId === ptS.id || selectedSeries?.id === ptS.id ? "text-yellow-200" : "text-gray-100"
+                                              ((isInSplitView ? Boolean(getViewportForSeries(ptS.id)) : secondarySeriesId === ptS.id) || selectedSeries?.id === ptS.id)
+                                                ? "text-yellow-100"
+                                                : "text-gray-200"
                                             )}>{formatSeriesLabel(ptS)}</span>
-                                            <span className={cn(
-                                              "text-xs flex-shrink-0",
-                                              secondarySeriesId === ptS.id || selectedSeries?.id === ptS.id ? "text-yellow-300/80" : "text-gray-400"
-                                            )}>({ptS.imageCount})</span>
+                                            <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                              {ptS.imageCount}
+                                            </span>
                                           </div>
                                            <div className="flex items-center gap-1">
                                              <TooltipProvider delayDuration={0}>
                                                <Tooltip>
                                                  <TooltipTrigger asChild>
                                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-yellow-700/30"
-                                                     onClick={(e) => { e.stopPropagation(); onSeriesSelect(ptS); if (onSecondarySeriesSelect) onSecondarySeriesSelect(null); }}
+                                                     onClick={(e) => { e.stopPropagation(); openSeriesPreview(ptS); }}
                                                    >
-                                                     <ExternalLink className="h-3.5 w-3.5 text-yellow-300" />
+                                                     <Maximize2 className="h-3.5 w-3.5 text-yellow-300" />
                                                    </Button>
                                                  </TooltipTrigger>
                                                  <TooltipContent className="bg-gradient-to-br from-yellow-600/95 via-yellow-500/95 to-yellow-600/95 border border-yellow-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                   <p>View PET standalone</p>
+                                                   <p>Quick Preview</p>
                                                  </TooltipContent>
                                                </Tooltip>
                                              </TooltipProvider>
-                                             {secondarySeriesId === ptS.id ? (
-                                               <TooltipProvider delayDuration={0}>
-                                                 <Tooltip>
-                                                   <TooltipTrigger asChild>
-                                                     <Button
-                                                       size="icon"
-                                                       variant="ghost"
-                                                       className="h-6 w-6 bg-green-600 hover:bg-green-700 animate-pulse"
-                                                       onClick={(e) => { e.stopPropagation(); if (onSecondarySeriesSelect) onSecondarySeriesSelect(null); }}
-                                                     >
-                                                       <Zap className="h-3.5 w-3.5 text-white" />
-                                                     </Button>
-                                                   </TooltipTrigger>
-                                                   <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                     <p className="font-medium">Disable fusion</p>
-                                                   </TooltipContent>
-                                                 </Tooltip>
-                                               </TooltipProvider>
-                                             ) : (
-                                               <TooltipProvider delayDuration={0}>
-                                                 <Tooltip>
-                                                   <TooltipTrigger asChild>
-                                                     <Button
-                                                       size="icon"
-                                                       variant="ghost"
-                                                       className={`h-6 w-6 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-green-700/30'}`}
-                                                       disabled={false}
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         // Only rebuild manifest if not ready yet
-                                                         if (!isReady && onRebuildFusionManifest) {
-                                                           onRebuildFusionManifest();
-                                                         }
-                                                         if (onSecondarySeriesSelect) onSecondarySeriesSelect(ptS.id);
-                                                       }}
-                                                     >
-                                                       {isLoading ? (
-                                                         <Loader2 className="h-3.5 w-3.5 animate-spin text-green-200" />
-                                                       ) : hasError ? (
-                                                         <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
-                                                       ) : (
-                                                         <Zap className="h-3.5 w-3.5 text-green-300" />
-                                                       )}
-                                                     </Button>
-                                                   </TooltipTrigger>
-                                                   <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                     <p className="font-medium">{statusLabel}</p>
-                                                     {isLoading ? (
-                                                       <p className="text-[10px] opacity-80">Preparing fused PET…</p>
-                                                     ) : isReady ? (
-                                                       <p className="text-[10px] opacity-80">Projects PET signals onto the planning CT</p>
-                                                     ) : null}
-                                                   </TooltipContent>
-                                                 </Tooltip>
-                                               </TooltipProvider>
-                                             )}
+                                             <TooltipProvider delayDuration={0}>
+                                               <Tooltip>
+                                                 <TooltipTrigger asChild>
+                                                   {(() => {
+                                                     const assignedVp = isInSplitView ? getViewportForSeries(ptS.id) : null;
+                                                     const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ptS.id;
+
+                                                     if (isInSplitView && assignedVp) {
+                                                       return (
+                                                         <span className={cn(pillClass('blue'), "h-6 px-2.5 flex-shrink-0")}>
+                                                           VP {assignedVp}
+                                                         </span>
+                                                       );
+                                                     }
+
+                                                     if (isActiveFusion) {
+                                                       return (
+                                                         <Button
+                                                           size="icon"
+                                                           variant="ghost"
+                                                           className="h-6 w-6 bg-blue-600 hover:bg-blue-700 animate-pulse"
+                                                           onClick={(e) => { e.stopPropagation(); if (onSecondarySeriesSelect) onSecondarySeriesSelect(null); }}
+                                                         >
+                                                           <Zap className="h-3.5 w-3.5 text-white" />
+                                                         </Button>
+                                                       );
+                                                     }
+
+                                                     return (
+                                                       <Button
+                                                         size="icon"
+                                                         variant="ghost"
+                                                         className={`h-6 w-6 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-blue-700/30'}`}
+                                                         disabled={false}
+                                                         onClick={(e) => {
+                                                           e.stopPropagation();
+                                                           // Only rebuild manifest if not ready yet
+                                                           if (!isReady && onRebuildFusionManifest) {
+                                                             onRebuildFusionManifest();
+                                                           }
+                                                           if (onSecondarySeriesSelect) onSecondarySeriesSelect(ptS.id);
+                                                         }}
+                                                       >
+                                                         {isLoading ? (
+                                                           <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-200" />
+                                                         ) : hasError ? (
+                                                           <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                                                         ) : (
+                                                           <Zap className="h-3.5 w-3.5 text-blue-300" />
+                                                         )}
+                                                       </Button>
+                                                     );
+                                                   })()}
+                                                 </TooltipTrigger>
+                                                 <TooltipContent className="bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                   {(() => {
+                                                     const assignedVp = isInSplitView ? getViewportForSeries(ptS.id) : null;
+                                                     const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ptS.id;
+                                                     if (isInSplitView && assignedVp) {
+                                                       return <p className="font-medium">Assigned to VP {assignedVp}</p>;
+                                                     }
+                                                     return (
+                                                       <>
+                                                         <p className="font-medium">{isActiveFusion ? 'Disable fusion' : statusLabel}</p>
+                                                         {isLoading ? (
+                                                           <p className="text-[10px] opacity-80">Preparing fused PET…</p>
+                                                         ) : isReady ? (
+                                                           <p className="text-[10px] opacity-80">Projects PET signals onto the planning CT</p>
+                                                         ) : null}
+                                                       </>
+                                                     );
+                                                   })()}
+                                                 </TooltipContent>
+                                               </Tooltip>
+                                             </TooltipProvider>
                                            </div>
                                          </div>
                                        </div>
@@ -2086,14 +2154,14 @@ export function SeriesSelector({
                                           {/* Secondary CT Series Card */}
                                           <div
                                             className={cn(
-                                              "group relative overflow-hidden w-full py-2.5 px-2 rounded-lg transition-all duration-200 border text-left text-xs cursor-pointer backdrop-blur-sm",
+                                              "group relative overflow-hidden w-full py-1.5 px-2 min-h-9 rounded-lg transition-all duration-150 border text-left text-xs cursor-pointer backdrop-blur-sm",
                                               secondarySeriesId === ctS.id
-                                                ? 'bg-gradient-to-br from-blue-500/25 via-blue-500/15 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20'
+                                                ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20'
                                                 : selectedSeries?.id === ctS.id
-                                                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-500/15 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20'
+                                                  ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20'
                                                   : hasErrorCt
-                                                    ? 'bg-gradient-to-br from-amber-900/20 via-amber-900/15 to-amber-900/20 border-amber-500/40'
-                                                    : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                                    ? 'bg-amber-900/15 border-amber-500/30'
+                                                    : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
                                             )}
                                              onClick={(e) => {
                                                e.stopPropagation();
@@ -2111,19 +2179,18 @@ export function SeriesSelector({
                                              <div className="relative z-10 flex items-center justify-between gap-2">
                                                <div className="flex items-center gap-2 flex-1 min-w-0">
                                                  <Badge variant="outline" className={cn(
-                                                   "text-xs font-semibold px-2.5 py-0.5 flex-shrink-0",
-                                                   secondarySeriesId === ctS.id || selectedSeries?.id === ctS.id
-                                                     ? "border-blue-400/80 text-blue-300 bg-blue-500/20"
-                                                     : "border-blue-500/60 text-blue-400 bg-blue-500/10"
+                                                  "flex-shrink-0",
+                                                  pillClassForModality('CT')
                                                  )}>CT</Badge>
-                                                 <span className={cn(
-                                                   "truncate text-xs font-medium",
-                                                   secondarySeriesId === ctS.id || selectedSeries?.id === ctS.id ? "text-blue-200" : "text-gray-100"
-                                                 )}>{formatSeriesLabel(ctS)}</span>
-                                                 <span className={cn(
-                                                   "text-xs flex-shrink-0",
-                                                   secondarySeriesId === ctS.id || selectedSeries?.id === ctS.id ? "text-blue-300/80" : "text-gray-400"
-                                                 )}>({ctS.imageCount})</span>
+                                                <span className={cn(
+                                                  "truncate text-xs font-medium",
+                                                  ((isInSplitView ? Boolean(getViewportForSeries(ctS.id)) : secondarySeriesId === ctS.id) || selectedSeries?.id === ctS.id)
+                                                    ? "text-blue-100"
+                                                    : "text-gray-200"
+                                                )}>{formatSeriesLabel(ctS)}</span>
+                                              <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                                 {ctS.imageCount}
+                                                </span>
                                                </div>
                                                <div className="flex items-center gap-1">
                                                  <TooltipProvider delayDuration={0}>
@@ -2135,71 +2202,85 @@ export function SeriesSelector({
                                                          className="h-6 w-6 hover:bg-blue-700/30"
                                                          onClick={(e) => {
                                                            e.stopPropagation();
-                                                           onSeriesSelect(ctS);
-                                                           if (onSecondarySeriesSelect) onSecondarySeriesSelect(null);
+                                                           openSeriesPreview(ctS);
                                                          }}
                                                        >
-                                                         <ExternalLink className="h-3.5 w-3.5 text-blue-300" />
+                                                         <Maximize2 className="h-3.5 w-3.5 text-blue-300" />
                                                        </Button>
                                                      </TooltipTrigger>
                                                      <TooltipContent className="bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                       <p>View CT standalone</p>
+                                                       <p>Quick Preview</p>
                                                      </TooltipContent>
                                                    </Tooltip>
                                                  </TooltipProvider>
-                                                 {secondarySeriesId === ctS.id ? (
-                                                   <TooltipProvider delayDuration={0}>
-                                                     <Tooltip>
-                                                       <TooltipTrigger asChild>
-                                                         <Button
-                                                           size="icon"
-                                                           variant="ghost"
-                                                           className="h-6 w-6 bg-green-600 hover:bg-green-700 animate-pulse"
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             if (onSecondarySeriesSelect) onSecondarySeriesSelect(null);
-                                                           }}
-                                                         >
-                                                           <Zap className="h-3.5 w-3.5 text-white" />
-                                                         </Button>
-                                                       </TooltipTrigger>
-                                                       <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                         <p className="font-medium">Disable fusion</p>
-                                                       </TooltipContent>
-                                                     </Tooltip>
-                                                   </TooltipProvider>
-                                                 ) : (
-                                                   <TooltipProvider delayDuration={0}>
-                                                     <Tooltip>
-                                                       <TooltipTrigger asChild>
-                                                         <Button
-                                                           size="icon"
-                                                           variant="ghost"
-                                                           className={`h-6 w-6 ${isReadyCt ? 'hover:bg-green-700/30' : 'cursor-not-allowed opacity-60'}`}
-                                                           disabled={!isReadyCt}
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             if (onRebuildFusionManifest) {
-                                                               onRebuildFusionManifest();
-                                                             }
-                                                             if (onSecondarySeriesSelect) onSecondarySeriesSelect(ctS.id);
-                                                           }}
-                                                         >
-                                                           {isLoadingCt ? (
-                                                             <Loader2 className="h-3.5 w-3.5 animate-spin text-green-200" />
-                                                           ) : hasErrorCt ? (
-                                                             <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
-                                                           ) : (
-                                                             <Zap className="h-3.5 w-3.5 text-green-300" />
-                                                           )}
-                                                         </Button>
-                                                       </TooltipTrigger>
-                                                       <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border border-green-400/30 text-white text-xs rounded-lg shadow-lg">
-                                                         <p className="font-medium">{statusLabelCt}</p>
-                                                       </TooltipContent>
-                                                     </Tooltip>
-                                                   </TooltipProvider>
-                                                 )}
+                                                <TooltipProvider delayDuration={0}>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      {(() => {
+                                                        const assignedVp = isInSplitView ? getViewportForSeries(ctS.id) : null;
+                                                        const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ctS.id;
+
+                                                        if (isInSplitView && assignedVp) {
+                                                          return (
+                                                            <span className={cn(pillClass('blue'), "h-6 px-2.5 flex-shrink-0")}>
+                                                              VP {assignedVp}
+                                                            </span>
+                                                          );
+                                                        }
+
+                                                        if (isActiveFusion) {
+                                                          return (
+                                                            <Button
+                                                              size="icon"
+                                                              variant="ghost"
+                                                              className="h-6 w-6 bg-blue-600 hover:bg-blue-700 animate-pulse"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (onSecondarySeriesSelect) onSecondarySeriesSelect(null);
+                                                              }}
+                                                            >
+                                                              <Zap className="h-3.5 w-3.5 text-white" />
+                                                            </Button>
+                                                          );
+                                                        }
+
+                                                        return (
+                                                          <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className={`h-6 w-6 ${isReadyCt ? 'hover:bg-blue-700/30' : 'cursor-not-allowed opacity-60'}`}
+                                                            disabled={!isReadyCt}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (onRebuildFusionManifest) {
+                                                                onRebuildFusionManifest();
+                                                              }
+                                                              if (onSecondarySeriesSelect) onSecondarySeriesSelect(ctS.id);
+                                                            }}
+                                                          >
+                                                            {isLoadingCt ? (
+                                                              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-200" />
+                                                            ) : hasErrorCt ? (
+                                                              <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                                                            ) : (
+                                                              <Zap className="h-3.5 w-3.5 text-blue-300" />
+                                                            )}
+                                                          </Button>
+                                                        );
+                                                      })()}
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                      {(() => {
+                                                        const assignedVp = isInSplitView ? getViewportForSeries(ctS.id) : null;
+                                                        const isActiveFusion = isInSplitView ? Boolean(assignedVp) : secondarySeriesId === ctS.id;
+                                                        if (isInSplitView && assignedVp) {
+                                                          return <p className="font-medium">Assigned to VP {assignedVp}</p>;
+                                                        }
+                                                        return <p className="font-medium">{isActiveFusion ? 'Disable fusion' : statusLabelCt}</p>;
+                                                      })()}
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
                                                </div>
                                              </div>
                                            </div>
@@ -2212,23 +2293,19 @@ export function SeriesSelector({
                                               <Button
                                                 variant={selectedRTSeries?.id === rtS.id ? 'default' : 'ghost'}
                                                 className={cn(
-                                                  "group w-full px-2 py-1.5 h-auto text-left justify-between text-xs border rounded-lg transition-all duration-200 backdrop-blur-sm",
+                                                  "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 border rounded-lg transition-all duration-150 backdrop-blur-sm",
                                                   selectedRTSeries?.id === rtS.id
                                                     ? hasSuperstructures
-                                                      ? 'bg-gradient-to-br from-blue-500/25 via-blue-500/15 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20 text-gray-200'
-                                                      : 'bg-gradient-to-br from-green-500/25 via-green-500/15 to-green-600/20 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200'
-                                                    : hasSuperstructures
-                                                    ? 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50 text-gray-300'
-                                                    : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50 text-gray-300'
+                                                      ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20 text-gray-200'
+                                                      : 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200'
+                                                    : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
                                                 )}
                                                 onClick={() => handleRTSeriesSelect(rtS)}
                                               >
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                                   <Badge variant="outline" className={cn(
-                                                    "text-xs font-semibold px-2 py-0.5 flex-shrink-0",
-                                                    selectedRTSeries?.id === rtS.id
-                                                      ? "border-green-400/80 text-green-300 bg-green-500/20"
-                                                      : "border-green-500/60 text-green-400 bg-green-500/10"
+                                                    "flex-shrink-0",
+                                                    pillClassForModality('RT')
                                                   )}>
                                                     RT
                                                   </Badge>
@@ -2298,10 +2375,10 @@ export function SeriesSelector({
                                 e.dataTransfer.effectAllowed = 'copy';
                               }}
                               className={`
-                                group relative p-2 rounded-lg border cursor-pointer transition-all duration-200 backdrop-blur-sm
+                                group relative py-1.5 px-2 min-h-9 rounded-lg border cursor-pointer transition-all duration-150
                                 ${selectedSeries?.id === seriesItem.id
-                                  ? 'bg-gradient-to-br from-purple-500/25 via-purple-500/15 to-purple-600/20 border-purple-400/60 shadow-md shadow-purple-500/20'
-                                  : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/50'
+                                  ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/10 border-purple-400/50 shadow-sm shadow-purple-500/10'
+                                  : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
                                 }
                               `}
                               onClick={() => onSeriesSelect(seriesItem)}
@@ -2309,29 +2386,19 @@ export function SeriesSelector({
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   <Badge 
-                                    variant="outline" 
-                                    className={`
-                                      text-xs font-semibold px-2.5 py-0.5 flex-shrink-0
-                                      ${selectedSeries?.id === seriesItem.id
-                                        ? 'border-purple-400/80 text-purple-300 bg-purple-500/20'
-                                        : 'border-purple-500/60 text-purple-400 bg-purple-500/10'
-                                      }
-                                    `}
+                                    className={cn("flex-shrink-0", pillClassForModality(seriesItem.modality))}
                                   >
                                     {seriesItem.modality}
                                   </Badge>
                                   <span className={`
                                     text-xs font-medium truncate
-                                    ${selectedSeries?.id === seriesItem.id ? 'text-purple-200' : 'text-gray-100'}
+                                    ${selectedSeries?.id === seriesItem.id ? 'text-purple-100' : 'text-gray-200'}
                                     group-hover:text-white transition-colors
                                   `}>
                                     {formatSeriesLabel(seriesItem)}
                                   </span>
-                                  <span className={`
-                                    text-xs flex-shrink-0
-                                    ${selectedSeries?.id === seriesItem.id ? 'text-purple-300/80' : 'text-gray-400'}
-                                  `}>
-                                    ({seriesItem.imageCount})
+                                  <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                    {seriesItem.imageCount}
                                   </span>
                                 </div>
                                 
@@ -2360,7 +2427,7 @@ export function SeriesSelector({
                               ) : (
                                 <ChevronRight className="w-4 h-4 text-gray-400" />
                               )}
-                              <span className="text-sm text-gray-300 font-medium">
+                              <span className="text-xs text-gray-300 font-semibold">
                                 Other Series ({otherSeries.length})
                               </span>
                             </div>
@@ -2372,7 +2439,7 @@ export function SeriesSelector({
                                   <div key={seriesItem.id}>
                                     <div
                                       className={`
-                                        group relative py-2.5 px-2 rounded-lg border cursor-pointer transition-all duration-200 backdrop-blur-sm
+                                        group relative py-1 px-2 rounded-lg border cursor-pointer transition-all duration-150 backdrop-blur-sm
                                         ${selectedSeries?.id === seriesItem.id
                                           ? 'bg-gradient-to-r from-blue-500/25 to-blue-600/20 border-blue-400/60 shadow-md shadow-blue-500/20'
                                           : 'bg-gradient-to-r from-blue-500/8 to-blue-600/5 border-blue-500/30 hover:border-blue-400/50 hover:bg-blue-500/15'
@@ -2383,28 +2450,18 @@ export function SeriesSelector({
                                       <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                           <Badge 
-                                            variant="outline" 
-                                            className={`
-                                              text-xs font-semibold px-2.5 py-0.5 flex-shrink-0
-                                              ${selectedSeries?.id === seriesItem.id
-                                                ? 'border-blue-400/80 text-blue-300 bg-blue-500/20'
-                                                : 'border-blue-500/60 text-blue-400 bg-blue-500/10'
-                                              }
-                                            `}
+                                            className={cn("flex-shrink-0", pillClassForModality(seriesItem.modality))}
                                           >
                                             {seriesItem.modality}
                                           </Badge>
                                           <span className={`
                                             text-xs font-medium truncate
-                                            ${selectedSeries?.id === seriesItem.id ? 'text-blue-200' : 'text-gray-200'}
+                                            ${selectedSeries?.id === seriesItem.id ? 'text-blue-100' : 'text-gray-200'}
                                           `}>
                                             {formatSeriesLabel(seriesItem)}
                                           </span>
-                                          <span className={`
-                                            text-xs flex-shrink-0
-                                            ${selectedSeries?.id === seriesItem.id ? 'text-blue-300/80' : 'text-gray-400'}
-                                          `}>
-                                            ({seriesItem.imageCount})
+                                          <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                            {seriesItem.imageCount}
                                           </span>
                                         </div>
                                       </div>
@@ -2447,7 +2504,7 @@ export function SeriesSelector({
                         placeholder="Search structures..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-1.5 bg-gray-900/80 backdrop-blur-sm border border-gray-600/40 text-white placeholder-gray-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-0 focus:border-blue-500/60 focus:bg-gray-800/90 hover:border-gray-500/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="pl-10 pr-4 py-1.5 bg-gray-900/80 backdrop-blur-sm border border-gray-600/40 text-white placeholder-gray-400 rounded-lg transition-all duration-150 focus:outline-none focus:ring-0 focus:border-blue-500/60 focus:bg-gray-800/90 hover:border-gray-500/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                       />
                     </div>
@@ -2460,7 +2517,7 @@ export function SeriesSelector({
                             variant="ghost"
                             size="sm"
                             onClick={toggleAllVisibility}
-                            className="bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg backdrop-blur-sm transition-all duration-200"
+                            className="bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
                           >
                             {allVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </Button>
@@ -2476,7 +2533,7 @@ export function SeriesSelector({
                             variant="ghost"
                             size="sm"
                             onClick={toggleGrouping}
-                            className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20 rounded-lg backdrop-blur-sm transition-all duration-200"
+                            className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
                           >
                             <FolderTree className="w-4 h-4" />
                           </Button>
@@ -2493,7 +2550,7 @@ export function SeriesSelector({
                               variant="ghost"
                               size="sm"
                               onClick={toggleAllExpansion}
-                              className="bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20 rounded-lg backdrop-blur-sm transition-all duration-200"
+                              className="bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
                             >
                               {allCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                             </Button>
@@ -2514,7 +2571,7 @@ export function SeriesSelector({
                               const nextMode = sortMode === 'az' ? 'za' : sortMode === 'za' ? 'position' : 'az';
                               setSortMode(nextMode);
                             }}
-                            className="bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 rounded-lg backdrop-blur-sm transition-all duration-200 ml-auto"
+                            className="bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 rounded-lg backdrop-blur-sm transition-all duration-150 ml-auto"
                           >
                             {sortMode === 'az' ? <ArrowDown className="w-4 h-4" /> : 
                              sortMode === 'za' ? <ArrowUp className="w-4 h-4" /> : 
@@ -2532,7 +2589,7 @@ export function SeriesSelector({
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowNewStructureDialog(true)}
-                            className="bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 rounded-lg backdrop-blur-sm transition-all duration-200"
+                            className="bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
                           >
                             <Plus className="w-4 h-4" />
                           </Button>
@@ -2548,7 +2605,7 @@ export function SeriesSelector({
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowStructureSettings(!showStructureSettings)}
-                            className="bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 rounded-lg backdrop-blur-sm transition-all duration-200"
+                            className="bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
                           >
                             <Settings className="w-4 h-4" />
                           </Button>
@@ -2570,7 +2627,7 @@ export function SeriesSelector({
                               }
                             }}
                             disabled={!selectedRTSeries}
-                            className="bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20 rounded-lg backdrop-blur-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20 rounded-lg backdrop-blur-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Save className="w-4 h-4" />
                           </Button>
@@ -2593,7 +2650,7 @@ export function SeriesSelector({
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowStructureSettings(false)}
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-150"
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -2788,7 +2845,7 @@ export function SeriesSelector({
                             return (
                               <div key={structure.roiNumber}>
                                 <div 
-                                  className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-200 backdrop-blur-sm ${
+                                  className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-150 backdrop-blur-sm ${
                                     selectedStructures.has(structure.roiNumber) 
                                       ? 'border-yellow-500/60 bg-yellow-500/10' 
                                       : selectedForEdit === structure.roiNumber
@@ -3017,7 +3074,7 @@ export function SeriesSelector({
                                         return (
                                           <div className="relative" key={`wrapper-${structure.roiNumber}`}>
                                             <div 
-                                              className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-200 backdrop-blur-sm ${
+                                              className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-150 backdrop-blur-sm ${
                                                 selectedForEdit === structure.roiNumber
                                                   ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20' 
                                                 : selectedStructures.has(structure.roiNumber) 
@@ -3175,7 +3232,7 @@ export function SeriesSelector({
                                         return (
                                           <div className="relative" key={`wrapper-nested-${structure.roiNumber}`}>
                                             <div 
-                                              className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-200 backdrop-blur-sm ${
+                                              className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-150 backdrop-blur-sm ${
                                                 selectedStructures.has(structure.roiNumber) 
                                                   ? 'border-yellow-500/60 bg-yellow-500/10' 
                                                   : selectedForEdit === structure.roiNumber
@@ -3359,7 +3416,7 @@ export function SeriesSelector({
                               return (
                                 <div key={structure.roiNumber}>
                                   <div 
-                                    className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-200 backdrop-blur-sm ${
+                                    className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg border transition-all duration-150 backdrop-blur-sm ${
                                       selectedForEdit === structure.roiNumber
                                         ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20' 
                                         : selectedStructures.has(structure.roiNumber) 
@@ -3577,7 +3634,7 @@ export function SeriesSelector({
                         <div className="text-gray-500 text-sm">No structure set loaded</div>
                         <Button
                           onClick={handleCreateBlankStructureSet}
-                          className="bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 rounded-lg backdrop-blur-sm transition-all duration-200"
+                          className="bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 rounded-lg backdrop-blur-sm transition-all duration-150"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Create New Structure Set
@@ -3767,7 +3824,7 @@ export function SeriesSelector({
             </Button>
             <Button 
               onClick={handleCreateNewStructure}
-              className="bg-green-600/20 border border-green-500/30 text-green-400 hover:bg-green-600/30 hover:text-green-300 backdrop-blur-sm transition-all duration-200"
+              className="bg-green-600/20 border border-green-500/30 text-green-400 hover:bg-green-600/30 hover:text-green-300 backdrop-blur-sm transition-all duration-150"
             >
               Create Structure
             </Button>

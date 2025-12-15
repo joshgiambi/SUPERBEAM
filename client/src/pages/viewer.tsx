@@ -302,7 +302,7 @@ export default function Viewer() {
                       <h2 className="text-base font-bold text-white leading-tight tracking-tight">
                         {studyData.patient?.patientName || currentStudy.patientName || 'Unknown Patient'}
                       </h2>
-                      <Badge variant="outline" className="border-gray-600/50 text-gray-300 bg-gray-800/40 px-2 py-0.5 text-xs font-medium">
+                      <Badge variant="outline" className="border-gray-600 text-gray-300 bg-gray-800/60 px-2 py-0.5 text-xs font-medium">
                         {studyData.patient?.patientID || currentStudy.patientID || 'No ID'}
                       </Badge>
                     </div>

@@ -9,6 +9,7 @@ import OHIFPrototypeGemini from "@/pages/ohif-prototype";
 import FusionTest from "@/pages/fusion-test";
 import PrototypeModule from "@/pages/prototype-module";
 import SuperStyle from "@/pages/superstyle";
+import SeriesPreview from "@/pages/series-preview";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={PatientManager} />
       <Route path="/viewer" component={Viewer} />
       <Route path="/enhanced-viewer" component={Viewer} />
+      <Route path="/preview" component={SeriesPreview} />
       <Route path="/fusion-test" component={FusionTest} />
       <Route path="/ohif-prototype" component={OHIFPrototypeGemini} />
       <Route path="/prototype-module" component={PrototypeModule} />

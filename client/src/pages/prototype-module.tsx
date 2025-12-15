@@ -21,11 +21,14 @@ import { ContourToolbarV2Prototype } from '@/components/dicom/contour-toolbar-v2
 import { ContourToolbarV3Prototype } from '@/components/dicom/contour-toolbar-v3-prototype';
 import { ContourToolbarV4Prototype } from '@/components/dicom/contour-toolbar-v4-prototype';
 import { V4AuroraPanelsPrototype } from '@/components/dicom/v4-aurora-panels-prototype';
+import { V4AuroraPanelsV2Demo } from '@/components/dicom/v4-aurora-panels-v2';
 import { UnifiedToolbarPrototype } from '@/components/dicom/unified-toolbar-prototype';
 import { SmartFusionViewportManager } from '@/components/dicom/smart-fusion-viewport-manager';
 import { SonnetViewportManager } from '@/components/dicom/sonnet-viewport-manager';
 import { FusionViewportGrid } from '@/components/dicom/fusion-viewport-grid';
 import { UnifiedFusionToolbarPrototype } from '@/components/dicom/unified-fusion-toolbar-prototype';
+import { PatientManagerV4AuroraPrototype } from '@/components/dicom/patient-manager-v4-aurora-prototype';
+import { SeriesSelectorAuroraPrototype } from '@/components/dicom/series-selector-aurora-prototype';
 import { 
   ArrowLeft, 
   Beaker, 
@@ -50,7 +53,7 @@ import { cn } from '@/lib/utils';
 // CATEGORIES
 // ============================================================================
 
-type Category = 'all' | 'fusion' | 'toolbars' | 'boolean' | 'design' | 'contouring';
+type Category = 'all' | 'fusion' | 'toolbars' | 'boolean' | 'design' | 'contouring' | 'sidebar';
 
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode; color: string }[] = [
   { id: 'all', label: 'All Prototypes', icon: <Filter className="w-3.5 h-3.5" />, color: 'gray' },
@@ -58,6 +61,7 @@ const CATEGORIES: { id: Category; label: string; icon: React.ReactNode; color: s
   { id: 'toolbars', label: 'Toolbars', icon: <LayoutGrid className="w-3.5 h-3.5" />, color: 'cyan' },
   { id: 'boolean', label: 'Boolean Ops', icon: <Scissors className="w-3.5 h-3.5" />, color: 'purple' },
   { id: 'contouring', label: 'Contouring', icon: <Scissors className="w-3.5 h-3.5" />, color: 'green' },
+  { id: 'sidebar', label: 'Sidebar', icon: <Layers className="w-3.5 h-3.5" />, color: 'blue' },
   { id: 'design', label: 'Design', icon: <Palette className="w-3.5 h-3.5" />, color: 'pink' },
 ];
 
@@ -275,6 +279,16 @@ const prototypes: Prototype[] = [
     tags: ['boolean', 'margin', 'toolbar', 'viewport', 'aurora', 'panels']
   },
   {
+    id: 'v4-aurora-panels-v2',
+    name: 'V4 Aurora Panels V2 (Enhanced)',
+    description: 'Enhanced Boolean panel with Expression/Panel modes & multi-step pipeline. Margin panel with Uniform/Anisotropic/Directional modes. Both include Auto-Update toggle.',
+    status: 'in-progress',
+    version: 'v4.2',
+    component: V4AuroraPanelsV2Demo,
+    category: 'toolbars',
+    tags: ['boolean', 'margin', 'toolbar', 'aurora', 'expression', 'pipeline', 'anisotropic', 'directional', 'auto-update']
+  },
+  {
     id: 'contour-toolbar-v3',
     name: 'Contour Toolbar V3 (Single-Row Draggable)',
     description: 'Compact single-row dark design with drag-anywhere functionality and position memory.',
@@ -316,6 +330,26 @@ const prototypes: Prototype[] = [
   },
 
   // DESIGN
+  {
+    id: 'series-selector-aurora',
+    name: 'Series Selector Aurora',
+    description: 'Refreshed series selector combining Aurora aesthetics + Unified Fusion Toolbar patterns. Modality-colored cards, collapsible sections, smooth animations.',
+    status: 'in-progress',
+    version: 'v1.0',
+    component: SeriesSelectorAuroraPrototype,
+    category: 'sidebar',
+    tags: ['series-selector', 'aurora', 'sidebar', 'fusion', 'modality-colors', 'structures']
+  },
+  {
+    id: 'patient-manager-v4-aurora',
+    name: 'Patient Manager V4 Aurora',
+    description: 'Subtle styling upgrade of the existing patient manager - same layout, cleaner borders, refined spacing.',
+    status: 'in-progress',
+    version: 'v4.0',
+    component: PatientManagerV4AuroraPrototype,
+    category: 'design',
+    tags: ['patient-manager', 'aurora', 'styling', 'subtle', 'upgrade']
+  },
   {
     id: 'font-testing',
     name: 'Font Testing',
@@ -454,6 +488,7 @@ export default function PrototypeModule() {
                     : cat.color === 'purple' ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                     : cat.color === 'green' ? "bg-green-500/20 text-green-300 border border-green-500/30"
                     : cat.color === 'pink' ? "bg-pink-500/20 text-pink-300 border border-pink-500/30"
+                    : cat.color === 'blue' ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                     : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                     : "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent"
                 )}
@@ -509,6 +544,7 @@ export default function PrototypeModule() {
                         : catColor === 'purple' ? "text-purple-400 bg-purple-900/20 border-purple-700/30"
                         : catColor === 'green' ? "text-green-400 bg-green-900/20 border-green-700/30"
                         : catColor === 'pink' ? "text-pink-400 bg-pink-900/20 border-pink-700/30"
+                        : catColor === 'blue' ? "text-blue-400 bg-blue-900/20 border-blue-700/30"
                         : "text-gray-400 bg-gray-900/20 border-gray-700/30"
                       )}>
                         {CATEGORIES.find(c => c.id === proto.category)?.label}

@@ -697,7 +697,8 @@ export function DICOMUploader() {
       case 'RTSTRUCT': return 'bg-purple-500';
       case 'RTDOSE': return 'bg-orange-500';
       case 'RTPLAN': return 'bg-red-500';
-      case 'PET': return 'bg-yellow-500';
+      case 'PET': return 'bg-amber-500';
+      case 'PT': return 'bg-amber-500';
       default: return 'bg-gray-500';
     }
   };

@@ -211,7 +211,8 @@ export function MetadataEditDialog({ open, onClose, patient, studies, series, on
       case 'MR': return 'text-purple-400';
       case 'RTSTRUCT': return 'text-green-400';
       case 'REG': return 'text-orange-400';
-      case 'PT': return 'text-yellow-400';
+      case 'PT': return 'text-amber-400';
+      case 'PET': return 'text-amber-400';
       default: return 'text-gray-400';
     }
   };

@@ -591,7 +591,8 @@ export function FusionViewportGrid({
                   const isViewed = viewports.some(vp => vp.primarySeriesId === series.id);
                   const modalityColors = {
                     'CT': 'bg-blue-900/40 border-blue-600/40 text-blue-200',
-                    'PT': 'bg-yellow-900/40 border-yellow-600/40 text-yellow-200',
+                    'PT': 'bg-amber-900/40 border-amber-600/40 text-amber-200',
+                    'PET': 'bg-amber-900/40 border-amber-600/40 text-amber-200',
                     'MR': 'bg-purple-900/40 border-purple-600/40 text-purple-200'
                   };
                   const colorClass = modalityColors[series.modality as keyof typeof modalityColors] || 'bg-gray-800/40 border-gray-600/40 text-gray-300';

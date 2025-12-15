@@ -205,7 +205,7 @@ export function FusionControlPanelV2({
 
   const getModalityColor = (modality: string) => {
     const mod = modality?.toUpperCase() || '';
-    if (mod === 'PT' || mod === 'PET') return 'yellow';
+    if (mod === 'PT' || mod === 'PET') return 'amber';
     if (mod === 'MR') return 'purple';
     if (mod === 'CT') return 'blue';
     return 'slate';
@@ -214,9 +214,9 @@ export function FusionControlPanelV2({
   const getModalityStyles = (modality: string, isActive: boolean = false) => {
     const color = getModalityColor(modality);
     const colorMap = {
-      yellow: isActive 
-        ? 'bg-yellow-600/90 border-yellow-500 text-yellow-50' 
-        : 'bg-yellow-900/40 border-yellow-600/40 text-yellow-200 hover:bg-yellow-800/50',
+      amber: isActive 
+        ? 'bg-amber-600/90 border-amber-500 text-amber-50' 
+        : 'bg-amber-900/40 border-amber-600/40 text-amber-200 hover:bg-amber-800/50',
       purple: isActive
         ? 'bg-purple-600/90 border-purple-500 text-purple-50'
         : 'bg-purple-900/40 border-purple-600/40 text-purple-200 hover:bg-purple-800/50',
