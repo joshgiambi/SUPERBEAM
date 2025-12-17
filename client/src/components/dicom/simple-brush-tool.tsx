@@ -605,8 +605,9 @@ export function SimpleBrushTool({
                     const imageHeight = transform.imageHeight || imageMetadata?.Rows || 512;
                     const scaledWidth = imageWidth * transform.scale;
                     const scaledHeight = imageHeight * transform.scale;
-                    const imageStartX = (canvasRef.current.width - scaledWidth) / 2 + transform.offsetX;
-                    const imageStartY = (canvasRef.current.height - scaledHeight) / 2 + transform.offsetY;
+                    // FIX: transform.offsetX already includes centering offset, don't double-count
+                    const imageStartX = transform.offsetX;
+                    const imageStartY = transform.offsetY;
 
                     const cursorXOnImage = coords.x - imageStartX;
                     const cursorYOnImage = coords.y - imageStartY;

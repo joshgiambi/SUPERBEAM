@@ -427,10 +427,11 @@ export default function PenToolV2({
   const handleMouseDown = useCallback(async (event: MouseEvent) => {
     if (!isActive || !selectedStructure || !canvasRef.current) return;
     
+    // FIX: Scale coordinates to account for CSS vs actual canvas dimensions
     const rect = canvasRef.current.getBoundingClientRect();
     const canvasPoint = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
+      x: ((event.clientX - rect.left) / rect.width) * canvasRef.current.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvasRef.current.height
     };
 
     if (event.button === 0) { // Left click
@@ -465,10 +466,11 @@ export default function PenToolV2({
   const handleMouseMove = useCallback(async (event: MouseEvent) => {
     if (!isActive || !canvasRef.current) return;
     
+    // FIX: Scale coordinates to account for CSS vs actual canvas dimensions
     const rect = canvasRef.current.getBoundingClientRect();
     const canvasPoint = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
+      x: ((event.clientX - rect.left) / rect.width) * canvasRef.current.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvasRef.current.height
     };
     
     setMousePosition(canvasPoint);
