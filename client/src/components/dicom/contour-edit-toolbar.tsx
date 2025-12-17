@@ -24,6 +24,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Brush,
   Pen,
   Scissors,
@@ -39,10 +46,15 @@ import {
   Sparkles,
   Zap,
   SplitSquareHorizontal,
-  Maximize2,
   GripVertical,
   RotateCcw,
-  MousePointer2
+  MousePointer2,
+  MousePointerClick,
+  Layers,
+  Eye,
+  EyeOff,
+  Split,
+  Circle
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { undoRedoManager } from '@/lib/undo-system';
@@ -225,14 +237,11 @@ export function ContourEditToolbar({
   const [mem3dParams, setMem3dParams] = useState<TuningParams>(DEFAULT_PARAMS);
   const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
   const [aiTumorUseSAM, setAiTumorUseSAM] = useState(false); // AI tumor mode: false = SuperSeg, true = SAM
+  const [hideOtherContours, setHideOtherContours] = useState(false);
   
-  // Dropdown states
-  const [showNthMenu, setShowNthMenu] = useState(false);
-  const [showClearMenu, setShowClearMenu] = useState(false);
-  const [showBlobMenu, setShowBlobMenu] = useState(false);
-  const nthMenuRef = useRef<NodeJS.Timeout | null>(null);
-  const clearMenuRef = useRef<NodeJS.Timeout | null>(null);
-  const blobMenuRef = useRef<NodeJS.Timeout | null>(null);
+  // Dissect tool state
+  const [dissectLineCount, setDissectLineCount] = useState(1); // 1 or 2 lines
+  const [dissectPoints, setDissectPoints] = useState<Array<{x: number, y: number}>>([]);
   
   // SmartNth dialog
   const [showSmartNthDialog, setShowSmartNthDialog] = useState(false);
@@ -383,13 +392,13 @@ export function ContourEditToolbar({
 
   // Tool handlers
   const handleToolClick = (toolId: string) => {
-    if (toolId === 'margin') {
-      onOpenAdvancedMarginTool?.();
-      return;
-    }
-    
     const newTool = activeTool === toolId ? null : toolId;
     setActiveTool(newTool);
+    
+    // Clear dissect points when switching away from dissect tool
+    if (activeTool === 'dissect' && newTool !== 'dissect') {
+      setDissectPoints([]);
+    }
     
     if (onToolChange) {
       onToolChange({
@@ -485,7 +494,6 @@ export function ContourEditToolbar({
       });
     }
     toast({ title: `Deleted every ${n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice for ${selectedStructure.structureName}` });
-    setShowNthMenu(false);
   };
 
   const handleOpenSmartNthDialog = () => {
@@ -500,7 +508,6 @@ export function ContourEditToolbar({
         }
       });
     }
-    setShowNthMenu(false);
   };
 
   const handleApplySmartNth = (threshold: number) => {
@@ -537,7 +544,6 @@ export function ContourEditToolbar({
       onContourUpdate({ action: 'clear_all', structureId: selectedStructure.roiNumber });
     }
     toast({ title: `Cleared all contours for ${selectedStructure.structureName}` });
-    setShowClearMenu(false);
   };
 
   const handleClearAbove = () => {
@@ -550,7 +556,6 @@ export function ContourEditToolbar({
       });
     }
     toast({ title: `Cleared contours above current slice` });
-    setShowClearMenu(false);
   };
 
   const handleClearBelow = () => {
@@ -563,7 +568,6 @@ export function ContourEditToolbar({
       });
     }
     toast({ title: `Cleared contours below current slice` });
-    setShowClearMenu(false);
   };
 
   const handleAcceptPrediction = () => {
@@ -593,13 +597,13 @@ export function ContourEditToolbar({
     { id: 'brush', icon: Brush, label: 'Brush', shortcut: 'B' },
     { id: 'pen', icon: Pen, label: 'Pen', shortcut: 'P' },
     { id: 'erase', icon: Scissors, label: 'Erase', shortcut: 'E' },
-    { id: 'margin', icon: Maximize2, label: 'Margin', shortcut: 'M' },
+    { id: 'dissect', icon: Split, label: 'Dissect', shortcut: 'D' },
     { id: 'interactive-tumor', icon: Sparkles, label: 'AI', shortcut: 'T' },
   ];
 
   // Inline settings renderer
   const renderInlineSettings = () => {
-    if (!activeTool || activeTool === 'margin') return null;
+    if (!activeTool) return null;
 
     if (activeTool === 'brush' || activeTool === 'erase') {
       return (
@@ -954,6 +958,129 @@ export function ContourEditToolbar({
       );
     }
 
+    if (activeTool === 'dissect') {
+      const pointsNeeded = dissectLineCount * 2;
+      const pointsPlaced = dissectPoints.length;
+      const canGenerate = pointsPlaced >= 2 && pointsPlaced % 2 === 0;
+      
+      return (
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: 'auto' }}
+          exit={{ opacity: 0, width: 0 }}
+          transition={{ duration: 0.15 }}
+          className="flex items-center gap-3 overflow-hidden"
+        >
+          <div className="w-px h-6 bg-white/10" />
+          
+          <div className="flex items-center gap-1.5">
+            <Split className="w-4 h-4" style={{ color: accentRgb }} />
+            <span className="text-[13px] text-gray-400 font-medium">Click to place points</span>
+          </div>
+
+          {/* Line count selector */}
+          <div className="flex items-center gap-0.5 bg-white/5 rounded p-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setDissectLineCount(1);
+                    setDissectPoints([]);
+                  }}
+                  className={cn(
+                    'h-6 px-2 rounded text-[12px] font-semibold transition-all',
+                    dissectLineCount === 1
+                      ? 'bg-cyan-500/30 text-cyan-300'
+                      : 'text-gray-500 hover:text-gray-400'
+                  )}
+                >
+                  1 Line
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">
+                Single bisecting line (2 points)
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setDissectLineCount(2);
+                    setDissectPoints([]);
+                  }}
+                  className={cn(
+                    'h-6 px-2 rounded text-[12px] font-semibold transition-all',
+                    dissectLineCount === 2
+                      ? 'bg-cyan-500/30 text-cyan-300'
+                      : 'text-gray-500 hover:text-gray-400'
+                  )}
+                >
+                  2 Lines
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">
+                Two bisecting lines (4 points)
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Points indicator */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/20">
+            <Circle className="w-3 h-3" style={{ color: accentRgb }} />
+            <span className="text-[12px] font-semibold tabular-nums" style={{ color: pointsPlaced >= pointsNeeded ? accentRgb : 'rgb(156, 163, 175)' }}>
+              {pointsPlaced}/{pointsNeeded}
+            </span>
+          </div>
+
+          {/* Clear points button */}
+          {pointsPlaced > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setDissectPoints([])}
+                  className="h-7 px-2 flex items-center gap-1 rounded text-[12px] font-medium text-gray-500 hover:text-gray-400 hover:bg-white/5 transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Clear
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Clear all points</TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* Generate button */}
+          <button
+            onClick={() => {
+              if (!canGenerate) {
+                toast({ title: 'Place points first', description: `Need at least 2 points (1 line) to dissect.`, variant: 'destructive' });
+                return;
+              }
+              onContourUpdate?.({ 
+                action: 'dissect_contour', 
+                structureId: selectedStructure.roiNumber,
+                lines: dissectPoints,
+                lineCount: dissectLineCount
+              });
+              toast({ title: 'Dissecting contour...', description: `Using ${pointsPlaced / 2} line(s)` });
+              setDissectPoints([]);
+            }}
+            disabled={!canGenerate}
+            className={cn(
+              "h-7 px-3 flex items-center gap-1.5 rounded text-[13px] font-semibold transition-all",
+              canGenerate 
+                ? "text-white" 
+                : "text-gray-500 bg-gray-700/50 cursor-not-allowed"
+            )}
+            style={canGenerate ? { background: accentRgb } : {}}
+          >
+            <Split className="w-3.5 h-3.5" />
+            Generate
+          </button>
+        </motion.div>
+      );
+    }
+
     return null;
   };
 
@@ -1114,11 +1241,11 @@ export function ContourEditToolbar({
                     onClick={handleUndo}
                     disabled={!canUndo}
                     className={cn(
-                      'h-7 w-7 flex items-center justify-center rounded-md transition-all',
+                      'h-8 w-8 flex items-center justify-center rounded-md transition-all',
                       canUndo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
                     )}
                   >
-                    <Undo className="w-3.5 h-3.5" />
+                    <Undo className="w-4 h-4" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Undo (Ctrl+Z)</TooltipContent>
@@ -1129,18 +1256,18 @@ export function ContourEditToolbar({
                     onClick={handleRedo}
                     disabled={!canRedo}
                     className={cn(
-                      'h-7 w-7 flex items-center justify-center rounded-md transition-all',
+                      'h-8 w-8 flex items-center justify-center rounded-md transition-all',
                       canRedo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
                     )}
                   >
-                    <Redo className="w-3.5 h-3.5" />
+                    <Redo className="w-4 h-4" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Redo (Ctrl+Y)</TooltipContent>
               </Tooltip>
             </div>
 
-            <div className="w-px h-5 bg-white/10" />
+            <div className="w-px h-6 bg-white/10" />
 
             {/* Actions */}
             <div className="flex items-center gap-1.5">
@@ -1148,9 +1275,9 @@ export function ContourEditToolbar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleDeleteCurrentSlice}
-                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
+                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                     Delete
                   </button>
                 </TooltipTrigger>
@@ -1161,146 +1288,164 @@ export function ContourEditToolbar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleInterpolate}
-                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
+                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
                   >
-                    <GitBranch className="w-3 h-3" />
+                    <GitBranch className="w-3.5 h-3.5" />
                     Interp
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Interpolate</TooltipContent>
               </Tooltip>
 
-              {/* Nth Menu */}
-              <div 
-                className="relative"
-                onMouseEnter={() => { if (nthMenuRef.current) clearTimeout(nthMenuRef.current); setShowNthMenu(true); }}
-                onMouseLeave={() => { nthMenuRef.current = setTimeout(() => setShowNthMenu(false), 150); }}
-              >
-                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all">
-                  <Grid3x3 className="w-3 h-3" />
-                  Nth
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                <AnimatePresence>
-                  {showNthMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      className="absolute bottom-full left-0 mb-1 rounded-lg shadow-xl overflow-hidden"
-                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
-                    >
-                      {[2, 3, 4].map(n => (
-                        <button
-                          key={n}
-                          onClick={() => handleDeleteEveryNthSlice(n)}
-                          className="w-full px-3 py-2 text-left text-xs text-amber-300/90 hover:text-amber-200 hover:bg-amber-500/10 transition-colors font-medium whitespace-nowrap"
-                        >
-                          Every {n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice
-                        </button>
-                      ))}
-                      <div className="h-px bg-white/10 mx-2" />
-                      <button
-                        onClick={handleOpenSmartNthDialog}
-                        className="w-full px-3 py-2 text-left text-xs text-amber-200 hover:text-amber-100 hover:bg-amber-500/10 transition-colors font-semibold whitespace-nowrap"
-                      >
-                        SmartNth...
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
+              {/* Smooth - moved before Nth */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleSmooth}
-                    className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-all"
+                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-all"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3.5 h-3.5" />
                     Smooth
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Smooth contours</TooltipContent>
               </Tooltip>
 
-              {/* Blob Menu */}
-              <div 
-                className="relative"
-                onMouseEnter={() => { if (blobMenuRef.current) clearTimeout(blobMenuRef.current); setShowBlobMenu(true); }}
-                onMouseLeave={() => { blobMenuRef.current = setTimeout(() => setShowBlobMenu(false), 150); }}
-              >
-                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
-                  <SplitSquareHorizontal className="w-3 h-3" />
-                  Blob
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                <AnimatePresence>
-                  {showBlobMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      className="absolute bottom-full left-0 mb-1 rounded-lg shadow-xl overflow-hidden"
-                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
+              {/* Nth Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all">
+                    <Grid3x3 className="w-3.5 h-3.5" />
+                    Nth
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  side="top" 
+                  align="start"
+                  sideOffset={8}
+                  collisionPadding={16}
+                  className="min-w-[140px] bg-gray-900/98 border-gray-700/50 backdrop-blur-xl"
+                >
+                  {[2, 3, 4].map(n => (
+                    <DropdownMenuItem
+                      key={n}
+                      onSelect={() => handleDeleteEveryNthSlice(n)}
+                      className="text-[13px] text-amber-300/90 hover:text-amber-200 focus:text-amber-200 focus:bg-amber-500/10 font-medium cursor-pointer"
                     >
-                      <button
-                        onClick={() => {
-                          setShowBlobMenu(false);
-                          onContourUpdate?.({ action: 'open_remove_blobs_dialog', structureId: selectedStructure.roiNumber });
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-violet-300/90 hover:text-violet-200 hover:bg-violet-500/10 transition-colors font-medium whitespace-nowrap"
-                      >
-                        Remove blobs…
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowBlobMenu(false);
-                          onContourUpdate?.({ action: 'separate_blobs', structureId: selectedStructure.roiNumber });
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-violet-300/90 hover:text-violet-200 hover:bg-violet-500/10 transition-colors font-medium whitespace-nowrap"
-                      >
-                        Blob separator
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      Every {n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem
+                    onSelect={handleOpenSmartNthDialog}
+                    className="text-[13px] text-amber-200 hover:text-amber-100 focus:text-amber-100 focus:bg-amber-500/10 font-semibold cursor-pointer"
+                  >
+                    SmartNth...
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Blob Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
+                    <SplitSquareHorizontal className="w-3.5 h-3.5" />
+                    Blob
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  side="top" 
+                  align="start"
+                  sideOffset={8}
+                  collisionPadding={16}
+                  className="min-w-[200px] bg-gray-900/98 border-gray-700/50 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      onContourUpdate?.({ action: 'open_remove_blobs_dialog', structureId: selectedStructure.roiNumber });
+                    }}
+                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                  >
+                    <MousePointerClick className="w-4 h-4" />
+                    Separator Tool
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      onContourUpdate?.({ action: 'separate_blobs', structureId: selectedStructure.roiNumber });
+                    }}
+                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                  >
+                    <Layers className="w-4 h-4" />
+                    Separate All Blobs
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      const newState = !hideOtherContours;
+                      setHideOtherContours(newState);
+                      onContourUpdate?.({ 
+                        action: 'toggle_other_contours_visibility', 
+                        structureId: selectedStructure.roiNumber,
+                        hideOthers: newState
+                      });
+                    }}
+                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                  >
+                    {hideOtherContours ? (
+                      <>
+                        <Eye className="w-4 h-4" />
+                        Show Other Contours
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        Hide Other Contours
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Clear Menu */}
-              <div 
-                className="relative"
-                onMouseEnter={() => { if (clearMenuRef.current) clearTimeout(clearMenuRef.current); setShowClearMenu(true); }}
-                onMouseLeave={() => { clearMenuRef.current = setTimeout(() => setShowClearMenu(false), 150); }}
-              >
-                <button className="h-7 px-2.5 flex items-center gap-1 rounded-md text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
-                  <Eraser className="w-3 h-3" />
-                  Clear
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                <AnimatePresence>
-                  {showClearMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      className="absolute bottom-full right-0 mb-1 rounded-lg shadow-xl overflow-hidden"
-                      style={{ background: `hsla(${accentHue}, 8%, 12%, 0.98)`, border: `1px solid ${accentRgb}15` }}
-                    >
-                      <button onClick={handleClearAbove} className="w-full px-3 py-2 text-left text-xs text-rose-300/90 hover:text-rose-200 hover:bg-rose-500/10 transition-colors font-medium whitespace-nowrap">
-                        Clear above
-                      </button>
-                      <button onClick={handleClearBelow} className="w-full px-3 py-2 text-left text-xs text-rose-300/90 hover:text-rose-200 hover:bg-rose-500/10 transition-colors font-medium whitespace-nowrap">
-                        Clear below
-                      </button>
-                      <div className="h-px bg-white/10 mx-2" />
-                      <button onClick={handleClearAll} className="w-full px-3 py-2 text-left text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors font-semibold whitespace-nowrap">
-                        Clear all
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
+                    <Eraser className="w-3.5 h-3.5" />
+                    Clear
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  side="top" 
+                  align="end"
+                  sideOffset={8}
+                  collisionPadding={16}
+                  className="min-w-[140px] bg-gray-900/98 border-gray-700/50 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem
+                    onSelect={handleClearAbove}
+                    className="text-[13px] text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
+                  >
+                    Clear above
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={handleClearBelow}
+                    className="text-[13px] text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
+                  >
+                    Clear below
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem
+                    onSelect={handleClearAll}
+                    className="text-[13px] text-rose-400 hover:text-rose-300 focus:text-rose-300 focus:bg-rose-500/10 font-semibold cursor-pointer"
+                  >
+                    Clear all
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             </div>
           </div>
