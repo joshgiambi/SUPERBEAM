@@ -948,10 +948,9 @@ export function ContourEditToolbar({
                 toast({ title: 'Canvas Error', description: 'Canvas reference not available.', variant: 'destructive' });
               }
             }}
-            className="h-6 px-2.5 flex items-center gap-1.5 rounded text-[11px] font-semibold text-white transition-all"
-            style={{ background: accentRgb }}
+            className="h-7 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-semibold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 hover:text-emerald-200 transition-all"
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3.5 h-3.5" />
             Generate
           </button>
         </motion.div>
@@ -1067,12 +1066,11 @@ export function ContourEditToolbar({
             }}
             disabled={!canGenerate}
             className={cn(
-              "h-7 px-3 flex items-center gap-1.5 rounded text-[13px] font-semibold transition-all",
+              "h-7 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-semibold transition-all",
               canGenerate 
-                ? "text-white" 
+                ? "text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30 hover:text-cyan-200" 
                 : "text-gray-500 bg-gray-700/50 cursor-not-allowed"
             )}
-            style={canGenerate ? { background: accentRgb } : {}}
           >
             <Split className="w-3.5 h-3.5" />
             Generate
