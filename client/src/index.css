@@ -226,8 +226,18 @@
 
   /* Custom Tab Alignment Fix */
   [role="tablist"] {
-    display: grid !important;
-    align-items: stretch !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  /* Hide scrollbars (keep scroll functionality) */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   [role="tab"] {

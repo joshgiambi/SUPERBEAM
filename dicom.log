@@ -1,0 +1,780 @@
+DEBUG [17-12-2025 21:44:24:081]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:44:24:082]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:44:24:082]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:44:24:082]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:44:24:082]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:44:24:082]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:44:24:082]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:44:24:082]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:44:24:082]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:44:24:082]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:44:24:082]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:44:24:082]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:44:24:082]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:44:24:082]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:44:24:082]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:44:24:082]:   53  49  52  49  58
+DEBUG [17-12-2025 21:44:24:082]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:44:24:086]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:48:45:145]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:48:45:145]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:48:45:145]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:48:45:145]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:48:45:145]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:48:45:145]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:48:45:145]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:48:45:145]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:48:45:145]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:48:45:145]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:48:45:145]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:48:45:145]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:48:45:145]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:48:45:145]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:48:45:145]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:48:45:145]:   53  49  52  49  58
+DEBUG [17-12-2025 21:48:45:145]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:48:45:147]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:49:10:942]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:49:10:942]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:49:10:942]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:49:10:942]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:49:10:942]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:49:10:942]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:49:10:942]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:49:10:942]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:49:10:942]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:49:10:942]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:49:10:942]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:49:10:942]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:49:10:942]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:49:10:942]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:49:10:942]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:49:10:942]:   53  49  52  49  58
+DEBUG [17-12-2025 21:49:10:942]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:49:10:943]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:49:49:064]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:49:49:065]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:49:49:065]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:49:49:065]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:49:49:065]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:49:49:065]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:49:49:065]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:49:49:065]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:49:49:065]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:49:49:065]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:49:49:065]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:49:49:065]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:49:49:065]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:49:49:065]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:49:49:065]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:49:49:065]:   53  49  52  49  58
+DEBUG [17-12-2025 21:49:49:065]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:49:49:065]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:50:27:915]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:50:27:916]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:50:27:916]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:50:27:916]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:50:27:916]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:50:27:916]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:50:27:916]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:50:27:916]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:50:27:916]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:50:27:916]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:50:27:916]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:50:27:916]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:50:27:916]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:50:27:916]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:50:27:916]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:50:27:916]:   53  49  52  49  58
+DEBUG [17-12-2025 21:50:27:916]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:50:27:917]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:56:03:093]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:56:03:094]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:56:03:094]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:56:03:094]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:56:03:094]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:56:03:094]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:56:03:094]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:03:094]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:03:094]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:56:03:094]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:56:03:094]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:56:03:094]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:56:03:094]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:56:03:094]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:56:03:094]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:56:03:094]:   53  49  52  49  58
+DEBUG [17-12-2025 21:56:03:094]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:56:03:095]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:56:08:438]: Request Parameters:
+DEBUG [17-12-2025 21:56:08:438]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [17-12-2025 21:56:08:438]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:56:08:438]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:56:08:438]: Their Implementation Class UID:    
+DEBUG [17-12-2025 21:56:08:438]: Their Implementation Version Name: 
+DEBUG [17-12-2025 21:56:08:438]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:56:08:438]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:56:08:438]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:56:08:438]: Responding Application Name: 
+DEBUG [17-12-2025 21:56:08:438]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:56:08:438]: Their Max PDU Receive Size:  0
+DEBUG [17-12-2025 21:56:08:438]: Presentation Contexts:
+DEBUG [17-12-2025 21:56:08:438]:   Context ID:        1 (Proposed)
+DEBUG [17-12-2025 21:56:08:438]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:08:438]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:08:438]:     Proposed Transfer Syntax(es):
+DEBUG [17-12-2025 21:56:08:438]:       =LittleEndianExplicit
+DEBUG [17-12-2025 21:56:08:438]:       =BigEndianExplicit
+DEBUG [17-12-2025 21:56:08:438]:       =LittleEndianImplicit
+DEBUG [17-12-2025 21:56:08:438]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:56:08:438]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:56:08:438]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:56:08:438]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:56:08:438]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [17-12-2025 21:56:08:438]: Requesting Association
+DEBUG [17-12-2025 21:56:08:438]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:56:08:438]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:56:08:438]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:56:08:438]: PDU Type: Associate Accept, PDU Length: 177 + 6 bytes PDU header
+DEBUG [17-12-2025 21:56:08:438]:   02  00  00  00  00  b1  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:56:08:438]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:56:08:438]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:08:438]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:08:438]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:56:08:438]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:56:08:438]:   31  2e  31  21  00  00  1b  01  00  00  00  40  00  00  13  31
+DEBUG [17-12-2025 21:56:08:438]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:56:08:438]:   2e  31  50  00  00  31  51  00  00  04  00  00  40  00  52  00
+DEBUG [17-12-2025 21:56:08:438]:   00  1b  31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38
+DEBUG [17-12-2025 21:56:08:438]:   30  31  30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00
+DEBUG [17-12-2025 21:56:08:438]:   06  4f  53  49  52  49  58
+DEBUG [17-12-2025 21:56:08:438]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:56:08:438]: Association Parameters Negotiated:
+DEBUG [17-12-2025 21:56:08:438]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [17-12-2025 21:56:08:438]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:56:08:438]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:56:08:438]: Their Implementation Class UID:    1.2.276.0.7238010.5.0.3.5.4
+DEBUG [17-12-2025 21:56:08:438]: Their Implementation Version Name: OSIRIX
+DEBUG [17-12-2025 21:56:08:438]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:56:08:438]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:56:08:438]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:56:08:438]: Responding Application Name: escapepod
+DEBUG [17-12-2025 21:56:08:438]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:56:08:438]: Their Max PDU Receive Size:  16384
+DEBUG [17-12-2025 21:56:08:438]: Presentation Contexts:
+DEBUG [17-12-2025 21:56:08:438]:   Context ID:        1 (Accepted)
+DEBUG [17-12-2025 21:56:08:438]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:08:438]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:08:438]:     Accepted SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:08:438]:     Accepted Transfer Syntax: =LittleEndianExplicit
+DEBUG [17-12-2025 21:56:08:438]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:56:08:438]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:56:08:438]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:56:08:438]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:56:08:438]: ======================= END A-ASSOCIATE-AC ======================
+INFO  [17-12-2025 21:56:08:438]: Association Accepted (Max Send PDV: 16372)
+INFO  [17-12-2025 21:56:08:438]: Sending Find Request
+DEBUG [17-12-2025 21:56:08:439]: ===================== OUTGOING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:08:439]: Message Type                  : C-FIND RQ
+DEBUG [17-12-2025 21:56:08:439]: Presentation Context ID       : 1
+DEBUG [17-12-2025 21:56:08:439]: Message ID                    : 1
+DEBUG [17-12-2025 21:56:08:439]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:08:439]: Data Set                      : present
+DEBUG [17-12-2025 21:56:08:439]: Priority                      : medium
+DEBUG [17-12-2025 21:56:08:439]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:56:08:439]: Request Identifiers:
+INFO  [17-12-2025 21:56:08:439]: 
+INFO  [17-12-2025 21:56:08:439]: # Dicom-Data-Set
+INFO  [17-12-2025 21:56:08:439]: # Used TransferSyntax: Little Endian Explicit
+INFO  [17-12-2025 21:56:08:439]: (0008,0020) DA (no value available)                     #   0, 0 StudyDate
+INFO  [17-12-2025 21:56:08:439]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+INFO  [17-12-2025 21:56:08:439]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+INFO  [17-12-2025 21:56:08:439]: (0008,0061) CS (no value available)                     #   0, 0 ModalitiesInStudy
+INFO  [17-12-2025 21:56:08:439]: (0008,1030) LO (no value available)                     #   0, 0 StudyDescription
+INFO  [17-12-2025 21:56:08:439]: (0010,0010) PN (no value available)                     #   0, 0 PatientName
+INFO  [17-12-2025 21:56:08:439]: (0010,0020) LO (no value available)                     #   0, 0 PatientID
+INFO  [17-12-2025 21:56:08:439]: (0020,000d) UI (no value available)                     #   0, 0 StudyInstanceUID
+INFO  [17-12-2025 21:56:08:439]: (0020,1206) IS (no value available)                     #   0, 0 NumberOfStudyRelatedSeries
+INFO  [17-12-2025 21:56:08:439]: (0020,1208) IS (no value available)                     #   0, 0 NumberOfStudyRelatedInstances
+INFO  [17-12-2025 21:56:08:439]: 
+DEBUG [17-12-2025 21:56:08:446]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:56:08:446]: DcmDataset::read() TransferSyntax="Little Endian Explicit"
+INFO  [17-12-2025 21:56:08:446]: Received Find Response 1
+DEBUG [17-12-2025 21:56:08:446]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:08:446]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:56:08:446]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:56:08:446]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:08:446]: Data Set                      : present
+DEBUG [17-12-2025 21:56:08:446]: DIMSE Status                  : 0xff00: Pending: Matches are continuing
+DEBUG [17-12-2025 21:56:08:446]: ======================= END DIMSE MESSAGE =======================
+DEBUG [17-12-2025 21:56:08:446]: Response Identifiers:
+DEBUG [17-12-2025 21:56:08:446]: 
+DEBUG [17-12-2025 21:56:08:446]: # Dicom-Data-Set
+DEBUG [17-12-2025 21:56:08:446]: # Used TransferSyntax: Little Endian Explicit
+DEBUG [17-12-2025 21:56:08:446]: (0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+DEBUG [17-12-2025 21:56:08:446]: (0008,0020) DA [20221214]                               #   8, 1 StudyDate
+DEBUG [17-12-2025 21:56:08:446]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+DEBUG [17-12-2025 21:56:08:446]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+DEBUG [17-12-2025 21:56:08:446]: (0008,0054) AE [escapepod]                              #  10, 1 RetrieveAETitle
+DEBUG [17-12-2025 21:56:08:446]: (0008,0061) CS [CT\MR\RTSTRUCT\REG]                     #  18, 4 ModalitiesInStudy
+DEBUG [17-12-2025 21:56:08:446]: (0008,1030) LO [Brain Mets]                             #  10, 1 StudyDescription
+DEBUG [17-12-2025 21:56:08:446]: (0010,0010) PN [LIMBIC_57]                              #  10, 1 PatientName
+DEBUG [17-12-2025 21:56:08:446]: (0010,0020) LO [LIMBIC_57]                              #  10, 1 PatientID
+DEBUG [17-12-2025 21:56:08:446]: (0020,000d) UI [2.16.840.1.114362.1.12072839.23213054100.618021210.557.4707] #  60, 1 StudyInstanceUID
+DEBUG [17-12-2025 21:56:08:446]: (0020,1206) IS [6]                                      #   2, 1 NumberOfStudyRelatedSeries
+DEBUG [17-12-2025 21:56:08:446]: (0020,1208) IS [788]                                    #   4, 1 NumberOfStudyRelatedInstances
+DEBUG [17-12-2025 21:56:08:446]: 
+DEBUG [17-12-2025 21:56:08:447]: DcmItem::convertCharacterSet() creating a new character set converter for 'ISO_IR 100' to 'ISO_IR 192'
+DEBUG [17-12-2025 21:56:08:447]: DcmSpecificCharacterSet: Selected character set 'ISO_IR 100' (ISO-8859-1) for the conversion to UTF-8
+DEBUG [17-12-2025 21:56:08:447]: DcmSpecificCharacterSet: Converting 'Brain Mets'
+DEBUG [17-12-2025 21:56:08:447]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:56:08:447]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:56:08:447]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+INFO  [17-12-2025 21:56:08:447]: Received Final Find Response
+DEBUG [17-12-2025 21:56:08:447]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:08:447]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:56:08:447]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:56:08:447]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:08:447]: Data Set                      : none
+DEBUG [17-12-2025 21:56:08:447]: DIMSE Status                  : 0x0000: Success: Matching is complete
+DEBUG [17-12-2025 21:56:08:447]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:56:08:447]: Releasing Association
+DEBUG [17-12-2025 21:56:48:445]: Request Parameters:
+DEBUG [17-12-2025 21:56:48:445]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [17-12-2025 21:56:48:445]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:56:48:445]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:56:48:445]: Their Implementation Class UID:    
+DEBUG [17-12-2025 21:56:48:445]: Their Implementation Version Name: 
+DEBUG [17-12-2025 21:56:48:445]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:56:48:445]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:56:48:445]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:56:48:445]: Responding Application Name: 
+DEBUG [17-12-2025 21:56:48:445]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:56:48:445]: Their Max PDU Receive Size:  0
+DEBUG [17-12-2025 21:56:48:445]: Presentation Contexts:
+DEBUG [17-12-2025 21:56:48:445]:   Context ID:        1 (Proposed)
+DEBUG [17-12-2025 21:56:48:445]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:48:445]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:48:445]:     Proposed Transfer Syntax(es):
+DEBUG [17-12-2025 21:56:48:445]:       =LittleEndianExplicit
+DEBUG [17-12-2025 21:56:48:445]:       =BigEndianExplicit
+DEBUG [17-12-2025 21:56:48:445]:       =LittleEndianImplicit
+DEBUG [17-12-2025 21:56:48:445]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:56:48:445]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:56:48:445]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:56:48:445]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:56:48:445]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [17-12-2025 21:56:48:445]: Requesting Association
+DEBUG [17-12-2025 21:56:48:445]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:56:48:445]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:56:48:445]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:56:48:445]: PDU Type: Associate Accept, PDU Length: 177 + 6 bytes PDU header
+DEBUG [17-12-2025 21:56:48:445]:   02  00  00  00  00  b1  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:56:48:445]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:56:48:445]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:48:445]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:56:48:445]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:56:48:445]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:56:48:445]:   31  2e  31  21  00  00  1b  01  00  00  00  40  00  00  13  31
+DEBUG [17-12-2025 21:56:48:445]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:56:48:445]:   2e  31  50  00  00  31  51  00  00  04  00  00  40  00  52  00
+DEBUG [17-12-2025 21:56:48:445]:   00  1b  31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38
+DEBUG [17-12-2025 21:56:48:445]:   30  31  30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00
+DEBUG [17-12-2025 21:56:48:445]:   06  4f  53  49  52  49  58
+DEBUG [17-12-2025 21:56:48:445]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:56:48:445]: Association Parameters Negotiated:
+DEBUG [17-12-2025 21:56:48:445]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [17-12-2025 21:56:48:445]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:56:48:445]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:56:48:445]: Their Implementation Class UID:    1.2.276.0.7238010.5.0.3.5.4
+DEBUG [17-12-2025 21:56:48:445]: Their Implementation Version Name: OSIRIX
+DEBUG [17-12-2025 21:56:48:445]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:56:48:445]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:56:48:445]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:56:48:445]: Responding Application Name: escapepod
+DEBUG [17-12-2025 21:56:48:445]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:56:48:445]: Their Max PDU Receive Size:  16384
+DEBUG [17-12-2025 21:56:48:445]: Presentation Contexts:
+DEBUG [17-12-2025 21:56:48:445]:   Context ID:        1 (Accepted)
+DEBUG [17-12-2025 21:56:48:445]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:48:445]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:48:445]:     Accepted SCP/SCU Role: Default
+DEBUG [17-12-2025 21:56:48:445]:     Accepted Transfer Syntax: =LittleEndianExplicit
+DEBUG [17-12-2025 21:56:48:445]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:56:48:445]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:56:48:445]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:56:48:445]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:56:48:445]: ======================= END A-ASSOCIATE-AC ======================
+INFO  [17-12-2025 21:56:48:446]: Association Accepted (Max Send PDV: 16372)
+INFO  [17-12-2025 21:56:48:446]: Sending Find Request
+DEBUG [17-12-2025 21:56:48:446]: ===================== OUTGOING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:48:446]: Message Type                  : C-FIND RQ
+DEBUG [17-12-2025 21:56:48:446]: Presentation Context ID       : 1
+DEBUG [17-12-2025 21:56:48:446]: Message ID                    : 1
+DEBUG [17-12-2025 21:56:48:446]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:48:446]: Data Set                      : present
+DEBUG [17-12-2025 21:56:48:446]: Priority                      : medium
+DEBUG [17-12-2025 21:56:48:446]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:56:48:446]: Request Identifiers:
+INFO  [17-12-2025 21:56:48:446]: 
+INFO  [17-12-2025 21:56:48:446]: # Dicom-Data-Set
+INFO  [17-12-2025 21:56:48:446]: # Used TransferSyntax: Little Endian Explicit
+INFO  [17-12-2025 21:56:48:446]: (0008,0020) DA (no value available)                     #   0, 0 StudyDate
+INFO  [17-12-2025 21:56:48:446]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+INFO  [17-12-2025 21:56:48:446]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+INFO  [17-12-2025 21:56:48:446]: (0008,0061) CS (no value available)                     #   0, 0 ModalitiesInStudy
+INFO  [17-12-2025 21:56:48:446]: (0008,1030) LO (no value available)                     #   0, 0 StudyDescription
+INFO  [17-12-2025 21:56:48:446]: (0010,0010) PN (no value available)                     #   0, 0 PatientName
+INFO  [17-12-2025 21:56:48:446]: (0010,0020) LO (no value available)                     #   0, 0 PatientID
+INFO  [17-12-2025 21:56:48:446]: (0020,000d) UI (no value available)                     #   0, 0 StudyInstanceUID
+INFO  [17-12-2025 21:56:48:446]: (0020,1206) IS (no value available)                     #   0, 0 NumberOfStudyRelatedSeries
+INFO  [17-12-2025 21:56:48:446]: (0020,1208) IS (no value available)                     #   0, 0 NumberOfStudyRelatedInstances
+INFO  [17-12-2025 21:56:48:446]: 
+DEBUG [17-12-2025 21:56:48:448]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:56:48:451]: DcmDataset::read() TransferSyntax="Little Endian Explicit"
+INFO  [17-12-2025 21:56:48:451]: Received Find Response 1
+DEBUG [17-12-2025 21:56:48:451]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:48:451]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:56:48:451]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:56:48:451]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:48:451]: Data Set                      : present
+DEBUG [17-12-2025 21:56:48:451]: DIMSE Status                  : 0xff00: Pending: Matches are continuing
+DEBUG [17-12-2025 21:56:48:451]: ======================= END DIMSE MESSAGE =======================
+DEBUG [17-12-2025 21:56:48:452]: Response Identifiers:
+DEBUG [17-12-2025 21:56:48:452]: 
+DEBUG [17-12-2025 21:56:48:452]: # Dicom-Data-Set
+DEBUG [17-12-2025 21:56:48:452]: # Used TransferSyntax: Little Endian Explicit
+DEBUG [17-12-2025 21:56:48:452]: (0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+DEBUG [17-12-2025 21:56:48:452]: (0008,0020) DA [20221214]                               #   8, 1 StudyDate
+DEBUG [17-12-2025 21:56:48:452]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+DEBUG [17-12-2025 21:56:48:452]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+DEBUG [17-12-2025 21:56:48:452]: (0008,0054) AE [escapepod]                              #  10, 1 RetrieveAETitle
+DEBUG [17-12-2025 21:56:48:452]: (0008,0061) CS [CT\MR\RTSTRUCT\REG]                     #  18, 4 ModalitiesInStudy
+DEBUG [17-12-2025 21:56:48:452]: (0008,1030) LO [Brain Mets]                             #  10, 1 StudyDescription
+DEBUG [17-12-2025 21:56:48:452]: (0010,0010) PN [LIMBIC_57]                              #  10, 1 PatientName
+DEBUG [17-12-2025 21:56:48:452]: (0010,0020) LO [LIMBIC_57]                              #  10, 1 PatientID
+DEBUG [17-12-2025 21:56:48:452]: (0020,000d) UI [2.16.840.1.114362.1.12072839.23213054100.618021210.557.4707] #  60, 1 StudyInstanceUID
+DEBUG [17-12-2025 21:56:48:452]: (0020,1206) IS [6]                                      #   2, 1 NumberOfStudyRelatedSeries
+DEBUG [17-12-2025 21:56:48:452]: (0020,1208) IS [788]                                    #   4, 1 NumberOfStudyRelatedInstances
+DEBUG [17-12-2025 21:56:48:452]: 
+DEBUG [17-12-2025 21:56:48:452]: DcmItem::convertCharacterSet() creating a new character set converter for 'ISO_IR 100' to 'ISO_IR 192'
+DEBUG [17-12-2025 21:56:48:452]: DcmSpecificCharacterSet: Selected character set 'ISO_IR 100' (ISO-8859-1) for the conversion to UTF-8
+DEBUG [17-12-2025 21:56:48:452]: DcmSpecificCharacterSet: Converting 'Brain Mets'
+DEBUG [17-12-2025 21:56:48:452]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:56:48:452]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:56:48:452]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+INFO  [17-12-2025 21:56:48:452]: Received Final Find Response
+DEBUG [17-12-2025 21:56:48:452]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:56:48:452]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:56:48:452]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:56:48:452]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:56:48:452]: Data Set                      : none
+DEBUG [17-12-2025 21:56:48:452]: DIMSE Status                  : 0x0000: Success: Matching is complete
+DEBUG [17-12-2025 21:56:48:452]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:56:48:452]: Releasing Association
+DEBUG [17-12-2025 21:57:06:116]: Request Parameters:
+DEBUG [17-12-2025 21:57:06:116]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [17-12-2025 21:57:06:116]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:06:116]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:06:116]: Their Implementation Class UID:    
+DEBUG [17-12-2025 21:57:06:116]: Their Implementation Version Name: 
+DEBUG [17-12-2025 21:57:06:116]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:06:116]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:06:116]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:06:116]: Responding Application Name: 
+DEBUG [17-12-2025 21:57:06:116]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:06:116]: Their Max PDU Receive Size:  0
+DEBUG [17-12-2025 21:57:06:116]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:06:116]:   Context ID:        1 (Proposed)
+DEBUG [17-12-2025 21:57:06:116]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:06:116]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:06:116]:     Proposed Transfer Syntax(es):
+DEBUG [17-12-2025 21:57:06:116]:       =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:06:116]:       =BigEndianExplicit
+DEBUG [17-12-2025 21:57:06:116]:       =LittleEndianImplicit
+DEBUG [17-12-2025 21:57:06:116]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:06:116]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:06:116]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:06:116]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:06:116]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [17-12-2025 21:57:06:117]: Requesting Association
+DEBUG [17-12-2025 21:57:06:117]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:57:06:117]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:57:06:117]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:57:06:117]: PDU Type: Associate Accept, PDU Length: 177 + 6 bytes PDU header
+DEBUG [17-12-2025 21:57:06:117]:   02  00  00  00  00  b1  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:57:06:117]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:57:06:117]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:06:117]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:06:117]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:57:06:117]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:57:06:117]:   31  2e  31  21  00  00  1b  01  00  00  00  40  00  00  13  31
+DEBUG [17-12-2025 21:57:06:117]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:57:06:117]:   2e  31  50  00  00  31  51  00  00  04  00  00  40  00  52  00
+DEBUG [17-12-2025 21:57:06:117]:   00  1b  31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38
+DEBUG [17-12-2025 21:57:06:117]:   30  31  30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00
+DEBUG [17-12-2025 21:57:06:117]:   06  4f  53  49  52  49  58
+DEBUG [17-12-2025 21:57:06:117]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:57:06:117]: Association Parameters Negotiated:
+DEBUG [17-12-2025 21:57:06:117]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [17-12-2025 21:57:06:117]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:06:117]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:06:117]: Their Implementation Class UID:    1.2.276.0.7238010.5.0.3.5.4
+DEBUG [17-12-2025 21:57:06:117]: Their Implementation Version Name: OSIRIX
+DEBUG [17-12-2025 21:57:06:117]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:06:117]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:06:117]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:06:117]: Responding Application Name: escapepod
+DEBUG [17-12-2025 21:57:06:117]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:06:117]: Their Max PDU Receive Size:  16384
+DEBUG [17-12-2025 21:57:06:117]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:06:117]:   Context ID:        1 (Accepted)
+DEBUG [17-12-2025 21:57:06:117]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:06:117]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:06:117]:     Accepted SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:06:117]:     Accepted Transfer Syntax: =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:06:117]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:06:117]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:06:117]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:06:117]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:06:117]: ======================= END A-ASSOCIATE-AC ======================
+INFO  [17-12-2025 21:57:06:117]: Association Accepted (Max Send PDV: 16372)
+INFO  [17-12-2025 21:57:06:118]: Sending Find Request
+DEBUG [17-12-2025 21:57:06:118]: ===================== OUTGOING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:06:118]: Message Type                  : C-FIND RQ
+DEBUG [17-12-2025 21:57:06:118]: Presentation Context ID       : 1
+DEBUG [17-12-2025 21:57:06:118]: Message ID                    : 1
+DEBUG [17-12-2025 21:57:06:118]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:06:118]: Data Set                      : present
+DEBUG [17-12-2025 21:57:06:118]: Priority                      : medium
+DEBUG [17-12-2025 21:57:06:118]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:06:118]: Request Identifiers:
+INFO  [17-12-2025 21:57:06:118]: 
+INFO  [17-12-2025 21:57:06:118]: # Dicom-Data-Set
+INFO  [17-12-2025 21:57:06:118]: # Used TransferSyntax: Little Endian Explicit
+INFO  [17-12-2025 21:57:06:118]: (0008,0020) DA (no value available)                     #   0, 0 StudyDate
+INFO  [17-12-2025 21:57:06:118]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+INFO  [17-12-2025 21:57:06:118]: (0010,0010) PN (no value available)                     #   0, 0 PatientName
+INFO  [17-12-2025 21:57:06:118]: (0010,0020) LO (no value available)                     #   0, 0 PatientID
+INFO  [17-12-2025 21:57:06:118]: (0020,000d) UI (no value available)                     #   0, 0 StudyInstanceUID
+INFO  [17-12-2025 21:57:06:118]: 
+DEBUG [17-12-2025 21:57:06:121]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:57:06:121]: DcmDataset::read() TransferSyntax="Little Endian Explicit"
+INFO  [17-12-2025 21:57:06:121]: Received Find Response 1
+DEBUG [17-12-2025 21:57:06:121]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:06:121]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:06:121]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:06:121]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:06:121]: Data Set                      : present
+DEBUG [17-12-2025 21:57:06:121]: DIMSE Status                  : 0xff00: Pending: Matches are continuing
+DEBUG [17-12-2025 21:57:06:121]: ======================= END DIMSE MESSAGE =======================
+DEBUG [17-12-2025 21:57:06:121]: Response Identifiers:
+DEBUG [17-12-2025 21:57:06:121]: 
+DEBUG [17-12-2025 21:57:06:121]: # Dicom-Data-Set
+DEBUG [17-12-2025 21:57:06:121]: # Used TransferSyntax: Little Endian Explicit
+DEBUG [17-12-2025 21:57:06:121]: (0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+DEBUG [17-12-2025 21:57:06:121]: (0008,0020) DA [20221214]                               #   8, 1 StudyDate
+DEBUG [17-12-2025 21:57:06:121]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+DEBUG [17-12-2025 21:57:06:121]: (0008,0054) AE [escapepod]                              #  10, 1 RetrieveAETitle
+DEBUG [17-12-2025 21:57:06:121]: (0010,0010) PN [LIMBIC_57]                              #  10, 1 PatientName
+DEBUG [17-12-2025 21:57:06:121]: (0010,0020) LO [LIMBIC_57]                              #  10, 1 PatientID
+DEBUG [17-12-2025 21:57:06:121]: (0020,000d) UI [2.16.840.1.114362.1.12072839.23213054100.618021210.557.4707] #  60, 1 StudyInstanceUID
+DEBUG [17-12-2025 21:57:06:121]: 
+DEBUG [17-12-2025 21:57:06:121]: DcmItem::convertCharacterSet() creating a new character set converter for 'ISO_IR 100' to 'ISO_IR 192'
+DEBUG [17-12-2025 21:57:06:121]: DcmSpecificCharacterSet: Selected character set 'ISO_IR 100' (ISO-8859-1) for the conversion to UTF-8
+DEBUG [17-12-2025 21:57:06:121]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:06:121]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:06:121]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+INFO  [17-12-2025 21:57:06:121]: Received Final Find Response
+DEBUG [17-12-2025 21:57:06:121]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:06:121]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:06:121]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:06:121]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:06:121]: Data Set                      : none
+DEBUG [17-12-2025 21:57:06:121]: DIMSE Status                  : 0x0000: Success: Matching is complete
+DEBUG [17-12-2025 21:57:06:121]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:06:121]: Releasing Association
+DEBUG [17-12-2025 21:57:40:631]: Request Parameters:
+DEBUG [17-12-2025 21:57:40:631]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [17-12-2025 21:57:40:631]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:40:631]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:40:631]: Their Implementation Class UID:    
+DEBUG [17-12-2025 21:57:40:631]: Their Implementation Version Name: 
+DEBUG [17-12-2025 21:57:40:631]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:40:631]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:40:631]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:40:631]: Responding Application Name: 
+DEBUG [17-12-2025 21:57:40:631]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:40:631]: Their Max PDU Receive Size:  0
+DEBUG [17-12-2025 21:57:40:631]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:40:631]:   Context ID:        1 (Proposed)
+DEBUG [17-12-2025 21:57:40:631]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:40:631]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:40:631]:     Proposed Transfer Syntax(es):
+DEBUG [17-12-2025 21:57:40:631]:       =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:40:631]:       =BigEndianExplicit
+DEBUG [17-12-2025 21:57:40:631]:       =LittleEndianImplicit
+DEBUG [17-12-2025 21:57:40:631]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:40:631]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:40:631]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:40:631]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:40:631]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [17-12-2025 21:57:40:632]: Requesting Association
+DEBUG [17-12-2025 21:57:40:632]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:57:40:632]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:57:40:632]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:57:40:632]: PDU Type: Associate Accept, PDU Length: 177 + 6 bytes PDU header
+DEBUG [17-12-2025 21:57:40:632]:   02  00  00  00  00  b1  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:57:40:632]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:57:40:632]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:40:632]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:40:632]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:57:40:632]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:57:40:632]:   31  2e  31  21  00  00  1b  01  00  00  00  40  00  00  13  31
+DEBUG [17-12-2025 21:57:40:632]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:57:40:632]:   2e  31  50  00  00  31  51  00  00  04  00  00  40  00  52  00
+DEBUG [17-12-2025 21:57:40:632]:   00  1b  31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38
+DEBUG [17-12-2025 21:57:40:632]:   30  31  30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00
+DEBUG [17-12-2025 21:57:40:632]:   06  4f  53  49  52  49  58
+DEBUG [17-12-2025 21:57:40:632]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:57:40:632]: Association Parameters Negotiated:
+DEBUG [17-12-2025 21:57:40:632]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [17-12-2025 21:57:40:632]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:40:632]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:40:632]: Their Implementation Class UID:    1.2.276.0.7238010.5.0.3.5.4
+DEBUG [17-12-2025 21:57:40:632]: Their Implementation Version Name: OSIRIX
+DEBUG [17-12-2025 21:57:40:632]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:40:632]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:40:632]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:40:632]: Responding Application Name: escapepod
+DEBUG [17-12-2025 21:57:40:632]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:40:632]: Their Max PDU Receive Size:  16384
+DEBUG [17-12-2025 21:57:40:632]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:40:632]:   Context ID:        1 (Accepted)
+DEBUG [17-12-2025 21:57:40:632]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:40:632]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:40:632]:     Accepted SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:40:632]:     Accepted Transfer Syntax: =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:40:632]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:40:632]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:40:632]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:40:632]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:40:632]: ======================= END A-ASSOCIATE-AC ======================
+INFO  [17-12-2025 21:57:40:632]: Association Accepted (Max Send PDV: 16372)
+INFO  [17-12-2025 21:57:40:633]: Sending Find Request
+DEBUG [17-12-2025 21:57:40:633]: ===================== OUTGOING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:40:633]: Message Type                  : C-FIND RQ
+DEBUG [17-12-2025 21:57:40:633]: Presentation Context ID       : 1
+DEBUG [17-12-2025 21:57:40:633]: Message ID                    : 1
+DEBUG [17-12-2025 21:57:40:633]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:40:633]: Data Set                      : present
+DEBUG [17-12-2025 21:57:40:633]: Priority                      : medium
+DEBUG [17-12-2025 21:57:40:633]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:40:633]: Request Identifiers:
+INFO  [17-12-2025 21:57:40:633]: 
+INFO  [17-12-2025 21:57:40:633]: # Dicom-Data-Set
+INFO  [17-12-2025 21:57:40:633]: # Used TransferSyntax: Little Endian Explicit
+INFO  [17-12-2025 21:57:40:633]: (0008,0020) DA (no value available)                     #   0, 0 StudyDate
+INFO  [17-12-2025 21:57:40:633]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+INFO  [17-12-2025 21:57:40:633]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+INFO  [17-12-2025 21:57:40:633]: (0008,0061) CS (no value available)                     #   0, 0 ModalitiesInStudy
+INFO  [17-12-2025 21:57:40:633]: (0008,1030) LO (no value available)                     #   0, 0 StudyDescription
+INFO  [17-12-2025 21:57:40:633]: (0010,0010) PN (no value available)                     #   0, 0 PatientName
+INFO  [17-12-2025 21:57:40:633]: (0010,0020) LO (no value available)                     #   0, 0 PatientID
+INFO  [17-12-2025 21:57:40:633]: (0020,000d) UI (no value available)                     #   0, 0 StudyInstanceUID
+INFO  [17-12-2025 21:57:40:633]: (0020,1206) IS (no value available)                     #   0, 0 NumberOfStudyRelatedSeries
+INFO  [17-12-2025 21:57:40:633]: (0020,1208) IS (no value available)                     #   0, 0 NumberOfStudyRelatedInstances
+INFO  [17-12-2025 21:57:40:633]: 
+DEBUG [17-12-2025 21:57:40:639]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:57:40:642]: DcmDataset::read() TransferSyntax="Little Endian Explicit"
+INFO  [17-12-2025 21:57:40:642]: Received Find Response 1
+DEBUG [17-12-2025 21:57:40:642]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:40:642]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:40:642]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:40:642]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:40:642]: Data Set                      : present
+DEBUG [17-12-2025 21:57:40:642]: DIMSE Status                  : 0xff00: Pending: Matches are continuing
+DEBUG [17-12-2025 21:57:40:642]: ======================= END DIMSE MESSAGE =======================
+DEBUG [17-12-2025 21:57:40:642]: Response Identifiers:
+DEBUG [17-12-2025 21:57:40:642]: 
+DEBUG [17-12-2025 21:57:40:642]: # Dicom-Data-Set
+DEBUG [17-12-2025 21:57:40:642]: # Used TransferSyntax: Little Endian Explicit
+DEBUG [17-12-2025 21:57:40:642]: (0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+DEBUG [17-12-2025 21:57:40:642]: (0008,0020) DA [20221214]                               #   8, 1 StudyDate
+DEBUG [17-12-2025 21:57:40:642]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+DEBUG [17-12-2025 21:57:40:642]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+DEBUG [17-12-2025 21:57:40:642]: (0008,0054) AE [escapepod]                              #  10, 1 RetrieveAETitle
+DEBUG [17-12-2025 21:57:40:642]: (0008,0061) CS [CT\MR\RTSTRUCT\REG]                     #  18, 4 ModalitiesInStudy
+DEBUG [17-12-2025 21:57:40:642]: (0008,1030) LO [Brain Mets]                             #  10, 1 StudyDescription
+DEBUG [17-12-2025 21:57:40:642]: (0010,0010) PN [LIMBIC_57]                              #  10, 1 PatientName
+DEBUG [17-12-2025 21:57:40:642]: (0010,0020) LO [LIMBIC_57]                              #  10, 1 PatientID
+DEBUG [17-12-2025 21:57:40:642]: (0020,000d) UI [2.16.840.1.114362.1.12072839.23213054100.618021210.557.4707] #  60, 1 StudyInstanceUID
+DEBUG [17-12-2025 21:57:40:642]: (0020,1206) IS [6]                                      #   2, 1 NumberOfStudyRelatedSeries
+DEBUG [17-12-2025 21:57:40:642]: (0020,1208) IS [788]                                    #   4, 1 NumberOfStudyRelatedInstances
+DEBUG [17-12-2025 21:57:40:642]: 
+DEBUG [17-12-2025 21:57:40:642]: DcmItem::convertCharacterSet() creating a new character set converter for 'ISO_IR 100' to 'ISO_IR 192'
+DEBUG [17-12-2025 21:57:40:642]: DcmSpecificCharacterSet: Selected character set 'ISO_IR 100' (ISO-8859-1) for the conversion to UTF-8
+DEBUG [17-12-2025 21:57:40:642]: DcmSpecificCharacterSet: Converting 'Brain Mets'
+DEBUG [17-12-2025 21:57:40:642]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:40:642]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:40:642]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+INFO  [17-12-2025 21:57:40:642]: Received Final Find Response
+DEBUG [17-12-2025 21:57:40:642]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:40:642]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:40:642]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:40:642]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:40:642]: Data Set                      : none
+DEBUG [17-12-2025 21:57:40:642]: DIMSE Status                  : 0x0000: Success: Matching is complete
+DEBUG [17-12-2025 21:57:40:642]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:40:642]: Releasing Association
+DEBUG [17-12-2025 21:57:46:927]: Request Parameters:
+DEBUG [17-12-2025 21:57:46:927]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [17-12-2025 21:57:46:927]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:46:927]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:46:927]: Their Implementation Class UID:    
+DEBUG [17-12-2025 21:57:46:927]: Their Implementation Version Name: 
+DEBUG [17-12-2025 21:57:46:927]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:46:927]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:46:927]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:46:927]: Responding Application Name: 
+DEBUG [17-12-2025 21:57:46:927]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:46:927]: Their Max PDU Receive Size:  0
+DEBUG [17-12-2025 21:57:46:927]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:46:927]:   Context ID:        1 (Proposed)
+DEBUG [17-12-2025 21:57:46:927]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:46:927]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:46:927]:     Proposed Transfer Syntax(es):
+DEBUG [17-12-2025 21:57:46:927]:       =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:46:927]:       =BigEndianExplicit
+DEBUG [17-12-2025 21:57:46:927]:       =LittleEndianImplicit
+DEBUG [17-12-2025 21:57:46:927]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:46:927]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:46:927]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:46:927]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:46:927]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [17-12-2025 21:57:46:927]: Requesting Association
+DEBUG [17-12-2025 21:57:46:927]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:57:46:927]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:57:46:927]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:57:46:927]: PDU Type: Associate Accept, PDU Length: 177 + 6 bytes PDU header
+DEBUG [17-12-2025 21:57:46:927]:   02  00  00  00  00  b1  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:57:46:927]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:57:46:927]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:46:927]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:57:46:927]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:57:46:927]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:57:46:927]:   31  2e  31  21  00  00  1b  01  00  00  00  40  00  00  13  31
+DEBUG [17-12-2025 21:57:46:927]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:57:46:927]:   2e  31  50  00  00  31  51  00  00  04  00  00  40  00  52  00
+DEBUG [17-12-2025 21:57:46:927]:   00  1b  31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38
+DEBUG [17-12-2025 21:57:46:927]:   30  31  30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00
+DEBUG [17-12-2025 21:57:46:927]:   06  4f  53  49  52  49  58
+DEBUG [17-12-2025 21:57:46:927]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:57:46:927]: Association Parameters Negotiated:
+DEBUG [17-12-2025 21:57:46:927]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [17-12-2025 21:57:46:927]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [17-12-2025 21:57:46:927]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [17-12-2025 21:57:46:927]: Their Implementation Class UID:    1.2.276.0.7238010.5.0.3.5.4
+DEBUG [17-12-2025 21:57:46:927]: Their Implementation Version Name: OSIRIX
+DEBUG [17-12-2025 21:57:46:927]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [17-12-2025 21:57:46:927]: Calling Application Name:    SUPERBEAM
+DEBUG [17-12-2025 21:57:46:927]: Called Application Name:     escapepod
+DEBUG [17-12-2025 21:57:46:927]: Responding Application Name: escapepod
+DEBUG [17-12-2025 21:57:46:927]: Our Max PDU Receive Size:    16384
+DEBUG [17-12-2025 21:57:46:927]: Their Max PDU Receive Size:  16384
+DEBUG [17-12-2025 21:57:46:927]: Presentation Contexts:
+DEBUG [17-12-2025 21:57:46:927]:   Context ID:        1 (Accepted)
+DEBUG [17-12-2025 21:57:46:927]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:46:927]:     Proposed SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:46:927]:     Accepted SCP/SCU Role: Default
+DEBUG [17-12-2025 21:57:46:927]:     Accepted Transfer Syntax: =LittleEndianExplicit
+DEBUG [17-12-2025 21:57:46:927]: Requested Extended Negotiation: none
+DEBUG [17-12-2025 21:57:46:927]: Accepted Extended Negotiation:  none
+DEBUG [17-12-2025 21:57:46:927]: Requested User Identity Negotiation: none
+DEBUG [17-12-2025 21:57:46:927]: User Identity Negotiation Response:  none
+DEBUG [17-12-2025 21:57:46:927]: ======================= END A-ASSOCIATE-AC ======================
+INFO  [17-12-2025 21:57:46:927]: Association Accepted (Max Send PDV: 16372)
+INFO  [17-12-2025 21:57:46:927]: Sending Find Request
+DEBUG [17-12-2025 21:57:46:927]: ===================== OUTGOING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:46:927]: Message Type                  : C-FIND RQ
+DEBUG [17-12-2025 21:57:46:927]: Presentation Context ID       : 1
+DEBUG [17-12-2025 21:57:46:927]: Message ID                    : 1
+DEBUG [17-12-2025 21:57:46:927]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:46:927]: Data Set                      : present
+DEBUG [17-12-2025 21:57:46:927]: Priority                      : medium
+DEBUG [17-12-2025 21:57:46:927]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:46:927]: Request Identifiers:
+INFO  [17-12-2025 21:57:46:927]: 
+INFO  [17-12-2025 21:57:46:927]: # Dicom-Data-Set
+INFO  [17-12-2025 21:57:46:927]: # Used TransferSyntax: Little Endian Explicit
+INFO  [17-12-2025 21:57:46:927]: (0008,0020) DA (no value available)                     #   0, 0 StudyDate
+INFO  [17-12-2025 21:57:46:927]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+INFO  [17-12-2025 21:57:46:927]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+INFO  [17-12-2025 21:57:46:927]: (0008,0061) CS (no value available)                     #   0, 0 ModalitiesInStudy
+INFO  [17-12-2025 21:57:46:927]: (0008,1030) LO (no value available)                     #   0, 0 StudyDescription
+INFO  [17-12-2025 21:57:46:927]: (0010,0010) PN (no value available)                     #   0, 0 PatientName
+INFO  [17-12-2025 21:57:46:927]: (0010,0020) LO (no value available)                     #   0, 0 PatientID
+INFO  [17-12-2025 21:57:46:927]: (0020,000d) UI (no value available)                     #   0, 0 StudyInstanceUID
+INFO  [17-12-2025 21:57:46:927]: (0020,1206) IS (no value available)                     #   0, 0 NumberOfStudyRelatedSeries
+INFO  [17-12-2025 21:57:46:927]: (0020,1208) IS (no value available)                     #   0, 0 NumberOfStudyRelatedInstances
+INFO  [17-12-2025 21:57:46:927]: 
+DEBUG [17-12-2025 21:57:46:930]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [17-12-2025 21:57:46:930]: DcmDataset::read() TransferSyntax="Little Endian Explicit"
+INFO  [17-12-2025 21:57:46:930]: Received Find Response 1
+DEBUG [17-12-2025 21:57:46:930]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:46:930]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:46:930]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:46:930]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:46:930]: Data Set                      : present
+DEBUG [17-12-2025 21:57:46:930]: DIMSE Status                  : 0xff00: Pending: Matches are continuing
+DEBUG [17-12-2025 21:57:46:930]: ======================= END DIMSE MESSAGE =======================
+DEBUG [17-12-2025 21:57:46:930]: Response Identifiers:
+DEBUG [17-12-2025 21:57:46:930]: 
+DEBUG [17-12-2025 21:57:46:930]: # Dicom-Data-Set
+DEBUG [17-12-2025 21:57:46:930]: # Used TransferSyntax: Little Endian Explicit
+DEBUG [17-12-2025 21:57:46:930]: (0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+DEBUG [17-12-2025 21:57:46:930]: (0008,0020) DA [20221214]                               #   8, 1 StudyDate
+DEBUG [17-12-2025 21:57:46:930]: (0008,0050) SH (no value available)                     #   0, 0 AccessionNumber
+DEBUG [17-12-2025 21:57:46:930]: (0008,0052) CS [STUDY]                                  #   6, 1 QueryRetrieveLevel
+DEBUG [17-12-2025 21:57:46:930]: (0008,0054) AE [escapepod]                              #  10, 1 RetrieveAETitle
+DEBUG [17-12-2025 21:57:46:930]: (0008,0061) CS [CT\MR\RTSTRUCT\REG]                     #  18, 4 ModalitiesInStudy
+DEBUG [17-12-2025 21:57:46:930]: (0008,1030) LO [Brain Mets]                             #  10, 1 StudyDescription
+DEBUG [17-12-2025 21:57:46:930]: (0010,0010) PN [LIMBIC_57]                              #  10, 1 PatientName
+DEBUG [17-12-2025 21:57:46:930]: (0010,0020) LO [LIMBIC_57]                              #  10, 1 PatientID
+DEBUG [17-12-2025 21:57:46:930]: (0020,000d) UI [2.16.840.1.114362.1.12072839.23213054100.618021210.557.4707] #  60, 1 StudyInstanceUID
+DEBUG [17-12-2025 21:57:46:930]: (0020,1206) IS [6]                                      #   2, 1 NumberOfStudyRelatedSeries
+DEBUG [17-12-2025 21:57:46:930]: (0020,1208) IS [788]                                    #   4, 1 NumberOfStudyRelatedInstances
+DEBUG [17-12-2025 21:57:46:930]: 
+DEBUG [17-12-2025 21:57:46:930]: DcmItem::convertCharacterSet() creating a new character set converter for 'ISO_IR 100' to 'ISO_IR 192'
+DEBUG [17-12-2025 21:57:46:930]: DcmSpecificCharacterSet: Selected character set 'ISO_IR 100' (ISO-8859-1) for the conversion to UTF-8
+DEBUG [17-12-2025 21:57:46:930]: DcmSpecificCharacterSet: Converting 'Brain Mets'
+DEBUG [17-12-2025 21:57:46:930]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:46:930]: DcmSpecificCharacterSet: Converting 'LIMBIC_57'
+DEBUG [17-12-2025 21:57:46:930]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+INFO  [17-12-2025 21:57:46:931]: Received Final Find Response
+DEBUG [17-12-2025 21:57:46:931]: ===================== INCOMING DIMSE MESSAGE ====================
+DEBUG [17-12-2025 21:57:46:931]: Message Type                  : C-FIND RSP
+DEBUG [17-12-2025 21:57:46:931]: Message ID Being Responded To : 1
+DEBUG [17-12-2025 21:57:46:931]: Affected SOP Class UID        : FINDStudyRootQueryRetrieveInformationModel
+DEBUG [17-12-2025 21:57:46:931]: Data Set                      : none
+DEBUG [17-12-2025 21:57:46:931]: DIMSE Status                  : 0x0000: Success: Matching is complete
+DEBUG [17-12-2025 21:57:46:931]: ======================= END DIMSE MESSAGE =======================
+INFO  [17-12-2025 21:57:46:931]: Releasing Association
+DEBUG [17-12-2025 21:58:08:484]: setting network send timeout to 60 seconds
+DEBUG [17-12-2025 21:58:08:485]: setting network receive timeout to 60 seconds
+DEBUG [17-12-2025 21:58:08:485]: Constructing Associate RQ PDU
+DEBUG [17-12-2025 21:58:08:485]: PDU Type: Associate Accept, PDU Length: 175 + 6 bytes PDU header
+DEBUG [17-12-2025 21:58:08:485]:   02  00  00  00  00  af  00  01  00  00  65  73  63  61  70  65
+DEBUG [17-12-2025 21:58:08:485]:   70  6f  64  20  20  20  20  20  20  20  53  55  50  45  52  42
+DEBUG [17-12-2025 21:58:08:485]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [17-12-2025 21:58:08:485]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [17-12-2025 21:58:08:485]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [17-12-2025 21:58:08:485]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [17-12-2025 21:58:08:485]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [17-12-2025 21:58:08:485]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [17-12-2025 21:58:08:485]:   50  00  00  31  51  00  00  04  00  00  40  00  52  00  00  1b
+DEBUG [17-12-2025 21:58:08:485]:   31  2e  32  2e  32  37  36  2e  30  2e  37  32  33  38  30  31
+DEBUG [17-12-2025 21:58:08:485]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  55  00  00  06  4f
+DEBUG [17-12-2025 21:58:08:485]:   53  49  52  49  58
+DEBUG [17-12-2025 21:58:08:485]: Parsing an A-ASSOCIATE PDU
+DEBUG [17-12-2025 21:58:08:487]: DcmDataset::read() TransferSyntax="Little Endian Implicit"

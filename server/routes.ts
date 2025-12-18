@@ -32,6 +32,8 @@ import mem3dRouter from './mem3d-api';
 import monaiRouter from './monai-api';
 import nninteractiveRouter from './nninteractive-api';
 import supersegRouter from './superseg-api';
+import { registerRobustImportRoutes } from './robust-import-routes';
+import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Helper function to check if two polygons overlap
@@ -252,6 +254,10 @@ const upload = multer({
     files: 5000 // Support up to 5000 files per upload
   }
 });
+
+// Max number of files we will parse in a single async parse session.
+// Keep this aligned with multer's `limits.files` to avoid confusing partial parses.
+const MAX_PARSE_SESSION_FILES = 5000;
 
 // In-memory storage for RT structure modifications
 // In production, this would be stored in a database
@@ -1895,8 +1901,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/studies/:id/series", async (req, res) => {
     try {
-      const series = await storage.getSeriesByStudyId(parseInt(req.params.id));
-      res.json(series);
+      const seriesList = await storage.getSeriesByStudyId(parseInt(req.params.id));
+      
+      // Enrich series with frameOfReferenceUID from first image's metadata
+      // This is needed for frontend fusion candidate detection
+      const enrichedSeries = await Promise.all(
+        seriesList.map(async (s) => {
+          // Skip if series already has frameOfReferenceUID in metadata
+          const existingFoR = (s.metadata as any)?.frameOfReferenceUID;
+          if (existingFoR) {
+            return { ...s, frameOfReferenceUID: existingFoR };
+          }
+          
+          // Try to get frameOfReferenceUID from first image
+          try {
+            const images = await storage.getImagesBySeriesId(s.id);
+            if (images.length > 0) {
+              const firstImage = images[0] as any;
+              const foR = firstImage?.frameOfReferenceUID || 
+                         firstImage?.metadata?.frameOfReferenceUID || 
+                         null;
+              if (foR) {
+                return { ...s, frameOfReferenceUID: foR };
+              }
+              
+              // If not in DB, try to parse from DICOM file
+              if (firstImage?.filePath && fs.existsSync(firstImage.filePath)) {
+                try {
+                  const buffer = fs.readFileSync(firstImage.filePath);
+                  const ds = (dicomParser as any).parseDicom(new Uint8Array(buffer), {});
+                  const foRFromFile = ds.string?.('x00200052')?.trim() || null;
+                  if (foRFromFile) {
+                    return { ...s, frameOfReferenceUID: foRFromFile };
+                  }
+                } catch {
+                  // Ignore parse errors
+                }
+              }
+            }
+          } catch {
+            // Ignore errors, return series without enrichment
+          }
+          
+          return s;
+        })
+      );
+      
+      res.json(enrichedSeries);
     } catch (error) {
       console.error('Error fetching series:', error);
       res.status(500).json({ message: "Failed to fetch series" });
@@ -4868,24 +4919,244 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PACS routes  
+  // ============================================
+  // DATA SOURCE / PACS ROUTES
+  // ============================================
+  
+  // Import the data source service
+  const dataSourceService = await import('./data-sources/index');
+  
+  // Get all data sources (PACS connections)
   app.get("/api/pacs", async (req, res) => {
     try {
+      // Ensure the local database source exists
+      await dataSourceService.ensureLocalDatabaseSource();
       const connections = await storage.getAllPacsConnections();
       res.json(connections);
     } catch (error) {
-      console.error('Error fetching PACS connections:', error);
-      res.status(500).json({ message: "Failed to fetch PACS connections" });
+      console.error('Error fetching data sources:', error);
+      res.status(500).json({ message: "Failed to fetch data sources" });
     }
   });
 
+  // Get a single data source
+  app.get("/api/pacs/:pacsId", async (req, res) => {
+    try {
+      const pacsId = parseInt(req.params.pacsId);
+      const connection = await storage.getPacsConnection(pacsId);
+      if (!connection) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      res.json(connection);
+    } catch (error) {
+      console.error('Error fetching data source:', error);
+      res.status(500).json({ message: "Failed to fetch data source" });
+    }
+  });
+
+  // Create a new data source
   app.post("/api/pacs", async (req, res) => {
     try {
       const connection = await storage.createPacsConnection(req.body);
       res.status(201).json(connection);
     } catch (error) {
-      console.error('Error creating PACS connection:', error);
-      res.status(500).json({ message: "Failed to create PACS connection" });
+      console.error('Error creating data source:', error);
+      res.status(500).json({ message: "Failed to create data source" });
+    }
+  });
+
+  // Update a data source
+  app.put("/api/pacs/:pacsId", async (req, res) => {
+    try {
+      const pacsId = parseInt(req.params.pacsId);
+      const existing = await storage.getPacsConnection(pacsId);
+      if (!existing) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      const updated = await storage.updatePacsConnection(pacsId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating data source:', error);
+      res.status(500).json({ message: "Failed to update data source" });
+    }
+  });
+
+  // Delete a data source
+  app.delete("/api/pacs/:pacsId", async (req, res) => {
+    try {
+      const pacsId = parseInt(req.params.pacsId);
+      const existing = await storage.getPacsConnection(pacsId);
+      if (!existing) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      // Don't allow deleting the local database source
+      if (existing.sourceType === 'local_database') {
+        return res.status(400).json({ message: "Cannot delete the local database source" });
+      }
+      await storage.deletePacsConnection(pacsId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting data source:', error);
+      res.status(500).json({ message: "Failed to delete data source" });
+    }
+  });
+
+  // Test a data source connection
+  app.post("/api/pacs/:pacsId/test", async (req, res) => {
+    try {
+      const pacsId = parseInt(req.params.pacsId);
+      const connection = await storage.getPacsConnection(pacsId);
+      
+      if (!connection) {
+        return res.status(404).json({ success: false, message: "Data source not found" });
+      }
+
+      const result = await dataSourceService.testDataSource(connection);
+      
+      // Update the last test result in the database
+      await storage.updatePacsConnection(pacsId, {
+        lastTestedAt: new Date(),
+        lastTestResult: result.success ? 'success' : 'failed',
+      });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error testing data source:', error);
+      res.status(500).json({ success: false, message: error.message || "Failed to test data source" });
+    }
+  });
+
+  // Query a specific data source
+  app.post("/api/pacs/:pacsId/query", async (req, res) => {
+    try {
+      const pacsId = parseInt(req.params.pacsId);
+      const connection = await storage.getPacsConnection(pacsId);
+      
+      if (!connection) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+
+      const queryParams = {
+        patientName: req.body.patientName || undefined,
+        patientID: req.body.patientID || undefined,
+        studyDate: req.body.studyDate || undefined,
+        studyDescription: req.body.studyDescription || undefined,
+        accessionNumber: req.body.accessionNumber || undefined,
+        // Convert "all" to undefined for modality
+        modality: (req.body.modality && req.body.modality !== 'all') ? req.body.modality : undefined,
+        limit: req.body.limit || 100,
+        offset: req.body.offset || 0,
+      };
+
+      const results = await dataSourceService.queryDataSource(connection, queryParams);
+      res.json(results);
+      
+    } catch (error: any) {
+      console.error('Error querying data source:', error);
+      res.status(500).json({ message: error.message || "Failed to query data source" });
+    }
+  });
+
+  // Query all active data sources at once
+  app.post("/api/data-sources/query-all", async (req, res) => {
+    try {
+      const connections = await storage.getAllPacsConnections();
+      const activeConnections = connections.filter(c => c.isActive);
+      
+      const queryParams = {
+        patientName: req.body.patientName || undefined,
+        patientID: req.body.patientID || undefined,
+        studyDate: req.body.studyDate || undefined,
+        studyDescription: req.body.studyDescription || undefined,
+        accessionNumber: req.body.accessionNumber || undefined,
+        modality: (req.body.modality && req.body.modality !== 'all') ? req.body.modality : undefined,
+        limit: req.body.limit || 100,
+        offset: req.body.offset || 0,
+      };
+
+      // Query all sources in parallel
+      const resultsBySource = await Promise.allSettled(
+        activeConnections.map(async (connection) => {
+          try {
+            const results = await dataSourceService.queryDataSource(connection, queryParams);
+            return { sourceId: connection.id, sourceName: connection.name, results };
+          } catch (err: any) {
+            return { sourceId: connection.id, sourceName: connection.name, error: err.message, results: [] };
+          }
+        })
+      );
+
+      // Combine results from all sources
+      const allResults: any[] = [];
+      const sourceInfo: any[] = [];
+      
+      resultsBySource.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          const { sourceId, sourceName, results, error } = result.value;
+          sourceInfo.push({ sourceId, sourceName, count: results.length, error });
+          results.forEach((r: any) => {
+            allResults.push({ ...r, _sourceId: sourceId, _sourceName: sourceName });
+          });
+        } else {
+          const connection = activeConnections[index];
+          sourceInfo.push({ sourceId: connection.id, sourceName: connection.name, count: 0, error: result.reason?.message });
+        }
+      });
+
+      res.json({ results: allResults, sources: sourceInfo });
+      
+    } catch (error: any) {
+      console.error('Error querying all data sources:', error);
+      res.status(500).json({ message: error.message || "Failed to query data sources" });
+    }
+  });
+
+  // Query local database directly (shortcut)
+  app.post("/api/studies/search", async (req, res) => {
+    try {
+      const queryParams = {
+        patientName: req.body.patientName || undefined,
+        patientID: req.body.patientID || undefined,
+        studyDate: req.body.studyDate || undefined,
+        studyDescription: req.body.studyDescription || undefined,
+        accessionNumber: req.body.accessionNumber || undefined,
+        modality: (req.body.modality && req.body.modality !== 'all') ? req.body.modality : undefined,
+        limit: req.body.limit || 100,
+        offset: req.body.offset || 0,
+      };
+
+      const results = await dataSourceService.queryLocalDatabase(queryParams);
+      res.json(results);
+      
+    } catch (error: any) {
+      console.error('Error searching local database:', error);
+      res.status(500).json({ message: error.message || "Failed to search local database" });
+    }
+  });
+
+  // Scan a folder for DICOM files (for import)
+  app.post("/api/scan-folder", async (req, res) => {
+    try {
+      const { folderPath } = req.body;
+      
+      if (!folderPath) {
+        return res.status(400).json({ message: "Folder path is required" });
+      }
+
+      // Create a temporary folder source connection
+      const tempConnection: any = {
+        id: 0,
+        name: 'Folder Scan',
+        sourceType: 'local_folder',
+        folderPath,
+      };
+
+      const results = await dataSourceService.scanLocalFolder(tempConnection, {});
+      res.json(results);
+      
+    } catch (error: any) {
+      console.error('Error scanning folder:', error);
+      res.status(500).json({ message: error.message || "Failed to scan folder" });
     }
   });
 
@@ -5703,13 +5974,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const patientId = parseInt(req.params.patientId);
       const metadata = req.body;
+      const updateDicomFiles = req.query.updateFiles !== 'false'; // Default to true
       
+      // Update database first
       const updated = await storage.updatePatientMetadata(patientId, metadata);
       if (!updated) {
         return res.status(404).json({ error: 'Patient not found' });
       }
       
-      res.json(updated);
+      // If requested, also update the actual DICOM files
+      let dicomUpdateResult = null;
+      if (updateDicomFiles) {
+        try {
+          // Get all studies for this patient
+          const studies = await storage.getStudiesByPatient(patientId);
+          const allFilePaths: string[] = [];
+          
+          // Collect all image file paths
+          for (const study of studies) {
+            const seriesList = await storage.getSeriesByStudyId(study.id);
+            for (const seriesItem of seriesList) {
+              const images = await storage.getImagesBySeriesId(seriesItem.id);
+              for (const image of images) {
+                if (image.filePath && fs.existsSync(image.filePath)) {
+                  allFilePaths.push(image.filePath);
+                }
+              }
+            }
+          }
+          
+          if (allFilePaths.length > 0) {
+            // Prepare DICOM-compatible metadata
+            const dicomMetadata: EditablePatientMetadata = {};
+            if (metadata.patientName !== undefined) dicomMetadata.patientName = metadata.patientName;
+            if (metadata.patientID !== undefined) dicomMetadata.patientID = metadata.patientID;
+            if (metadata.patientSex !== undefined) dicomMetadata.patientSex = metadata.patientSex;
+            if (metadata.patientAge !== undefined) dicomMetadata.patientAge = metadata.patientAge;
+            if (metadata.dateOfBirth !== undefined) dicomMetadata.patientBirthDate = metadata.dateOfBirth;
+            
+            // Batch update all DICOM files
+            console.log(`Updating DICOM metadata in ${allFilePaths.length} files for patient ${patientId}...`);
+            dicomUpdateResult = await DicomMetadataWriter.batchUpdatePatientMetadata(
+              allFilePaths,
+              dicomMetadata,
+              (current, total, result) => {
+                if (!result.success) {
+                  console.warn(`Failed to update file ${current}/${total}: ${result.error}`);
+                }
+              }
+            );
+            
+            console.log(`DICOM file update complete: ${dicomUpdateResult.success} successful, ${dicomUpdateResult.failed} failed`);
+          }
+        } catch (dicomError) {
+          console.error('Error updating DICOM files (database update succeeded):', dicomError);
+          // Continue - database was updated successfully, just log the DICOM file error
+        }
+      }
+      
+      res.json({
+        ...updated,
+        dicomFilesUpdated: dicomUpdateResult ? {
+          success: dicomUpdateResult.success,
+          failed: dicomUpdateResult.failed,
+          totalFiles: (dicomUpdateResult.success || 0) + (dicomUpdateResult.failed || 0)
+        } : null
+      });
     } catch (error) {
       console.error('Error updating patient metadata:', error);
       next(error);
@@ -5899,13 +6229,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const seriesId = parseInt(req.params.seriesId);
       const { description } = req.body;
+      const updateDicomFiles = req.query.updateFiles !== 'false'; // Default to true
       
+      // Update database first
       const updated = await storage.updateSeriesDescription(seriesId, description);
       if (!updated) {
         return res.status(404).json({ error: 'Series not found' });
       }
       
-      res.json(updated);
+      // If requested, also update the actual DICOM files
+      let dicomUpdateResult = null;
+      if (updateDicomFiles && description !== undefined) {
+        try {
+          // Get all images for this series
+          const images = await storage.getImagesBySeriesId(seriesId);
+          const allFilePaths: string[] = [];
+          
+          for (const image of images) {
+            if (image.filePath && fs.existsSync(image.filePath)) {
+              allFilePaths.push(image.filePath);
+            }
+          }
+          
+          if (allFilePaths.length > 0) {
+            const dicomMetadata: EditableSeriesMetadata = { seriesDescription: description };
+            
+            console.log(`Updating series description in ${allFilePaths.length} DICOM files for series ${seriesId}...`);
+            dicomUpdateResult = await DicomMetadataWriter.batchUpdateSeriesMetadata(
+              allFilePaths,
+              dicomMetadata,
+              (current, total, result) => {
+                if (!result.success) {
+                  console.warn(`Failed to update file ${current}/${total}: ${result.error}`);
+                }
+              }
+            );
+            
+            console.log(`DICOM file update complete: ${dicomUpdateResult.success} successful, ${dicomUpdateResult.failed} failed`);
+          }
+        } catch (dicomError) {
+          console.error('Error updating DICOM files (database update succeeded):', dicomError);
+        }
+      }
+      
+      res.json({
+        ...updated,
+        dicomFilesUpdated: dicomUpdateResult ? {
+          success: dicomUpdateResult.success,
+          failed: dicomUpdateResult.failed,
+          totalFiles: (dicomUpdateResult.success || 0) + (dicomUpdateResult.failed || 0)
+        } : null
+      });
     } catch (error) {
       console.error('Error updating series description:', error);
       next(error);
@@ -6198,15 +6572,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate session ID
       const sessionId = `parse-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Create session - handle up to 1000 files
+      // Create session - handle up to MAX_PARSE_SESSION_FILES files
       const session = {
         sessionId,
         uploadSessionId, // Add the uploadSessionId to preserve it for cleanup
         status: 'parsing' as const,
         progress: 0,
-        total: Math.min(files.length, 1000),
+        total: Math.min(files.length, MAX_PARSE_SESSION_FILES),
         startedAt: new Date(),
-        files: files.slice(0, 1000)
+        files: files.slice(0, MAX_PARSE_SESSION_FILES)
       };
       
       parsingSessions.set(sessionId, session);
@@ -6217,8 +6591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         sessionId,
         total: session.total,
-        message: files.length > 1000 
-          ? `Started parsing first 1000 of ${files.length} files from existing upload.`
+        message: files.length > MAX_PARSE_SESSION_FILES
+          ? `Started parsing first ${MAX_PARSE_SESSION_FILES} of ${files.length} files from existing upload. Increase MAX_PARSE_SESSION_FILES to parse more in one session.`
           : `Started parsing ${session.total} files from existing upload`
       });
       
@@ -6286,15 +6660,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate session ID
       const sessionId = `parse-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Create session - handle up to 1000 files
+      // Create session - handle up to MAX_PARSE_SESSION_FILES files
       const session = {
         sessionId,
         uploadSessionId,
         status: 'parsing' as const,
         progress: 0,
-        total: Math.min(allFiles.length, 1000),
+        total: Math.min(allFiles.length, MAX_PARSE_SESSION_FILES),
         startedAt: new Date(),
-        files: allFiles.slice(0, 1000)
+        files: allFiles.slice(0, MAX_PARSE_SESSION_FILES)
       };
       
       parsingSessions.set(sessionId, session);
@@ -6305,8 +6679,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         sessionId,
         total: session.total,
-        message: allFiles.length > 1000 
-          ? `Started parsing first 1000 of ${allFiles.length} files. Please upload remaining files in a separate batch.`
+        message: allFiles.length > MAX_PARSE_SESSION_FILES
+          ? `Started parsing first ${MAX_PARSE_SESSION_FILES} of ${allFiles.length} files. Increase MAX_PARSE_SESSION_FILES to parse more in one session.`
           : `Started parsing ${session.total} files`
       });
       
@@ -6561,6 +6935,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register SuperSeg API routes
   app.use('/api/superseg', supersegRouter);
+
+  // Register Robust Import routes (handles large 20k+ file uploads)
+  registerRobustImportRoutes(app);
 
   return { close: () => {} } as Server;
 }

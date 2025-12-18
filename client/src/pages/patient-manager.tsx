@@ -11,13 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DICOMUploader } from "@/components/dicom/dicom-uploader";
+import { RobustImport } from "@/components/dicom/robust-import";
 import { PatientCard } from "@/components/patient-manager/patient-card";
 import { useParsingSession } from "@/hooks/use-parsing-session";
 import { 
@@ -46,7 +45,8 @@ import {
   X,
   Beaker,
   FlaskConical,
-  Palette
+  Tag,
+  Zap
 } from "lucide-react";
 
 interface Patient {
@@ -78,15 +78,32 @@ interface Study {
 interface PacsConnection {
   id: number;
   name: string;
-  aeTitle: string;
-  hostname: string;
-  port: number;
-  callingAeTitle: string;
-  protocol: string;
+  sourceType: 'local_database' | 'dicomweb' | 'local_folder' | 'dimse';
+  // DIMSE fields
+  aeTitle?: string;
+  hostname?: string;
+  port?: number;
+  callingAeTitle?: string;
+  // DICOMweb fields
+  wadoRoot?: string;
+  qidoRoot?: string;
   wadoUri?: string;
-  qidoUri?: string;
   stowUri?: string;
+  qidoSupportsIncludeField?: boolean;
+  supportsReject?: boolean;
+  supportsStow?: boolean;
+  supportsFuzzyMatching?: boolean;
+  supportsWildcard?: boolean;
+  imageRendering?: string;
+  thumbnailRendering?: string;
+  enableStudyLazyLoad?: boolean;
+  // Local folder fields
+  folderPath?: string;
+  watchFolder?: boolean;
+  // Status
   isActive: boolean;
+  lastTestedAt?: string;
+  lastTestResult?: 'success' | 'failed' | 'pending';
   createdAt: string;
 }
 
@@ -199,16 +216,68 @@ interface PatientFusionOverview {
   debug?: PatientFusionOverviewDebug;
 }
 
-const pacsConnectionSchema = z.object({
+// Data source configuration schema (OHIF-style)
+const dataSourceSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  aeTitle: z.string().min(1, "AE Title is required"),
-  hostname: z.string().min(1, "Hostname is required"),
-  port: z.number().min(1).max(65535, "Port must be between 1 and 65535"),
-  callingAeTitle: z.string().default("DICOM_VIEWER"),
-  protocol: z.enum(["DICOM", "DICOMweb"]).default("DICOM"),
+  sourceType: z.enum(["dicomweb", "local_folder", "dimse"]).default("dicomweb"),
+  // DIMSE fields
+  aeTitle: z.string().optional(),
+  hostname: z.string().optional(),
+  port: z.number().min(1).max(65535).optional(),
+  callingAeTitle: z.string().default("SUPERBEAM"),
+  // DICOMweb fields
+  wadoRoot: z.string().optional(),
+  qidoRoot: z.string().optional(),
   wadoUri: z.string().optional(),
-  qidoUri: z.string().optional(),
   stowUri: z.string().optional(),
+  qidoSupportsIncludeField: z.boolean().default(true),
+  supportsFuzzyMatching: z.boolean().default(true),
+  supportsWildcard: z.boolean().default(true),
+  supportsStow: z.boolean().default(false),
+  // Local folder fields  
+  folderPath: z.string().optional(),
+  watchFolder: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if (data.sourceType === 'dicomweb') {
+    if (!data.qidoRoot) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "QIDO Root URL is required for DICOMweb sources",
+        path: ["qidoRoot"],
+      });
+    }
+  } else if (data.sourceType === 'local_folder') {
+    if (!data.folderPath) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Folder path is required for local folder sources",
+        path: ["folderPath"],
+      });
+    }
+  } else if (data.sourceType === 'dimse') {
+    if (!data.aeTitle) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "AE Title is required for DIMSE sources",
+        path: ["aeTitle"],
+      });
+    }
+    if (!data.hostname) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Hostname is required for DIMSE sources",
+        path: ["hostname"],
+      });
+    }
+    if (!data.port) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Port is required for DIMSE sources",
+        path: ["port"],
+      });
+    }
+  }
 });
 
 const querySchema = z.object({
@@ -504,18 +573,28 @@ export default function PatientManager() {
     }
   }, [fusionPatientId, toast]);
 
-  // PACS connection form
-  const pacsForm = useForm<z.infer<typeof pacsConnectionSchema>>({
-    resolver: zodResolver(pacsConnectionSchema),
+  // Data source form
+  const dataSourceForm = useForm<z.infer<typeof dataSourceSchema>>({
+    resolver: zodResolver(dataSourceSchema),
     defaultValues: {
       name: "",
+      sourceType: "dicomweb",
       aeTitle: "",
       hostname: "",
       port: 104,
-      callingAeTitle: "DICOM_VIEWER",
-      protocol: "DICOM",
+      callingAeTitle: "SUPERBEAM",
+      qidoRoot: "",
+      wadoRoot: "",
+      folderPath: "",
+      qidoSupportsIncludeField: true,
+      supportsFuzzyMatching: true,
+      supportsWildcard: true,
+      isActive: true,
     },
   });
+
+  // Watch source type to show/hide relevant fields
+  const selectedSourceType = dataSourceForm.watch("sourceType");
 
   // Query form
   const queryForm = useForm<z.infer<typeof querySchema>>({
@@ -530,32 +609,56 @@ export default function PatientManager() {
     },
   });
 
-  // Create PACS connection mutation
-  const createPacsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof pacsConnectionSchema>) => {
+  // Create data source mutation
+  const createDataSourceMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof dataSourceSchema>) => {
       const response = await fetch("/api/pacs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create PACS connection");
+      if (!response.ok) throw new Error("Failed to create data source");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pacs"] });
-      pacsForm.reset();
-      toast({ title: "PACS connection created successfully" });
+      dataSourceForm.reset();
+      toast({ title: "Data source created successfully" });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create PACS connection",
+        title: "Failed to create data source",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Test PACS connection mutation
+  // Delete data source mutation
+  const deleteDataSourceMutation = useMutation({
+    mutationFn: async (pacsId: number) => {
+      const response = await fetch(`/api/pacs/${pacsId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete data source");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pacs"] });
+      toast({ title: "Data source deleted" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete data source",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Test data source connection mutation
   const testConnectionMutation = useMutation({
     mutationFn: async (pacsId: number) => {
       const response = await fetch(`/api/pacs/${pacsId}/test`, {
@@ -565,14 +668,13 @@ export default function PatientManager() {
       if (!response.ok) throw new Error("Failed to test connection");
       return response.json();
     },
-    onSuccess: (data: { connected: boolean }, pacsId: number) => {
+    onSuccess: (data: { success: boolean; message: string; responseTime?: number }, pacsId: number) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pacs"] });
       const connection = pacsConnections.find(p => p.id === pacsId);
       toast({
-        title: data.connected ? "Connection successful" : "Connection failed",
-        description: data.connected 
-          ? `Successfully connected to ${connection?.name}` 
-          : `Failed to connect to ${connection?.name}`,
-        variant: data.connected ? "default" : "destructive",
+        title: data.success ? "Connection successful" : "Connection failed",
+        description: data.message + (data.responseTime ? ` (${data.responseTime}ms)` : ''),
+        variant: data.success ? "default" : "destructive",
       });
     },
   });
@@ -770,19 +872,25 @@ export default function PatientManager() {
     study.modality?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreatePacs = (data: z.infer<typeof pacsConnectionSchema>) => {
-    createPacsMutation.mutate(data);
+  const handleCreateDataSource = (data: z.infer<typeof dataSourceSchema>) => {
+    createDataSourceMutation.mutate(data);
   };
 
   const handleTestConnection = (pacsId: number) => {
     testConnectionMutation.mutate(pacsId);
   };
 
-  const handleQueryPacs = (data: z.infer<typeof querySchema>) => {
+  const handleDeleteDataSource = (pacsId: number) => {
+    if (confirm("Are you sure you want to delete this data source?")) {
+      deleteDataSourceMutation.mutate(pacsId);
+    }
+  };
+
+  const handleQueryDataSource = (data: z.infer<typeof querySchema>) => {
     if (!selectedPacs) {
       toast({
-        title: "No PACS selected",
-        description: "Please select a PACS connection first",
+        title: "No data source selected",
+        description: "Please select a data source first",
         variant: "destructive",
       });
       return;
@@ -795,6 +903,22 @@ export default function PatientManager() {
         onSettled: () => setIsQuerying(false),
       }
     );
+  };
+
+  // Helper to get source type icon and label
+  const getSourceTypeInfo = (sourceType: string) => {
+    switch (sourceType) {
+      case 'local_database':
+        return { icon: Database, label: 'Local Database', color: 'text-green-500' };
+      case 'dicomweb':
+        return { icon: Network, label: 'DICOMweb', color: 'text-blue-500' };
+      case 'local_folder':
+        return { icon: FolderDown, label: 'Local Folder', color: 'text-amber-500' };
+      case 'dimse':
+        return { icon: Wifi, label: 'DIMSE', color: 'text-purple-500' };
+      default:
+        return { icon: Network, label: sourceType, color: 'text-gray-500' };
+    }
   };
 
   const handleFileUpload = async (files: File[]) => {
@@ -846,278 +970,298 @@ export default function PatientManager() {
 
   return (
     <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
-      {/* Animation styles for logo */}
-      <style>{`
-        @keyframes superWave {
-          0% { 
-            color: white; 
-            filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
-            transform: translateY(0px);
-          }
-          50% { 
-            color: #06b6d4; 
-            filter: drop-shadow(0 0 12px #06b6d4);
-            transform: translateY(-3px);
-          }
-          100% { 
-            color: white; 
-            filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
-            transform: translateY(0px);
-          }
-        }
-        @keyframes beamWave {
-          0% { 
-            filter: drop-shadow(0 0 6px currentColor);
-            transform: translateY(0px);
-          }
-          50% { 
-            filter: drop-shadow(0 0 14px currentColor);
-            transform: translateY(-3px);
-          }
-          100% { 
-            filter: drop-shadow(0 0 6px currentColor);
-            transform: translateY(0px);
-          }
-        }
-        .letter-s { animation: superWave 1s ease-in-out forwards; }
-        .letter-u { animation: superWave 1s ease-in-out forwards 0.08s; }
-        .letter-p { animation: superWave 1s ease-in-out forwards 0.16s; }
-        .letter-e1 { animation: superWave 1s ease-in-out forwards 0.24s; }
-        .letter-r { animation: superWave 1s ease-in-out forwards 0.32s; }
-        .letter-b { color: #06b6d4; animation: beamWave 1s ease-in-out forwards 0.4s; }
-        .letter-e2 { color: #ec4899; animation: beamWave 1s ease-in-out forwards 0.48s; }
-        .letter-a { color: #f97316; animation: beamWave 1s ease-in-out forwards 0.56s; }
-        .letter-m { color: #fbbf24; animation: beamWave 1s ease-in-out forwards 0.64s; }
-      `}</style>
-
-      {/* Fixed Topbar */}
-      <header className="fixed top-4 left-4 right-4 z-50 bg-gray-950/95 backdrop-blur-xl border border-gray-700/50 rounded-xl px-5 py-2.5 shadow-xl">
+      {/* Header matching viewer interface */}
+      <header className="fixed top-4 left-4 right-4 bg-gray-950/95 backdrop-blur-xl border border-gray-700/50 rounded-xl px-5 py-2.5 z-50 shadow-xl">
         <div className="flex items-center justify-between w-full">
           {/* Left: Logo */}
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl tracking-wider" style={{ letterSpacing: '0.1em', fontFamily: "'Doto', monospace", fontWeight: 900 }}>
-                <span className="letter-s inline-block">S</span>
-                <span className="letter-u inline-block">U</span>
-                <span className="letter-p inline-block">P</span>
-                <span className="letter-e1 inline-block">E</span>
-                <span className="letter-r inline-block">R</span>
-                <span className="letter-b inline-block">B</span>
-                <span className="letter-e2 inline-block">E</span>
-                <span className="letter-a inline-block">A</span>
-                <span className="letter-m inline-block">M</span>
-              </h1>
+                <style>{`
+                  @keyframes superWave {
+                    0% { 
+                      color: white; 
+                      filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+                      transform: translateY(0px);
+                    }
+                    50% { 
+                      color: #06b6d4; 
+                      filter: drop-shadow(0 0 12px #06b6d4);
+                      transform: translateY(-3px);
+                    }
+                    100% { 
+                      color: white; 
+                      filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+                      transform: translateY(0px);
+                    }
+                  }
+                  @keyframes beamWave {
+                    0% { 
+                      filter: drop-shadow(0 0 6px currentColor);
+                      transform: translateY(0px);
+                    }
+                    50% { 
+                      filter: drop-shadow(0 0 14px currentColor);
+                      transform: translateY(-3px);
+                    }
+                    100% { 
+                      filter: drop-shadow(0 0 6px currentColor);
+                      transform: translateY(0px);
+                    }
+                  }
+                  .letter-s { animation: superWave 1s ease-in-out forwards; }
+                  .letter-u { animation: superWave 1s ease-in-out forwards 0.08s; }
+                  .letter-p { animation: superWave 1s ease-in-out forwards 0.16s; }
+                  .letter-e1 { animation: superWave 1s ease-in-out forwards 0.24s; }
+                  .letter-r { animation: superWave 1s ease-in-out forwards 0.32s; }
+                  .letter-b { color: #06b6d4; animation: beamWave 1s ease-in-out forwards 0.4s; }
+                  .letter-e2 { color: #ec4899; animation: beamWave 1s ease-in-out forwards 0.48s; }
+                  .letter-a { color: #f97316; animation: beamWave 1s ease-in-out forwards 0.56s; }
+                  .letter-m { color: #fbbf24; animation: beamWave 1s ease-in-out forwards 0.64s; }
+                `}</style>
+                <h1 className="text-2xl tracking-wider" style={{ letterSpacing: '0.1em', fontFamily: "'Doto', monospace", fontWeight: 900 }}>
+                  <span className="letter-s inline-block">S</span>
+                  <span className="letter-u inline-block">U</span>
+                  <span className="letter-p inline-block">P</span>
+                  <span className="letter-e1 inline-block">E</span>
+                  <span className="letter-r inline-block">R</span>
+                  <span className="letter-b inline-block">B</span>
+                  <span className="letter-e2 inline-block">E</span>
+                  <span className="letter-a inline-block">A</span>
+                  <span className="letter-m inline-block">M</span>
+                </h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Link href="/prototypes">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 px-3 text-white/90 hover:text-purple-400 hover:bg-purple-600/20 hover:border-purple-500/50 hover:shadow-md hover:shadow-purple-500/20 border border-transparent rounded-lg transition-all duration-200"
+                >
+                  <Beaker className="h-4 w-4 mr-1.5" />
+                  <span className="text-sm font-medium">Prototypes</span>
+                </Button>
+              </Link>
+              <Link href="/ohif-prototypes">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 px-3 text-white/90 hover:text-cyan-400 hover:bg-cyan-600/20 hover:border-cyan-500/50 hover:shadow-md hover:shadow-cyan-500/20 border border-transparent rounded-lg transition-all duration-200"
+                >
+                  <FlaskConical className="h-4 w-4 mr-1.5" />
+                  <span className="text-sm font-medium">OHIF</span>
+                </Button>
+              </Link>
+              <Link href="/introducing">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 px-3 text-white/90 hover:text-amber-400 hover:bg-amber-600/20 hover:border-amber-500/50 hover:shadow-md hover:shadow-amber-500/20 border border-transparent rounded-lg transition-all duration-200"
+                >
+                  <span className="text-sm font-medium">✨ Intro</span>
+                </Button>
+              </Link>
             </div>
           </div>
-          
-          {/* Center: Search Bar */}
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search patients, studies..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-9 w-full bg-black/30 border border-gray-700/50 text-white placeholder:text-gray-500 
-                       focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 rounded-lg
-                       transition-all duration-200 text-sm"
-            />
-          </div>
+        </header>
 
-          {/* Right: Quick Links */}
-          <div className="flex items-center gap-2">
-            <Link href="/prototypes">
-              <Button variant="ghost" size="sm" className="h-8 px-3 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20">
-                <Beaker className="w-4 h-4 mr-1.5" />
-                Prototypes
-              </Button>
-            </Link>
-            <Link href="/introducing">
-              <Button variant="ghost" size="sm" className="h-8 px-3 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20">
-                ✨ Intro
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Main layout with content and sidebar */}
+      <div className="flex flex-1 pt-20 overflow-hidden">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {/* Unified Control Panel with proper height management */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="relative flex flex-col h-full overflow-hidden">
+            <div className="px-4 pt-3 pb-2 flex-shrink-0 space-y-2">
+              {/* Navigation Tabs */}
+              <TabsList className="flex w-full h-12 items-center justify-between rounded-lg bg-gray-900/80 p-1 border border-gray-700/40">
+                <TabsTrigger value="patients" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-indigo-500/20 data-[state=active]:text-indigo-200 data-[state=active]:border-indigo-400/60 data-[state=active]:shadow-[0_0_12px_rgba(99,102,241,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <User className="h-4 w-4" />
+                  Patients
+                </TabsTrigger>
+                <TabsTrigger value="import" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-200 data-[state=active]:border-purple-400/60 data-[state=active]:shadow-[0_0_12px_rgba(168,85,247,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <Upload className="h-4 w-4" />
+                  Import
+                  {hasActiveParsingSession && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
+                  {!hasActiveParsingSession && hasPendingData && <span className="w-2 h-2 bg-amber-400 rounded-full" />}
+                </TabsTrigger>
+                <TabsTrigger value="pacs" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-200 data-[state=active]:border-blue-400/60 data-[state=active]:shadow-[0_0_12px_rgba(59,130,246,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <Database className="h-4 w-4" />
+                  Sources
+                </TabsTrigger>
+                <TabsTrigger value="query" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-200 data-[state=active]:border-cyan-400/60 data-[state=active]:shadow-[0_0_12px_rgba(34,211,238,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <Search className="h-4 w-4" />
+                  Query
+                </TabsTrigger>
+                <TabsTrigger value="fusion" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-200 data-[state=active]:border-orange-400/60 data-[state=active]:shadow-[0_0_12px_rgba(251,146,60,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <Merge className="h-4 w-4" />
+                  Fusion
+                </TabsTrigger>
+                <TabsTrigger value="metadata" className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 h-10 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-200 data-[state=active]:border-emerald-400/60 data-[state=active]:shadow-[0_0_12px_rgba(52,211,153,0.4)] text-gray-400 hover:text-white hover:bg-white/5">
+                  <FileText className="h-4 w-4" />
+                  Metadata
+                </TabsTrigger>
+              </TabsList>
 
-      {/* Main Layout */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden pt-20">
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left Content Area */}
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {/* Tab Navigation Bar */}
-            <div className="px-4 pt-4 pb-2 flex-shrink-0">
-              <div className="bg-gray-900/80 backdrop-blur-xl border border-gray-700/40 rounded-xl p-2">
-                <TabsList className="flex bg-transparent gap-1 w-full">
-                  <TabsTrigger value="patients" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <User className="h-4 w-4" />
-                    Patients
-                  </TabsTrigger>
-                  <TabsTrigger value="import" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <Upload className="h-4 w-4" />
-                    Import
-                    {hasActiveParsingSession && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
-                  </TabsTrigger>
-                  <TabsTrigger value="pacs" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <Network className="h-4 w-4" />
-                    PACS
-                  </TabsTrigger>
-                  <TabsTrigger value="query" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <Database className="h-4 w-4" />
-                    Query
-                  </TabsTrigger>
-                  <TabsTrigger value="fusion" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <Merge className="h-4 w-4" />
-                    Fusion
-                  </TabsTrigger>
-                  <TabsTrigger value="metadata" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-indigo-600/20 data-[state=active]:text-white data-[state=active]:border-indigo-500/50 text-gray-400 hover:text-gray-200 rounded-lg transition-all py-2 px-3 hover:bg-white/5 text-sm font-medium border border-transparent">
-                    <FileText className="h-4 w-4" />
-                    Metadata
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              
-              {/* Tag Filters */}
-              {uniqueTags.length > 0 && (
-                <div className="bg-gray-900/60 border border-gray-700/30 rounded-lg p-2 mt-2">
-                  <div className="flex gap-1.5 items-center flex-wrap">
-                    <span className="text-xs text-gray-500 uppercase tracking-wider mr-2">Tags:</span>
-                    {uniqueTags.map(tag => {
-                      // Define tag colors based on tag type - matching patient card colors
-                      const getTagStyle = (tagName: string) => {
-                        const lower = tagName.toLowerCase();
-                        if (lower.includes('head') || lower.includes('brain')) {
-                          return {
-                            base: 'bg-purple-500/10 border-purple-500/30 text-purple-300 hover:bg-purple-500/20',
-                            selected: 'bg-purple-600/30 border-purple-500 text-purple-100 shadow-lg shadow-purple-500/20'
-                          };
-                        } else if (lower.includes('chest') || lower.includes('thorax') || lower.includes('lung')) {
-                          return {
-                            base: 'bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20',
-                            selected: 'bg-blue-600/30 border-blue-500 text-blue-100 shadow-lg shadow-blue-500/20'
-                          };
-                        } else if (lower.includes('abdomen') || lower.includes('pelvis')) {
-                          return {
-                            base: 'bg-green-500/10 border-green-500/30 text-green-300 hover:bg-green-500/20',
-                            selected: 'bg-green-600/30 border-green-500 text-green-100 shadow-lg shadow-green-500/20'
-                          };
-                        } else if (lower.includes('spine') || lower.includes('neck')) {
-                          return {
-                            base: 'bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20',
-                            selected: 'bg-orange-600/30 border-orange-500 text-orange-100 shadow-lg shadow-orange-500/20'
-                          };
-                        } else if (lower.includes('contrast') || lower.includes('gad')) {
-                          return {
-                            base: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/20',
-                            selected: 'bg-yellow-600/30 border-yellow-500 text-yellow-100 shadow-lg shadow-yellow-500/20'
-                          };
-                        } else if (lower.includes('emergency') || lower.includes('urgent')) {
-                          return {
-                            base: 'bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20',
-                            selected: 'bg-red-600/30 border-red-500 text-red-100 shadow-lg shadow-red-500/20'
-                          };
-                        } else {
-                          return {
-                            base: 'bg-gray-500/10 border-gray-500/30 text-gray-300 hover:bg-gray-500/20',
-                            selected: 'bg-indigo-600/30 border-indigo-500 text-indigo-100 shadow-lg shadow-indigo-500/20'
-                          };
-                        }
-                      };
-                      
-                      const style = getTagStyle(tag);
-                      const isSelected = selectedTags.includes(tag);
-                      
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedTags(selectedTags.filter(t => t !== tag));
-                            } else {
-                              setSelectedTags([...selectedTags, tag]);
-                            }
-                          }}
-                          className={`px-2.5 py-1 rounded-md border transition-all duration-200 text-xs font-medium ${
-                            isSelected ? style.selected : style.base
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
+            </div>
+
+            {/* Tab Content Container */}
+            <div className="flex-1 relative overflow-hidden">
+              {/* Patients Tab Content */}
+              <TabsContent value="patients" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              {/* Fixed Search & Filter Card */}
+              <div className="flex-shrink-0 px-4 pt-3 pb-3">
+                <div className="bg-[#0d1f24] border border-cyan-700/40 rounded-xl overflow-hidden shadow-xl">
+                  {/* Header Row */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-white font-semibold text-base">Patient Database</span>
+                    <Badge variant="outline" className="border-cyan-600/50 text-cyan-300 bg-cyan-500/15 px-2.5 py-0.5 text-xs font-medium rounded-md">
+                      {filteredPatients.length} / {patients.length}
+                    </Badge>
+                  </div>
+                  
+                  {/* Search Row */}
+                  <div className="px-4 pb-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search patients by name, ID, or study..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 h-10 w-full bg-[#081518] border border-cyan-800/40 text-white placeholder:text-gray-500 
+                                 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:shadow-[0_0_12px_rgba(34,211,238,0.15)] rounded-lg
+                                 transition-all duration-200 text-sm focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Quick Tags */}
+                  <div className="px-4 pb-4">
                     {selectedTags.length > 0 && (
-                      <button
-                        onClick={() => setSelectedTags([])}
-                        className="text-gray-500 hover:text-gray-300 text-xs ml-2"
-                      >
-                        Clear all
-                      </button>
+                      <div className="flex justify-end mb-2">
+                        <button
+                          onClick={() => setSelectedTags([])}
+                          className="text-[10px] text-red-400 hover:text-red-300 font-medium flex items-center gap-1"
+                        >
+                          <X className="h-3 w-3" />
+                          Clear filters
+                        </button>
+                      </div>
+                    )}
+                    {uniqueTags.length > 0 ? (
+                      <div className="flex gap-1.5 flex-wrap">
+                        {uniqueTags.map(tag => {
+                          const getTagStyle = (tagName: string) => {
+                            const lower = tagName.toLowerCase();
+                            if (lower.includes('head') || lower.includes('brain')) {
+                              return { 
+                                base: 'bg-purple-500/10 border-purple-500/30 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400/50', 
+                                selected: 'bg-purple-500/30 border-purple-400 text-purple-100 shadow-[0_0_8px_rgba(168,85,247,0.3)]' 
+                              };
+                            } else if (lower.includes('chest') || lower.includes('thorax') || lower.includes('lung')) {
+                              return { 
+                                base: 'bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400/50', 
+                                selected: 'bg-blue-500/30 border-blue-400 text-blue-100 shadow-[0_0_8px_rgba(59,130,246,0.3)]' 
+                              };
+                            } else if (lower.includes('abdomen') || lower.includes('pelvis')) {
+                              return { 
+                                base: 'bg-green-500/10 border-green-500/30 text-green-300 hover:bg-green-500/20 hover:border-green-400/50', 
+                                selected: 'bg-green-500/30 border-green-400 text-green-100 shadow-[0_0_8px_rgba(34,197,94,0.3)]' 
+                              };
+                            } else if (lower.includes('spine') || lower.includes('neck')) {
+                              return { 
+                                base: 'bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20 hover:border-orange-400/50', 
+                                selected: 'bg-orange-500/30 border-orange-400 text-orange-100 shadow-[0_0_8px_rgba(251,146,60,0.3)]' 
+                              };
+                            } else {
+                              return { 
+                                base: 'bg-gray-500/10 border-gray-500/30 text-gray-300 hover:bg-gray-500/20 hover:border-gray-400/50', 
+                                selected: 'bg-indigo-500/30 border-indigo-400 text-indigo-100 shadow-[0_0_8px_rgba(99,102,241,0.3)]' 
+                              };
+                            }
+                          };
+                          const style = getTagStyle(tag);
+                          const isSelected = selectedTags.includes(tag);
+                          
+                          return (
+                            <button
+                              key={tag}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedTags(selectedTags.filter(t => t !== tag));
+                                } else {
+                                  setSelectedTags([...selectedTags, tag]);
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-md border transition-all duration-200 text-xs font-medium ${
+                                isSelected ? style.selected : style.base
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500 italic py-1">
+                        No tags yet. Add tags to patients for quick filtering.
+                      </div>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {/* Patients Tab */}
-            <TabsContent value="patients" className="space-y-4 pt-4">
+              {/* Scrollable Patient List */}
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
+
             {/* Selection Actions Bar */}
             {selectedPatients.size > 0 && (
-              <div className="mb-4 animate-in slide-in-from-top-2 duration-200">
-                <div className="bg-gradient-to-r from-indigo-600/10 to-purple-600/10 backdrop-blur-xl border border-indigo-500/30 rounded-xl p-4 shadow-2xl shadow-black/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-indigo-500/20 p-2 rounded-lg">
-                        <CheckSquare className="h-5 w-5 text-indigo-400" />
-                      </div>
-                      <div>
-                        <span className="text-white font-semibold text-sm">
-                          {selectedPatients.size} patient{selectedPatients.size !== 1 ? 's' : ''} selected
-                        </span>
-                        <p className="text-gray-400 text-xs">Choose an action below</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleExport}
-                        className="bg-black/30 border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/20 hover:text-indigo-200 transition-all"
-                      >
-                        <FolderDown className="h-4 w-4 mr-2" />
-                        Export
-                      </Button>
-                      {selectedPatients.size >= 2 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleMerge}
-                          className="bg-black/30 border-purple-500/50 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200 transition-all"
-                        >
-                          <Merge className="h-4 w-4 mr-2" />
-                          Merge
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDeleteSelected}
-                        className="bg-black/30 border-red-500/50 text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-all"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
-                      <div className="w-px h-6 bg-gray-600/50 mx-1" />
+              <div className="mb-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center justify-between h-10 bg-gray-900/80 backdrop-blur-xl border border-indigo-500/40 rounded-lg px-3">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-indigo-400" />
+                    <span className="text-indigo-200 font-medium text-sm">
+                      {selectedPatients.size} selected
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleExport}
+                      className="h-7 px-2.5 text-xs text-gray-300 hover:text-white hover:bg-indigo-500/20"
+                    >
+                      <FolderDown className="h-3.5 w-3.5 mr-1.5" />
+                      Export
+                    </Button>
+                    {selectedPatients.size >= 2 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedPatients(new Set())}
-                        className="text-gray-400 hover:text-white hover:bg-gray-800/50"
+                        onClick={handleMerge}
+                        className="h-7 px-2.5 text-xs text-gray-300 hover:text-white hover:bg-purple-500/20"
                       >
-                        <X className="h-4 w-4" />
+                        <Merge className="h-3.5 w-3.5 mr-1.5" />
+                        Merge
                       </Button>
-                    </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDeleteSelected}
+                      className="h-7 px-2.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      Delete
+                    </Button>
+                    <div className="w-px h-5 bg-gray-700/60 mx-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedPatients(new Set())}
+                      className="h-7 w-7 p-0 text-gray-500 hover:text-white hover:bg-gray-700/50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1190,51 +1334,46 @@ export default function PatientManager() {
                 })}
               </div>
             )}
-          </TabsContent>
-
-
+              </div>
+            </TabsContent>
 
             {/* Import DICOM Tab */}
-            <TabsContent value="import" className="space-y-4 p-4">
-            <Card className="bg-gray-900/80 border border-gray-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Upload className="h-5 w-5 text-purple-400" />
-                  Import DICOM Files
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Upload DICOM files to parse metadata and import into the database. 
-                  Supports CT, MRI, PET/CT, RT Structure Sets, Dose, and Plan files.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DICOMUploader />
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="import" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-semibold text-white">Import DICOM Files</h2>
+                  <span className="text-xs text-gray-500">Upload and parse DICOM data from your computer</span>
+                </div>
+                <RobustImport />
+              </div>
+            </TabsContent>
 
-            {/* PACS Tab */}
-            <TabsContent value="pacs" className="space-y-4 p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">PACS Connections</h3>
+            {/* Data Sources Tab */}
+            <TabsContent value="pacs" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-white">Data Sources</h2>
+                <span className="text-xs text-gray-500">Configure DICOM data sources and PACS connections</span>
+              </div>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button>
                     <Network className="h-4 w-4 mr-2" />
-                    Add PACS
+                    Add Data Source
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Add PACS Connection</DialogTitle>
+                    <DialogTitle>Add Data Source</DialogTitle>
                     <DialogDescription>
-                      Configure a new PACS connection for DICOM networking.
+                      Configure a new DICOM data source. Supports DICOMweb servers, DIMSE PACS, and local folders.
                     </DialogDescription>
                   </DialogHeader>
-                  <Form {...pacsForm}>
-                    <form onSubmit={pacsForm.handleSubmit(handleCreatePacs)} className="space-y-4">
+                  <Form {...dataSourceForm}>
+                    <form onSubmit={dataSourceForm.handleSubmit(handleCreateDataSource)} className="space-y-4">
                       <FormField
-                        control={pacsForm.control}
+                        control={dataSourceForm.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
@@ -1247,76 +1386,221 @@ export default function PatientManager() {
                         )}
                       />
                       <FormField
-                        control={pacsForm.control}
-                        name="aeTitle"
+                        control={dataSourceForm.control}
+                        name="sourceType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>AE Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="PACS_SERVER" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={pacsForm.control}
-                        name="hostname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Hostname</FormLabel>
-                            <FormControl>
-                              <Input placeholder="pacs.hospital.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={pacsForm.control}
-                        name="port"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Port</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="104" 
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 104)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={pacsForm.control}
-                        name="protocol"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Protocol</FormLabel>
+                            <FormLabel>Source Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select protocol" />
+                                  <SelectValue placeholder="Select source type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="DICOM">DICOM (DIMSE)</SelectItem>
-                                <SelectItem value="DICOMweb">DICOMweb (WADO/QIDO/STOW)</SelectItem>
+                                <SelectItem value="dicomweb">DICOMweb (WADO/QIDO/STOW)</SelectItem>
+                                <SelectItem value="dimse">DIMSE (C-FIND/C-MOVE/C-ECHO)</SelectItem>
+                                <SelectItem value="local_folder">Local Folder</SelectItem>
                               </SelectContent>
                             </Select>
+                            <FormDescription>
+                              Choose the protocol for connecting to your DICOM source.
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
+                      {/* DICOMweb fields */}
+                      {selectedSourceType === 'dicomweb' && (
+                        <>
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="qidoRoot"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>QIDO Root URL</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://pacs.example.com/dicom-web" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Base URL for QIDO-RS queries (e.g., /studies)
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="wadoRoot"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>WADO Root URL (optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Same as QIDO if blank" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Base URL for WADO-RS retrieval. Leave blank to use QIDO URL.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={dataSourceForm.control}
+                              name="supportsFuzzyMatching"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Fuzzy Matching</FormLabel>
+                                  </div>
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={dataSourceForm.control}
+                              name="supportsWildcard"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Wildcards</FormLabel>
+                                  </div>
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* DIMSE fields */}
+                      {selectedSourceType === 'dimse' && (
+                        <>
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="aeTitle"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>AE Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="PACS_SERVER" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={dataSourceForm.control}
+                              name="hostname"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Hostname</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="pacs.hospital.com" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={dataSourceForm.control}
+                              name="port"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Port</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="104" 
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 104)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="callingAeTitle"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Calling AE Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="SUPERBEAM" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Your local AE title (the caller)
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
+                      {/* Local folder fields */}
+                      {selectedSourceType === 'local_folder' && (
+                        <>
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="folderPath"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Folder Path</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="/path/to/dicom/files" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Absolute path to a folder containing DICOM files on the server.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={dataSourceForm.control}
+                            name="watchFolder"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                <div className="space-y-0.5">
+                                  <FormLabel>Watch for Changes</FormLabel>
+                                  <FormDescription>
+                                    Auto-import new DICOM files
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Checkbox 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
                       <Button 
                         type="submit" 
                         className="w-full" 
-                        disabled={createPacsMutation.isPending}
+                        disabled={createDataSourceMutation.isPending}
                       >
-                        {createPacsMutation.isPending ? "Creating..." : "Create Connection"}
+                        {createDataSourceMutation.isPending ? "Creating..." : "Create Data Source"}
                       </Button>
                     </form>
                   </Form>
@@ -1325,152 +1609,301 @@ export default function PatientManager() {
             </div>
 
             {pacsLoading ? (
-              <div className="text-center py-8">Loading PACS connections...</div>
+              <div className="text-center py-8">Loading data sources...</div>
             ) : pacsConnections.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <Network className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No PACS connections configured</p>
+                  <p className="text-gray-500">No data sources configured</p>
+                  <p className="text-xs text-gray-400 mt-2">Add a DICOMweb server, DIMSE PACS, or local folder</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {pacsConnections.map((connection) => (
-                  <Card key={connection.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {connection.isActive ? (
-                            <Wifi className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <WifiOff className="h-5 w-5 text-red-500" />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {pacsConnections.map((connection) => {
+                  const sourceInfo = getSourceTypeInfo(connection.sourceType);
+                  const SourceIcon = sourceInfo.icon;
+                  const isLocalDb = connection.sourceType === 'local_database';
+                  
+                  return (
+                    <Card 
+                      key={connection.id} 
+                      className={`hover:shadow-lg transition-all ${selectedPacs === connection.id ? 'ring-2 ring-primary' : ''}`}
+                    >
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center justify-between text-base">
+                          <div className="flex items-center gap-2">
+                            <SourceIcon className={`h-5 w-5 ${sourceInfo.color}`} />
+                            {connection.name}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {connection.lastTestResult === 'success' && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                                <Wifi className="h-3 w-3 mr-1" />
+                                Online
+                              </Badge>
+                            )}
+                            {connection.lastTestResult === 'failed' && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30">
+                                <WifiOff className="h-3 w-3 mr-1" />
+                                Offline
+                              </Badge>
+                            )}
+                            {!connection.lastTestResult && (
+                              <Badge variant="outline" className="text-gray-500">
+                                Not tested
+                              </Badge>
+                            )}
+                          </div>
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          {connection.sourceType === 'dicomweb' && (
+                            <span className="font-mono">{connection.qidoRoot || 'No URL configured'}</span>
                           )}
-                          {connection.name}
+                          {connection.sourceType === 'dimse' && (
+                            <span>{connection.aeTitle} @ {connection.hostname}:{connection.port}</span>
+                          )}
+                          {connection.sourceType === 'local_folder' && (
+                            <span className="font-mono">{connection.folderPath}</span>
+                          )}
+                          {connection.sourceType === 'local_database' && (
+                            <span>Built-in SQLite database with imported studies</span>
+                          )}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-2">
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestConnection(connection.id)}
+                            disabled={testConnectionMutation.isPending}
+                          >
+                            <Activity className="h-3 w-3 mr-1" />
+                            Test
+                          </Button>
+                          <Button
+                            variant={selectedPacs === connection.id ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPacs(connection.id);
+                              setActiveTab("query");
+                            }}
+                          >
+                            <Search className="h-3 w-3 mr-1" />
+                            Query
+                          </Button>
+                          {!isLocalDb && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteDataSource(connection.id)}
+                              disabled={deleteDataSourceMutation.isPending}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
-                        <Badge variant="outline">{connection.protocol}</Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        {connection.aeTitle} @ {connection.hostname}:{connection.port}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleTestConnection(connection.id)}
-                          disabled={testConnectionMutation.isPending}
-                        >
-                          <Activity className="h-4 w-4 mr-2" />
-                          Test
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedPacs(connection.id)}
-                          disabled={selectedPacs === connection.id}
-                        >
-                          {selectedPacs === connection.id ? "Selected" : "Select"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
-          </TabsContent>
+              </div>
+            </TabsContent>
 
             {/* Query Tab */}
-            <TabsContent value="query" className="space-y-4 p-4">
+            <TabsContent value="query" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-semibold text-white">Query DICOM Sources</h2>
+                  <span className="text-xs text-gray-500">Search and retrieve studies from external sources</span>
+                </div>
+            {/* Source indicator */}
+            {selectedPacs && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+                {(() => {
+                  const connection = pacsConnections.find(c => c.id === selectedPacs);
+                  if (!connection) return null;
+                  const info = getSourceTypeInfo(connection.sourceType);
+                  const Icon = info.icon;
+                  return (
+                    <>
+                      <Icon className={`h-4 w-4 ${info.color}`} />
+                      <span className="text-sm font-medium">Querying: {connection.name}</span>
+                      <Badge variant="outline" className="text-xs">{info.label}</Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="ml-auto"
+                        onClick={() => setSelectedPacs(null)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+            
             <div className="grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>DICOM Query</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    DICOM Query
+                  </CardTitle>
                   <CardDescription>
-                    Query PACS for studies using C-FIND or QIDO-RS
+                    {selectedPacs ? 'Search for studies in the selected data source' : 'Select a data source to begin querying'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {!selectedPacs ? (
-                    <div className="text-center py-8">
-                      <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Select a PACS connection first</p>
+                    <div className="space-y-4">
+                      <div className="text-center py-4">
+                        <Database className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm">Select a data source to query</p>
+                      </div>
+                      <div className="space-y-2">
+                        {pacsConnections.map((connection) => {
+                          const info = getSourceTypeInfo(connection.sourceType);
+                          const Icon = info.icon;
+                          return (
+                            <Button
+                              key={connection.id}
+                              variant="outline"
+                              className="w-full justify-start"
+                              onClick={() => setSelectedPacs(connection.id)}
+                            >
+                              <Icon className={`h-4 w-4 mr-2 ${info.color}`} />
+                              {connection.name}
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {info.label}
+                              </Badge>
+                            </Button>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <Form {...queryForm}>
-                      <form onSubmit={queryForm.handleSubmit(handleQueryPacs)} className="space-y-4">
-                        <FormField
-                          control={queryForm.control}
-                          name="patientName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Patient Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Smith^John" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={queryForm.control}
-                          name="patientID"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Patient ID</FormLabel>
-                              <FormControl>
-                                <Input placeholder="12345" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={queryForm.control}
-                          name="studyDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Study Date</FormLabel>
-                              <FormControl>
-                                <Input placeholder="20240101" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Format: YYYYMMDD or date range YYYYMMDD-YYYYMMDD
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={queryForm.control}
-                          name="modality"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Modality</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <form onSubmit={queryForm.handleSubmit(handleQueryDataSource)} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={queryForm.control}
+                            name="patientName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Patient Name</FormLabel>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="All modalities" />
-                                  </SelectTrigger>
+                                  <Input placeholder="Smith*" {...field} />
                                 </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="">All modalities</SelectItem>
-                                  <SelectItem value="CT">CT</SelectItem>
-                                  <SelectItem value="MR">MR</SelectItem>
-                                  <SelectItem value="PT">PT</SelectItem>
-                                  <SelectItem value="CR">CR</SelectItem>
-                                  <SelectItem value="DX">DX</SelectItem>
-                                  <SelectItem value="US">US</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={queryForm.control}
+                            name="patientID"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Patient ID</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="12345" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={queryForm.control}
+                          name="studyDescription"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Study Description</FormLabel>
+                              <FormControl>
+                                <Input placeholder="CT Chest" {...field} />
+                              </FormControl>
                             </FormItem>
                           )}
                         />
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
-                          disabled={isQuerying}
-                        >
-                          <Search className="h-4 w-4 mr-2" />
-                          {isQuerying ? "Querying..." : "Query PACS"}
-                        </Button>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={queryForm.control}
+                            name="studyDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Study Date</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="20240101" {...field} />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                  YYYYMMDD or range
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={queryForm.control}
+                            name="modality"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Modality</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || "all"}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="All" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectItem value="CT">CT</SelectItem>
+                                    <SelectItem value="MR">MR</SelectItem>
+                                    <SelectItem value="PT">PT</SelectItem>
+                                    <SelectItem value="CR">CR</SelectItem>
+                                    <SelectItem value="DX">DX</SelectItem>
+                                    <SelectItem value="US">US</SelectItem>
+                                    <SelectItem value="RTSTRUCT">RTSTRUCT</SelectItem>
+                                    <SelectItem value="RTPLAN">RTPLAN</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={queryForm.control}
+                          name="accessionNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Accession Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="ACC123456" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2">
+                          <Button 
+                            type="submit" 
+                            className="flex-1" 
+                            disabled={isQuerying}
+                          >
+                            <Search className="h-4 w-4 mr-2" />
+                            {isQuerying ? "Searching..." : "Search"}
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              queryForm.reset();
+                              setQueryResults([]);
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        </div>
                       </form>
                     </Form>
                   )}
@@ -1479,43 +1912,59 @@ export default function PatientManager() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Query Results</CardTitle>
-                  <CardDescription>
-                    Studies found on PACS ({queryResults.length} results)
-                  </CardDescription>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Results</span>
+                    {queryResults.length > 0 && (
+                      <Badge variant="secondary">{queryResults.length} studies</Badge>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {queryResults.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No query results yet</p>
+                    <div className="text-center py-12">
+                      <Search className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">
+                        {selectedPacs ? 'Enter search criteria and click Search' : 'Select a data source to begin'}
+                      </p>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
                       {queryResults.map((result, index) => (
-                        <Card key={index} className="p-3">
-                          <div className="space-y-1 text-sm">
-                            <div className="font-medium">
-                              {result.patientName || "Unknown Patient"}
+                        <Card key={index} className="p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1 flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">
+                                {result.patientName || "Unknown Patient"}
+                              </div>
+                              <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                                <span>ID: {result.patientID || 'N/A'}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {result.modality || 'N/A'}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {result.studyDescription || 'No description'}
+                              </div>
+                              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                <Calendar className="h-3 w-3" />
+                                <span>{result.studyDate || 'No date'}</span>
+                                <span>•</span>
+                                <span>{result.numberOfStudyRelatedSeries || 0} series</span>
+                                <span>•</span>
+                                <span>{result.numberOfStudyRelatedInstances || 0} images</span>
+                              </div>
                             </div>
-                            <div className="text-gray-500">
-                              ID: {result.patientID} | {result.modality}
-                            </div>
-                            <div className="text-gray-500">
-                              {result.studyDescription}
-                            </div>
-                            <div className="text-gray-500">
-                              Date: {result.studyDate} | Series: {result.numberOfStudyRelatedSeries} | Images: {result.numberOfStudyRelatedInstances}
+                            <div className="flex flex-col gap-1">
+                              <Button variant="outline" size="sm" className="h-7 text-xs">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs">
+                                <Download className="h-3 w-3 mr-1" />
+                                Get
+                              </Button>
                             </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full mt-2"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Retrieve Study
-                          </Button>
                         </Card>
                       ))}
                     </div>
@@ -1523,9 +1972,15 @@ export default function PatientManager() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+              </div>
+            </TabsContent>
 
-            <TabsContent value="fusion" className="space-y-4 p-4">
+            <TabsContent value="fusion" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-semibold text-white">Image Fusion</h2>
+                  <span className="text-xs text-gray-500">Manage multi-modality registration and fusion workflows</span>
+                </div>
               <Card className="bg-gray-950/90 border border-gray-700/60">
                 <CardHeader className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -1691,7 +2146,7 @@ export default function PatientManager() {
                     return (
                       <Card key={study.id} className="bg-gray-950/90 border border-gray-700/60">
                         <CardHeader>
-                          <CardTitle className="text-base font-semibold">{study.studyDescription || study.studyInstanceUID}</CardTitle>
+                          <CardTitle className="text-sm font-medium">{study.studyDescription || study.studyInstanceUID}</CardTitle>
                           <CardDescription>
                             {study.studyDate ? `Date ${study.studyDate}` : 'Study'} • {Object.entries(study.modalityCounts).map(([modality, count]) => `${modality}: ${count}`).join(' · ')}
                           </CardDescription>
@@ -1759,124 +2214,127 @@ export default function PatientManager() {
                   </CardContent>
                 </Card>
               ) : null}
+              </div>
             </TabsContent>
 
             {/* Metadata Tab */}
-            <TabsContent value="metadata" className="space-y-4 p-4">
-              <MetadataViewer />
+            <TabsContent value="metadata" className="absolute inset-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-semibold text-white">DICOM Metadata</h2>
+                  <span className="text-xs text-gray-500">View and edit DICOM tags and series information</span>
+                </div>
+                <MetadataViewer />
+              </div>
             </TabsContent>
             </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <aside 
-            className="w-80 flex-shrink-0 border-l border-gray-800 bg-gray-950/50 overflow-y-auto"
-          >
-            <div className="p-4 space-y-4">
-              {/* Recently Opened Section */}
-              <div className="bg-gray-900/80 border border-blue-500/30 rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-blue-500/20 bg-blue-500/5">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-400" />
-                    <span className="text-white font-medium text-sm">Recently Opened</span>
-                  </div>
-                </div>
-                <div className="p-3 space-y-2">
-                  {recentlyOpenedPatients.length === 0 ? (
-                    <p className="text-gray-500 text-sm py-2">No recently opened patients</p>
-                  ) : (
-                    recentlyOpenedPatients.slice(0, 5).map(patientId => {
-                      const patient = patients.find(p => p.id === patientId);
-                      return patient ? (
-                        <Link 
-                          key={patientId}
-                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                          className="block p-2.5 rounded-lg bg-blue-500/5 hover:bg-blue-500/15 transition-all border border-blue-500/20 hover:border-blue-500/30"
-                          onClick={() => trackPatientOpened(patientId)}
-                        >
-                          <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
-                          <div className="text-blue-400 text-xs mt-0.5">ID: {patient.patientID}</div>
-                        </Link>
-                      ) : null;
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Favorites Section */}
-              <div className="bg-gray-900/80 border border-yellow-500/30 rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-yellow-500/20 bg-yellow-500/5">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-yellow-400" />
-                    <span className="text-white font-medium text-sm">Favorites</span>
-                  </div>
-                </div>
-                <div className="p-3 space-y-2">
-                  {favoritePatients.size === 0 ? (
-                    <p className="text-gray-500 text-sm py-2">No favorite patients</p>
-                  ) : (
-                    Array.from(favoritePatients).slice(0, 5).map(patientId => {
-                      const patient = patients.find(p => p.id === patientId);
-                      return patient ? (
-                        <Link 
-                          key={patientId}
-                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                          className="block p-2.5 rounded-lg bg-yellow-500/5 hover:bg-yellow-500/15 transition-all border border-yellow-500/20 hover:border-yellow-500/30"
-                          onClick={() => trackPatientOpened(patientId)}
-                        >
-                          <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
-                          <div className="text-yellow-400 text-xs mt-0.5">ID: {patient.patientID}</div>
-                        </Link>
-                      ) : null;
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Recently Imported Section */}
-              <div className="bg-gray-900/80 border border-green-500/30 rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-green-500/20 bg-green-500/5">
-                  <div className="flex items-center gap-2">
-                    <Import className="h-4 w-4 text-green-400" />
-                    <span className="text-white font-medium text-sm">Recently Imported</span>
-                  </div>
-                </div>
-                <div className="p-3 space-y-2">
-                  {recentlyImportedPatients.length === 0 ? (
-                    <p className="text-gray-500 text-sm py-2">No recently imported patients</p>
-                  ) : (
-                    recentlyImportedPatients.slice(0, 5).map(importEntry => {
-                      const patient = patients.find(p => p.id === importEntry.patientId || p.patientID === importEntry.patientId);
-                      return patient ? (
-                        <Link 
-                          key={importEntry.patientId}
-                          href={`/enhanced-viewer?patientId=${patient.patientID}`}
-                          className="block p-2.5 rounded-lg bg-green-500/5 hover:bg-green-500/15 transition-all border border-green-500/20 hover:border-green-500/30"
-                          onClick={() => trackPatientOpened(typeof importEntry.patientId === 'number' ? importEntry.patientId : parseInt(importEntry.patientId.toString()))}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-white text-sm font-medium truncate">{patient.patientName}</div>
-                              <div className="text-green-400 text-xs mt-0.5">ID: {patient.patientID}</div>
-                            </div>
-                            <div className="text-right ml-3">
-                              <div className="text-green-300 text-xs font-medium">
-                                {new Date(importEntry.importDate).toLocaleDateString()}
-                              </div>
-                              <div className="text-green-400/70 text-[10px] mt-0.5">
-                                {new Date(importEntry.importDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ) : null;
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
-          </aside>
+          </Tabs>
         </div>
+
+        {/* Right Sidebar */}
+        <div className="w-[440px] flex-shrink-0 flex flex-col h-full bg-gray-950/50">
+          <div className="p-4 space-y-4 overflow-y-auto flex-1">
+            {/* Recently Opened */}
+            <div className="bg-cyan-950/40 backdrop-blur-xl border border-cyan-500/25 rounded-xl p-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Clock className="h-4.5 w-4.5 text-cyan-400" />
+                <span className="text-cyan-200 font-bold text-sm">Recently Opened</span>
+                <span className="ml-auto text-xs text-cyan-400/70 bg-cyan-500/15 px-2 py-0.5 rounded-md font-semibold">{recentlyOpenedPatients.length}</span>
+              </div>
+              {recentlyOpenedPatients.length === 0 ? (
+                <p className="text-cyan-300/40 text-sm py-3 text-center">No recently opened patients</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {recentlyOpenedPatients.slice(0, 5).map(patientId => {
+                    const patient = patients.find(p => p.id === patientId);
+                    return patient ? (
+                      <Link 
+                        key={patientId}
+                        href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                        className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-cyan-500/15 transition-all"
+                        onClick={() => trackPatientOpened(patientId)}
+                      >
+                        <div className="w-1.5 h-6 rounded-full bg-cyan-500/40 group-hover:bg-cyan-400/70 transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-semibold text-sm truncate">{patient.patientName?.replace(/\^/g, ', ')}</div>
+                          <div className="text-cyan-300/60 text-xs font-mono mt-0.5">{patient.patientID}</div>
+                        </div>
+                      </Link>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Favorites */}
+            <div className="bg-amber-950/40 backdrop-blur-xl border border-amber-500/25 rounded-xl p-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Star className="h-4.5 w-4.5 text-amber-400" />
+                <span className="text-amber-200 font-bold text-sm">Favorites</span>
+                <span className="ml-auto text-xs text-amber-400/70 bg-amber-500/15 px-2 py-0.5 rounded-md font-semibold">{favoritePatients.size}</span>
+              </div>
+              {favoritePatients.size === 0 ? (
+                <p className="text-amber-300/40 text-sm py-3 text-center">No favorites yet</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {Array.from(favoritePatients).slice(0, 5).map(patientId => {
+                    const patient = patients.find(p => p.id === patientId);
+                    return patient ? (
+                      <Link 
+                        key={patientId}
+                        href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                        className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-amber-500/15 transition-all"
+                        onClick={() => trackPatientOpened(patientId)}
+                      >
+                        <div className="w-1.5 h-6 rounded-full bg-amber-500/40 group-hover:bg-amber-400/70 transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-semibold text-sm truncate">{patient.patientName?.replace(/\^/g, ', ')}</div>
+                          <div className="text-amber-300/60 text-xs font-mono mt-0.5">{patient.patientID}</div>
+                        </div>
+                      </Link>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Recently Imported */}
+            <div className="bg-emerald-950/40 backdrop-blur-xl border border-emerald-500/25 rounded-xl p-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Import className="h-4.5 w-4.5 text-emerald-400" />
+                <span className="text-emerald-200 font-bold text-sm">Recently Imported</span>
+                <span className="ml-auto text-xs text-emerald-400/70 bg-emerald-500/15 px-2 py-0.5 rounded-md font-semibold">{recentlyImportedPatients.length}</span>
+              </div>
+              {recentlyImportedPatients.length === 0 ? (
+                <p className="text-emerald-300/40 text-sm py-3 text-center">No imports yet</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {recentlyImportedPatients.slice(0, 5).map(importEntry => {
+                    const patient = patients.find(p => p.id === importEntry.patientId || p.patientID === importEntry.patientId);
+                    return patient ? (
+                      <Link 
+                        key={importEntry.patientId}
+                        href={`/enhanced-viewer?patientId=${patient.patientID}`}
+                        className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-emerald-500/15 transition-all"
+                        onClick={() => trackPatientOpened(typeof importEntry.patientId === 'number' ? importEntry.patientId : parseInt(importEntry.patientId.toString()))}
+                      >
+                        <div className="w-1.5 h-6 rounded-full bg-emerald-500/40 group-hover:bg-emerald-400/70 transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-semibold text-sm truncate">{patient.patientName?.replace(/\^/g, ', ')}</div>
+                          <div className="text-emerald-300/60 text-xs font-mono mt-0.5">{patient.patientID}</div>
+                        </div>
+                        <div className="text-xs text-emerald-300/60 font-medium">
+                          {new Date(importEntry.importDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </div>
+                      </Link>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
@@ -1979,7 +2437,7 @@ export default function PatientManager() {
               Cancel
             </Button>
             <Button
-              onClick={() => handleMergeConfirm(Array.from(selectedPatients)[0])}
+              onClick={() => handleMergeConfirm('existing')}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               Merge Patients
@@ -1987,7 +2445,6 @@ export default function PatientManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </Tabs>
     </div>
   );
 }
@@ -2030,62 +2487,69 @@ function MetadataViewer() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gray-900/60 border-gray-700/50">
-        <CardContent className="py-8 text-center">
-          <p className="text-gray-400">Loading metadata...</p>
-        </CardContent>
-      </Card>
+      <div className="bg-gray-900/60 border border-gray-700/40 rounded-xl p-8 text-center">
+        <div className="inline-flex items-center gap-2 text-gray-400">
+          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.64 5.64L4.22 4.22M19.78 19.78l-1.42-1.42M5.64 18.36L4.22 19.78M19.78 4.22l-1.42 1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          Loading metadata...
+        </div>
+      </div>
     );
   }
 
   if (!metadata) {
     return (
-      <Card className="bg-gray-900/60 border-gray-700/50">
-        <CardContent className="py-8 text-center">
-          <p className="text-gray-400">No metadata available</p>
-        </CardContent>
-      </Card>
+      <div className="bg-gray-900/60 border border-gray-700/40 rounded-xl p-8 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-800/50 ring-1 ring-gray-700/50 mb-4">
+          <FileText className="h-7 w-7 text-gray-500" />
+        </div>
+        <p className="text-gray-400 font-medium">No metadata available</p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
       {/* Summary Card */}
-      <Card className="bg-gray-900/60 border-gray-700/50">
-        <CardHeader>
-          <CardTitle className="text-white">DICOM Database Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
-              <p className="text-gray-400 text-sm">Total Patients</p>
-              <p className="text-2xl font-bold text-white">{metadata.summary.totalPatients}</p>
+      <div className="bg-gradient-to-br from-emerald-950/40 via-gray-900/80 to-gray-900/80 rounded-xl border border-emerald-500/20 shadow-lg overflow-hidden">
+        <div className="px-5 py-4 border-b border-emerald-500/15 bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20 ring-1 ring-emerald-400/30">
+              <Database className="h-5 w-5 text-emerald-300" />
             </div>
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
-              <p className="text-gray-400 text-sm">Total Studies</p>
-              <p className="text-2xl font-bold text-white">{metadata.summary.totalStudies}</p>
+            <h3 className="text-sm font-medium text-white">DICOM Database Summary</h3>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
+              <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Patients</p>
+              <p className="text-2xl font-bold text-white mt-1">{metadata.summary.totalPatients}</p>
             </div>
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
-              <p className="text-gray-400 text-sm">Total Series</p>
-              <p className="text-2xl font-bold text-white">{metadata.summary.totalSeries}</p>
+            <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
+              <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Studies</p>
+              <p className="text-2xl font-bold text-white mt-1">{metadata.summary.totalStudies}</p>
             </div>
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
-              <p className="text-gray-400 text-sm">Total Images</p>
-              <p className="text-2xl font-bold text-white">{metadata.summary.totalImages}</p>
+            <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
+              <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Series</p>
+              <p className="text-2xl font-bold text-white mt-1">{metadata.summary.totalSeries}</p>
+            </div>
+            <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30">
+              <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Images</p>
+              <p className="text-2xl font-bold text-white mt-1">{metadata.summary.totalImages}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Detailed Metadata */}
-      <Card className="bg-gray-900/60 border-gray-700/50">
-        <CardHeader>
-          <CardTitle className="text-white">Detailed DICOM Metadata</CardTitle>
-          <CardDescription className="text-gray-400">
-            Click on series to expand and view image metadata
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-gray-900/60 border border-gray-700/40 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-700/30 bg-gray-900/40">
+          <h3 className="text-sm font-medium text-white">Detailed DICOM Metadata</h3>
+          <p className="text-sm text-gray-400 mt-0.5">Click on series to expand and view image metadata</p>
+        </div>
+        <div className="p-5">
           <div className="space-y-4">
             {metadata.patients.map((patient: any) => {
               const patientStudies = metadata.studies.filter((s: any) => s.patientId === patient.id);
@@ -2162,8 +2626,8 @@ function MetadataViewer() {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

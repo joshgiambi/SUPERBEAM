@@ -83,9 +83,23 @@ export function MetadataEditDialog({ open, onClose, patient, studies, series, on
       });
       
       if (response.ok) {
+        const result = await response.json();
+        
+        // Build description with DICOM file update info
+        let description = "Patient metadata updated successfully";
+        if (result.dicomFilesUpdated) {
+          const { success, failed, totalFiles } = result.dicomFilesUpdated;
+          if (totalFiles > 0) {
+            description += ` — Updated ${success} DICOM file${success !== 1 ? 's' : ''}`;
+            if (failed > 0) {
+              description += ` (${failed} failed)`;
+            }
+          }
+        }
+        
         toast({
           title: "Success",
-          description: "Patient metadata updated successfully"
+          description
         });
         onUpdate();
       } else {
@@ -111,9 +125,23 @@ export function MetadataEditDialog({ open, onClose, patient, studies, series, on
       });
       
       if (response.ok) {
+        const result = await response.json();
+        
+        // Build description with DICOM file update info
+        let description = "Series description updated";
+        if (result.dicomFilesUpdated) {
+          const { success, failed, totalFiles } = result.dicomFilesUpdated;
+          if (totalFiles > 0) {
+            description += ` — Updated ${success} DICOM file${success !== 1 ? 's' : ''}`;
+            if (failed > 0) {
+              description += ` (${failed} failed)`;
+            }
+          }
+        }
+        
         toast({
           title: "Success",
-          description: "Series description updated"
+          description
         });
       }
     } catch (error) {

@@ -83,6 +83,7 @@
     "date-fns": "^3.6.0",
     "dcmjs": "^0.41.0",
     "dicom-dimse": "^0.0.7",
+    "dicom-dimse-native": "^2.4.6",
     "dicom-parser": "^1.8.21",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.39.3",

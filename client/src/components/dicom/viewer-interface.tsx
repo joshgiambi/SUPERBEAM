@@ -1367,6 +1367,40 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         });
       }
 
+      // Also include series that share Frame of Reference with the primary
+      const primaryEntry = seriesById.get(primarySeriesId);
+      const primaryFoR = typeof primaryEntry?.frameOfReferenceUID === 'string' ? primaryEntry.frameOfReferenceUID.trim() : '';
+      if (primaryFoR) {
+        const foMatches = seriesByFoR.get(primaryFoR) ?? [];
+        foMatches.forEach((secondaryId) => {
+          if (secondaryId !== primarySeriesId && shouldIncludeSeries(secondaryId)) {
+            results.add(secondaryId);
+          }
+        });
+      }
+
+      // Fallback: if no MR or PT candidates found, include all visible MR and PT series
+      // This enables fusion even without explicit registration (using identity transform)
+      const fusionableModalities = new Set(['PT', 'PET', 'MR', 'NM']);
+      const hasFusionableResults = Array.from(results.values()).some((id) => {
+        const entry = seriesById.get(id);
+        const modality = (entry?.modality || '').toUpperCase();
+        return fusionableModalities.has(modality);
+      });
+
+      if (!hasFusionableResults) {
+        // No fusionable series found through registration - add all MR/PT series as fallback
+        visibleSeriesIdSet.forEach((seriesId) => {
+          if (seriesId === primarySeriesId) return;
+          const entry = seriesById.get(seriesId);
+          if (!entry) return;
+          const modality = (entry.modality || '').toUpperCase();
+          if (fusionableModalities.has(modality) && shouldIncludeSeries(seriesId)) {
+            results.add(seriesId);
+          }
+        });
+      }
+
       const candidateIds = Array.from(results.values()).filter((id) => shouldIncludeSeries(id));
       if (import.meta.env.DEV) {
         const candidateDetails = candidateIds.map(id => {
@@ -1398,6 +1432,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       regAssociations,
       registrationRelationshipMap,
       seriesById,
+      seriesByFoR,
       visibleSeriesIdSet,
       shouldHideSeries,
       studyData?.patient?.id,

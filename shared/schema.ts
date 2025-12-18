@@ -150,19 +150,38 @@ export type InsertSeries = z.infer<typeof insertSeriesSchema>;
 export type InsertImage = z.infer<typeof insertImageSchema>;
 export type InsertMediaPreview = z.infer<typeof insertMediaPreviewSchema>;
 
-// DICOM Network Configuration
+// DICOM Network Configuration / Data Sources
 export const pacsConnections = pgTable("pacs_connections", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  aeTitle: text("ae_title").notNull(),
-  hostname: text("hostname").notNull(),
-  port: integer("port").notNull(),
-  callingAeTitle: text("calling_ae_title").notNull().default("DICOM_VIEWER"),
-  protocol: text("protocol").notNull().default("DICOM"), // DICOM or DICOMweb
-  wadoUri: text("wado_uri"), // For DICOMweb
-  qidoUri: text("qido_uri"), // For DICOMweb queries
+  // Source type: 'local_database', 'dicomweb', 'local_folder', 'dimse'
+  sourceType: text("source_type").notNull().default("dicomweb"),
+  // DIMSE/Traditional PACS fields
+  aeTitle: text("ae_title"),
+  hostname: text("hostname"),
+  port: integer("port"),
+  callingAeTitle: text("calling_ae_title").default("SUPERBEAM"),
+  // DICOMweb fields (OHIF-style configuration)
+  wadoRoot: text("wado_root"), // Base URL for WADO requests
+  qidoRoot: text("qido_root"), // Base URL for QIDO requests
+  wadoUri: text("wado_uri"), // Legacy WADO-URI endpoint
   stowUri: text("stow_uri"), // For DICOMweb storage
+  // DICOMweb options
+  qidoSupportsIncludeField: boolean("qido_supports_include_field").default(true),
+  supportsReject: boolean("supports_reject").default(false),
+  supportsStow: boolean("supports_stow").default(false),
+  supportsFuzzyMatching: boolean("supports_fuzzy_matching").default(true),
+  supportsWildcard: boolean("supports_wildcard").default(true),
+  imageRendering: text("image_rendering").default("wadors"), // wadors, wadouri
+  thumbnailRendering: text("thumbnail_rendering").default("wadors"),
+  enableStudyLazyLoad: boolean("enable_study_lazy_load").default(true),
+  // Local folder configuration
+  folderPath: text("folder_path"), // For local_folder source type
+  watchFolder: boolean("watch_folder").default(false), // Auto-import new files
+  // Status
   isActive: boolean("is_active").default(true),
+  lastTestedAt: timestamp("last_tested_at"),
+  lastTestResult: text("last_test_result"), // 'success', 'failed', 'pending'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

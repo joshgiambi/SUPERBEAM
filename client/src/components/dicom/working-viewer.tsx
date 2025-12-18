@@ -53,6 +53,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { RegistrationAssociation, RegistrationTransformCandidate, RegistrationSeriesDetail } from '@/types/fusion';
 import { useToast } from '@/hooks/use-toast';
 import { BlobManagementDialog } from './blob-management-dialog';
+import { AnimatePresence } from 'framer-motion';
 import { groupStructureBlobs, computeBlobVolumeCc, createContourKey, type Blob, type BlobContour } from '@/lib/blob-operations';
 import { useUserSettings } from './user-settings-panel';
 import { getImageLoadPoolManager, createStackContextPrefetch, RequestPriority } from '@/lib/image-load-pool-manager';

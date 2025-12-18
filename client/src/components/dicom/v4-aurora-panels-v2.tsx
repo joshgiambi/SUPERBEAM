@@ -846,7 +846,7 @@ export function BooleanPanelV4v2({ availableStructures, onExecute, onPreview, on
         onMouseDown={handleMouseDown}
       >
         <div 
-          className={cn("rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl", isDragging && "ring-2")}
+          className={cn("rounded-2xl backdrop-blur-xl shadow-2xl", isDragging && "ring-2")}
           style={{
             background: `linear-gradient(180deg, hsla(${accentColor.hue}, 12%, 13%, 0.97) 0%, hsla(${accentColor.hue}, 8%, 9%, 0.99) 100%)`,
             boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${accentColor.rgb}20, 0 0 60px -15px ${accentColor.rgb}20`,
@@ -916,13 +916,18 @@ export function BooleanPanelV4v2({ availableStructures, onExecute, onPreview, on
             <div className="w-px h-6 bg-white/10" />
 
             {/* Save & Library */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setShowSaveDialog(true)}
                     disabled={mode === 'expression' ? !expression.trim() : !steps.some(s => s.structureA && s.structureB)}
-                    className="h-7 w-7 flex items-center justify-center rounded-md text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    className={cn(
+                      "h-7 w-7 flex items-center justify-center rounded-lg transition-all border",
+                      "bg-blue-900/30 border-blue-500/40 text-blue-300",
+                      "hover:bg-blue-800/40 hover:border-blue-400/60 hover:text-blue-200",
+                      "disabled:opacity-40 disabled:cursor-not-allowed"
+                    )}
                   >
                     <Save className="w-3.5 h-3.5" />
                   </button>
@@ -936,10 +941,10 @@ export function BooleanPanelV4v2({ availableStructures, onExecute, onPreview, on
                     <button
                       onClick={() => setShowLibrary(!showLibrary)}
                       className={cn(
-                        "h-7 w-7 flex items-center justify-center rounded-md transition-all",
+                        "h-7 w-7 flex items-center justify-center rounded-lg transition-all border",
                         showLibrary 
-                          ? "text-purple-300 bg-purple-500/20" 
-                          : "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                          ? "bg-purple-700/40 border-purple-400/60 text-purple-200" 
+                          : "bg-purple-900/30 border-purple-500/40 text-purple-300 hover:bg-purple-800/40 hover:border-purple-400/60 hover:text-purple-200"
                       )}
                     >
                       <Library className="w-3.5 h-3.5" />
@@ -1183,20 +1188,11 @@ export function BooleanPanelV4v2({ availableStructures, onExecute, onPreview, on
                   {/* Steps List */}
                   <AnimatePresence>
                     {expandedSteps && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="space-y-2 overflow-hidden"
-                      >
+                      <div className="space-y-2">
                         {steps.map((step, index) => (
-                          <motion.div
+                          <div
                             key={step.id}
-                            layout
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/[0.06]"
+                            className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/[0.06] transition-colors"
                           >
                             <span className="text-[10px] text-gray-600 font-mono w-5">#{index + 1}</span>
 
@@ -1258,9 +1254,9 @@ export function BooleanPanelV4v2({ availableStructures, onExecute, onPreview, on
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             )}
-                          </motion.div>
+                          </div>
                         ))}
-                      </motion.div>
+                      </div>
                     )}
                   </AnimatePresence>
                 </motion.div>
@@ -1584,7 +1580,7 @@ export function MarginPanelV4v2({ availableStructures, onExecute, onPreview, onC
         onMouseDown={handleMouseDown}
       >
         <div 
-          className={cn("rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl", isDragging && "ring-2")}
+          className={cn("rounded-2xl backdrop-blur-xl shadow-2xl", isDragging && "ring-2")}
           style={{
             background: `linear-gradient(180deg, hsla(${directionColor.hue}, 12%, 13%, 0.97) 0%, hsla(${directionColor.hue}, 8%, 9%, 0.99) 100%)`,
             boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${directionColor.rgb}20, 0 0 60px -15px ${directionColor.rgb}20`,
@@ -1673,12 +1669,16 @@ export function MarginPanelV4v2({ availableStructures, onExecute, onPreview, onC
             <div className="flex-1" />
 
             {/* Save & Library */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setShowMarginSaveDialog(true)}
-                    className="h-7 w-7 flex items-center justify-center rounded-md text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
+                    className={cn(
+                      "h-7 w-7 flex items-center justify-center rounded-lg transition-all border",
+                      "bg-blue-900/30 border-blue-500/40 text-blue-300",
+                      "hover:bg-blue-800/40 hover:border-blue-400/60 hover:text-blue-200"
+                    )}
                   >
                     <Save className="w-3.5 h-3.5" />
                   </button>
@@ -1692,10 +1692,10 @@ export function MarginPanelV4v2({ availableStructures, onExecute, onPreview, onC
                     <button
                       onClick={() => setShowMarginLibrary(!showMarginLibrary)}
                       className={cn(
-                        "h-7 w-7 flex items-center justify-center rounded-md transition-all",
+                        "h-7 w-7 flex items-center justify-center rounded-lg transition-all border",
                         showMarginLibrary 
-                          ? "text-cyan-300 bg-cyan-500/20" 
-                          : "text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                          ? "bg-cyan-700/40 border-cyan-400/60 text-cyan-200" 
+                          : "bg-cyan-900/30 border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40 hover:border-cyan-400/60 hover:text-cyan-200"
                       )}
                     >
                       <Library className="w-3.5 h-3.5" />
