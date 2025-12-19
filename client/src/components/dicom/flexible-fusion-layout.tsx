@@ -599,6 +599,9 @@ interface CompactToolbarProps {
   onSecondarySeriesSelect?: (id: number | null) => void;
   fusionWindowLevel?: { window: number; level: number } | null;
   onFusionWindowLevelChange?: (wl: { window: number; level: number } | null) => void;
+  // Primary series info for accurate labeling
+  primarySeriesId?: number;
+  primaryModality?: string;
 }
 
 const CompactToolbar: React.FC<CompactToolbarProps> = ({
@@ -623,6 +626,8 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
   onSecondarySeriesSelect,
   fusionWindowLevel,
   onFusionWindowLevelChange,
+  primarySeriesId,
+  primaryModality = 'CT',
 }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   
@@ -637,8 +642,8 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
   // Check if a secondary is already assigned to a viewport
   const isSecondaryAssigned = (secId: number) => assignedSecondaryIds.includes(secId);
   
-  // Get available scans for adding
-  const availableScansForAdd = secondarySeriesIds.filter(id => !isSecondaryAssigned(id)).map(secId => {
+  // Get available fusion secondaries for adding (from fusion manifest - have registration data)
+  const availableFusionSecondaries = secondarySeriesIds.filter(id => !isSecondaryAssigned(id)).map(secId => {
     const series = availableSeries.find(s => s.id === secId);
     const status = fusionSecondaryStatuses?.get(secId);
     return {
@@ -647,6 +652,23 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
       description: series?.seriesDescription || `Series ${secId}`,
       isReady: status?.status === 'ready' || status?.status === 'idle',
     };
+  });
+  
+  // Show option to add primary-only viewport if we have capacity
+  const canAddPrimaryOnlyViewport = viewportCount < maxViewports;
+  
+  // Check if there's anything to show in the dialog
+  const hasOptions = canAddPrimaryOnlyViewport || availableFusionSecondaries.length > 0;
+
+  // Debug log to help diagnose Add button issues
+  console.log('[CompactToolbar Add Debug]', {
+    secondarySeriesIds,
+    assignedSecondaryIds,
+    availableFusionSecondaries,
+    viewportCount,
+    maxViewports,
+    canAddPrimaryOnlyViewport,
+    hasOptions,
   });
 
   return (
@@ -718,7 +740,7 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                className="absolute top-full left-0 mt-2 w-72 z-50"
+                className="absolute top-full left-0 mt-2 w-80 z-50"
               >
                 <div className="bg-gray-950 border border-gray-800/50 rounded-xl shadow-xl p-3">
                   <div className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
@@ -726,44 +748,92 @@ const CompactToolbar: React.FC<CompactToolbarProps> = ({
                     Add Viewport
                   </div>
                   <div className="text-[10px] text-gray-500 mb-3">
-                    Select a scan to add to a new viewport
+                    Select a scan to add to the layout
                   </div>
                   
-                  {availableScansForAdd.length > 0 ? (
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {availableScansForAdd.map((scan) => {
-                        const colorClass = getModalityColor(scan.modality);
-                        const dotColor = colorClass === 'amber' ? 'bg-amber-400' : colorClass === 'purple' ? 'bg-purple-400' : 'bg-cyan-400';
-                        const textColor = colorClass === 'amber' ? 'text-amber-400' : colorClass === 'purple' ? 'text-purple-400' : 'text-cyan-400';
-                        return (
-                          <button
-                            key={scan.id}
-                            onClick={() => {
-                              onAddViewportWithSecondary(scan.id);
-                              setShowAddDialog(false);
-                            }}
-                            disabled={!scan.isReady}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-left",
-                              scan.isReady
-                                ? "bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70 hover:border-gray-600/50"
-                                : "bg-gray-900/30 border-gray-800/30 opacity-50 cursor-not-allowed"
-                            )}
-                          >
-                            <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
-                            <span className={cn("font-semibold text-xs", textColor)}>
-                              {scan.modality}
-                            </span>
-                            <span className="text-gray-400 text-xs truncate flex-1">
-                              {scan.description}
-                            </span>
-                          </button>
-                        );
-                      })}
+                  {/* Section 1: Primary Only (no fusion overlay) */}
+                  {canAddPrimaryOnlyViewport && (
+                    <div className="mb-3">
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1.5 font-medium">
+                        Primary Only
+                      </div>
+                      <button
+                        onClick={() => {
+                          onAddViewport(); // Adds primary-only viewport
+                          setShowAddDialog(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-left bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70",
+                          getModalityColor(primaryModality) === 'purple' 
+                            ? "hover:border-purple-500/40" 
+                            : getModalityColor(primaryModality) === 'amber'
+                              ? "hover:border-amber-500/40"
+                              : "hover:border-cyan-500/40"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-2.5 h-2.5 rounded-full",
+                          getModalityColor(primaryModality) === 'purple' ? "bg-purple-400" :
+                          getModalityColor(primaryModality) === 'amber' ? "bg-amber-400" : "bg-cyan-400"
+                        )} />
+                        <span className={cn(
+                          "font-semibold text-xs",
+                          getModalityColor(primaryModality) === 'purple' ? "text-purple-400" :
+                          getModalityColor(primaryModality) === 'amber' ? "text-amber-400" : "text-cyan-400"
+                        )}>
+                          {primaryModality}
+                        </span>
+                        <span className="text-gray-400 text-xs truncate flex-1">
+                          Primary {primaryModality} (no fusion overlay)
+                        </span>
+                      </button>
                     </div>
-                  ) : (
+                  )}
+                  
+                  {/* Section 2: Fusion overlays (primary + secondary) */}
+                  {availableFusionSecondaries.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1.5 font-medium">
+                        Fusion Overlays
+                      </div>
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                        {availableFusionSecondaries.map((scan) => {
+                          const colorClass = getModalityColor(scan.modality);
+                          const dotColor = colorClass === 'amber' ? 'bg-amber-400' : colorClass === 'purple' ? 'bg-purple-400' : 'bg-cyan-400';
+                          const textColor = colorClass === 'amber' ? 'text-amber-400' : colorClass === 'purple' ? 'text-purple-400' : 'text-cyan-400';
+                          return (
+                            <button
+                              key={scan.id}
+                              onClick={() => {
+                                onAddViewportWithSecondary(scan.id);
+                                setShowAddDialog(false);
+                              }}
+                              disabled={!scan.isReady}
+                              className={cn(
+                                "w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-left",
+                                scan.isReady
+                                  ? "bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70 hover:border-gray-600/50"
+                                  : "bg-gray-900/30 border-gray-800/30 opacity-50 cursor-not-allowed"
+                              )}
+                            >
+                              <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
+                              <span className={cn("font-semibold text-xs", textColor)}>
+                                {primaryModality} + {scan.modality}
+                              </span>
+                              <span className="text-gray-400 text-xs truncate flex-1">
+                                {scan.description}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Empty state - only when nothing is available */}
+                  {!hasOptions && (
                     <div className="text-center py-4 text-gray-500 text-xs">
-                      All available scans are loaded
+                      Maximum viewports reached ({maxViewports})
                     </div>
                   )}
                   
@@ -1355,6 +1425,13 @@ export function FlexibleFusionLayout({
     return {};
   }, [fusionLayoutPreset]);
 
+  // Get primary series info for toolbar display
+  const primarySeries = useMemo(() => {
+    return availableSeries.find(s => s.id === primarySeriesId);
+  }, [availableSeries, primarySeriesId]);
+  
+  const primaryModality = primarySeries?.modality || 'CT';
+
   // Build secondary descriptors for the FusionDropdown
   const secondaryDescriptors = useMemo(() => {
     return secondarySeriesIds.map(secId => {
@@ -1422,6 +1499,8 @@ export function FlexibleFusionLayout({
             onSecondarySeriesSelect={onSecondarySeriesSelect}
             fusionWindowLevel={fusionWindowLevel}
             onFusionWindowLevelChange={onFusionWindowLevelChange}
+            primarySeriesId={primarySeriesId}
+            primaryModality={primaryModality}
           />
         </div>
         

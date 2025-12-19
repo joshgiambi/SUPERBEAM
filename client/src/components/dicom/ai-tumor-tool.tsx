@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supersegClient } from '@/lib/superseg-client';
-import { samController } from '@/lib/sam-controller';
+import { samOhifController } from '@/lib/sam-ohif-controller';
 import { log } from '@/lib/log';
 import { Button } from '@/components/ui/button';
 import { Sparkles, X, Loader2, MousePointer2 } from 'lucide-react';
@@ -550,15 +550,15 @@ export function AITumorTool({
     setIsProcessing(true);
 
     try {
-      log.info('[ai-tumor] 🤖 Starting SAM segmentation...');
+      log.info('[ai-tumor] 🤖 Starting SAM segmentation (browser-based)...');
       
       // Initialize SAM if needed
-      if (!samController.isReady()) {
+      if (!samOhifController.isReady()) {
         toast({
           title: 'Loading SAM Model',
           description: 'Downloading ~200MB model (first time only)...',
         });
-        await samController.initialize();
+        await samOhifController.initialize();
       }
       
       // Get current image pixel data
@@ -584,10 +584,11 @@ export function AITumorTool({
 
       log.info(`[ai-tumor] SAM click at pixel (${pixelX}, ${pixelY})`);
 
-      // Call SAM pointToContour
-      const result = await samController.pointToContour(
+      // Call SAM clickToSegment (browser-based via ONNX)
+      const result = await samOhifController.clickToSegment(
         { x: pixelX, y: pixelY },
-        { pixels: cachedData.pixelData, width, height }
+        { pixels: cachedData.pixelData, width, height },
+        `slice_${currentIndex}` // Cache key for this slice
       );
 
       if (result.contour.length < 3) {

@@ -1,6 +1,6 @@
 import { Float3D, Grid, Mask3D, Structure, MarginResult, PerSideMargins } from './types';
 import { expandGrid, copyMaskToGrid } from './grid';
-import { initializeInfinityMapInside0, getJustOutsideVoxels, negateInside, InfinityVal } from './seeds';
+import { initializeInfinityMapInside0, InfinityVal } from './seeds';
 import { distanceTransform3D } from './distanceTransform';
 
 function cloneStructure(structure: Structure): Structure {
@@ -44,17 +44,36 @@ export function marginSymmetric(structure: Structure, marginMM: number, eclipseF
     const mask = thresholdToMask(dt, eg, marginMM * marginMM);
     return { grid: eg, mask };
   } else {
-    // Inner (erosion): expand grid by 1 voxel band, ring seeds=0 outside, negate inside distances, threshold < -r^2
-    const extraX = 1, extraY = 1, extraZ = 1;
+    // Inner (erosion): shrink the structure by |marginMM|
+    // Need to expand grid enough to properly compute distances at boundaries
+    const absMargin = Math.abs(marginMM);
+    const extraX = Math.max(2, Math.ceil(absMargin / g.xRes) + 1);
+    const extraY = Math.max(2, Math.ceil(absMargin / g.yRes) + 1);
+    const extraZ = Math.max(2, Math.ceil(absMargin / g.zRes) + 1);
     const eg = expandGrid(g, extraX, extraY, extraZ);
-    const ring = getJustOutsideVoxels(structure, eg);
+    
+    // Get inside mask: inside voxels = 0, outside = infinity
+    const inside = initializeInfinityMapInside0(structure, eg);
+    
+    // For erosion, compute distance from OUTSIDE into the structure
+    // Seeds: outside voxels = 0, inside voxels = infinity
     const dt: Float3D = { values: new Float32Array(eg.xSize * eg.ySize * eg.zSize), grid: eg };
-    for (let i = 0; i < dt.values.length; i++) dt.values[i] = ring[i] ? 0 : InfinityVal;
+    for (let i = 0; i < dt.values.length; i++) {
+      dt.values[i] = inside.values[i] === 0 ? InfinityVal : 0;
+    }
+    
+    // Run DT - computes distance from outside (boundary) into the structure
     distanceTransform3D(dt, eg);
-    negateInside(dt, structure, eg);
-    const thr = -marginMM * marginMM; // marginMM is negative
+    
+    // Threshold: keep only inside voxels where distance from boundary > absMargin
+    const thresholdSq = absMargin * absMargin;
     const out = new Uint8Array(eg.xSize * eg.ySize * eg.zSize);
-    for (let i = 0; i < dt.values.length; i++) out[i] = dt.values[i] < -thr ? 1 : 0;
+    for (let i = 0; i < dt.values.length; i++) {
+      // Only keep inside voxels that are far enough from boundary
+      if (inside.values[i] === 0 && dt.values[i] > thresholdSq) {
+        out[i] = 1;
+      }
+    }
     return { grid: eg, mask: { values: out, grid: eg } };
   }
 }

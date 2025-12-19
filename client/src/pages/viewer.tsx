@@ -305,10 +305,28 @@ export default function Viewer() {
                       <Badge variant="outline" className="border-gray-600 text-gray-300 bg-gray-800/60 px-2 py-0.5 text-xs font-medium">
                         {studyData.patient?.patientID || currentStudy.patientID || 'No ID'}
                       </Badge>
+                      {(studyData.patient?.patientSex || currentStudy.patientSex) && (
+                        <Badge 
+                          variant="outline" 
+                          className={`px-2 py-0.5 text-xs font-medium ${
+                            (studyData.patient?.patientSex || currentStudy.patientSex)?.toUpperCase() === 'M' 
+                              ? 'border-blue-500/60 text-blue-300 bg-blue-500/20' 
+                              : (studyData.patient?.patientSex || currentStudy.patientSex)?.toUpperCase() === 'F'
+                                ? 'border-pink-500/60 text-pink-300 bg-pink-500/20'
+                                : 'border-gray-600 text-gray-300 bg-gray-800/60'
+                          }`}
+                        >
+                          {(studyData.patient?.patientSex || currentStudy.patientSex)?.toUpperCase() === 'M' 
+                            ? 'Male' 
+                            : (studyData.patient?.patientSex || currentStudy.patientSex)?.toUpperCase() === 'F'
+                              ? 'Female'
+                              : studyData.patient?.patientSex || currentStudy.patientSex}
+                        </Badge>
+                      )}
                     </div>
-                    {studyData.patient?.patientSex && (
+                    {studyData.patient?.patientAge && (
                       <p className="text-xs text-gray-400 leading-tight mt-1">
-                        {studyData.patient.patientSex}{studyData.patient?.patientAge ? ` • ${studyData.patient.patientAge}` : ''}
+                        Age: {studyData.patient.patientAge}
                       </p>
                     )}
                   </div>

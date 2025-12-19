@@ -1,6 +1,6 @@
 /**
  * Smart brush utilities for adaptive contouring
- * A sophisticated, stable implementation for a polished user experience.
+ * Uses gradient-based edge detection for robust border finding.
  */
 
 interface Point {
@@ -9,8 +9,38 @@ interface Point {
 }
 
 /**
- * Creates a refined adaptive preview that is both "tighter to borders" and "less jagged."
- * This implementation uses more advanced techniques for edge detection and smoothing.
+ * Calculate Sobel gradient magnitude at a pixel
+ */
+function getGradientMagnitude(
+  pixelData: Float32Array | Uint16Array | Uint8Array | Int16Array,
+  width: number,
+  height: number,
+  x: number,
+  y: number
+): number {
+  const xi = Math.round(x);
+  const yi = Math.round(y);
+  
+  if (xi < 1 || xi >= width - 1 || yi < 1 || yi >= height - 1) {
+    return 0;
+  }
+  
+  // Sobel operator for gradient
+  const gx = 
+    -pixelData[(yi-1) * width + (xi-1)] + pixelData[(yi-1) * width + (xi+1)] +
+    -2 * pixelData[yi * width + (xi-1)] + 2 * pixelData[yi * width + (xi+1)] +
+    -pixelData[(yi+1) * width + (xi-1)] + pixelData[(yi+1) * width + (xi+1)];
+  
+  const gy = 
+    -pixelData[(yi-1) * width + (xi-1)] - 2 * pixelData[(yi-1) * width + xi] - pixelData[(yi-1) * width + (xi+1)] +
+     pixelData[(yi+1) * width + (xi-1)] + 2 * pixelData[(yi+1) * width + xi] + pixelData[(yi+1) * width + (xi+1)];
+  
+  return Math.sqrt(gx * gx + gy * gy);
+}
+
+/**
+ * Creates a refined adaptive preview using gradient-based edge detection.
+ * Finds actual edges instead of just intensity changes.
  */
 export function createAdaptivePreview(
   pixelData: Float32Array | Uint16Array | Uint8Array,
@@ -28,58 +58,59 @@ export function createAdaptivePreview(
   }
   
   try {
-    const centerIntensity = pixelData[cy * width + cx] || 0;
-    
-    // A more sensitive threshold that adapts to the local tissue density.
-    // Increased multiplier to reduce bleeding into surrounding structures
-    const adaptiveThreshold = Math.max(12, Math.abs(centerIntensity) * 0.15);
-    
-    const numRays = 48; // Increased for a smoother initial shape.
+    const numRays = 48;
     const shapePoints: Point[] = [];
+    
+    // Minimum distance from center (don't collapse to nothing)
+    const minDistance = radius * 0.3;
     
     for (let i = 0; i < numRays; i++) {
       const angle = (i / numRays) * Math.PI * 2;
       const dx = Math.cos(angle);
       const dy = Math.sin(angle);
       
-      let distance = radius;
+      // Find the strongest edge along this ray
+      let bestDistance = radius;
+      let bestGradient = 0;
       
-      // We'll sample along the ray and look for a significant gradient change.
-      const step = 1.5; // A slightly larger step for performance.
-      for (let d = 1; d <= radius; d += step) {
-        const x = Math.round(cx + dx * d);
-        const y = Math.round(cy + dy * d);
+      const step = 1.0;
+      for (let d = minDistance; d <= radius; d += step) {
+        const x = cx + dx * d;
+        const y = cy + dy * d;
         
-        if (x < 0 || x >= width || y < 0 || y >= height) {
-          distance = Math.max(radius * 0.5, d - step);
+        if (x < 1 || x >= width - 1 || y < 1 || y >= height - 1) {
           break;
         }
         
-        const pixelIntensity = pixelData[y * width + x] || 0;
-        const intensityDiff = Math.abs(pixelIntensity - centerIntensity);
+        const gradient = getGradientMagnitude(pixelData, width, height, x, y);
         
-        if (intensityDiff > adaptiveThreshold) {
-          // We've found a border. We'll set the distance and stop searching.
-          distance = Math.max(radius * 0.4, d - step * 2);
-          break;
+        // Prefer edges closer to center (slight bias)
+        const distanceBias = 1 - (d / radius) * 0.1;
+        const score = gradient * distanceBias;
+        
+        if (score > bestGradient) {
+          bestGradient = score;
+          bestDistance = d;
         }
       }
       
-      // We'll add a slight expansion in uniform areas to make the tool feel more responsive.
-      if (distance === radius) {
-        distance = radius * 1.05;
+      // If no significant edge found, use the full radius
+      // A "significant" gradient is one that's notably above the noise floor
+      const gradientThreshold = 20; // Minimum gradient to consider as an edge
+      if (bestGradient < gradientThreshold) {
+        bestDistance = radius;
       }
       
       shapePoints.push({
-        x: centerX + dx * distance,
-        y: centerY + dy * distance
+        x: centerX + dx * bestDistance,
+        y: centerY + dy * bestDistance
       });
     }
     
-    // This is the key to a "less jagged" appearance: a multi-pass smoothing filter.
-    // We apply a simple averaging filter multiple times to smooth out sharp edges.
+    // Multi-pass smoothing for less jagged appearance
     let smoothedPoints = [...shapePoints];
     const smoothingPasses = 3;
+    
     for (let pass = 0; pass < smoothingPasses; pass++) {
       const passPoints: Point[] = [];
       for (let i = 0; i < smoothedPoints.length; i++) {
@@ -87,10 +118,10 @@ export function createAdaptivePreview(
         const curr = smoothedPoints[i];
         const next = smoothedPoints[(i + 1) % smoothedPoints.length];
         
-        // A simple weighted average provides effective smoothing.
+        // Gaussian-like weighted average
         passPoints.push({
-          x: (prev.x * 0.25 + curr.x * 0.5 + next.x * 0.25),
-          y: (prev.y * 0.25 + curr.y * 0.5 + next.y * 0.25)
+          x: prev.x * 0.25 + curr.x * 0.5 + next.x * 0.25,
+          y: prev.y * 0.25 + curr.y * 0.5 + next.y * 0.25
         });
       }
       smoothedPoints = passPoints;

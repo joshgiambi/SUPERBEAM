@@ -391,6 +391,21 @@ export function RobustImport() {
       queryClient.invalidateQueries({ queryKey: ['/api/studies'] });
       queryClient.invalidateQueries({ queryKey: ['/api/series'] });
 
+      // Track recently imported patients with timestamps
+      if (state.result.patients && state.result.patients.length > 0) {
+        const importTimestamp = Date.now();
+        state.result.patients.forEach(patient => {
+          const recentlyImported = JSON.parse(localStorage.getItem('recentlyImportedPatients') || '[]');
+          // Use patientID (uppercase D) to match the PatientPreview interface
+          const patientId = patient.patientID;
+          const newEntry = { patientId, importDate: importTimestamp };
+          const updated = [newEntry, ...recentlyImported.filter((item: any) => item.patientId !== patientId)].slice(0, 10);
+          localStorage.setItem('recentlyImportedPatients', JSON.stringify(updated));
+        });
+        // Trigger event to update patient manager
+        window.dispatchEvent(new Event('recentlyImportedUpdated'));
+      }
+
       setState({ stage: 'success', result: state.result });
 
       toast({

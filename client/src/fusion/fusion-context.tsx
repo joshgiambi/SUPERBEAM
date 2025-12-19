@@ -176,7 +176,8 @@ function getDefaultWindowForModality(modality?: string | null): { window: number
   const mode = (modality || '').toUpperCase();
   switch (mode) {
     case 'MR':
-      return { window: 80, level: 40 };
+      // MRI: return null to use auto windowing based on actual pixel data min/max
+      return null;
     case 'PT':
     case 'PET':
       return { window: 5, level: 2.5 };

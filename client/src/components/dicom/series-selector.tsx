@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, Maximize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes } from 'lucide-react';
+import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, Maximize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes, Star } from 'lucide-react';
 import { DICOMSeries, WindowLevel, WINDOW_LEVEL_PRESETS } from '@/lib/dicom-utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -106,6 +106,7 @@ export function SeriesSelector({
   // Debug logging removed for performance
   const [rtSeries, setRTSeries] = useState<any[]>([]);
   const [selectedRTSeries, setSelectedRTSeries] = useState<any>(null);
+  const [userSelectedPrimaryCT, setUserSelectedPrimaryCT] = useState<number | null>(null); // User-selected primary CT for hierarchy
   const [structureVisibility, setStructureVisibility] = useState<Map<number, boolean>>(new Map());
   const [selectedStructures, setSelectedStructures] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -1210,7 +1211,7 @@ export function SeriesSelector({
     <TooltipProvider delayDuration={0}>
       <div className="h-full flex flex-col space-y-4">
         {/* Main Series and Structures Panel */}
-        <Card className="flex-1 bg-gray-950/90 backdrop-blur-xl border border-gray-600/60 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
+        <Card className="flex-1 bg-gray-950/95 border border-gray-600/60 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
           <CardContent className="p-0 h-full flex flex-col">
             <div className="flex-1 overflow-hidden flex flex-col">
               <Accordion 
@@ -1222,16 +1223,19 @@ export function SeriesSelector({
             
             {/* Series Section */}
             <AccordionItem value="series" className="border-gray-800/50">
-              <AccordionTrigger className="px-4 py-3.5 hover:no-underline hover:bg-gray-800/30 backdrop-blur-sm transition-colors">
+              <AccordionTrigger className="px-4 py-3.5 hover:no-underline hover:bg-gray-800/30 transition-colors">
                 <div className="flex items-center text-gray-100 font-semibold text-sm">
                   <Layers3 className="w-4 h-4 mr-2.5 text-blue-400" />
                   Series
                 </div>
               </AccordionTrigger>
               
-              {/* Summary when collapsed */}
-              {!accordionValues.includes('series') && (
-                <div className="px-4 py-2 space-y-1.5 border-t border-gray-800/50 bg-gray-900/30 transition-all duration-150 ease-out opacity-100">
+              {/* Summary when collapsed - always rendered to prevent layout shift */}
+              <div 
+                className={`px-4 space-y-1.5 border-t border-gray-800/50 bg-gray-900/30 overflow-hidden transition-opacity duration-150 ease-out ${
+                  accordionValues.includes('series') ? 'hidden' : 'py-2 animate-fade-in'
+                }`}
+              >
                   {selectedSeries && (
                     <div className="flex items-center gap-2 text-xs">
                       <Badge className={pillClassForModality(selectedSeries.modality)}>
@@ -1320,8 +1324,7 @@ export function SeriesSelector({
                   {!selectedSeries && (
                     <div className="text-xs text-gray-500 italic">No series selected</div>
                   )}
-                </div>
-              )}
+              </div>
               
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-1 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
@@ -1334,14 +1337,12 @@ export function SeriesSelector({
                     const regSeries = series.filter(s => modalityOf(s) === 'REG');
                     const otherSeries = series.filter(s => !['CT', 'MR', 'PT', 'PET', 'NM', 'REG', 'RTSTRUCT'].includes(modalityOf(s)));
 
-                    // Helper: choose a single Planning CT as the parent (if any CT exists)
-                    const choosePlanningCT = () => {
+                    // Helper: get all planning CTs (CTs referenced by RT structures or that are registration primaries)
+                    const getAllPlanningCTs = () => {
                       const allCTSeries = series.filter(s => modalityOf(s) === 'CT');
-                      if (allCTSeries.length === 0) return null;
+                      if (allCTSeries.length === 0) return [];
 
                       // Gather signals
-                      const assocArrays = regAssociations ? Object.values(regAssociations) : [];
-                      const assocIdsFlat: number[] = assocArrays.flat();
                       const regPrimaryIds = new Set<number>(
                         regAssociations ? Object.keys(regAssociations).map(k => Number(k)).filter(n => Number.isFinite(n)) : []
                       );
@@ -1367,17 +1368,55 @@ export function SeriesSelector({
                         return score;
                       };
 
-                      // Pick best by score
+                      // Sort by score descending
                       const sorted = [...allCTSeries].sort((a, b) => scoreCT(b) - scoreCT(a));
-                      return sorted[0] || null;
+                      
+                      // Return ALL CTs that are either:
+                      // 1. Referenced by an RT structure, OR
+                      // 2. A registration primary, OR
+                      // 3. The highest-scoring CT (at minimum show one)
+                      const planningCTs = sorted.filter((ct, idx) => 
+                        planningCTIds.has(ct.id) || 
+                        regPrimaryIds.has(ct.id) || 
+                        idx === 0  // Always include the best CT
+                      );
+                      
+                      // De-duplicate while preserving order
+                      const seen = new Set<number>();
+                      return planningCTs.filter(ct => {
+                        if (seen.has(ct.id)) return false;
+                        seen.add(ct.id);
+                        return true;
+                      });
                     };
 
-                    const mainCT = choosePlanningCT();
-                    const ctSeriesTop = mainCT ? [mainCT] : [];
+                    const allPlanningCTs = getAllPlanningCTs();
+                    
+                    // If user has selected a primary CT, put it first; otherwise use default ordering
+                    const ctSeriesTop = userSelectedPrimaryCT && allPlanningCTs.some(ct => ct.id === userSelectedPrimaryCT)
+                      ? [
+                          allPlanningCTs.find(ct => ct.id === userSelectedPrimaryCT)!,
+                          ...allPlanningCTs.filter(ct => ct.id !== userSelectedPrimaryCT)
+                        ]
+                      : allPlanningCTs;
+                    
+                    // Determine if we have multiple planning CTs (show star icons)
+                    const hasMultiplePlanningCTs = allPlanningCTs.length > 1;
+                    
+                    // When user has selected a primary, show only that one at top level
+                    // The other CTs will be nested as secondaries under it
+                    const displayedPrimaryCTs = userSelectedPrimaryCT && hasMultiplePlanningCTs
+                      ? ctSeriesTop.slice(0, 1)  // Only show the user-selected primary (first in reordered list)
+                      : ctSeriesTop;             // Default: show all planning CTs
+                    
+                    // CTs that should appear as nested secondaries (when user has selected a primary)
+                    const nestedSecondaryCTs = userSelectedPrimaryCT && hasMultiplePlanningCTs
+                      ? ctSeriesTop.slice(1)     // All CTs except the primary
+                      : [];
 
-                    // Determine primary list: if any CT exists, the single Planning CT is the parent; otherwise fallback
-                    const primarySeries = ctSeriesTop.length > 0
-                      ? ctSeriesTop
+                    // Determine primary list: if any planning CTs exist, show them; otherwise fallback to MR/PT/other
+                    const primarySeries = displayedPrimaryCTs.length > 0
+                      ? displayedPrimaryCTs
                       : (mrSeries.length > 0 ? mrSeries : (ptSeries.length > 0 ? ptSeries : otherSeries));
 
                     return (
@@ -1443,13 +1482,23 @@ export function SeriesSelector({
 
                           const hasExplicitPetCandidates = Boolean(petMapForPrimary && petMapForPrimary.size);
 
-                          const registeredCtAssoc = series.filter((s) => {
+                          const registeredCtAssocFromReg = series.filter((s) => {
                             if (modalityOf(s) !== 'CT') return false;
                             if (!candidateSet.has(s.id)) return false;
                             if (ctIdsLinkedToPet.has(s.id)) return false;
                             if (ptAssoc.length && ptAssoc.some((pet) => Number(pet.studyId) === Number(s.studyId))) return false;
                             return true;
                           });
+                          
+                          // Combine registration-derived CTs with user-demoted planning CTs
+                          // nestedSecondaryCTs are planning CTs that were moved under the user-selected primary
+                          const nestedSecondaryCtIds = new Set(nestedSecondaryCTs.map(ct => ct.id));
+                          const registeredCtAssoc = [
+                            // First: show nestedSecondaryCTs (user-demoted planning CTs)
+                            ...nestedSecondaryCTs.filter(ct => ct.id !== seriesItem.id),
+                            // Then: show registration-derived CTs (excluding those already in nestedSecondaryCTs)
+                            ...registeredCtAssocFromReg.filter(ct => !nestedSecondaryCtIds.has(ct.id))
+                          ];
                           return (
                             <div key={seriesItem.id} className="space-y-1">
                             {/* Primary Series Card */}
@@ -1493,6 +1542,46 @@ export function SeriesSelector({
                                 {selectedSeries?.id === seriesItem.id && (
                                   <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                                 )}
+                                
+                                {/* Star icon for switching primary CT - only show when multiple planning CTs exist */}
+                                {hasMultiplePlanningCTs && modalityOf(seriesItem) === 'CT' && (
+                                  <TooltipProvider delayDuration={0}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          className={cn(
+                                            "flex-shrink-0 p-1 rounded transition-all duration-150",
+                                            userSelectedPrimaryCT === seriesItem.id
+                                              ? "text-yellow-400 hover:text-yellow-300"
+                                              : "text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/10"
+                                          )}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Toggle: if already primary, clear selection (back to default)
+                                            if (userSelectedPrimaryCT === seriesItem.id) {
+                                              setUserSelectedPrimaryCT(null);
+                                            } else {
+                                              setUserSelectedPrimaryCT(seriesItem.id);
+                                            }
+                                          }}
+                                        >
+                                          <Star 
+                                            className="h-3.5 w-3.5" 
+                                            fill={userSelectedPrimaryCT === seriesItem.id ? "currentColor" : "none"}
+                                          />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="left" className="bg-gray-800 border-gray-700 text-white text-xs">
+                                        <p>
+                                          {userSelectedPrimaryCT === seriesItem.id
+                                            ? "Current primary CT - click to reset"
+                                            : "Set as primary CT (reorganize hierarchy)"
+                                          }
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                               </div>
                               {/* Tooltip */}
                               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gradient-to-br from-blue-600/95 via-blue-500/95 to-blue-600/95 border border-blue-400/30 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
@@ -1502,6 +1591,66 @@ export function SeriesSelector({
 
                             {/* Nested Series - Secondary/Fusion Options */}
                             <div className="ml-3 space-y-2">
+                              {/* RT Structure Series nested under CT - FIRST, show those that reference this primary CT */}
+                              {rtSeries && rtSeries.length > 0 && rtSeries.filter((rtS: any) => {
+                                const isMatch = rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1);
+                                return isMatch;
+                              }).length > 0 && (
+                                <div className="space-y-2 border-l-2 border-green-500/40 pl-2">
+                                  {rtSeries.filter((rtS: any) => 
+                                    rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1)
+                                  ).map((rtS: any) => (
+                                    <Button
+                                      key={rtS.id}
+                                      variant="ghost"
+                                      className={cn(
+                                        "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                        selectedRTSeries?.id === rtS.id 
+                                          ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                          : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
+                                      )}
+                                      onClick={() => handleRTSeriesSelect(rtS)}
+                                    >
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <Badge className={cn("flex-shrink-0", pillClassForModality('RT'))}>
+                                          RT
+                                        </Badge>
+                                        <span className={cn(
+                                          "truncate text-xs leading-tight",
+                                          selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
+                                        )}>
+                                          {rtS.seriesDescription || 'Structure Set'}
+                                        </span>
+                                      </div>
+                                      
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className={`flex-shrink-0 transition-colors p-1 ${
+                                              seriesHistoryStatus.get(rtS.id)
+                                                ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
+                                                : 'text-gray-600 cursor-not-allowed'
+                                            }`}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (seriesHistoryStatus.get(rtS.id)) {
+                                                setHistorySeriesId(rtS.id);
+                                                setShowHistoryModal(true);
+                                              }
+                                            }}
+                                          >
+                                            <History className="h-3.5 w-3.5" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                              
                               {/* Registered CT secondaries (REG-derived only; PET/CT CTs are shown under PET) */}
                               {(() => {
                                 if (registeredCtAssoc.length === 0) return null;
@@ -1565,6 +1714,7 @@ export function SeriesSelector({
                                                   {ctS.imageCount}
                                                 </span>
                                               </div>
+                                              
                                             {onSecondarySeriesSelect && (
                                               <TooltipProvider delayDuration={0}>
                                                 <Tooltip>
@@ -1642,71 +1792,42 @@ export function SeriesSelector({
                                             )}
                                           </div>
                                         </div>
+                                        {/* RT Structure nested under this secondary CT */}
+                                        {rtSeries && rtSeries.filter((rtS: any) => rtS.referencedSeriesId === ctS.id).length > 0 && (
+                                          <div className="ml-3 space-y-1 border-l-2 border-green-500/30 pl-2 mt-1">
+                                            {rtSeries.filter((rtS: any) => rtS.referencedSeriesId === ctS.id).map((rtS: any) => (
+                                              <Button
+                                                key={rtS.id}
+                                                variant="ghost"
+                                                className={cn(
+                                                  "group w-full px-2 py-1 min-h-7 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                                  selectedRTSeries?.id === rtS.id 
+                                                    ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                                    : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
+                                                )}
+                                                onClick={() => handleRTSeriesSelect(rtS)}
+                                              >
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                  <Badge className={cn("flex-shrink-0 text-[10px] px-1.5", pillClassForModality('RT'))}>
+                                                    RT
+                                                  </Badge>
+                                                  <span className={cn(
+                                                    "truncate text-[11px] leading-tight",
+                                                    selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
+                                                  )}>
+                                                    {rtS.seriesDescription || 'Structure Set'}
+                                                  </span>
+                                                </div>
+                                              </Button>
+                                            ))}
+                                          </div>
+                                        )}
                                         </div>
                                       );
                                     })}
                                   </div>
                                 );
                               })()}
-                              {/* RT Structure Series nested under CT - only show those that reference this CT */}
-                              {rtSeries && rtSeries.length > 0 && rtSeries.filter((rtS: any) => {
-                                const isMatch = rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1);
-                              return isMatch;
-                            }).length > 0 && (
-                                <div className="space-y-2 border-l-2 border-green-500/40 pl-2">
-                                  {rtSeries.filter((rtS: any) => 
-                                    rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1)
-                                  ).map((rtS: any) => (
-                                    <Button
-                                      key={rtS.id}
-                                      variant="ghost"
-                                      className={cn(
-                                        "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
-                                        selectedRTSeries?.id === rtS.id 
-                                          ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
-                                          : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
-                                      )}
-                                      onClick={() => handleRTSeriesSelect(rtS)}
-                                    >
-                                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <Badge className={cn("flex-shrink-0", pillClassForModality('RT'))}>
-                                          RT
-                                        </Badge>
-                                        <span className={cn(
-                                          "truncate text-xs leading-tight",
-                                          selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
-                                        )}>
-                                          {rtS.seriesDescription || 'Structure Set'}
-                                        </span>
-                                      </div>
-                                      
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div
-                                            className={`flex-shrink-0 transition-colors p-1 ${
-                                              seriesHistoryStatus.get(rtS.id)
-                                                ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
-                                                : 'text-gray-600 cursor-not-allowed'
-                                            }`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (seriesHistoryStatus.get(rtS.id)) {
-                                                setHistorySeriesId(rtS.id);
-                                                setShowHistoryModal(true);
-                                              }
-                                            }}
-                                          >
-                                            <History className="h-3.5 w-3.5" />
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </Button>
-                                  ))}
-                                </div>
-                              )}
                               
                               {/* Registration and MR Series that can be fused (REG-preferred; fallback: all MR) */}
                               {(() => {
@@ -2488,7 +2609,7 @@ export function SeriesSelector({
 
             {/* Structures Section */}
             <AccordionItem value="structures" className="border-gray-800/50">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-800/30 backdrop-blur-sm">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-800/30">
                 <div className="flex items-center text-gray-100 font-medium text-sm">
                   <Palette className="w-4 h-4 mr-2 text-green-400" />
                   Structures
@@ -3654,7 +3775,7 @@ export function SeriesSelector({
       </Card>
 
       {/* Window/Level Controls - Redesigned */}
-      <Card className="bg-gray-950/90 backdrop-blur-xl border border-gray-700/50 rounded-xl overflow-hidden shadow-xl">
+      <Card className="bg-gray-950/95 border border-gray-700/50 rounded-xl overflow-hidden shadow-xl">
         <CardContent className="p-0">
           <Accordion 
             type="single" 
@@ -3770,7 +3891,7 @@ export function SeriesSelector({
 
       {/* New Structure Dialog - Glassmorphic Styling */}
       <Dialog open={showNewStructureDialog} onOpenChange={setShowNewStructureDialog}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900/80 backdrop-blur-xl border border-gray-700/50 shadow-2xl">
+        <DialogContent className="sm:max-w-[425px] bg-gray-900/95 border border-gray-700/50 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-white text-lg font-semibold">Create New Structure</DialogTitle>
             <DialogDescription className="text-gray-400">

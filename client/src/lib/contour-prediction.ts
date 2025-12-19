@@ -12,7 +12,8 @@ import {
   type RegionCharacteristics
 } from './image-aware-prediction';
 import { fastSlicePrediction } from "./fast-slice-prediction";
-import { samController, type SAMPredictionResult } from './sam-controller';
+// Use OHIF-style SAM with @cornerstonejs/ai
+import { samOhifController, type SAMPredictionResult } from './sam-ohif-controller';
 
 export type PropagationMode = 'conservative' | 'moderate' | 'aggressive';
 
@@ -35,6 +36,10 @@ export interface PredictionParams {
   coordinateTransforms?: {
     worldToPixel: (x: number, y: number) => [number, number];
     pixelToWorld: (x: number, y: number) => [number, number];
+    // Optional 3D-aware variants (preferred when available).
+    // Many DICOM series require using Z (slice plane) for correct world<->pixel projection.
+    worldToPixel3D?: (x: number, y: number, z: number) => [number, number];
+    pixelToWorld3D?: (x: number, y: number, z: number) => [number, number, number];
   };
   enableImageRefinement?: boolean;
 
@@ -224,6 +229,50 @@ function smoothContourInPlace(points: number[], iterations = 1, smoothing = 0.2)
       points[i] = buffer[i];
     }
   }
+}
+
+/**
+ * Smooth a contour in world coordinates (returns a new array)
+ * Uses 5-point Gaussian-like smoothing for better quality
+ */
+function smoothContourWorldCoords(points: number[], passes: number = 2): number[] {
+  if (points.length < 15) return [...points]; // Need at least 5 points
+  
+  const totalPoints = points.length / 3;
+  let result = [...points];
+  
+  for (let pass = 0; pass < passes; pass++) {
+    const smoothed = new Array<number>(points.length);
+    
+    for (let i = 0; i < totalPoints; i++) {
+      const p2 = ((i - 2) + totalPoints) % totalPoints;
+      const p1 = ((i - 1) + totalPoints) % totalPoints;
+      const n1 = (i + 1) % totalPoints;
+      const n2 = (i + 2) % totalPoints;
+      
+      const idx = i * 3;
+      // Gaussian-like weights: [0.1, 0.2, 0.4, 0.2, 0.1]
+      smoothed[idx] = 
+        result[p2 * 3] * 0.1 + 
+        result[p1 * 3] * 0.2 + 
+        result[idx] * 0.4 + 
+        result[n1 * 3] * 0.2 + 
+        result[n2 * 3] * 0.1;
+      
+      smoothed[idx + 1] = 
+        result[p2 * 3 + 1] * 0.1 + 
+        result[p1 * 3 + 1] * 0.2 + 
+        result[idx + 1] * 0.4 + 
+        result[n1 * 3 + 1] * 0.2 + 
+        result[n2 * 3 + 1] * 0.1;
+      
+      smoothed[idx + 2] = result[idx + 2]; // Preserve Z
+    }
+    
+    result = smoothed;
+  }
+  
+  return result;
 }
 
 /**
@@ -491,6 +540,53 @@ function trendBasedPredictionFromSnapshot(
   };
 }
 
+function isProjectionSane(
+  contourWorld: number[],
+  imageWidth: number,
+  imageHeight: number,
+  project: (x: number, y: number, z: number) => [number, number],
+  samplePoints = 24
+): { ok: boolean; inBoundsRatio: number; nanRatio: number } {
+  if (!Number.isFinite(imageWidth) || !Number.isFinite(imageHeight) || imageWidth <= 1 || imageHeight <= 1) {
+    return { ok: false, inBoundsRatio: 0, nanRatio: 1 };
+  }
+  if (!contourWorld || contourWorld.length < 9) {
+    return { ok: false, inBoundsRatio: 0, nanRatio: 1 };
+  }
+
+  const totalPts = Math.max(1, Math.floor(contourWorld.length / 3));
+  const step = Math.max(1, Math.floor(totalPts / samplePoints));
+  let tested = 0;
+  let inBounds = 0;
+  let nan = 0;
+
+  for (let i = 0; i < totalPts; i += step) {
+    const idx = i * 3;
+    const x = contourWorld[idx];
+    const y = contourWorld[idx + 1];
+    const z = contourWorld[idx + 2];
+    const [px, py] = project(x, y, z);
+    tested++;
+
+    if (!Number.isFinite(px) || !Number.isFinite(py)) {
+      nan++;
+      continue;
+    }
+
+    // generous bounds (allow slight overshoot)
+    if (px >= -2 && px <= imageWidth + 2 && py >= -2 && py <= imageHeight + 2) {
+      inBounds++;
+    }
+  }
+
+  const nanRatio = tested ? nan / tested : 1;
+  const inBoundsRatio = tested ? inBounds / tested : 0;
+
+  // If many points are NaN or most points are out of bounds, projection is not trustworthy.
+  const ok = nanRatio < 0.2 && inBoundsRatio >= 0.6;
+  return { ok, inBoundsRatio, nanRatio };
+}
+
 /**
  * SAM-based prediction using OHIF's SAM model (runs in browser via ONNX)
  */
@@ -505,10 +601,30 @@ async function samPrediction(
   coordinateTransforms?: {
     worldToPixel: (x: number, y: number) => [number, number];
     pixelToWorld: (x: number, y: number) => [number, number];
+    worldToPixel3D?: (x: number, y: number, z: number) => [number, number];
+    pixelToWorld3D?: (x: number, y: number, z: number) => [number, number, number];
   }
 ): Promise<PredictionResult> {
+  // Detailed logging for SAM requirements
+  console.log('🤖 SAM: Checking prerequisites...', {
+    hasImageData: !!imageData,
+    hasCurrentSlice: !!imageData?.currentSlice,
+    hasTargetSlice: !!imageData?.targetSlice,
+    hasTransforms: !!coordinateTransforms,
+    currentSlicePixels: imageData?.currentSlice?.pixels?.length || 0,
+    targetSlicePixels: imageData?.targetSlice?.pixels?.length || 0,
+    currentSliceSize: imageData?.currentSlice ? `${imageData.currentSlice.width}x${imageData.currentSlice.height}` : 'N/A',
+    targetSliceSize: imageData?.targetSlice ? `${imageData.targetSlice.width}x${imageData.targetSlice.height}` : 'N/A',
+  });
+
   if (!imageData?.currentSlice || !imageData?.targetSlice || !coordinateTransforms) {
-    console.warn('SAM prediction unavailable: missing pixel data or transforms.');
+    const missingParts = [];
+    if (!imageData) missingParts.push('imageData');
+    if (!imageData?.currentSlice) missingParts.push('currentSlice');
+    if (!imageData?.targetSlice) missingParts.push('targetSlice');
+    if (!coordinateTransforms) missingParts.push('coordinateTransforms');
+    
+    console.error('🤖 SAM CANNOT RUN - Missing:', missingParts.join(', '));
     return {
       predictedContour: [],
       confidence: 0,
@@ -516,7 +632,22 @@ async function samPrediction(
       metadata: {
         method: 'sam_missing_data',
         historySize: 0,
-        notes: 'Pixel data or transforms unavailable',
+        notes: `SAM missing: ${missingParts.join(', ')}`,
+      },
+    };
+  }
+  
+  // Verify pixel data exists
+  if (!imageData.currentSlice.pixels || !imageData.targetSlice.pixels) {
+    console.error('🤖 SAM CANNOT RUN - Missing pixel arrays');
+    return {
+      predictedContour: [],
+      confidence: 0,
+      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
+      metadata: {
+        method: 'sam_missing_pixels',
+        historySize: 0,
+        notes: 'Pixel arrays not loaded',
       },
     };
   }
@@ -525,7 +656,12 @@ async function samPrediction(
     // Convert contour to pixel coordinates
     const pixelContour: { x: number; y: number }[] = [];
     for (let i = 0; i < currentContour.length; i += 3) {
-      const [px, py] = coordinateTransforms.worldToPixel(currentContour[i], currentContour[i + 1]);
+      const x = currentContour[i];
+      const y = currentContour[i + 1];
+      const z = currentContour[i + 2];
+      const [px, py] = coordinateTransforms.worldToPixel3D
+        ? coordinateTransforms.worldToPixel3D(x, y, z)
+        : coordinateTransforms.worldToPixel(x, y);
       pixelContour.push({ x: px, y: py });
     }
 
@@ -543,13 +679,18 @@ async function samPrediction(
     };
 
     // Run SAM prediction
-    const result = await samController.predictNextSlice(pixelContour, refImage, targetImage);
+    const result = await samOhifController.predictNextSlice(pixelContour, refImage, targetImage);
 
     // Convert predicted contour back to world coordinates
     const predictedContour: number[] = [];
     for (const point of result.contour) {
-      const [x, y] = coordinateTransforms.pixelToWorld(point.x, point.y);
-      predictedContour.push(x, y, targetSlicePosition);
+      if (coordinateTransforms.pixelToWorld3D) {
+        const [wx, wy, wz] = coordinateTransforms.pixelToWorld3D(point.x, point.y, targetSlicePosition);
+        predictedContour.push(wx, wy, wz);
+      } else {
+        const [wx, wy] = coordinateTransforms.pixelToWorld(point.x, point.y);
+        predictedContour.push(wx, wy, targetSlicePosition);
+      }
     }
 
     return {
@@ -583,85 +724,38 @@ async function samPrediction(
 
 /**
  * Geometric prediction using intensity-based refinement (fast, client-side)
+ * Falls back to simple contour copy if pixel data isn't available
  */
 async function geometricPrediction(
   currentContour: number[],
   currentSlicePosition: number,
   targetSlicePosition: number,
-  imageData?: {
+  _imageData?: {
     currentSlice?: ImageData;
     targetSlice?: ImageData;
   },
-  coordinateTransforms?: {
+  _coordinateTransforms?: {
     worldToPixel: (x: number, y: number) => [number, number];
     pixelToWorld: (x: number, y: number) => [number, number];
+    worldToPixel3D?: (x: number, y: number, z: number) => [number, number];
+    pixelToWorld3D?: (x: number, y: number, z: number) => [number, number, number];
   },
-  predictionParams?: import('./fast-slice-prediction').PredictionParams
+  _predictionParams?: import('./fast-slice-prediction').PredictionParams
 ): Promise<PredictionResult> {
-  if (!imageData?.currentSlice || !imageData?.targetSlice || !coordinateTransforms) {
-    return {
-      predictedContour: [],
-      confidence: 0,
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: { method: 'geometric_missing_data', historySize: 0 },
-    };
+  // World-space deterministic fallback: copy contour and move it to target slice.
+  // We keep this function as a thin wrapper; the orchestrator will choose
+  // more advanced world-space modes when history is available.
+  const copiedContour: number[] = [];
+  for (let i = 0; i < currentContour.length; i += 3) {
+    copiedContour.push(currentContour[i], currentContour[i + 1], targetSlicePosition);
   }
-
-  try {
-    // Convert world contour to pixel coordinates
-    const pixelPoints: { x: number; y: number }[] = [];
-    for (let i = 0; i < currentContour.length; i += 3) {
-      const [px, py] = coordinateTransforms.worldToPixel(currentContour[i], currentContour[i + 1]);
-      pixelPoints.push({ x: px, y: py });
-    }
-
-    // Run geometric prediction with intensity refinement
-    const sliceDistance = targetSlicePosition - currentSlicePosition;
-    const predictedPixels = fastSlicePrediction(
-      pixelPoints,
-      imageData.currentSlice.pixels,
-      imageData.targetSlice.pixels,
-      imageData.currentSlice.width || 512,
-      imageData.currentSlice.height || 512,
-      sliceDistance,
-      predictionParams
-    );
-
-    if (predictedPixels.length === 0) {
-      return {
-        predictedContour: [],
-        confidence: 0,
-        adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-        metadata: { method: 'geometric_no_result', historySize: 0 },
-      };
-    }
-
-    // Convert back to world coordinates
-    const predictedContour: number[] = [];
-    for (const p of predictedPixels) {
-      const [worldX, worldY] = coordinateTransforms.pixelToWorld(p.x, p.y);
-      predictedContour.push(worldX, worldY, targetSlicePosition);
-    }
-
-    return {
-      predictedContour,
-      confidence: 0.85, // Conservative confidence for geometric method
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: {
-        method: 'geometric',
-        historySize: 0,
-        notes: 'Geometric prediction with intensity refinement',
-      },
-    };
-  } catch (error: any) {
-    console.error('Geometric prediction failed:', error);
-    return {
-      predictedContour: [],
-      confidence: 0,
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: { method: 'geometric_failed', historySize: 0, notes: error.message },
-    };
-  }
+  const smoothed = smoothContourWorldCoords(copiedContour, 2);
+  return {
+    predictedContour: smoothed,
+    confidence: 0.55,
+    adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
+    metadata: { method: 'geometric_world_copy', historySize: 0, notes: 'World-space copy + smoothing' },
+  };
 }
 
 async function mem3dPrediction(
@@ -675,6 +769,8 @@ async function mem3dPrediction(
   coordinateTransforms?: {
     worldToPixel: (x: number, y: number) => [number, number];
     pixelToWorld: (x: number, y: number) => [number, number];
+    worldToPixel3D?: (x: number, y: number, z: number) => [number, number];
+    pixelToWorld3D?: (x: number, y: number, z: number) => [number, number, number];
   },
   predictionParams?: import('./fast-slice-prediction').PredictionParams
 ): Promise<PredictionResult> {
@@ -691,7 +787,12 @@ async function mem3dPrediction(
     // Convert world contour to pixel coordinates
     const pixelPoints: { x: number; y: number }[] = [];
     for (let i = 0; i < currentContour.length; i += 3) {
-      const [px, py] = coordinateTransforms.worldToPixel(currentContour[i], currentContour[i + 1]);
+      const x = currentContour[i];
+      const y = currentContour[i + 1];
+      const z = currentContour[i + 2];
+      const [px, py] = coordinateTransforms.worldToPixel3D
+        ? coordinateTransforms.worldToPixel3D(x, y, z)
+        : coordinateTransforms.worldToPixel(x, y);
       pixelPoints.push({ x: px, y: py });
     }
 
@@ -719,8 +820,13 @@ async function mem3dPrediction(
     // Convert back to world coordinates
     const predictedContour: number[] = [];
     for (const p of predictedPixels) {
-      const [worldX, worldY] = coordinateTransforms.pixelToWorld(p.x, p.y);
-      predictedContour.push(worldX, worldY, targetSlicePosition);
+      if (coordinateTransforms.pixelToWorld3D) {
+        const [worldX, worldY, worldZ] = coordinateTransforms.pixelToWorld3D(p.x, p.y, targetSlicePosition);
+        predictedContour.push(worldX, worldY, worldZ);
+      } else {
+        const [worldX, worldY] = coordinateTransforms.pixelToWorld(p.x, p.y);
+        predictedContour.push(worldX, worldY, targetSlicePosition);
+      }
     }
 
     return {
@@ -763,13 +869,29 @@ export async function predictNextSliceContour(params: PredictionParams): Promise
   } = params;
   
   if (!currentContour || currentContour.length < 9) { // Need at least 3 points
+    console.warn('🔮 predictNextSliceContour: REJECTED - currentContour invalid', {
+      hasContour: !!currentContour,
+      contourLength: currentContour?.length || 0,
+      currentSlicePosition,
+      targetSlicePosition,
+      predictionMode
+    });
     return {
       predictedContour: [],
       confidence: 0,
       adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: { method: 'none', historySize: 0 }
+      metadata: { method: 'none', historySize: 0, notes: `Input contour invalid (length: ${currentContour?.length || 0})` }
     };
   }
+  
+  console.log('🔮 predictNextSliceContour: ACCEPTED - processing', {
+    predictionMode,
+    contourLength: currentContour.length,
+    points: currentContour.length / 3,
+    currentSlicePosition,
+    targetSlicePosition,
+    sliceDistance: targetSlicePosition - currentSlicePosition
+  });
   
   const sliceDistance = targetSlicePosition - currentSlicePosition;
   
@@ -812,35 +934,79 @@ export async function predictNextSliceContour(params: PredictionParams): Promise
           confidence: result.confidence,
           method: result.metadata?.method,
         });
-      } catch (samError) {
-        console.error('🤖 SAM prediction failed:', samError);
-        // Fallback to geometric
-        console.log('🤖 Falling back to geometric prediction');
-        result = await geometricPrediction(
-          currentContour,
-          currentSlicePosition,
-          targetSlicePosition,
-          imageData,
-          coordinateTransforms,
-          params.mem3dParams
-        );
-        if (result.metadata) {
-          result.metadata.notes = `SAM failed (${samError}), used geometric fallback`;
+        
+        // NO FALLBACK: If SAM fails, return the failed result so user knows SAM didn't work
+        if (result.predictedContour.length < 9 || result.metadata?.method?.includes('missing_data') || result.metadata?.method?.includes('failed')) {
+          console.error('🤖 SAM FAILED - NO FALLBACK. Result:', result.metadata?.method, result.metadata?.notes);
+          // Return empty result with clear error message
+          result = {
+            predictedContour: [],
+            confidence: 0,
+            adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
+            metadata: {
+              method: 'sam_failed',
+              historySize: 0,
+              notes: `SAM failed: ${result.metadata?.notes || 'unknown error'}. Check console for details.`,
+            },
+          };
         }
+      } catch (samError: any) {
+        console.error('🤖 SAM prediction threw error:', samError);
+        // NO FALLBACK: Return error result
+        result = {
+          predictedContour: [],
+          confidence: 0,
+          adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
+          metadata: {
+            method: 'sam_error',
+            historySize: 0,
+            notes: `SAM error: ${samError.message || samError}`,
+          },
+        };
       }
       break;
       
     case 'geometric':
-      // Geometric prediction with intensity-based refinement
-      console.log('📐 Using geometric prediction mode');
-      result = await geometricPrediction(
-        currentContour,
-        currentSlicePosition,
-        targetSlicePosition,
-        imageData,
-        coordinateTransforms,
-        params.mem3dParams
-      );
+      // Shape-based prediction: simple copy from nearest reference with smoothing
+      // No trend extrapolation - just copy and smooth for reliability
+      {
+        console.log('🔮 GEO: geometric prediction', {
+          currentPoints: currentContour.length / 3,
+          sliceDistance: sliceDistance.toFixed(2),
+          from: currentSlicePosition.toFixed(2),
+          to: targetSlicePosition.toFixed(2)
+        });
+        
+        // Simple copy + smooth - most reliable approach
+        const predictedContour: number[] = [];
+        for (let i = 0; i < currentContour.length; i += 3) {
+          predictedContour.push(
+            currentContour[i],
+            currentContour[i + 1],
+            targetSlicePosition  // Set Z to target slice
+          );
+        }
+        
+        // Apply smoothing
+        const smoothed = smoothContourWorldCoords(predictedContour, 2);
+        
+        result = {
+          predictedContour: smoothed,
+          confidence: Math.max(0.5, 1 - Math.abs(sliceDistance) * 0.05),
+          adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
+          metadata: { 
+            method: 'geometric_copy', 
+            historySize: 1, 
+            notes: `Copied from slice ${currentSlicePosition.toFixed(2)}`,
+            distance_to_nearest: Math.abs(sliceDistance)
+          },
+        };
+        
+        console.log('🔮 GEO: result', {
+          points: smoothed.length / 3,
+          confidence: result.confidence.toFixed(2)
+        });
+      }
       break;
       
     case 'fast-raycast':
@@ -857,33 +1023,62 @@ export async function predictNextSliceContour(params: PredictionParams): Promise
       break;
   }
 
-  // Fallback to adaptive if primary method fails
+  // NO FALLBACK: If prediction failed, log it but don't silently switch to another method
   if (result.predictedContour.length === 0 || result.confidence === 0) {
-    console.warn(`${predictionMode} prediction failed, falling back to adaptive prediction`);
-    const fallbackContour = findNearestContour();
-    result = adaptivePrediction(currentContour, fallbackContour, sliceDistance, targetSlicePosition);
+    console.warn(`${predictionMode} prediction failed - NOT falling back to another method`);
+    // Ensure metadata reflects the failure
     if (result.metadata) {
-      result.metadata.fallbackApplied = true;
-      result.metadata.notes = `${predictionMode} failed, used geometric fallback`;
+      result.metadata.fallbackApplied = false;
     }
   }
   
   // Apply image-aware refinement if enabled and image data available
   // Skip refinement for fast-raycast (it handles refinement internally)
   if (enableImageRefinement &&
+      predictionMode !== 'geometric' &&
       predictionMode !== 'fast-raycast' &&
       imageData?.targetSlice &&
       coordinateTransforms &&
       result.predictedContour.length > 0) {
     
     try {
+      // If transforms look untrustworthy for this slice, skip refinement to avoid
+      // turning a reasonable contour into garbage.
+      const targetWidth = imageData.targetSlice.width || 512;
+      const targetHeight = imageData.targetSlice.height || 512;
+      const projectForSanity = (x: number, y: number, z: number): [number, number] =>
+        coordinateTransforms.worldToPixel3D
+          ? coordinateTransforms.worldToPixel3D(x, y, z)
+          : coordinateTransforms.worldToPixel(x, y);
+      const sanity = isProjectionSane(result.predictedContour, targetWidth, targetHeight, projectForSanity);
+      if (!sanity.ok) {
+        if (!result.metadata) {
+          result.metadata = { method: predictionMode as string, historySize: 0 };
+        }
+        result.metadata.imageRefinement = { applied: false, edgeSnapped: false, validated: false };
+        result.metadata.notes = `${result.metadata.notes || ''} Skipped image refinement (bad projection: inBoundsRatio=${sanity.inBoundsRatio.toFixed(2)}, nanRatio=${sanity.nanRatio.toFixed(2)}).`.trim();
+        return result;
+      }
+
+      const worldToPixel2D = (x: number, y: number): [number, number] =>
+        coordinateTransforms.worldToPixel3D
+          ? coordinateTransforms.worldToPixel3D(x, y, targetSlicePosition)
+          : coordinateTransforms.worldToPixel(x, y);
+      const pixelToWorld2D = (px: number, py: number): [number, number] => {
+        if (coordinateTransforms.pixelToWorld3D) {
+          const [wx, wy] = coordinateTransforms.pixelToWorld3D(px, py, targetSlicePosition);
+          return [wx, wy];
+        }
+        return coordinateTransforms.pixelToWorld(px, py);
+      };
+
       const { refinedContour, confidence: imageConfidence, metadata: refinementMetadata } = 
         refineContourWithImageData(
           result.predictedContour,
           imageData.referenceSlices || [],
           imageData.targetSlice,
-          coordinateTransforms.worldToPixel,
-          coordinateTransforms.pixelToWorld,
+          worldToPixel2D,
+          pixelToWorld2D,
           {
             snapToEdges: true,
             validateSimilarity: imageData.referenceSlices && imageData.referenceSlices.length > 0,

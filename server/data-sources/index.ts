@@ -6,6 +6,7 @@
  * - dicomweb: External DICOMweb servers (Orthanc, DCM4CHEE, etc.)
  * - local_folder: Server-side folder scanning for DICOM files
  * - dimse: Traditional DICOM DIMSE connections (C-FIND, C-MOVE)
+ * - orthanc: Orthanc native REST API (more reliable than DIMSE)
  */
 
 import { storage } from '../storage';
@@ -58,6 +59,14 @@ export interface QueryResult {
   modality?: string;
   numberOfStudyRelatedSeries?: number;
   numberOfStudyRelatedInstances?: number;
+  // Remote source identifiers
+  orthancStudyId?: string;
+  // Local storage status (checked via StudyInstanceUID)
+  isLocal?: boolean;
+  isPartial?: boolean; // True if local but missing some series/instances
+  localStudyId?: number;
+  localSeriesCount?: number; // How many series we have locally
+  localInstanceCount?: number; // How many instances we have locally
 }
 
 // Query parameters
@@ -518,6 +527,288 @@ async function testDIMSEConnection(connection: PacsConnection): Promise<{
 }
 
 /**
+ * Orthanc REST API Study result format
+ */
+interface OrthancStudy {
+  ID: string;
+  MainDicomTags: {
+    AccessionNumber?: string;
+    ReferringPhysicianName?: string;
+    StudyDate?: string;
+    StudyDescription?: string;
+    StudyInstanceUID?: string;
+    StudyTime?: string;
+  };
+  ParentPatient: string;
+  PatientMainDicomTags: {
+    PatientID?: string;
+    PatientName?: string;
+    PatientBirthDate?: string;
+    PatientSex?: string;
+  };
+  Series: string[];
+}
+
+/**
+ * Query an Orthanc server using its native REST API
+ * This is more reliable than DIMSE for Orthanc servers
+ */
+export async function queryOrthancServer(
+  connection: PacsConnection,
+  params: QueryParams
+): Promise<QueryResult[]> {
+  if (!connection.hostname || !connection.port) {
+    throw new Error('Hostname and port are required for Orthanc connections');
+  }
+
+  const baseUrl = `http://${connection.hostname}:${connection.port}`;
+  
+  try {
+    // Fetch all studies with expanded data
+    const response = await fetch(`${baseUrl}/studies?expand`, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Orthanc returned ${response.status}: ${response.statusText}`);
+    }
+
+    const studies: OrthancStudy[] = await response.json();
+    
+    // Convert to our standard QueryResult format and filter
+    let results: QueryResult[] = studies.map(study => ({
+      patientName: study.PatientMainDicomTags?.PatientName,
+      patientID: study.PatientMainDicomTags?.PatientID,
+      studyInstanceUID: study.MainDicomTags?.StudyInstanceUID,
+      studyDate: study.MainDicomTags?.StudyDate,
+      studyTime: study.MainDicomTags?.StudyTime,
+      studyDescription: study.MainDicomTags?.StudyDescription,
+      accessionNumber: study.MainDicomTags?.AccessionNumber,
+      modality: undefined, // Would need to query series for this
+      numberOfStudyRelatedSeries: study.Series?.length,
+      numberOfStudyRelatedInstances: undefined,
+      // Add Orthanc-specific ID for retrieval
+      orthancStudyId: study.ID,
+    } as QueryResult & { orthancStudyId?: string }));
+
+    // Apply filters
+    if (params.patientName) {
+      const filter = params.patientName.toLowerCase().replace(/\*/g, '');
+      results = results.filter(r => r.patientName?.toLowerCase().includes(filter));
+    }
+    if (params.patientID) {
+      const filter = params.patientID.toLowerCase().replace(/\*/g, '');
+      results = results.filter(r => r.patientID?.toLowerCase().includes(filter));
+    }
+    if (params.studyDescription) {
+      const filter = params.studyDescription.toLowerCase().replace(/\*/g, '');
+      results = results.filter(r => r.studyDescription?.toLowerCase().includes(filter));
+    }
+    if (params.studyDate) {
+      results = results.filter(r => r.studyDate === params.studyDate);
+    }
+    if (params.accessionNumber) {
+      results = results.filter(r => r.accessionNumber === params.accessionNumber);
+    }
+
+    // Apply limit/offset
+    if (params.offset) {
+      results = results.slice(params.offset);
+    }
+    if (params.limit) {
+      results = results.slice(0, params.limit);
+    }
+
+    // Check which studies are already stored locally (by StudyInstanceUID)
+    const studyUIDs = results
+      .map(r => r.studyInstanceUID)
+      .filter((uid): uid is string => !!uid);
+    
+    if (studyUIDs.length > 0) {
+      // Get all local studies and series to build lookup maps
+      const localStudies = await storage.getAllStudies();
+      const localSeries = await storage.getAllSeries();
+      
+      // Map: studyInstanceUID -> { studyId, seriesCount }
+      const localStudyMap = new Map<string, { studyId: number; seriesCount: number }>();
+      
+      // Count series per study
+      const seriesCountByStudyId = new Map<number, number>();
+      for (const s of localSeries) {
+        seriesCountByStudyId.set(s.studyId, (seriesCountByStudyId.get(s.studyId) || 0) + 1);
+      }
+      
+      for (const study of localStudies) {
+        if (study.studyInstanceUID) {
+          localStudyMap.set(study.studyInstanceUID, {
+            studyId: study.id,
+            seriesCount: seriesCountByStudyId.get(study.id) || 0,
+          });
+        }
+      }
+      
+      // Mark which results are already local, and detect partial imports
+      let fullCount = 0;
+      let partialCount = 0;
+      
+      for (const result of results) {
+        if (result.studyInstanceUID && localStudyMap.has(result.studyInstanceUID)) {
+          const localInfo = localStudyMap.get(result.studyInstanceUID)!;
+          result.isLocal = true;
+          result.localStudyId = localInfo.studyId;
+          result.localSeriesCount = localInfo.seriesCount;
+          
+          // Check if we have fewer series locally than Orthanc reports
+          const orthancSeriesCount = result.numberOfStudyRelatedSeries || 0;
+          if (localInfo.seriesCount < orthancSeriesCount) {
+            result.isPartial = true;
+            partialCount++;
+          } else {
+            result.isPartial = false;
+            fullCount++;
+          }
+        } else {
+          result.isLocal = false;
+          result.isPartial = false;
+        }
+      }
+      
+      console.log(`[Orthanc] Found ${results.length} studies from ${baseUrl} (${fullCount} complete, ${partialCount} partial, ${results.length - fullCount - partialCount} not local)`);
+    } else {
+      console.log(`[Orthanc] Found ${results.length} studies from ${baseUrl}`);
+    }
+    return results;
+  } catch (error: any) {
+    console.error('[Orthanc] Query error:', error);
+    throw new Error(`Failed to query Orthanc server: ${error.message}`);
+  }
+}
+
+/**
+ * Test Orthanc REST API connection
+ */
+async function testOrthancConnection(connection: PacsConnection): Promise<{
+  success: boolean;
+  message: string;
+  responseTime?: number;
+}> {
+  const startTime = Date.now();
+
+  if (!connection.hostname || !connection.port) {
+    return { success: false, message: 'Hostname and port required' };
+  }
+
+  const baseUrl = `http://${connection.hostname}:${connection.port}`;
+
+  try {
+    const response = await fetch(`${baseUrl}/system`, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (response.ok) {
+      const system = await response.json();
+      const studiesResponse = await fetch(`${baseUrl}/studies`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      const studies = studiesResponse.ok ? await studiesResponse.json() : [];
+      
+      return {
+        success: true,
+        message: `Connected to ${system.Name || 'Orthanc'} (${studies.length} studies)`,
+        responseTime: Date.now() - startTime,
+      };
+    } else {
+      return {
+        success: false,
+        message: `Orthanc returned ${response.status}: ${response.statusText}`,
+        responseTime: Date.now() - startTime,
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Connection failed: ${error.message}`,
+      responseTime: Date.now() - startTime,
+    };
+  }
+}
+
+/**
+ * Download a study from Orthanc and save to local storage
+ * Returns the path to the downloaded DICOM files
+ */
+export async function downloadOrthancStudy(
+  connection: PacsConnection,
+  orthancStudyId: string
+): Promise<{ success: boolean; message: string; filePaths?: string[] }> {
+  if (!connection.hostname || !connection.port) {
+    return { success: false, message: 'Hostname and port required' };
+  }
+
+  const baseUrl = `http://${connection.hostname}:${connection.port}`;
+  const downloadDir = path.join(process.cwd(), 'uploads', 'orthanc-import', orthancStudyId);
+
+  try {
+    // Create download directory
+    await fs.promises.mkdir(downloadDir, { recursive: true });
+
+    // Get study details to find all instances
+    const studyResponse = await fetch(`${baseUrl}/studies/${orthancStudyId}`, {
+      signal: AbortSignal.timeout(30000),
+    });
+    
+    if (!studyResponse.ok) {
+      throw new Error(`Failed to get study details: ${studyResponse.status}`);
+    }
+
+    const study = await studyResponse.json();
+    const filePaths: string[] = [];
+
+    // Download each series
+    for (const seriesId of study.Series) {
+      const seriesResponse = await fetch(`${baseUrl}/series/${seriesId}`, {
+        signal: AbortSignal.timeout(30000),
+      });
+      
+      if (!seriesResponse.ok) continue;
+      
+      const series = await seriesResponse.json();
+
+      // Download each instance
+      for (const instanceId of series.Instances) {
+        const instancePath = path.join(downloadDir, `${instanceId}.dcm`);
+        
+        // Download DICOM file
+        const fileResponse = await fetch(`${baseUrl}/instances/${instanceId}/file`, {
+          signal: AbortSignal.timeout(60000),
+        });
+        
+        if (fileResponse.ok) {
+          const buffer = Buffer.from(await fileResponse.arrayBuffer());
+          await fs.promises.writeFile(instancePath, buffer);
+          filePaths.push(instancePath);
+        }
+      }
+    }
+
+    console.log(`[Orthanc] Downloaded ${filePaths.length} files for study ${orthancStudyId}`);
+    return {
+      success: true,
+      message: `Downloaded ${filePaths.length} DICOM files`,
+      filePaths,
+    };
+  } catch (error: any) {
+    console.error('[Orthanc] Download error:', error);
+    return {
+      success: false,
+      message: `Download failed: ${error.message}`,
+    };
+  }
+}
+
+/**
  * Test a data source connection
  */
 export async function testDataSource(connection: PacsConnection): Promise<{
@@ -589,6 +880,10 @@ export async function testDataSource(connection: PacsConnection): Promise<{
         // Use proper DICOM C-ECHO for testing
         return testDIMSEConnection(connection);
 
+      case 'orthanc':
+        // Test Orthanc REST API connection
+        return testOrthancConnection(connection);
+
       default:
         return { success: false, message: `Unknown source type: ${connection.sourceType}` };
     }
@@ -620,6 +915,9 @@ export async function queryDataSource(
       
     case 'dimse':
       return queryDIMSEServer(connection, params);
+      
+    case 'orthanc':
+      return queryOrthancServer(connection, params);
       
     default:
       throw new Error(`Unknown source type: ${connection.sourceType}`);

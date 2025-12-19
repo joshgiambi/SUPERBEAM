@@ -24,7 +24,7 @@ import {
   Cpu,
   Info
 } from 'lucide-react';
-import { samController } from '@/lib/sam-controller';
+import { samOhifController } from '@/lib/sam-ohif-controller';
 import { supersegClient } from '@/lib/superseg-client';
 
 interface ServiceStatus {
@@ -69,9 +69,9 @@ export function AIStatusPanel() {
   const checkAllServices = async () => {
     setServices(prev => prev.map(s => ({ ...s, loading: true, error: undefined })));
 
-    // Check SAM (client-side)
-    const samReady = samController.isReady();
-    const samInitializing = samController.isInitializing();
+    // Check SAM (client-side via standalone ONNX)
+    const samReady = samOhifController.isReady();
+    const samInitializing = samOhifController.isInitializing();
 
     // Check SuperSeg (server-side)
     let supersegAvailable = false;
@@ -125,7 +125,7 @@ export function AIStatusPanel() {
   const handleLoadSAM = async () => {
     setSamLoading(true);
     try {
-      await samController.initialize();
+      await samOhifController.initialize();
       await checkAllServices();
     } catch (err) {
       console.error('Failed to load SAM:', err);

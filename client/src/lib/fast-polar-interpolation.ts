@@ -1,9 +1,10 @@
 /**
- * Fast Polar Interpolation for Contours
+ * Fast Arc-Length Interpolation for Contours
  * 
- * Optimized polar-space interpolation for near-instant contour interpolation.
- * Trades some quality for speed (~5-10ms per slice vs 100-500ms for SDT).
- * Good enough for human anatomy, works reliably for most clinical cases.
+ * Uses arc-length parameterization for robust interpolation that works
+ * with any contour shape (star-shaped, concave, irregular).
+ * 
+ * Much more robust than polar ray-casting for complex shapes.
  */
 
 type Vec2 = [number, number];
@@ -27,7 +28,6 @@ function centroid(poly: Vec2[]): Vec2 {
   
   a *= 0.5;
   if (Math.abs(a) < 1e-9) {
-    // Fallback to mean if area near zero
     let sx = 0, sy = 0;
     for (const [x, y] of poly) { sx += x; sy += y; }
     return [sx / Math.max(1, n), sy / Math.max(1, n)];
@@ -50,121 +50,119 @@ function area(poly: Vec2[]): number {
 }
 
 /**
- * Find principal axis of a point cloud (for alignment)
+ * Calculate cumulative arc lengths for a polygon
  */
-function principalAxis(pts: Vec2[], c: Vec2): Vec2 {
-  let sxx = 0, sxy = 0, syy = 0;
-  for (const [x, y] of pts) {
-    const dx = x - c[0];
-    const dy = y - c[1];
-    sxx += dx * dx;
-    sxy += dx * dy;
-    syy += dy * dy;
-  }
-  
-  const a = sxx, b = sxy, d = syy;
-  const T = a + d;
-  const D = Math.sqrt(Math.max(0, (a - d) * (a - d) + 4 * b * b));
-  const l1 = 0.5 * (T + D);
-  
-  let vx = b, vy = l1 - a;
-  const len = Math.hypot(vx, vy) || 1;
-  vx /= len;
-  vy /= len;
-  
-  return [vx, vy];
-}
-
-/**
- * Sample contour in polar space using ray casting
- */
-function polarSample(poly: Vec2[], center: Vec2, baseAngle: number, bins: number): number[] {
-  const twopi = Math.PI * 2;
-  const radii = new Array<number>(bins).fill(0);
+function cumulativeArcLengths(poly: Vec2[]): number[] {
   const n = poly.length;
+  const lengths = new Array(n + 1);
+  lengths[0] = 0;
   
-  if (n < 3) return radii;
+  for (let i = 0; i < n; i++) {
+    const p = poly[i];
+    const q = poly[(i + 1) % n];
+    const dx = q[0] - p[0];
+    const dy = q[1] - p[1];
+    lengths[i + 1] = lengths[i] + Math.sqrt(dx * dx + dy * dy);
+  }
   
-  for (let k = 0; k < bins; k++) {
-    const ang = baseAngle + (k / bins) * twopi;
-    const dir: Vec2 = [Math.cos(ang), Math.sin(ang)];
-    let rMax = 0;
+  return lengths;
+}
+
+/**
+ * Sample a polygon at uniform arc-length intervals
+ */
+function resampleByArcLength(poly: Vec2[], numSamples: number): Vec2[] {
+  const n = poly.length;
+  if (n < 3) return poly;
+  
+  const cumLengths = cumulativeArcLengths(poly);
+  const totalLength = cumLengths[n];
+  
+  if (totalLength < 1e-9) return poly;
+  
+  const samples: Vec2[] = [];
+  
+  for (let i = 0; i < numSamples; i++) {
+    const targetLen = (i / numSamples) * totalLength;
     
-    // Ray-edge intersection
+    // Find segment containing this arc length
+    let segIdx = 0;
+    for (let j = 1; j <= n; j++) {
+      if (cumLengths[j] >= targetLen) {
+        segIdx = j - 1;
+        break;
+      }
+    }
+    
+    // Interpolate within segment
+    const segStart = cumLengths[segIdx];
+    const segEnd = cumLengths[segIdx + 1];
+    const segLen = segEnd - segStart;
+    
+    let localT = 0;
+    if (segLen > 1e-9) {
+      localT = (targetLen - segStart) / segLen;
+    }
+    
+    const p = poly[segIdx];
+    const q = poly[(segIdx + 1) % n];
+    
+    samples.push([
+      p[0] + (q[0] - p[0]) * localT,
+      p[1] + (q[1] - p[1]) * localT
+    ]);
+  }
+  
+  return samples;
+}
+
+/**
+ * Find the best starting point alignment between two polygons
+ * Minimizes total point-to-point distance
+ */
+function findBestRotation(poly1: Vec2[], poly2: Vec2[]): number {
+  const n = poly1.length;
+  if (n !== poly2.length || n < 3) return 0;
+  
+  let bestOffset = 0;
+  let bestDist = Infinity;
+  
+  // Try every possible starting offset (sample a subset for speed)
+  const step = Math.max(1, Math.floor(n / 16));
+  
+  for (let offset = 0; offset < n; offset += step) {
+    let totalDist = 0;
     for (let i = 0; i < n; i++) {
-      const p = poly[i];
-      const q = poly[(i + 1) % n];
-      
-      const ux = dir[0], uy = dir[1];
-      const px = p[0] - center[0], py = p[1] - center[1];
-      const ex = q[0] - p[0], ey = q[1] - p[1];
-      
-      const det = ux * (-ey) - (-ex) * uy;
-      if (Math.abs(det) < 1e-12) continue; // parallel
-      
-      const invDet = 1 / det;
-      const u = (px * (-ey) - (-ex) * py) * invDet;
-      const v = (ux * py - uy * px) * invDet;
-      
-      if (u >= 0 && v >= 0 && v <= 1) {
-        if (u > rMax) rMax = u;
-      }
+      const j = (i + offset) % n;
+      const dx = poly1[i][0] - poly2[j][0];
+      const dy = poly1[i][1] - poly2[j][1];
+      totalDist += dx * dx + dy * dy;
     }
     
-    // Fallback: project vertices onto ray
-    if (rMax <= 0) {
-      for (let i = 0; i < n; i++) {
-        const dx = poly[i][0] - center[0];
-        const dy = poly[i][1] - center[1];
-        const u = dx * dir[0] + dy * dir[1];
-        if (u > rMax) rMax = u;
-      }
+    if (totalDist < bestDist) {
+      bestDist = totalDist;
+      bestOffset = offset;
+    }
+  }
+  
+  // Refine around best offset
+  for (let delta = -step; delta <= step; delta++) {
+    const offset = (bestOffset + delta + n) % n;
+    let totalDist = 0;
+    for (let i = 0; i < n; i++) {
+      const j = (i + offset) % n;
+      const dx = poly1[i][0] - poly2[j][0];
+      const dy = poly1[i][1] - poly2[j][1];
+      totalDist += dx * dx + dy * dy;
     }
     
-    radii[k] = rMax;
-  }
-  
-  return radii;
-}
-
-/**
- * Smooth radii array using simple moving average
- */
-function smoothRadii(radii: number[], windowSize: number = 3): number[] {
-  const n = radii.length;
-  const smoothed = new Array<number>(n);
-  const halfWin = Math.floor(windowSize / 2);
-  
-  for (let i = 0; i < n; i++) {
-    let sum = 0, count = 0;
-    for (let j = -halfWin; j <= halfWin; j++) {
-      const idx = (i + j + n) % n;
-      sum += radii[idx];
-      count++;
+    if (totalDist < bestDist) {
+      bestDist = totalDist;
+      bestOffset = offset;
     }
-    smoothed[i] = sum / count;
   }
   
-  return smoothed;
-}
-
-/**
- * Reconstruct polygon from polar representation
- */
-function polarToCartesian(radii: number[], center: Vec2, baseAngle: number, z: number): number[] {
-  const twopi = Math.PI * 2;
-  const n = radii.length;
-  const points: number[] = [];
-  
-  for (let i = 0; i < n; i++) {
-    const ang = baseAngle + (i / n) * twopi;
-    const r = radii[i];
-    const x = center[0] + r * Math.cos(ang);
-    const y = center[1] + r * Math.sin(ang);
-    points.push(x, y, z);
-  }
-  
-  return points;
+  return bestOffset;
 }
 
 /**
@@ -179,14 +177,20 @@ function to2D(points: number[]): Vec2[] {
 }
 
 /**
- * Fast polar interpolation between two contours
+ * Fast arc-length interpolation between two contours
+ * 
+ * Uses centroid-normalized interpolation to prevent bulging:
+ * 1. Center both contours at origin (remove position)
+ * 2. Interpolate the centered shapes
+ * 3. Apply area correction to match expected area
+ * 4. Move result to interpolated centroid position
  * 
  * @param contour1 - First contour points [x,y,z,...]
  * @param z1 - Z position of first contour
  * @param contour2 - Second contour points [x,y,z,...]
  * @param z2 - Z position of second contour
  * @param targetZ - Target Z position for interpolation
- * @param bins - Number of angular bins (default: 128)
+ * @param numSamples - Number of points in output (default: 128)
  * @returns Interpolated contour points [x,y,z,...]
  */
 export function fastPolarInterpolate(
@@ -195,7 +199,7 @@ export function fastPolarInterpolate(
   contour2: number[],
   z2: number,
   targetZ: number,
-  bins: number = 128
+  numSamples: number = 128
 ): number[] {
   if (!contour1?.length || !contour2?.length) return [];
   
@@ -208,59 +212,64 @@ export function fastPolarInterpolate(
   
   if (poly1.length < 3 || poly2.length < 3) return [];
   
-  // Compute centroids
+  // Calculate centroids and areas of source polygons
   const c1 = centroid(poly1);
   const c2 = centroid(poly2);
-  const ci: Vec2 = [
-    c1[0] + (c2[0] - c1[0]) * t,
-    c1[1] + (c2[1] - c1[1]) * t
-  ];
-  
-  // Use a CONSISTENT base angle for both contours (use first contour's axis)
-  // This prevents rotation artifacts during interpolation
-  const axis1 = principalAxis(poly1, c1);
-  const baseAngle = Math.atan2(axis1[1], axis1[0]);
-  
-  // Sample BOTH contours with the SAME base angle
-  // This ensures rays are aligned and prevents spinning
-  const radii1 = polarSample(poly1, c1, baseAngle, bins);
-  const radii2 = polarSample(poly2, c2, baseAngle, bins);
-  
-  // Smooth radii to reduce jaggedness
-  const smooth1 = smoothRadii(radii1, 3);
-  const smooth2 = smoothRadii(radii2, 3);
-  
-  // Interpolate radii
-  const radiiInterp = new Array<number>(bins);
-  for (let i = 0; i < bins; i++) {
-    radiiInterp[i] = smooth1[i] + (smooth2[i] - smooth1[i]) * t;
-  }
-  
-  // Area preservation: scale radii to match interpolated area
   const area1 = area(poly1);
   const area2 = area(poly2);
-  const targetArea = area1 + (area2 - area1) * t;
   
-  // Approximate current area from radii (using polygon approximation)
-  let currentArea = 0;
-  const twopi = Math.PI * 2;
-  for (let i = 0; i < bins; i++) {
-    const r1 = radiiInterp[i];
-    const r2 = radiiInterp[(i + 1) % bins];
-    const dtheta = twopi / bins;
-    currentArea += 0.5 * r1 * r2 * Math.sin(dtheta);
+  // Expected area at target Z (linear interpolation)
+  const expectedArea = area1 + (area2 - area1) * t;
+  
+  // Interpolated centroid position
+  const targetCx = c1[0] + (c2[0] - c1[0]) * t;
+  const targetCy = c1[1] + (c2[1] - c1[1]) * t;
+  
+  // Center polygons at origin for shape-only interpolation
+  const centered1: Vec2[] = poly1.map(([x, y]) => [x - c1[0], y - c1[1]]);
+  const centered2: Vec2[] = poly2.map(([x, y]) => [x - c2[0], y - c2[1]]);
+  
+  // Resample both centered polygons to same number of points using arc-length
+  const resampled1 = resampleByArcLength(centered1, numSamples);
+  const resampled2 = resampleByArcLength(centered2, numSamples);
+  
+  // Find best rotation alignment
+  const offset = findBestRotation(resampled1, resampled2);
+  
+  // Interpolate point-by-point (shape only, centered at origin)
+  const interpolated: Vec2[] = [];
+  
+  for (let i = 0; i < numSamples; i++) {
+    const j = (i + offset) % numSamples;
+    const p1 = resampled1[i];
+    const p2 = resampled2[j];
+    
+    const x = p1[0] + (p2[0] - p1[0]) * t;
+    const y = p1[1] + (p2[1] - p1[1]) * t;
+    
+    interpolated.push([x, y]);
   }
   
-  // Scale radii to match target area
-  if (currentArea > 1e-6) {
-    const scale = Math.sqrt(targetArea / currentArea);
-    for (let i = 0; i < bins; i++) {
-      radiiInterp[i] *= scale;
-    }
+  // Calculate actual area of interpolated polygon
+  const actualArea = area(interpolated);
+  
+  // Always apply area correction (no threshold - always match expected area)
+  let corrected = interpolated;
+  if (actualArea > 1e-9 && expectedArea > 1e-9) {
+    const scaleFactor = Math.sqrt(expectedArea / actualArea);
+    corrected = interpolated.map(([x, y]) => [
+      x * scaleFactor,
+      y * scaleFactor
+    ] as Vec2);
   }
   
-  // Convert back to cartesian
-  return polarToCartesian(radiiInterp, ci, baseAngle, targetZ);
+  // Convert back to 3D result, repositioning at interpolated centroid
+  const result: number[] = [];
+  for (const [x, y] of corrected) {
+    result.push(x + targetCx, y + targetCy, targetZ);
+  }
+  
+  return result;
 }
 
 /**

@@ -3,7 +3,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, FileStack, Brain, Eye, ChevronDown, ChevronUp, Layers, GitBranch, Loader2, Edit, Star, ArrowRight, Maximize2, ImageIcon, Zap, History, Trash2, FolderOpen, FileImage, User } from 'lucide-react';
+import { Calendar, FileStack, Brain, Eye, ChevronDown, ChevronUp, Layers, GitBranch, Loader2, Edit, Star, ArrowRight, Maximize2, ImageIcon, Zap, History, Trash2, FolderOpen, FileImage, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'wouter';
 import { MetadataEditDialog } from './metadata-edit-dialog';
@@ -18,6 +18,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PatientCardProps {
   patient: any;
@@ -43,6 +53,11 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
   const [isDeleting, setIsDeleting] = useState(false);
   const hasLoadedRef = useRef(false);
   const { toast } = useToast();
+  
+  // Delete confirmation dialog states
+  const [showDeletePatientDialog, setShowDeletePatientDialog] = useState(false);
+  const [showDeleteStudyDialog, setShowDeleteStudyDialog] = useState<{ id: number; description: string } | null>(null);
+  const [showDeleteSeriesDialog, setShowDeleteSeriesDialog] = useState<{ id: number; description: string; modality: string } | null>(null);
 
   // Group series by study
   const studiesWithSeries = studies.map(study => ({
@@ -172,11 +187,8 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
     return isNaN(parsed) ? null : new Date(parsed);
   };
   
-  const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete patient ${patient.patientName}? This will delete all associated studies, series, and images.`)) {
-      return;
-    }
-    
+  const handleDeletePatient = async () => {
+    setShowDeletePatientDialog(false);
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/patients/${patient.id}?full=true`, {
@@ -184,7 +196,8 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete patient');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete patient');
       }
       
       toast({
@@ -199,11 +212,49 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
       console.error('Error deleting patient:', error);
       toast({
         title: "Error",
-        description: "Failed to delete patient. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to delete patient. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteStudy = async (studyId: number) => {
+    setShowDeleteStudyDialog(null);
+    try {
+      const res = await fetch(`/api/studies/${studyId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete study');
+      }
+      toast({ title: "Study deleted", description: "Study and all series removed." });
+      onUpdate?.();
+    } catch (err) {
+      toast({ 
+        title: "Error", 
+        description: err instanceof Error ? err.message : "Failed to delete study.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleDeleteSeries = async (seriesId: number) => {
+    setShowDeleteSeriesDialog(null);
+    try {
+      const res = await fetch(`/api/series/${seriesId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete series');
+      }
+      toast({ title: "Series deleted", description: "Series removed." });
+      onUpdate?.();
+    } catch (err) {
+      toast({ 
+        title: "Error", 
+        description: err instanceof Error ? err.message : "Failed to delete series.", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -353,69 +404,77 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
 
       {/* Main Card */}
       <Card 
-        className="flex-1 rounded-xl bg-[#161b22] border border-[#2a3441]/50 transition-all duration-200 hover:border-gray-600/60 hover:bg-[#1a1f26] overflow-hidden"
+        className="flex-1 rounded-xl bg-[#111318]/90 border border-gray-700/45 backdrop-blur-sm transition-all duration-200 hover:border-indigo-500/50 hover:bg-[#111318] hover:shadow-lg hover:shadow-indigo-500/10"
       >
-        {/* Header Row */}
-        <div className="px-4 py-2.5 flex items-center gap-3">
+        {/* Compact Header Row */}
+        <div className="px-4 py-3">
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" />
-            <span className="text-white font-semibold text-sm truncate max-w-[200px]">
-              {patient.patientName?.replace(/\^/g, ', ') || 'Unknown Patient'}
-            </span>
-          </div>
-          <span className="text-gray-400 text-[11px] font-mono bg-gray-800/50 px-1.5 py-0.5 rounded">
-            {patient.patientID || '—'}
-          </span>
-          <span className="text-gray-500 text-xs">
-            {patient.patientSex || '?'} · {patient.patientAge || '—'}
-          </span>
-          {tags.length > 0 && (
-            <div className="flex items-center gap-1.5 ml-auto">
-              {tags.slice(0, 2).map(tag => {
-                const getTagStyle = (tagName: string) => {
-                  const lower = tagName.toLowerCase();
-                  if (lower.includes('head') || lower.includes('brain')) {
-                    return 'bg-purple-500/20 border-purple-400/50 text-purple-300';
-                  } else if (lower.includes('chest') || lower.includes('thorax') || lower.includes('lung')) {
-                    return 'bg-cyan-500/20 border-cyan-400/50 text-cyan-300';
-                  } else if (lower.includes('abdomen') || lower.includes('pelvis')) {
-                    return 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300';
-                  } else if (lower.includes('spine') || lower.includes('neck')) {
-                    return 'bg-amber-500/20 border-amber-400/50 text-amber-300';
-                  } else if (lower.includes('contrast') || lower.includes('gad')) {
-                    return 'bg-yellow-500/20 border-yellow-400/50 text-yellow-300';
-                  } else if (lower.includes('emergency') || lower.includes('urgent')) {
-                    return 'bg-red-500/20 border-red-400/50 text-red-300';
-                  } else {
-                    return 'bg-gray-500/20 border-gray-400/50 text-gray-300';
-                  }
-                };
-                return (
-                  <span
-                    key={tag.id}
-                    className={`px-2 py-0.5 rounded-md border text-[10px] font-medium ${getTagStyle(tag.tagValue)}`}
-                  >
-                    {tag.tagValue}
-                  </span>
-                );
-              })}
-              {tags.length > 2 && (
-                <span className="text-[10px] text-gray-500">+{tags.length - 2}</span>
-              )}
+            {/* Patient Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-white font-semibold text-sm truncate max-w-[180px]">
+                  {patient.patientName?.replace(/\^/g, ', ') || 'Unknown Patient'}
+                </span>
+                <span className="text-gray-500 text-xs font-mono flex-shrink-0">
+                  {patient.patientID || '—'}
+                </span>
+                <span className="text-gray-500 text-xs flex-shrink-0">
+                  {patient.patientSex || '?'} · {patient.patientAge || '—'}
+                </span>
+                
+                {/* Tags - inline with patient info */}
+                {tags.length > 0 && (
+                  <>
+                    <span className="text-gray-600">|</span>
+                    {tags.slice(0, 3).map(tag => {
+                      // Match the search bar tag styling based on tag content
+                      const getTagStyle = (tagName: string) => {
+                        const lower = tagName.toLowerCase();
+                        if (lower.includes('head') || lower.includes('brain')) {
+                          return 'bg-purple-500/20 border-purple-400/50 text-purple-200';
+                        } else if (lower.includes('chest') || lower.includes('thorax') || lower.includes('lung')) {
+                          return 'bg-blue-500/20 border-blue-400/50 text-blue-200';
+                        } else if (lower.includes('abdomen') || lower.includes('pelvis')) {
+                          return 'bg-green-500/20 border-green-400/50 text-green-200';
+                        } else if (lower.includes('spine') || lower.includes('neck')) {
+                          return 'bg-orange-500/20 border-orange-400/50 text-orange-200';
+                        } else if (lower.includes('contrast') || lower.includes('gad')) {
+                          return 'bg-yellow-500/20 border-yellow-400/50 text-yellow-200';
+                        } else if (lower.includes('emergency') || lower.includes('urgent')) {
+                          return 'bg-red-500/20 border-red-400/50 text-red-200';
+                        } else {
+                          return 'bg-gray-500/20 border-gray-400/50 text-gray-200';
+                        }
+                      };
+                      return (
+                        <span
+                          key={tag.id}
+                          className={`px-2 py-0.5 rounded-md border text-[10px] font-semibold ${getTagStyle(tag.tagValue)}`}
+                        >
+                          {tag.tagValue}
+                        </span>
+                      );
+                    })}
+                    {tags.length > 3 && (
+                      <span className="text-[10px] text-gray-400 font-medium">+{tags.length - 3}</span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       
-        {/* Series Section */}
-        <div className="px-4 py-3 bg-[#0d1117]">
-          <div className="space-y-2">
+      {/* Series Section - Matching Viewer Sidebar Style */}
+      <div className="px-4 pb-3">
+        <div className="space-y-2">
           {/* Study Date Header */}
           {studies.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-              <Calendar className="h-3.5 w-3.5 text-cyan-500/70" />
-              <span className="text-gray-300">{getStudyDateDisplay() || 'No date'}</span>
-              <span className="text-[#2a3441]">•</span>
-              <span className="text-cyan-400/80">{series.filter(s => ['CT', 'MR', 'PT', 'RTSTRUCT'].includes(s.modality)).length} series</span>
+            <div className="flex items-center gap-2 text-xs text-gray-400 pb-1">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{getStudyDateDisplay() || 'No date'}</span>
+              <span className="text-gray-600">·</span>
+              <span>{series.filter(s => ['CT', 'MR', 'PT', 'RTSTRUCT'].includes(s.modality)).length} series</span>
             </div>
           )}
 
@@ -424,8 +483,8 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
 
           {/* Registered CT Section */}
           {ctSeries.filter(s => s.id !== planningCT?.id).length > 0 && (
-            <div className="space-y-1 border-l-2 border-cyan-500/30 pl-2 ml-1">
-              <div className="text-[10px] text-cyan-400/80 uppercase tracking-wider font-medium px-1">
+            <div className="space-y-1 border-l-2 border-blue-500/40 pl-2 ml-1">
+              <div className="text-[10px] text-blue-300/80 uppercase tracking-wider font-semibold px-1">
                 Registered CT
               </div>
               {ctSeries
@@ -442,15 +501,15 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
 
           {/* RT Structure */}
           {rtStructureSeries.slice(0, isExpanded ? undefined : 1).map((rtS) => (
-            <div key={rtS.id} className="border-l-2 border-emerald-500/30 pl-2 ml-1">
+            <div key={rtS.id} className="border-l-2 border-green-500/40 pl-2 ml-1">
               {renderRTCard(rtS)}
             </div>
           ))}
 
           {/* PET/CT Fusion Section */}
           {(ptSeries.length > 0 || mrSeries.length > 0) && (
-            <div className="space-y-1 border-l-2 border-purple-500/30 pl-2 ml-1">
-              <div className="flex items-center gap-1.5 text-[10px] text-purple-400/90 uppercase tracking-wider font-medium">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] text-cyan-300/80 uppercase tracking-wider font-semibold px-1">
                 <Zap className="h-3 w-3" />
                 {ptSeries.length > 0 ? 'PET/CT Fusion' : 'MR Fusion'}
               </div>
@@ -507,16 +566,16 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
 
           {/* Expanded Content - Detailed Item List */}
           {isExpanded && (
-            <div className="mt-3 space-y-3 pt-3 border-t border-gray-800/50">
+            <div className="mt-3 space-y-3 pt-3 border-t border-gray-700/30">
               {/* Full Study & Series List */}
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
+                <h4 className="text-xs font-medium text-indigo-400 flex items-center gap-1.5">
                   <FolderOpen className="h-3.5 w-3.5" />
                   Studies & Series
                 </h4>
                 <div className="space-y-2">
                   {studiesWithSeries.map((study) => (
-                    <div key={study.id} className="bg-gray-900/40 rounded-lg overflow-hidden">
+                    <div key={study.id} className="bg-gray-800/30 rounded-lg overflow-hidden">
                       {/* Study Header */}
                       <div className="flex items-center justify-between px-2.5 py-2 bg-gray-800/50 border-b border-gray-700/30">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -536,18 +595,12 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0 text-gray-500 hover:text-red-400 hover:bg-red-500/10"
-                            onClick={async (e) => {
+                            onClick={(e) => {
                               e.stopPropagation();
-                              if (!confirm(`Delete study "${study.studyDescription || 'Unnamed'}" and all its series?`)) return;
-                              try {
-                                const res = await fetch(`/api/studies/${study.id}`, { method: 'DELETE' });
-                                if (res.ok) {
-                                  toast({ title: "Study deleted", description: "Study and all series removed." });
-                                  onUpdate?.();
-                                }
-                              } catch (err) {
-                                toast({ title: "Error", description: "Failed to delete study.", variant: "destructive" });
-                              }
+                              setShowDeleteStudyDialog({
+                                id: study.id,
+                                description: study.studyDescription || 'Unnamed Study'
+                              });
                             }}
                           >
                             <Trash2 className="h-3 w-3" />
@@ -586,18 +639,13 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                                onClick={async (e) => {
+                                onClick={(e) => {
                                   e.stopPropagation();
-                                  if (!confirm(`Delete series "${s.seriesDescription || s.modality}"?`)) return;
-                                  try {
-                                    const res = await fetch(`/api/series/${s.id}`, { method: 'DELETE' });
-                                    if (res.ok) {
-                                      toast({ title: "Series deleted", description: "Series removed." });
-                                      onUpdate?.();
-                                    }
-                                  } catch (err) {
-                                    toast({ title: "Error", description: "Failed to delete series.", variant: "destructive" });
-                                  }
+                                  setShowDeleteSeriesDialog({
+                                    id: s.id,
+                                    description: s.seriesDescription || 'Unnamed Series',
+                                    modality: s.modality
+                                  });
                                 }}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -694,21 +742,20 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
               ) : null}
             </div>
           )}
-          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between px-4 py-2 bg-[#161b22]">
+        {/* Action Buttons - Matching Viewer Style */}
+        <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-700/30">
           <div className="flex items-center gap-1.5">
             <Link href={`/enhanced-viewer?patientId=${patient.patientID}`}>
               <Button 
-                variant="outline"
+                variant="ghost"
                 size="sm" 
-                className="h-7 px-3 bg-cyan-950/50 border-cyan-600/50 text-cyan-400 hover:bg-cyan-900/50 hover:border-cyan-500/70 hover:text-cyan-300 rounded-lg transition-all duration-200"
+                className="h-8 px-3 text-white/90 hover:text-indigo-400 hover:bg-indigo-600/20 hover:border-indigo-500/50 hover:shadow-md hover:shadow-indigo-500/20 border border-transparent rounded-lg transition-all duration-200"
                 onClick={onPatientOpened}
               >
-                <Eye className="h-3.5 w-3.5 mr-1.5" />
-                <span className="text-xs font-medium">Open Viewer</span>
+                <Eye className="h-4 w-4 mr-1.5" />
+                <span className="text-sm font-medium">Open Viewer</span>
               </Button>
             </Link>
             {hasFusion && (
@@ -716,10 +763,10 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-3 text-purple-400 hover:text-purple-300 hover:bg-purple-500/15 rounded-md transition-all duration-200"
+                  className="h-8 px-3 text-white/90 hover:text-cyan-400 hover:bg-cyan-600/20 hover:border-cyan-500/50 hover:shadow-md hover:shadow-cyan-500/20 border border-transparent rounded-lg transition-all duration-200"
                 >
-                  <Layers className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-xs font-medium">Fusion</span>
+                  <Layers className="h-4 w-4 mr-1.5" />
+                  <span className="text-sm font-medium">Fusion</span>
                 </Button>
               </Link>
             )}
@@ -729,12 +776,22 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-6 px-2 text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+            className="h-7 px-2.5 text-xs text-gray-400 hover:text-gray-300 hover:bg-white/5 transition-colors rounded-md"
           >
-            <ChevronDown className={`h-3.5 w-3.5 mr-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-            Details
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-1" />
+                Less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-1" />
+                Details
+              </>
+            )}
           </Button>
         </div>
+      </div>
     </Card>
       
     {/* Metadata Edit Dialog */}
@@ -756,6 +813,132 @@ export function PatientCard({ patient, studies, series, isSelectable, isSelected
         }
       }}
     />
+
+    {/* Delete Patient Confirmation Dialog */}
+    <AlertDialog open={showDeletePatientDialog} onOpenChange={setShowDeletePatientDialog}>
+      <AlertDialogContent className="bg-gray-900 border-gray-700">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div>
+              <AlertDialogTitle className="text-white">Delete Patient</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-400">
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </div>
+          </div>
+        </AlertDialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-gray-300">
+            Are you sure you want to delete <span className="font-semibold text-white">{patient.patientName?.replace(/\^/g, ', ')}</span>?
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            This will permanently delete all associated studies, series, images, and RT structures.
+          </p>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDeletePatient}
+            className="bg-red-600 text-white hover:bg-red-700 border-0"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Patient
+              </>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Delete Study Confirmation Dialog */}
+    <AlertDialog open={!!showDeleteStudyDialog} onOpenChange={(open) => !open && setShowDeleteStudyDialog(null)}>
+      <AlertDialogContent className="bg-gray-900 border-gray-700">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/20">
+              <FolderOpen className="h-5 w-5 text-orange-400" />
+            </div>
+            <div>
+              <AlertDialogTitle className="text-white">Delete Study</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-400">
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </div>
+          </div>
+        </AlertDialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-gray-300">
+            Are you sure you want to delete study <span className="font-semibold text-white">"{showDeleteStudyDialog?.description}"</span>?
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            This will permanently delete all series and images within this study.
+          </p>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => showDeleteStudyDialog && handleDeleteStudy(showDeleteStudyDialog.id)}
+            className="bg-orange-600 text-white hover:bg-orange-700 border-0"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Study
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Delete Series Confirmation Dialog */}
+    <AlertDialog open={!!showDeleteSeriesDialog} onOpenChange={(open) => !open && setShowDeleteSeriesDialog(null)}>
+      <AlertDialogContent className="bg-gray-900 border-gray-700">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/20">
+              <FileImage className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <AlertDialogTitle className="text-white">Delete Series</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-400">
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </div>
+          </div>
+        </AlertDialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-gray-300">
+            Are you sure you want to delete the <Badge className={cn("mx-1", pillClassForModality(showDeleteSeriesDialog?.modality || ''))}>{showDeleteSeriesDialog?.modality}</Badge> series <span className="font-semibold text-white">"{showDeleteSeriesDialog?.description}"</span>?
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            This will permanently delete all images in this series.
+          </p>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => showDeleteSeriesDialog && handleDeleteSeries(showDeleteSeriesDialog.id)}
+            className="bg-yellow-600 text-white hover:bg-yellow-700 border-0"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Series
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </div>
     </TooltipProvider>
   );

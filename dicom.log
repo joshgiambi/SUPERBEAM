@@ -778,3 +778,1400 @@ DEBUG [17-12-2025 21:58:08:485]:   30  2e  35  2e  30  2e  33  2e  35  2e  34  5
 DEBUG [17-12-2025 21:58:08:485]:   53  49  52  49  58
 DEBUG [17-12-2025 21:58:08:485]: Parsing an A-ASSOCIATE PDU
 DEBUG [17-12-2025 21:58:08:487]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [18-12-2025 19:48:35:551]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:35:551]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:35:551]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:35:557]: PDU Type: Associate Accept, PDU Length: 188 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:35:557]:   02  00  00  00  00  bc  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:35:557]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:35:557]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:35:557]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:35:557]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:35:557]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:35:557]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [18-12-2025 19:48:35:557]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:35:557]:   50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00  00  20
+DEBUG [18-12-2025 19:48:35:557]:   31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36  38  30
+DEBUG [18-12-2025 19:48:35:557]:   30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30  2e  34
+DEBUG [18-12-2025 19:48:35:557]:   55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d  5f  33
+DEBUG [18-12-2025 19:48:35:557]:   30  34
+DEBUG [18-12-2025 19:48:35:557]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:35:559]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [18-12-2025 19:48:41:427]: Request Parameters:
+DEBUG [18-12-2025 19:48:41:427]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:41:427]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:41:427]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:41:427]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:41:427]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:41:427]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:41:427]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:41:427]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:427]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:41:427]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:41:427]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:41:427]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:41:427]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:41:427]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:41:427]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:427]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:41:427]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:41:427]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:41:427]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:41:427]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:41:427]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:41:427]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:41:427]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:41:427]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:41:427]: Requesting Association
+DEBUG [18-12-2025 19:48:41:427]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:41:427]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:41:427]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:41:436]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:41:436]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:41:436]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:41:436]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:41:436]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:41:436]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:41:436]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:41:436]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:41:436]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:41:436]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:41:436]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:41:436]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:41:436]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:41:436]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:41:439]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:41:439]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:41:439]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:41:439]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:41:439]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:41:439]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:41:439]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:41:439]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:41:439]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:41:439]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:439]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:439]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:41:439]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:41:439]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:41:439]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:41:439]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:41:439]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:439]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:439]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:41:439]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:41:439]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:41:439]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:41:439]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:41:439]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:41:451]: Request Parameters:
+DEBUG [18-12-2025 19:48:41:451]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:41:451]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:41:451]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:41:451]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:41:451]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:41:451]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:41:451]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:41:451]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:451]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:41:451]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:41:451]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:41:451]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:41:451]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:41:451]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:41:451]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:451]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:41:451]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:41:451]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:41:451]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:41:451]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:41:451]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:41:451]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:41:451]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:41:451]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:41:451]: Requesting Association
+DEBUG [18-12-2025 19:48:41:451]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:41:451]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:41:451]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:41:457]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:41:457]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:41:457]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:41:457]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:41:457]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:41:457]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:41:457]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:41:457]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:41:457]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:41:457]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:41:457]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:41:457]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:41:457]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:41:457]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:41:457]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:41:457]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:41:457]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:41:457]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:41:457]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:41:457]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:41:457]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:41:457]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:41:457]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:41:457]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:457]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:41:457]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:41:457]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:41:457]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:41:457]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:41:457]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:41:457]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:457]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:41:457]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:41:457]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:41:457]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:41:457]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:41:457]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:41:457]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:44:966]: Request Parameters:
+DEBUG [18-12-2025 19:48:44:966]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:44:966]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:44:966]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:44:966]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:44:966]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:44:966]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:44:966]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:44:966]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:44:966]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:44:966]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:44:966]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:44:966]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:44:966]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:44:966]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:44:966]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:44:966]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:44:966]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:44:966]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:44:966]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:44:966]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:44:966]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:44:966]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:44:966]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:44:966]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:44:966]: Requesting Association
+DEBUG [18-12-2025 19:48:44:967]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:44:967]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:44:967]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:44:980]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:44:980]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:44:980]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:44:980]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:44:980]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:44:980]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:44:980]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:44:980]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:44:980]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:44:980]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:44:980]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:44:980]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:44:980]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:44:980]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:44:980]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:44:980]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:44:980]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:44:980]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:44:980]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:44:980]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:44:980]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:44:980]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:44:980]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:44:980]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:44:980]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:44:980]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:44:980]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:44:980]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:44:980]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:44:980]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:44:980]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:44:980]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:44:980]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:44:980]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:44:980]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:44:980]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:44:980]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:44:980]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:57:664]: Request Parameters:
+DEBUG [18-12-2025 19:48:57:664]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:57:664]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:57:664]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:57:664]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:57:664]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:57:664]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:57:664]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:57:664]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:57:664]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:57:664]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:57:664]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:57:664]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:57:664]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:57:664]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:57:664]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:57:664]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:57:664]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:57:664]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:57:664]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:57:664]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:57:664]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:57:664]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:57:664]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:57:664]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:57:664]: Requesting Association
+DEBUG [18-12-2025 19:48:57:664]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:57:664]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:57:664]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:57:670]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:57:670]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:57:670]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:57:670]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:57:670]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:57:670]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:57:670]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:57:670]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:57:670]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:57:670]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:57:670]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:57:670]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:57:670]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:57:670]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:57:671]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:57:671]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:57:671]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:57:671]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:57:671]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:57:671]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:57:671]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:57:671]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:57:671]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:57:671]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:57:671]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:57:671]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:57:671]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:57:671]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:57:671]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:57:671]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:57:671]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:57:671]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:57:671]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:57:671]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:57:671]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:57:671]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:57:671]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:57:671]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:58:635]: Request Parameters:
+DEBUG [18-12-2025 19:48:58:635]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:58:635]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:58:635]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:58:635]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:58:635]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:58:635]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:58:635]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:58:635]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:58:635]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:58:635]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:58:635]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:58:635]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:58:635]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:58:635]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:58:635]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:58:635]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:58:635]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:58:635]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:58:635]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:58:635]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:58:635]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:58:635]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:58:635]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:58:635]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:58:635]: Requesting Association
+DEBUG [18-12-2025 19:48:58:635]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:58:635]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:58:635]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:58:650]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:58:650]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:58:650]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:58:650]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:58:650]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:58:650]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:58:650]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:58:650]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:58:650]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:58:650]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:58:650]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:58:650]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:58:650]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:58:650]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:58:650]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:58:650]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:58:650]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:58:650]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:58:650]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:58:650]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:58:650]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:58:650]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:58:650]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:58:650]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:58:650]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:58:650]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:58:650]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:58:650]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:58:650]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:58:650]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:58:650]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:58:650]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:58:650]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:58:650]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:58:650]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:58:650]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:58:650]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:58:650]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:59:147]: Request Parameters:
+DEBUG [18-12-2025 19:48:59:147]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:59:147]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:147]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:147]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:59:147]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:59:147]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:147]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:147]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:147]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:59:147]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:147]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:59:147]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:147]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:59:147]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:147]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:147]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:59:147]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:59:147]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:59:147]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:59:147]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:147]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:147]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:147]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:147]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:59:147]: Requesting Association
+DEBUG [18-12-2025 19:48:59:147]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:147]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:147]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:59:153]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:59:153]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:59:153]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:59:153]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:153]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:153]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:59:153]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:59:153]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:59:153]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:59:153]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:59:153]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:59:153]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:59:153]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:59:153]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:59:153]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:59:153]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:59:153]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:59:153]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:153]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:153]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:59:153]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:59:153]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:153]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:153]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:153]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:153]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:153]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:59:153]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:153]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:59:153]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:153]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:153]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:153]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:153]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:153]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:153]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:153]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:59:154]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:59:300]: Request Parameters:
+DEBUG [18-12-2025 19:48:59:300]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:59:300]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:300]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:300]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:59:300]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:59:300]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:300]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:300]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:300]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:59:300]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:300]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:59:300]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:300]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:59:300]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:300]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:300]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:59:300]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:59:300]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:59:300]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:59:300]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:300]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:300]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:300]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:300]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:59:300]: Requesting Association
+DEBUG [18-12-2025 19:48:59:300]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:300]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:300]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:59:307]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:59:307]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:59:307]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:59:307]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:307]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:307]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:59:307]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:59:307]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:59:307]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:59:307]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:59:307]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:59:307]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:59:307]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:59:307]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:59:307]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:59:307]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:59:307]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:59:307]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:307]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:307]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:59:307]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:59:307]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:307]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:307]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:307]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:307]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:307]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:59:307]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:307]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:59:307]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:307]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:307]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:307]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:307]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:307]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:307]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:307]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:59:307]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:59:826]: Request Parameters:
+DEBUG [18-12-2025 19:48:59:826]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:59:826]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:826]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:826]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:59:826]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:59:826]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:826]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:826]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:826]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:59:826]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:826]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:59:826]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:826]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:59:826]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:826]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:826]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:59:826]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:59:826]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:59:826]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:59:826]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:826]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:826]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:826]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:826]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:59:826]: Requesting Association
+DEBUG [18-12-2025 19:48:59:826]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:826]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:826]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:59:833]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:59:833]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:59:833]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:59:833]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:833]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:833]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:59:833]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:59:833]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:59:833]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:59:833]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:59:833]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:59:833]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:59:833]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:59:833]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:59:833]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:59:833]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:59:833]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:59:833]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:833]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:833]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:59:833]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:59:833]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:833]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:833]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:833]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:833]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:833]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:59:833]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:833]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:59:833]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:833]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:833]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:833]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:833]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:833]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:833]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:833]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:59:834]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:48:59:976]: Request Parameters:
+DEBUG [18-12-2025 19:48:59:976]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:48:59:976]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:976]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:976]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:48:59:976]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:48:59:976]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:976]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:976]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:976]: Responding Application Name: 
+DEBUG [18-12-2025 19:48:59:976]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:976]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:48:59:976]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:976]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:48:59:976]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:976]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:976]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:48:59:976]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:48:59:976]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:48:59:976]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:48:59:976]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:976]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:976]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:976]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:976]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:48:59:976]: Requesting Association
+DEBUG [18-12-2025 19:48:59:976]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:976]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:48:59:976]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:48:59:982]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:48:59:982]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:48:59:982]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:48:59:982]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:982]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:48:59:982]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:48:59:982]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:48:59:982]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:48:59:982]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:48:59:982]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:48:59:982]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:48:59:982]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:48:59:982]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:48:59:982]:   5f  33  30  34
+DEBUG [18-12-2025 19:48:59:982]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:48:59:982]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:48:59:982]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:48:59:982]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:48:59:982]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:48:59:982]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:48:59:982]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:48:59:982]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:48:59:982]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:48:59:982]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:982]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:48:59:982]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:48:59:982]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:48:59:982]: Presentation Contexts:
+DEBUG [18-12-2025 19:48:59:982]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:48:59:982]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:48:59:982]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:982]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:48:59:982]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:48:59:982]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:48:59:982]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:48:59:982]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:48:59:982]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:48:59:982]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:00:143]: Request Parameters:
+DEBUG [18-12-2025 19:49:00:143]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:00:143]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:00:143]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:00:143]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:00:143]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:00:143]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:00:143]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:00:143]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:00:143]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:00:143]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:00:143]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:00:143]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:00:143]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:00:143]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:00:143]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:00:143]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:00:143]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:00:143]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:00:143]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:00:143]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:00:143]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:00:143]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:00:143]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:00:143]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:00:143]: Requesting Association
+DEBUG [18-12-2025 19:49:00:143]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:00:143]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:00:143]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:00:151]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:00:151]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:00:151]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:00:151]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:00:151]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:00:151]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:00:151]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:00:151]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:00:151]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:00:151]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:00:151]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:00:151]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:00:151]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:00:151]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:00:151]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:00:151]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:00:151]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:00:151]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:00:151]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:00:151]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:00:151]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:00:151]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:00:151]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:00:151]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:00:151]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:00:151]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:00:151]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:00:151]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:00:151]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:00:151]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:00:151]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:00:151]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:00:151]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:00:151]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:00:151]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:00:151]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:00:151]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:00:151]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:01:113]: Request Parameters:
+DEBUG [18-12-2025 19:49:01:113]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:01:113]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:113]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:113]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:01:113]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:01:113]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:113]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:113]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:113]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:01:113]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:113]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:01:113]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:113]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:01:113]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:113]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:113]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:01:113]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:01:113]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:01:113]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:01:113]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:113]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:113]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:113]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:113]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:01:113]: Requesting Association
+DEBUG [18-12-2025 19:49:01:114]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:114]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:114]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:01:122]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:01:122]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:01:122]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:01:122]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:122]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:122]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:01:122]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:01:122]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:01:122]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:01:122]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:01:122]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:01:122]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:01:122]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:01:122]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:01:122]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:01:122]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:01:122]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:01:122]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:122]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:122]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:01:122]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:01:122]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:122]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:122]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:122]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:122]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:122]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:01:122]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:122]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:01:122]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:122]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:122]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:122]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:122]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:122]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:122]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:122]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:01:122]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:01:247]: Request Parameters:
+DEBUG [18-12-2025 19:49:01:247]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:01:247]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:247]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:247]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:01:247]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:01:247]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:247]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:247]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:247]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:01:247]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:247]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:01:247]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:247]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:01:247]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:247]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:247]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:01:247]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:01:247]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:01:247]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:01:247]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:247]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:247]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:247]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:247]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:01:247]: Requesting Association
+DEBUG [18-12-2025 19:49:01:247]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:247]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:247]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:01:252]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:01:252]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:01:252]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:01:252]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:252]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:252]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:01:252]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:01:252]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:01:252]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:01:252]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:01:252]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:01:252]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:01:252]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:01:252]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:01:252]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:01:252]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:01:252]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:01:252]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:252]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:252]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:01:252]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:01:252]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:252]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:252]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:252]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:252]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:252]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:01:252]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:252]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:01:252]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:252]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:252]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:252]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:252]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:252]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:252]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:252]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:01:253]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:01:410]: Request Parameters:
+DEBUG [18-12-2025 19:49:01:410]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:01:410]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:410]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:410]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:01:410]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:01:410]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:410]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:410]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:410]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:01:410]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:410]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:01:410]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:410]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:01:410]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:410]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:410]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:01:410]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:01:410]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:01:410]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:01:410]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:410]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:410]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:410]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:410]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:01:410]: Requesting Association
+DEBUG [18-12-2025 19:49:01:411]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:411]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:411]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:01:418]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:01:418]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:01:418]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:01:418]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:418]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:418]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:01:418]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:01:418]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:01:418]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:01:418]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:01:418]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:01:418]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:01:418]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:01:418]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:01:418]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:01:418]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:01:418]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:01:418]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:418]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:418]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:01:418]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:01:418]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:418]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:418]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:418]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:418]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:418]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:01:418]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:418]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:01:418]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:418]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:418]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:418]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:418]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:418]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:418]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:418]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:01:418]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:01:569]: Request Parameters:
+DEBUG [18-12-2025 19:49:01:569]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:01:569]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:569]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:569]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:01:569]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:01:569]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:569]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:569]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:569]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:01:569]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:569]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:01:569]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:569]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:01:569]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:569]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:569]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:01:569]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:01:569]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:01:569]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:01:569]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:569]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:569]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:569]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:569]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:01:569]: Requesting Association
+DEBUG [18-12-2025 19:49:01:569]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:569]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:569]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:01:575]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:01:575]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:01:575]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:01:575]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:575]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:575]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:01:575]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:01:575]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:01:575]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:01:575]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:01:575]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:01:575]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:01:575]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:01:575]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:01:576]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:01:576]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:01:576]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:01:576]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:576]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:576]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:01:576]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:01:576]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:576]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:576]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:576]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:576]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:576]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:01:576]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:576]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:01:576]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:576]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:576]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:576]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:576]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:576]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:576]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:576]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:01:576]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:49:01:752]: Request Parameters:
+DEBUG [18-12-2025 19:49:01:752]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:49:01:752]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:752]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:752]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:49:01:752]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:49:01:752]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:752]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:752]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:752]: Responding Application Name: 
+DEBUG [18-12-2025 19:49:01:752]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:752]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:49:01:752]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:752]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:49:01:752]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:752]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:752]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:49:01:752]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:49:01:752]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:49:01:752]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:49:01:752]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:752]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:752]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:752]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:752]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:49:01:752]: Requesting Association
+DEBUG [18-12-2025 19:49:01:753]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:753]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:49:01:753]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:49:01:760]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:49:01:760]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:49:01:760]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:49:01:760]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:760]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:49:01:760]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:49:01:760]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:49:01:760]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:49:01:760]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:49:01:760]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:49:01:760]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:49:01:760]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:49:01:760]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:49:01:760]:   5f  33  30  34
+DEBUG [18-12-2025 19:49:01:760]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:49:01:760]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:49:01:760]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:49:01:760]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:49:01:760]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:49:01:760]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:49:01:760]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:49:01:760]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:49:01:760]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:49:01:760]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:760]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:49:01:760]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:49:01:760]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:49:01:760]: Presentation Contexts:
+DEBUG [18-12-2025 19:49:01:760]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:49:01:760]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:49:01:760]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:760]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:49:01:760]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:49:01:760]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:49:01:760]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:49:01:760]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:49:01:760]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:49:01:760]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:55:00:778]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:00:780]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:00:780]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:00:786]: PDU Type: Associate Accept, PDU Length: 188 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:00:786]:   02  00  00  00  00  bc  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:00:786]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:00:786]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:00:786]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:00:786]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:00:786]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:00:786]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [18-12-2025 19:55:00:786]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:00:786]:   50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00  00  20
+DEBUG [18-12-2025 19:55:00:786]:   31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36  38  30
+DEBUG [18-12-2025 19:55:00:786]:   30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30  2e  34
+DEBUG [18-12-2025 19:55:00:786]:   55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d  5f  33
+DEBUG [18-12-2025 19:55:00:786]:   30  34
+DEBUG [18-12-2025 19:55:00:786]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:00:790]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [18-12-2025 19:55:02:134]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:02:134]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:02:134]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:02:143]: PDU Type: Associate Accept, PDU Length: 188 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:02:143]:   02  00  00  00  00  bc  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:02:143]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:02:143]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:02:143]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:02:143]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:02:143]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:02:143]:   31  2e  31  21  00  00  19  01  00  00  00  40  00  00  11  31
+DEBUG [18-12-2025 19:55:02:143]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:02:143]:   50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00  00  20
+DEBUG [18-12-2025 19:55:02:143]:   31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36  38  30
+DEBUG [18-12-2025 19:55:02:143]:   30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30  2e  34
+DEBUG [18-12-2025 19:55:02:143]:   55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d  5f  33
+DEBUG [18-12-2025 19:55:02:143]:   30  34
+DEBUG [18-12-2025 19:55:02:143]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:02:145]: DcmDataset::read() TransferSyntax="Little Endian Implicit"
+DEBUG [18-12-2025 19:55:03:747]: Request Parameters:
+DEBUG [18-12-2025 19:55:03:747]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:55:03:747]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:03:747]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:03:747]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:55:03:747]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:55:03:747]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:03:747]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:03:747]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:03:747]: Responding Application Name: 
+DEBUG [18-12-2025 19:55:03:747]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:03:747]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:55:03:747]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:03:747]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:55:03:747]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:03:747]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:03:747]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:55:03:747]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:55:03:747]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:55:03:747]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:55:03:747]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:03:747]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:03:747]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:03:747]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:03:747]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:55:03:747]: Requesting Association
+DEBUG [18-12-2025 19:55:03:747]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:03:747]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:03:747]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:03:752]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:03:752]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:03:752]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:03:752]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:03:752]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:03:752]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:03:752]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:03:752]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:55:03:752]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:03:752]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:55:03:752]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:55:03:752]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:55:03:752]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:55:03:752]:   5f  33  30  34
+DEBUG [18-12-2025 19:55:03:752]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:03:752]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:55:03:752]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:55:03:752]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:03:752]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:03:752]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:55:03:752]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:55:03:752]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:03:752]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:03:752]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:03:752]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:55:03:752]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:03:752]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:55:03:752]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:03:752]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:55:03:752]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:03:752]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:03:752]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:03:752]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:03:752]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:03:752]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:03:752]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:03:752]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:55:03:753]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:55:04:283]: Request Parameters:
+DEBUG [18-12-2025 19:55:04:283]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:55:04:283]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:04:283]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:04:283]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:55:04:283]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:55:04:283]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:04:283]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:04:283]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:04:283]: Responding Application Name: 
+DEBUG [18-12-2025 19:55:04:283]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:04:283]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:55:04:283]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:04:283]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:55:04:283]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:04:283]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:04:283]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:55:04:283]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:55:04:283]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:55:04:283]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:55:04:283]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:04:283]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:04:283]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:04:283]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:04:283]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:55:04:283]: Requesting Association
+DEBUG [18-12-2025 19:55:04:283]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:04:283]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:04:283]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:04:291]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:04:291]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:04:291]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:04:291]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:04:291]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:04:291]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:04:291]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:04:291]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:55:04:291]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:04:291]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:55:04:291]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:55:04:291]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:55:04:291]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:55:04:291]:   5f  33  30  34
+DEBUG [18-12-2025 19:55:04:291]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:04:291]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:55:04:291]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:55:04:291]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:04:291]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:04:291]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:55:04:291]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:55:04:291]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:04:291]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:04:291]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:04:291]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:55:04:291]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:04:291]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:55:04:291]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:04:291]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:55:04:291]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:04:291]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:04:291]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:04:291]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:04:291]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:04:291]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:04:291]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:04:291]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:55:04:291]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:55:06:328]: Request Parameters:
+DEBUG [18-12-2025 19:55:06:328]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:55:06:328]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:06:328]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:06:328]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:55:06:328]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:55:06:328]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:06:328]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:06:328]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:06:328]: Responding Application Name: 
+DEBUG [18-12-2025 19:55:06:328]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:06:328]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:55:06:328]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:06:328]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:55:06:328]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:06:328]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:06:328]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:55:06:328]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:55:06:328]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:55:06:328]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:55:06:328]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:06:328]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:06:328]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:06:328]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:06:328]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:55:06:328]: Requesting Association
+DEBUG [18-12-2025 19:55:06:328]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:06:328]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:06:328]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:06:335]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:06:335]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:06:335]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:06:335]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:06:335]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:06:335]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:06:335]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:06:335]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:55:06:335]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:06:335]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:55:06:335]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:55:06:335]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:55:06:335]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:55:06:335]:   5f  33  30  34
+DEBUG [18-12-2025 19:55:06:335]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:06:335]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:55:06:335]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:55:06:335]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:06:335]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:06:335]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:55:06:335]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:55:06:335]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:06:335]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:06:335]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:06:335]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:55:06:335]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:06:335]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:55:06:335]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:06:335]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:55:06:335]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:06:335]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:06:335]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:06:335]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:06:335]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:06:335]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:06:335]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:06:335]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:55:06:335]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:55:11:045]: Request Parameters:
+DEBUG [18-12-2025 19:55:11:045]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:55:11:045]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:11:045]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:11:045]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:55:11:045]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:55:11:045]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:11:045]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:11:045]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:045]: Responding Application Name: 
+DEBUG [18-12-2025 19:55:11:045]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:11:045]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:55:11:045]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:11:045]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:55:11:045]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:11:045]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:045]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:55:11:045]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:55:11:045]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:55:11:045]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:55:11:045]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:11:045]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:11:045]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:11:045]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:11:045]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:55:11:045]: Requesting Association
+DEBUG [18-12-2025 19:55:11:045]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:11:045]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:11:045]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:11:050]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:11:050]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:11:050]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:11:050]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:11:050]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:11:050]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:11:050]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:11:050]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:55:11:050]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:11:050]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:55:11:050]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:55:11:050]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:55:11:050]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:55:11:050]:   5f  33  30  34
+DEBUG [18-12-2025 19:55:11:050]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:11:050]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:55:11:050]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:55:11:050]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:11:050]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:11:050]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:55:11:050]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:55:11:050]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:11:050]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:11:050]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:050]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:050]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:11:050]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:55:11:050]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:11:050]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:55:11:050]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:11:050]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:050]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:050]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:11:050]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:11:050]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:11:050]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:11:050]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:55:11:050]: No Acceptable Presentation Contexts
+DEBUG [18-12-2025 19:55:11:547]: Request Parameters:
+DEBUG [18-12-2025 19:55:11:547]: ====================== BEGIN A-ASSOCIATE-RQ =====================
+DEBUG [18-12-2025 19:55:11:547]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:11:547]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:11:547]: Their Implementation Class UID:    
+DEBUG [18-12-2025 19:55:11:547]: Their Implementation Version Name: 
+DEBUG [18-12-2025 19:55:11:547]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:11:547]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:11:547]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:547]: Responding Application Name: 
+DEBUG [18-12-2025 19:55:11:547]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:11:547]: Their Max PDU Receive Size:  0
+DEBUG [18-12-2025 19:55:11:547]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:11:547]:   Context ID:        1 (Proposed)
+DEBUG [18-12-2025 19:55:11:547]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:11:547]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:547]:     Proposed Transfer Syntax(es):
+DEBUG [18-12-2025 19:55:11:547]:       =LittleEndianExplicit
+DEBUG [18-12-2025 19:55:11:547]:       =BigEndianExplicit
+DEBUG [18-12-2025 19:55:11:547]:       =LittleEndianImplicit
+DEBUG [18-12-2025 19:55:11:547]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:11:547]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:11:547]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:11:547]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:11:547]: ======================= END A-ASSOCIATE-RQ ======================
+INFO  [18-12-2025 19:55:11:547]: Requesting Association
+DEBUG [18-12-2025 19:55:11:548]: setting network send timeout to 60 seconds
+DEBUG [18-12-2025 19:55:11:548]: setting network receive timeout to 60 seconds
+DEBUG [18-12-2025 19:55:11:548]: Constructing Associate RQ PDU
+DEBUG [18-12-2025 19:55:11:560]: PDU Type: Associate Accept, PDU Length: 190 + 6 bytes PDU header
+DEBUG [18-12-2025 19:55:11:560]:   02  00  00  00  00  be  00  01  00  00  53  55  50  45  52  4f
+DEBUG [18-12-2025 19:55:11:560]:   52  54  48  41  4e  43  20  20  20  20  53  55  50  45  52  42
+DEBUG [18-12-2025 19:55:11:560]:   45  41  4d  20  20  20  20  20  20  20  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:11:560]:   00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+DEBUG [18-12-2025 19:55:11:560]:   00  00  00  00  00  00  00  00  00  00  10  00  00  15  31  2e
+DEBUG [18-12-2025 19:55:11:560]:   32  2e  38  34  30  2e  31  30  30  30  38  2e  33  2e  31  2e
+DEBUG [18-12-2025 19:55:11:560]:   31  2e  31  21  00  00  1b  01  00  03  00  40  00  00  13  31
+DEBUG [18-12-2025 19:55:11:560]:   2e  32  2e  38  34  30  2e  31  30  30  30  38  2e  31  2e  32
+DEBUG [18-12-2025 19:55:11:560]:   2e  31  50  00  00  3e  51  00  00  04  00  00  3f  fe  52  00
+DEBUG [18-12-2025 19:55:11:560]:   00  20  31  2e  32  2e  38  32  36  2e  30  2e  31  2e  33  36
+DEBUG [18-12-2025 19:55:11:560]:   38  30  30  34  33  2e  39  2e  33  38  31  31  2e  33  2e  30
+DEBUG [18-12-2025 19:55:11:560]:   2e  34  55  00  00  0e  50  59  4e  45  54  44  49  43  4f  4d
+DEBUG [18-12-2025 19:55:11:560]:   5f  33  30  34
+DEBUG [18-12-2025 19:55:11:560]: Parsing an A-ASSOCIATE PDU
+DEBUG [18-12-2025 19:55:11:560]: Association Parameters Negotiated:
+DEBUG [18-12-2025 19:55:11:560]: ====================== BEGIN A-ASSOCIATE-AC =====================
+DEBUG [18-12-2025 19:55:11:560]: Our Implementation Class UID:      1.2.276.0.7230010.3.0.3.6.8
+DEBUG [18-12-2025 19:55:11:560]: Our Implementation Version Name:   OFFIS_DCMTK_368
+DEBUG [18-12-2025 19:55:11:560]: Their Implementation Class UID:    1.2.826.0.1.3680043.9.3811.3.0.4
+DEBUG [18-12-2025 19:55:11:560]: Their Implementation Version Name: PYNETDICOM_304
+DEBUG [18-12-2025 19:55:11:560]: Application Context Name:    1.2.840.10008.3.1.1.1
+DEBUG [18-12-2025 19:55:11:560]: Calling Application Name:    SUPERBEAM
+DEBUG [18-12-2025 19:55:11:560]: Called Application Name:     SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:560]: Responding Application Name: SUPERORTHANC
+DEBUG [18-12-2025 19:55:11:560]: Our Max PDU Receive Size:    16384
+DEBUG [18-12-2025 19:55:11:560]: Their Max PDU Receive Size:  16382
+DEBUG [18-12-2025 19:55:11:560]: Presentation Contexts:
+DEBUG [18-12-2025 19:55:11:560]:   Context ID:        1 (Abstract Syntax Not Supported)
+DEBUG [18-12-2025 19:55:11:560]:     Abstract Syntax: =FINDStudyRootQueryRetrieveInformationModel
+DEBUG [18-12-2025 19:55:11:560]:     Proposed SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:560]:     Accepted SCP/SCU Role: Default
+DEBUG [18-12-2025 19:55:11:560]: Requested Extended Negotiation: none
+DEBUG [18-12-2025 19:55:11:560]: Accepted Extended Negotiation:  none
+DEBUG [18-12-2025 19:55:11:560]: Requested User Identity Negotiation: none
+DEBUG [18-12-2025 19:55:11:560]: User Identity Negotiation Response:  none
+DEBUG [18-12-2025 19:55:11:560]: ======================= END A-ASSOCIATE-AC ======================
+ERROR [18-12-2025 19:55:11:560]: No Acceptable Presentation Contexts

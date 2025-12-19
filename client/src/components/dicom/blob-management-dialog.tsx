@@ -200,38 +200,48 @@ export function BlobManagementDialog({
 
   const sortedBlobs = [...blobList].sort((a, b) => b.volumeCc - a.volumeCc);
 
+  // Compute accent colors for spyglass effect
+  const accentWithAlpha = (alpha: number) => {
+    const [r, g, b] = structureColor;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  // Spyglass center position - matches blob localization target (65% of viewer width, 50% height)
+  // The blob gets centered at canvas.width * 0.65, canvas.height * 0.50
+  // Viewer starts after 280px sidebar, so spyglass center = 280px + 65% of remaining width
+  const spyglassCenterX = 'calc(280px + (100vw - 280px) * 0.65)';
+  const spyglassCenterY = '50%';
+
   return (
     <TooltipProvider delayDuration={200}>
-      {/* Backdrop with gradient spotlight effect - pointer-events:none allows scroll passthrough */}
+      {/* Spyglass effect - dark vignette with clear center and crisp border */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-40 pointer-events-none"
         style={{
-          background: `
-            radial-gradient(circle 450px at 220px 50%, 
-              transparent 0%, 
-              transparent 92%,
-              ${accentRgb}40 93%,
-              ${accentRgb}60 94%,
-              ${accentRgb}40 95%,
-              rgba(0, 0, 0, 0.7) 100%
-            )
-          `
+          background: `radial-gradient(circle 320px at ${spyglassCenterX} ${spyglassCenterY}, 
+            transparent 0%,
+            transparent 94%,
+            ${accentWithAlpha(0.5)} 95%,
+            ${accentWithAlpha(0.5)} 96%,
+            rgba(0, 0, 0, 0.6) 97%,
+            rgba(0, 0, 0, 0.75) 100%
+          )`
         }}
       />
       
-      {/* Panel */}
+      {/* Panel - positioned higher to avoid truncation with many blobs */}
       <motion.div 
         initial={{ opacity: 0, x: -20, scale: 0.95 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
         exit={{ opacity: 0, x: -20, scale: 0.95 }}
         transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed top-1/2 -translate-y-1/2 left-6 z-50 select-none pointer-events-auto"
+        className="fixed top-16 left-6 z-50 select-none pointer-events-auto"
       >
         <div 
-          className="rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl w-[380px] max-h-[80vh] flex flex-col"
+          className="rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl w-[380px] max-h-[calc(100vh-120px)] flex flex-col"
           style={{
             background: `linear-gradient(180deg, hsla(${accentHue}, 12%, 13%, 0.97) 0%, hsla(${accentHue}, 8%, 9%, 0.99) 100%)`,
             boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${accentRgb}20, 0 0 60px -15px ${accentRgb}30`,

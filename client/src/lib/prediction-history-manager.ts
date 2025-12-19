@@ -79,6 +79,10 @@ export class PredictionHistoryManager {
     const normalizedTarget = normalizeSlicePosition(targetSlice);
     const allContours = this.getAllContours();
     
+    // Debug: show all available contours
+    console.log(`🔮 HISTORY: Looking for contours near ${normalizedTarget.toFixed(2)}, have ${allContours.length} contours at:`, 
+      allContours.map(c => c.slicePosition.toFixed(2)).join(', '));
+    
     let before: ContourSnapshot | null = null;
     let after: ContourSnapshot | null = null;
 
@@ -93,6 +97,8 @@ export class PredictionHistoryManager {
         }
       }
     }
+    
+    console.log(`🔮 HISTORY: Found before=${before?.slicePosition?.toFixed(2) || 'null'}, after=${after?.slicePosition?.toFixed(2) || 'null'}`);
 
     return { before, after };
   }

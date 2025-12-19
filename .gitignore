@@ -19,8 +19,12 @@ attached_assets/
 
 # Data directories
 uploads/
-storage/patients/
-storage/previews/
+storage/
+
+# Database files
+*.sqlite3
+*.sqlite
+storage.db
 
 # Python
 __pycache__/

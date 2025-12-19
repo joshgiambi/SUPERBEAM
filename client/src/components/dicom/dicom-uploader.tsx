@@ -367,10 +367,11 @@ export function DICOMUploader() {
           // Track recently imported patients with timestamps
           if (parseResult.patientPreviews) {
             const importTimestamp = Date.now();
-            parseResult.patientPreviews.forEach(patient => {
-              // Update recently imported with timestamp
+            parseResult.patientPreviews.forEach((patient: any) => {
+              // Update recently imported with timestamp - check both patientId and patientID for compatibility
               const recentlyImported = JSON.parse(localStorage.getItem('recentlyImportedPatients') || '[]');
-              const newEntry = { patientId: patient.patientId || patient.id, importDate: importTimestamp };
+              const patientIdValue = patient.patientId || patient.patientID || patient.id;
+              const newEntry = { patientId: patientIdValue, importDate: importTimestamp };
               const updated = [newEntry, ...recentlyImported.filter((item: any) => item.patientId !== newEntry.patientId)].slice(0, 10);
               localStorage.setItem('recentlyImportedPatients', JSON.stringify(updated));
             });
@@ -434,10 +435,11 @@ export function DICOMUploader() {
       // Track recently imported patients with timestamps
       if (parseResult.patientPreviews) {
         const importTimestamp = Date.now();
-        parseResult.patientPreviews.forEach(patient => {
-          // Update recently imported with timestamp
+        parseResult.patientPreviews.forEach((patient: any) => {
+          // Update recently imported with timestamp - check both patientId and patientID for compatibility
           const recentlyImported = JSON.parse(localStorage.getItem('recentlyImportedPatients') || '[]');
-          const newEntry = { patientId: patient.patientId || patient.id, importDate: importTimestamp };
+          const patientIdValue = patient.patientId || patient.patientID || patient.id;
+          const newEntry = { patientId: patientIdValue, importDate: importTimestamp };
           const updated = [newEntry, ...recentlyImported.filter((item: any) => item.patientId !== newEntry.patientId)].slice(0, 10);
           localStorage.setItem('recentlyImportedPatients', JSON.stringify(updated));
         });
@@ -612,10 +614,11 @@ export function DICOMUploader() {
       // Track recently imported patients with timestamps
       if (sessionData?.parseResult?.patientPreviews) {
         const importTimestamp = Date.now();
-        sessionData.parseResult.patientPreviews.forEach(patient => {
-          // Update recently imported with timestamp
+        sessionData.parseResult.patientPreviews.forEach((patient: any) => {
+          // Update recently imported with timestamp - check both patientId and patientID for compatibility
           const recentlyImported = JSON.parse(localStorage.getItem('recentlyImportedPatients') || '[]');
-          const newEntry = { patientId: patient.patientId || patient.patientID || patient.id, importDate: importTimestamp };
+          const patientIdValue = patient.patientId || patient.patientID || patient.id;
+          const newEntry = { patientId: patientIdValue, importDate: importTimestamp };
           const updated = [newEntry, ...recentlyImported.filter((item: any) => item.patientId !== newEntry.patientId)].slice(0, 10);
           localStorage.setItem('recentlyImportedPatients', JSON.stringify(updated));
         });

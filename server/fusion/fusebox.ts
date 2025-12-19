@@ -315,25 +315,14 @@ export async function resolveFuseboxTransform(
   const secondaryMeta = secondaryImages[0]?.filePath ? parseMinimalDicomMeta(secondaryImages[0].filePath) : null;
   const primaryFoR = primaryMeta?.frameOfReference || null;
   const secondaryFoR = secondaryMeta?.frameOfReference || null;
+  
+  // Get Series Instance UIDs for direction detection
+  const primarySeriesUID = (primarySeries as any).seriesInstanceUID || null;
+  const secondarySeriesUID = (secondarySeries as any).seriesInstanceUID || null;
 
-  if (primaryFoR && secondaryFoR && primaryFoR === secondaryFoR) {
-    logHelper(logger, 'info', 'Using identity transform for matching Frame of Reference', {
-      primarySeriesId,
-      secondarySeriesId,
-      frameOfReferenceUID: primaryFoR,
-    });
-    return {
-      matrix: [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
-      ],
-      transformSource: 'matrix',
-      registrationId: 'identity-frame-of-reference',
-    };
-  }
-
+  // Check for registration files FIRST before using identity transform
+  // This is important for CT-CT fusion where both scans may share the same FoR
+  // but require a transformation matrix from the registration file
   const { parseDicomRegistrationFromFile } = await import('../registration/reg-parser.ts');
   const { findRegFileForStudy, findAllRegFilesForPatient } = await import('../registration/reg-resolver.ts');
 
@@ -345,7 +334,16 @@ export async function resolveFuseboxTransform(
     return patient?.patientID ?? null;
   })());
 
-  const candidates: Array<{ regFile: string; studyId: number; matrix?: number[]; transformSource?: FuseboxTransformSource; registrationId?: string }> = [];
+  const candidates: Array<{ 
+    regFile: string; 
+    studyId: number; 
+    matrix?: number[]; 
+    transformSource?: FuseboxTransformSource; 
+    registrationId?: string;
+    sourceFoR?: string;
+    targetFoR?: string;
+    wasInverted?: boolean;
+  }> = [];
 
   const regFiles = patientDbId != null
     ? await findAllRegFilesForPatient(patientDbId)
@@ -354,37 +352,212 @@ export async function resolveFuseboxTransform(
         return resolved ? [resolved] : [];
       })());
 
+  // Helper to invert a 4x4 rigid transformation matrix (rotation + translation)
+  const invertMatrix4x4 = (mat: number[]): number[] => {
+    // For rigid transforms: M^-1 = [R^T | -R^T * t]
+    const R = [
+      [mat[0], mat[1], mat[2]],
+      [mat[4], mat[5], mat[6]],
+      [mat[8], mat[9], mat[10]]
+    ];
+    const Rt = [
+      [R[0][0], R[1][0], R[2][0]],
+      [R[0][1], R[1][1], R[2][1]],
+      [R[0][2], R[1][2], R[2][2]]
+    ];
+    const t = [mat[3], mat[7], mat[11]];
+    const tin = [
+      -(Rt[0][0]*t[0] + Rt[0][1]*t[1] + Rt[0][2]*t[2]),
+      -(Rt[1][0]*t[0] + Rt[1][1]*t[1] + Rt[1][2]*t[2]),
+      -(Rt[2][0]*t[0] + Rt[2][1]*t[1] + Rt[2][2]*t[2])
+    ];
+    return [
+      Rt[0][0], Rt[0][1], Rt[0][2], tin[0],
+      Rt[1][0], Rt[1][1], Rt[1][2], tin[1],
+      Rt[2][0], Rt[2][1], Rt[2][2], tin[2],
+      0, 0, 0, 1
+    ];
+  };
+
   for (const reg of regFiles) {
     const parsed = parseDicomRegistrationFromFile(reg.filePath);
     if (!parsed) continue;
 
-    if (parsed.matrixRowMajor4x4) {
-      candidates.push({
-        regFile: reg.filePath,
-        studyId: reg.studyId,
-        matrix: parsed.matrixRowMajor4x4.slice(),
-        transformSource: 'matrix',
+    // Determine direction from REG file metadata
+    // The REG file specifies target series UID (fixed volume) and source series UIDs (moving volume)
+    // Matrix transforms FROM source TO target coordinate systems
+    // For fusion: we need secondary → primary (moving → fixed)
+    // So if secondary matches source and primary matches target, use matrix as-is
+    // If reversed, invert the matrix
+    
+    // Get FoR info from the REG file
+    const targetFoRFromReg = parsed.targetFrameOfReferenceUid;
+    const sourceFoRFromReg = parsed.sourceFrameOfReferenceUid;
+    
+    // Determine which of our series is the registration "target" (fixed reference)
+    // by matching the FoR from the REG file to our series' FoRs
+    let regTargetSeriesUID: string | null = null;
+    let regSourceSeriesUID: string | null = null;
+    
+    // Match based on Frame of Reference
+    // The registration's target FoR should match the "fixed" volume
+    if (targetFoRFromReg && primaryFoR && secondaryFoR) {
+      if (targetFoRFromReg === primaryFoR) {
+        // Primary's FoR matches the REG's target → Primary is the fixed/target
+        regTargetSeriesUID = primarySeriesUID;
+        regSourceSeriesUID = secondarySeriesUID;
+      } else if (targetFoRFromReg === secondaryFoR) {
+        // Secondary's FoR matches the REG's target → Secondary is the fixed/target
+        regTargetSeriesUID = secondarySeriesUID;
+        regSourceSeriesUID = primarySeriesUID;
+      }
+    }
+    
+    // Log the direction detection for debugging
+    if (regTargetSeriesUID && regSourceSeriesUID) {
+      logHelper(logger, 'debug', 'Registration direction determined from FoR match', {
+        primarySeriesId,
+        secondarySeriesId,
+        regTargetSeriesUID,
+        regSourceSeriesUID,
+        targetFoRFromReg,
+        primaryFoR,
+        secondaryFoR,
       });
     }
+
+    // Process candidates with direction information
     if (parsed.candidates?.length) {
       parsed.candidates.forEach((candidate, index) => {
         if (candidate.matrix?.length === 16) {
+          let finalMatrix = candidate.matrix.slice();
+          let wasInverted = false;
+          
+          // Try FoR-based direction detection first (if FoRs are different)
+          if (candidate.sourceFoR && candidate.targetFoR && candidate.sourceFoR !== candidate.targetFoR && primaryFoR && secondaryFoR) {
+            const matrixGoesSecondaryToPrimary = 
+              candidate.sourceFoR === secondaryFoR && candidate.targetFoR === primaryFoR;
+            const matrixGoesPrimaryToSecondary = 
+              candidate.sourceFoR === primaryFoR && candidate.targetFoR === secondaryFoR;
+            
+            if (matrixGoesSecondaryToPrimary) {
+              finalMatrix = candidate.matrix.slice();
+            } else if (matrixGoesPrimaryToSecondary) {
+              finalMatrix = invertMatrix4x4(candidate.matrix);
+              wasInverted = true;
+            }
+          }
+          // If FoRs are same (common in CT-CT fusion), use series UID direction
+          else if (regTargetSeriesUID && regSourceSeriesUID && primarySeriesUID && secondarySeriesUID) {
+            // Matrix transforms FROM source TO target
+            // We want: secondary → primary
+            const matrixGoesSecondaryToPrimary = 
+              regSourceSeriesUID === secondarySeriesUID && regTargetSeriesUID === primarySeriesUID;
+            const matrixGoesPrimaryToSecondary = 
+              regSourceSeriesUID === primarySeriesUID && regTargetSeriesUID === secondarySeriesUID;
+            
+            if (matrixGoesSecondaryToPrimary) {
+              finalMatrix = candidate.matrix.slice();
+            } else if (matrixGoesPrimaryToSecondary) {
+              finalMatrix = invertMatrix4x4(candidate.matrix);
+              wasInverted = true;
+            }
+          }
+          
           candidates.push({
             regFile: reg.filePath,
             studyId: reg.studyId,
-            matrix: candidate.matrix.slice(),
+            matrix: finalMatrix,
             transformSource: 'matrix',
-            registrationId: `${path.basename(reg.filePath)}#${index}`,
+            registrationId: `${path.basename(reg.filePath)}#${index}${wasInverted ? '-inv' : ''}`,
+            sourceFoR: candidate.sourceFoR,
+            targetFoR: candidate.targetFoR,
+            wasInverted,
           });
         }
       });
     }
+    
+    // Fallback: use top-level matrix if no candidates (legacy format)
+    if (!parsed.candidates?.length && parsed.matrixRowMajor4x4) {
+      let finalMatrix = parsed.matrixRowMajor4x4.slice();
+      let wasInverted = false;
+      
+      // Try FoR-based direction first
+      if (parsed.sourceFrameOfReferenceUid && parsed.targetFrameOfReferenceUid && 
+          parsed.sourceFrameOfReferenceUid !== parsed.targetFrameOfReferenceUid && 
+          primaryFoR && secondaryFoR) {
+        const matrixGoesPrimaryToSecondary = 
+          parsed.sourceFrameOfReferenceUid === primaryFoR && parsed.targetFrameOfReferenceUid === secondaryFoR;
+        
+        if (matrixGoesPrimaryToSecondary) {
+          finalMatrix = invertMatrix4x4(parsed.matrixRowMajor4x4);
+          wasInverted = true;
+        }
+      }
+      // Fallback to series UID direction
+      else if (regTargetSeriesUID && regSourceSeriesUID && primarySeriesUID && secondarySeriesUID) {
+        const matrixGoesPrimaryToSecondary = 
+          regSourceSeriesUID === primarySeriesUID && regTargetSeriesUID === secondarySeriesUID;
+        
+        if (matrixGoesPrimaryToSecondary) {
+          finalMatrix = invertMatrix4x4(parsed.matrixRowMajor4x4);
+          wasInverted = true;
+        }
+      }
+      
+      candidates.push({
+        regFile: reg.filePath,
+        studyId: reg.studyId,
+        matrix: finalMatrix,
+        transformSource: 'matrix',
+        wasInverted,
+      });
+    }
+  }
+
+  // Helper to check if a matrix is identity (or near-identity)
+  const isIdentityMatrix = (matrix: number[] | undefined): boolean => {
+    if (!matrix || matrix.length !== 16) return false;
+    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    const tolerance = 0.001;
+    return matrix.every((val, idx) => Math.abs(val - identity[idx]) < tolerance);
+  };
+
+  // Sort candidates to prefer non-identity matrices (actual registration transforms)
+  // This is crucial for CT-CT fusion where both identity and registration matrices may exist
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    const aIsIdentity = isIdentityMatrix(a.matrix);
+    const bIsIdentity = isIdentityMatrix(b.matrix);
+    if (aIsIdentity && !bIsIdentity) return 1;  // Non-identity first
+    if (!aIsIdentity && bIsIdentity) return -1;
+    return 0;
+  });
+
+  // Log candidate matrix selection for debugging
+  if (sortedCandidates.length > 0) {
+    logHelper(logger, 'info', 'Registration matrix candidates found', {
+      primarySeriesId,
+      secondarySeriesId,
+      primarySeriesUID,
+      secondarySeriesUID,
+      primaryFoR,
+      secondaryFoR,
+      totalCandidates: sortedCandidates.length,
+      selectedIsIdentity: isIdentityMatrix(sortedCandidates[0]?.matrix),
+      selectedWasInverted: sortedCandidates[0]?.wasInverted,
+      selectedTranslation: sortedCandidates[0]?.matrix ? [
+        sortedCandidates[0].matrix[3],  // tx
+        sortedCandidates[0].matrix[7],  // ty
+        sortedCandidates[0].matrix[11], // tz
+      ] : null,
+    });
   }
 
   let fallbackMatrix: FuseboxTransformInfo | null = null;
   let helperError: Error | null = null;
 
-  for (const cand of candidates) {
+  for (const cand of sortedCandidates) {
     const candidateId = cand.registrationId || `matrix-${path.basename(cand.regFile)}`;
     if (registrationId && registrationId !== candidateId) continue;
     const info: FuseboxTransformInfo = {
@@ -405,6 +578,45 @@ export async function resolveFuseboxTransform(
 
   if (fallbackMatrix && (fallbackMatrix.transformFile || fallbackMatrix.transformSource === 'matrix-validated')) {
     return fallbackMatrix;
+  }
+
+  // If we have any registration matrix at all (even without helper validation), use it
+  // Prefer non-identity matrices from registration files
+  if (sortedCandidates.length > 0) {
+    const bestCandidate = sortedCandidates[0]; // Already sorted with non-identity first
+    logHelper(logger, 'info', 'Using registration matrix from file (no helper validation)', {
+      primarySeriesId,
+      secondarySeriesId,
+      registrationId: bestCandidate.registrationId,
+      isIdentity: isIdentityMatrix(bestCandidate.matrix),
+    });
+    return {
+      matrix: bestCandidate.matrix?.slice(),
+      filePath: bestCandidate.regFile,
+      transformSource: 'matrix',
+      registrationId: bestCandidate.registrationId,
+    };
+  }
+
+  // Only use identity transform as last resort when:
+  // 1. No registration files found
+  // 2. Frame of Reference UIDs match
+  if (primaryFoR && secondaryFoR && primaryFoR === secondaryFoR) {
+    logHelper(logger, 'info', 'No registration file found - using identity transform for matching Frame of Reference', {
+      primarySeriesId,
+      secondarySeriesId,
+      frameOfReferenceUID: primaryFoR,
+    });
+    return {
+      matrix: [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+      ],
+      transformSource: 'matrix',
+      registrationId: 'identity-frame-of-reference',
+    };
   }
 
   if (helperError) throw helperError;

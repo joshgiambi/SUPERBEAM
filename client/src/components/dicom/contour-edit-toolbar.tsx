@@ -54,15 +54,16 @@ import {
   Eye,
   EyeOff,
   Split,
-  Circle
+  Circle,
+  Box
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { undoRedoManager } from '@/lib/undo-system';
 import { log } from '@/lib/log';
 import { useToast } from '@/hooks/use-toast';
-import { samController } from '@/lib/sam-controller';
+import { samOhifController } from '@/lib/sam-ohif-controller';
 import { SmartNthSettingsDialog } from './smart-nth-settings-dialog';
-import { PredictionTuningPanel, DEFAULT_PARAMS, type PredictionParams as TuningParams } from './prediction-tuning-panel';
+// Prediction tuning panel removed: GEO prediction is now deterministic world-space propagation.
 
 // ============================================================================
 // HELPERS
@@ -172,7 +173,6 @@ interface ContourEditToolbarProps {
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
     predictionMode?: 'geometric' | 'sam';
-    mem3dParams?: TuningParams;
     aiTumorSmoothOutput?: boolean;
     aiTumorUseSAM?: boolean;
   }) => void;
@@ -234,7 +234,6 @@ export function ContourEditToolbar({
   const [isPredictionEnabled, setIsPredictionEnabled] = useState(false);
   const [predictionMode, setPredictionMode] = useState<'geometric' | 'sam'>('geometric');
   const [samLoading, setSamLoading] = useState(false);
-  const [mem3dParams, setMem3dParams] = useState<TuningParams>(DEFAULT_PARAMS);
   const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
   const [aiTumorUseSAM, setAiTumorUseSAM] = useState(false); // AI tumor mode: false = SuperSeg, true = SAM
   const [hideOtherContours, setHideOtherContours] = useState(false);
@@ -336,7 +335,7 @@ export function ContourEditToolbar({
     return () => window.removeEventListener('brush:size:update', handler as EventListener);
   }, []);
 
-  // Notify parent when prediction mode or params change
+  // Notify parent when prediction mode changes
   useEffect(() => {
     if (onToolChange && activeTool === 'brush' && isPredictionEnabled) {
       onToolChange({
@@ -346,10 +345,9 @@ export function ContourEditToolbar({
         smartBrushEnabled: smartBrush,
         predictionEnabled: isPredictionEnabled,
         predictionMode: predictionMode,
-        mem3dParams: mem3dParams
       });
     }
-  }, [predictionMode, mem3dParams, onToolChange, activeTool, isPredictionEnabled, brushThickness, smartBrush]);
+  }, [predictionMode, onToolChange, activeTool, isPredictionEnabled, brushThickness, smartBrush]);
 
   // Mutations
   const updateNameMutation = useMutation({
@@ -407,7 +405,6 @@ export function ContourEditToolbar({
         isActive: newTool !== null,
         predictionEnabled: isPredictionEnabled,
         predictionMode: predictionMode,
-        mem3dParams: mem3dParams,
         smartBrushEnabled: smartBrush,
         aiTumorSmoothOutput: aiTumorSmoothOutput
       });
@@ -628,7 +625,6 @@ export function ContourEditToolbar({
                     isActive: true,
                     predictionEnabled: isPredictionEnabled,
                     predictionMode: predictionMode,
-                    mem3dParams: mem3dParams,
                     smartBrushEnabled: smartBrush
                   });
                 }
@@ -657,15 +653,14 @@ export function ContourEditToolbar({
                       smartBrushEnabled: enabled,
                       predictionEnabled: isPredictionEnabled,
                       predictionMode: predictionMode,
-                      mem3dParams: mem3dParams
                     });
                   }
                 }}
                 className={cn(
-                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all',
+                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border',
                   smartBrush
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5'
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10'
                 )}
               >
                 <Zap className="w-3 h-3" />
@@ -684,24 +679,23 @@ export function ContourEditToolbar({
                       smartBrushEnabled: smartBrush,
                       predictionEnabled: enabled,
                       predictionMode: predictionMode,
-                      mem3dParams: mem3dParams
                     });
                   }
                 }}
                 className={cn(
-                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all',
+                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border',
                   isPredictionEnabled
-                    ? 'bg-violet-500/20 text-violet-400'
-                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5'
+                    ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
+                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10'
                 )}
               >
                 <Sparkles className="w-3 h-3" />
                 Predict
               </button>
 
-              {/* Prediction Mode Toggle */}
+              {/* Prediction Mode Toggle - Segmented control style */}
               {isPredictionEnabled && (
-                <div className="flex items-center gap-0.5 bg-white/5 rounded p-0.5">
+                <div className="flex items-center gap-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -715,18 +709,18 @@ export function ContourEditToolbar({
                               smartBrushEnabled: smartBrush,
                               predictionEnabled: isPredictionEnabled,
                               predictionMode: 'geometric',
-                              mem3dParams: mem3dParams
                             });
                           }
                         }}
                         className={cn(
-                          'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
                           predictionMode === 'geometric'
-                            ? 'bg-blue-500/30 text-blue-300'
-                            : 'text-gray-500 hover:text-gray-400'
+                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
                         )}
                       >
-                        GEO
+                        <Box className="w-3 h-3" />
+                        Geo
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
@@ -739,14 +733,14 @@ export function ContourEditToolbar({
                         onClick={async () => {
                           if (predictionMode !== 'sam') {
                             // Initialize SAM if needed
-                            if (!samController.isReady()) {
+                            if (!samOhifController.isReady()) {
                               setSamLoading(true);
                               toast({ 
                                 title: "Loading SAM Model", 
                                 description: "Downloading ~200MB model (first time only)..." 
                               });
                               try {
-                                await samController.initialize();
+                                await samOhifController.initialize();
                                 toast({ 
                                   title: "SAM Ready", 
                                   description: "AI prediction model loaded successfully" 
@@ -772,20 +766,20 @@ export function ContourEditToolbar({
                                 smartBrushEnabled: smartBrush,
                                 predictionEnabled: isPredictionEnabled,
                                 predictionMode: 'sam',
-                                mem3dParams: mem3dParams
                               });
                             }
                           }
                         }}
                         disabled={samLoading}
                         className={cn(
-                          'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
+                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
                           predictionMode === 'sam'
-                            ? 'bg-purple-500/30 text-purple-300'
-                            : 'text-gray-500 hover:text-gray-400',
+                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10',
                           samLoading && 'opacity-50 cursor-wait'
                         )}
                       >
+                        <Sparkles className="w-3 h-3" />
                         {samLoading ? '...' : 'SAM'}
                       </button>
                     </TooltipTrigger>
@@ -796,29 +790,35 @@ export function ContourEditToolbar({
                 </div>
               )}
 
-              <AnimatePresence>
-                {isPredictionEnabled && hasPredictionForCurrentSlice && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex items-center gap-1"
+              {/* Accept/Reject buttons - always visible when prediction enabled, greyed out when no prediction */}
+              {isPredictionEnabled && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleAcceptPrediction}
+                    disabled={!hasPredictionForCurrentSlice}
+                    className={cn(
+                      "h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border",
+                      hasPredictionForCurrentSlice
+                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
+                        : "bg-transparent text-gray-600 border-white/10 cursor-not-allowed"
+                    )}
                   >
-                    <button
-                      onClick={handleAcceptPrediction}
-                      className="h-6 px-2 flex items-center gap-1 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-medium hover:bg-emerald-500/30"
-                    >
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={handleRejectPrediction}
-                      className="h-6 px-2 flex items-center gap-1 rounded bg-red-500/20 text-red-400 text-[11px] font-medium hover:bg-red-500/30"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Check className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={handleRejectPrediction}
+                    disabled={!hasPredictionForCurrentSlice}
+                    className={cn(
+                      "h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border",
+                      hasPredictionForCurrentSlice
+                        ? "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30"
+                        : "bg-transparent text-gray-600 border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </motion.div>
@@ -1093,12 +1093,20 @@ export function ContourEditToolbar({
         So: outer wrapper handles positioning + drag translateX, inner motion handles animation.
       */}
       <div
-        className={cn("fixed z-50 select-none left-1/2", isDragging && "cursor-grabbing")}
+        className={cn("fixed z-50 select-none", isDragging && "cursor-grabbing")}
         style={{
           bottom: `calc(96px - ${position.y}px)`,
-          transform: `translateX(calc(-50% + ${position.x}px))`,
+          left: `calc(${viewerOffsetLeft}px + 16px + ${position.x}px)`,
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => {
+          // Stop all mouse events from propagating to canvas below
+          e.stopPropagation();
+          handleMouseDown(e);
+        }}
+        onMouseUp={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1108,12 +1116,17 @@ export function ContourEditToolbar({
         >
           <div 
             className={cn(
-              "rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl transition-all",
+              "rounded-2xl overflow-hidden backdrop-blur-xl transition-all",
               isDragging && "ring-2"
             )}
             style={{
               background: `linear-gradient(180deg, hsla(${accentHue}, 12%, 13%, 0.97) 0%, hsla(${accentHue}, 8%, 9%, 0.99) 100%)`,
-              boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${accentRgb}20, 0 0 60px -15px ${accentRgb}20`,
+              boxShadow: `
+                0 8px 24px -4px rgba(0, 0, 0, 0.6),
+                0 16px 48px -8px rgba(0, 0, 0, 0.4),
+                0 0 0 1px ${accentRgb}15,
+                0 0 40px -10px ${accentRgb}15
+              `,
               ...(isDragging ? { ringColor: `${accentRgb}40` } : {}),
             }}
           >
@@ -1459,14 +1472,7 @@ export function ContourEditToolbar({
         totalSlices={totalSlicesForSmartNth}
       />
 
-      {/* Prediction Tuning Panel */}
-      {predictionMode === 'geometric' && isPredictionEnabled && (
-        <PredictionTuningPanel
-          params={mem3dParams}
-          onParamsChange={setMem3dParams}
-          onReset={() => setMem3dParams(DEFAULT_PARAMS)}
-        />
-      )}
+      {/* Prediction tuning removed (GEO uses deterministic world-space propagation). */}
     </TooltipProvider>
   );
 }

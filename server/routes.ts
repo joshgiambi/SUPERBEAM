@@ -29,7 +29,6 @@ import { FuseboxVolumeResampler } from './fusion/resampler.ts';
 import { loadDicomMetadata } from './fusion/dicom-metadata.ts';
 import segvolRouter from './segvol-api';
 import mem3dRouter from './mem3d-api';
-import monaiRouter from './monai-api';
 import nninteractiveRouter from './nninteractive-api';
 import supersegRouter from './superseg-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
@@ -528,6 +527,22 @@ function generateUID(): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Serve SAM ONNX models from local storage (much faster than CDN)
+  const samModelsDir = path.join(import.meta.dirname, 'sam-models');
+  if (fs.existsSync(samModelsDir)) {
+    // Import express for static middleware
+    const express = await import('express');
+    app.use('/api/sam-models', (req, res, next) => {
+      // Set headers for efficient caching of large binary files
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      next();
+    }, express.default.static(samModelsDir));
+    logger.info('📦 SAM models available at /api/sam-models', 'routes');
+  } else {
+    logger.warn('⚠️ SAM models directory not found. Run: cd server/sam-models && chmod +x download-models.sh && ./download-models.sh', 'routes');
+  }
+  
   // Create demo data
   app.post("/api/create-test-data", async (req, res) => {
     try {
@@ -590,216 +605,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Populate HN-ATLAS demo data
-  app.post("/api/populate-demo", async (req, res) => {
-    try {
-      await createHNAtlasDemo();
-      res.json({ 
-        success: true, 
-        message: "Demo data already exists or has been created",
-        patients: (await storage.getAllPatients()).length,
-        studies: (await storage.getAllStudies()).length
-      });
-    } catch (error) {
-      console.error('Error populating demo:', error);
-      res.status(500).json({ message: "Failed to create demo data" });
-    }
-  });
-
-  async function createHNAtlasDemo() {
-    try {
-      // Check if HN-ATLAS patient already exists
-      try {
-        const hnPatient = await storage.getPatientByID('HN-ATLAS-84');
-        if (hnPatient) {
-          console.log('HN-ATLAS patient already exists');
-          return;
-        }
-      } catch (error) {
-        // Patient doesn't exist, create new one
-      }
-
-      // Create HN-ATLAS patient
-      const hnPatient = await storage.createPatient({
-        patientID: 'HN-ATLAS-84',
-        patientName: 'HN-ATLAS^84',
-        patientSex: 'M',
-        patientAge: '62',
-        dateOfBirth: '19620315'
-      });
-
-      const hnDatasetPath = 'attached_assets/HN-ATLAS-84/HN-ATLAS-84';
-      const contrastPath = path.join(hnDatasetPath, 'DICOM_CONTRAST');
-      const mimPath = path.join(hnDatasetPath, 'MIM');
-
-      if (!fs.existsSync(contrastPath)) {
-        console.log('HN-ATLAS dataset not found');
-        return;
-      }
-
-      // Parse the DICOM_CONTRAST folder for CT images - use ALL available slices
-      const contrastFiles = fs.readdirSync(contrastPath)
-        .filter(f => f.endsWith('.dcm'))
-        .sort();
-
-      if (contrastFiles.length === 0) {
-        console.log('No DICOM files found in HN-ATLAS contrast folder');
-        return;
-      }
-
-      // Create CT study
-      const ctStudy = await storage.createStudy({
-        studyInstanceUID: generateUID(),
-        patientId: hnPatient.id,
-        patientName: 'HN-ATLAS^84',
-        patientID: 'HN-ATLAS-84',
-        studyDate: '20200615',
-        studyDescription: 'Head & Neck CT with Contrast',
-        accessionNumber: 'HN84_CT_001',
-        modality: 'CT',
-        numberOfSeries: 1,
-        numberOfImages: contrastFiles.length,
-        isDemo: true,
-      });
-
-      // Create CT series
-      const ctSeries = await storage.createSeries({
-        studyId: ctStudy.id,
-        seriesInstanceUID: generateUID(),
-        seriesDescription: 'CT Head Neck with Contrast',
-        modality: 'CT',
-        seriesNumber: 1,
-        imageCount: contrastFiles.length,
-        sliceThickness: '3.0',
-        metadata: { 
-          source: 'HN-ATLAS-84',
-          anatomy: 'Head & Neck',
-          contrast: 'IV Contrast Enhanced'
-        },
-      });
-
-      // Copy and process ALL CT images
-      const hnDemoDir = 'uploads/hn-atlas-demo';
-      if (!fs.existsSync(hnDemoDir)) {
-        fs.mkdirSync(hnDemoDir, { recursive: true });
-      }
-
-      const ctImages = [];
-      for (let i = 0; i < contrastFiles.length; i++) {
-        const fileName = contrastFiles[i];
-        const sourcePath = path.join(contrastPath, fileName);
-        const demoPath = path.join(hnDemoDir, fileName);
-        
-        // Copy file to demo directory
-        fs.copyFileSync(sourcePath, demoPath);
-        const fileStats = fs.statSync(demoPath);
-        
-        // Extract instance number from filename
-        const instanceMatch = fileName.match(/\.(\d+)\.dcm$/);
-        const instanceNumber = instanceMatch ? parseInt(instanceMatch[1]) : i + 1;
-        
-        const image = await storage.createImage({
-          seriesId: ctSeries.id,
-          sopInstanceUID: generateUID(),
-          instanceNumber: instanceNumber,
-          filePath: demoPath,
-          fileName: fileName,
-          fileSize: fileStats.size,
-          imagePosition: null,
-          imageOrientation: null,
-          pixelSpacing: '0.488\\0.488',
-          sliceLocation: `${instanceNumber * 3.0}`,
-          windowCenter: '50',
-          windowWidth: '350',
-          metadata: {
-            source: 'HN-ATLAS-84',
-            anatomy: 'Head & Neck',
-            contrast: true
-          },
-        });
-        ctImages.push(image);
-      }
-
-      await storage.updateSeriesImageCount(ctSeries.id, ctImages.length);
-
-      // Check for RT Structure Set
-      if (fs.existsSync(mimPath)) {
-        const rtFiles = fs.readdirSync(mimPath).filter(f => f.endsWith('.dcm'));
-        
-        if (rtFiles.length > 0) {
-          // Create RT Structure Study
-          const rtStudy = await storage.createStudy({
-            studyInstanceUID: generateUID(),
-            patientId: hnPatient.id,
-            patientName: 'HN-ATLAS^84',
-            patientID: 'HN-ATLAS-84',
-            studyDate: '20200615',
-            studyDescription: 'RT Structure Set - Organ Contours',
-            accessionNumber: 'HN84_RT_001',
-            modality: 'RTSTRUCT',
-            numberOfSeries: 1,
-            numberOfImages: rtFiles.length,
-            isDemo: true,
-          });
-
-          // Create RT series
-          const rtSeries = await storage.createSeries({
-            studyId: rtStudy.id,
-            seriesInstanceUID: generateUID(),
-            seriesDescription: 'RT Structure Set - Head & Neck Organs',
-            modality: 'RTSTRUCT',
-            seriesNumber: 1,
-            imageCount: rtFiles.length,
-            sliceThickness: '3.0',
-            metadata: { 
-              source: 'HN-ATLAS-84',
-              structureType: 'Organ Contours',
-              organsSructures: ['Brainstem', 'Spinal Cord', 'Parotid Glands', 'Mandible']
-            },
-          });
-
-          // Process RT Structure files
-          for (let i = 0; i < rtFiles.length; i++) {
-            const fileName = rtFiles[i];
-            const sourcePath = path.join(mimPath, fileName);
-            const demoPath = path.join(hnDemoDir, `rt_${fileName}`);
-            
-            fs.copyFileSync(sourcePath, demoPath);
-            const fileStats = fs.statSync(demoPath);
-            
-            await storage.createImage({
-              seriesId: rtSeries.id,
-              sopInstanceUID: generateUID(),
-              instanceNumber: i + 1,
-              filePath: demoPath,
-              fileName: `rt_${fileName}`,
-              fileSize: fileStats.size,
-              imagePosition: null,
-              imageOrientation: null,
-              pixelSpacing: null,
-              sliceLocation: null,
-              windowCenter: null,
-              windowWidth: null,
-              metadata: {
-                source: 'HN-ATLAS-84',
-                structureType: 'RT Structure Set'
-              },
-            });
-          }
-
-          await storage.updateSeriesImageCount(rtSeries.id, rtFiles.length);
-          await storage.updateStudyCounts(rtStudy.id, 1, rtFiles.length);
-        }
-      }
-
-      await storage.updateStudyCounts(ctStudy.id, 1, ctImages.length);
-      console.log(`Created HN-ATLAS-84 demo patient with ${ctImages.length} CT images`);
-      
-    } catch (error) {
-      console.error('Error creating HN-ATLAS demo:', error);
-    }
-  }
-  
   // Serve DICOM files
   app.get("/api/images/:sopInstanceUID", async (req, res) => {
     try {
@@ -4428,8 +4233,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const studyId = req.query.studyId ? Number(req.query.studyId) : undefined;
       const patientIdRaw = req.query.patientId as string | undefined;
-      const patientId = patientIdRaw && patientIdRaw.trim() ? patientIdRaw.trim() : undefined;
-      if (!Number.isFinite(studyId as any) && !patientId) return res.status(400).json({ error: 'studyId or patientId required' });
+      // Convert patientId to number - findAllRegFilesForPatient expects a numeric database ID
+      const patientIdParsed = patientIdRaw && patientIdRaw.trim() ? Number(patientIdRaw.trim()) : NaN;
+      const patientId = Number.isFinite(patientIdParsed) ? patientIdParsed : undefined;
+      if (!Number.isFinite(studyId as any) && patientId === undefined) return res.status(400).json({ error: 'studyId or patientId required' });
       const { findRegFileForStudy, findAllRegFilesForPatient } = await import('./registration/reg-resolver.ts');
       const { parseDicomRegistrationFromFile } = await import('./registration/reg-parser.ts');
       const foundList = patientId
@@ -5157,6 +4964,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error scanning folder:', error);
       res.status(500).json({ message: error.message || "Failed to scan folder" });
+    }
+  });
+
+  // Import study from Orthanc server
+  app.post("/api/orthanc/import", async (req, res) => {
+    try {
+      const { pacsId, orthancStudyId, studyInstanceUID } = req.body;
+      
+      if (!pacsId || (!orthancStudyId && !studyInstanceUID)) {
+        return res.status(400).json({ message: "pacsId and orthancStudyId (or studyInstanceUID) are required" });
+      }
+
+      const connection = await storage.getPacsConnection(pacsId);
+      if (!connection) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+
+      if (connection.sourceType !== 'orthanc') {
+        return res.status(400).json({ message: "Data source is not an Orthanc server" });
+      }
+
+      // If we have studyInstanceUID but not orthancStudyId, look it up
+      let targetOrthancId = orthancStudyId;
+      if (!targetOrthancId && studyInstanceUID) {
+        const baseUrl = `http://${connection.hostname}:${connection.port}`;
+        const searchResponse = await fetch(`${baseUrl}/tools/lookup`, {
+          method: 'POST',
+          body: studyInstanceUID,
+          signal: AbortSignal.timeout(30000),
+        });
+        if (searchResponse.ok) {
+          const results = await searchResponse.json();
+          const studyResult = results.find((r: any) => r.Type === 'Study');
+          if (studyResult) {
+            targetOrthancId = studyResult.ID;
+          }
+        }
+      }
+
+      if (!targetOrthancId) {
+        return res.status(404).json({ message: "Study not found in Orthanc" });
+      }
+
+      console.log(`[Orthanc Import] Starting import of study ${targetOrthancId} from ${connection.name}`);
+
+      // Download the study
+      const result = await dataSourceService.downloadOrthancStudy(connection, targetOrthancId);
+      
+      if (!result.success || !result.filePaths || result.filePaths.length === 0) {
+        return res.status(500).json({ message: result.message || "Failed to download study" });
+      }
+
+      // Now process the downloaded files through our import pipeline
+      const importedPatients: any[] = [];
+      const importedStudies: any[] = [];
+      const importedSeries: any[] = [];
+
+      // Process each downloaded file (using already imported dicomParser)
+      for (const filePath of result.filePaths) {
+        try {
+          const fileBuffer = await fs.promises.readFile(filePath);
+          const dataSet = dicomParser.parseDicom(fileBuffer);
+          
+          // Extract metadata
+          const patientID = dataSet.string('x00100020') || 'UNKNOWN';
+          const patientName = dataSet.string('x00100010') || 'UNKNOWN';
+          const studyUID = dataSet.string('x0020000d');
+          const seriesUID = dataSet.string('x0020000e');
+          const sopInstanceUID = dataSet.string('x00080018');
+          const modality = dataSet.string('x00080060') || 'OT';
+          const studyDate = dataSet.string('x00080020') || '';
+          const studyDescription = dataSet.string('x00081030') || '';
+          const seriesDescription = dataSet.string('x0008103e') || '';
+          const seriesNumber = parseInt(dataSet.string('x00200011') || '1');
+          const instanceNumber = parseInt(dataSet.string('x00200013') || '1');
+          const fileName = path.basename(filePath);
+
+          // Create or find patient
+          let patient = await storage.getPatientByID(patientID);
+          if (!patient) {
+            patient = await storage.createPatient({
+              patientID,
+              patientName,
+              patientSex: dataSet.string('x00100040'),
+              patientAge: dataSet.string('x00101010'),
+              dateOfBirth: dataSet.string('x00100030'),
+            });
+            importedPatients.push(patient);
+          }
+
+          // Create or find study
+          let study = await storage.getStudyByUID(studyUID);
+          if (!study) {
+            study = await storage.createStudy({
+              patientId: patient.id,
+              studyInstanceUID: studyUID,
+              studyDate,
+              studyDescription,
+              accessionNumber: dataSet.string('x00080050'),
+            });
+            importedStudies.push(study);
+          }
+
+          // Create or find series
+          let series = await storage.getSeriesByUID(seriesUID);
+          if (!series) {
+            series = await storage.createSeries({
+              studyId: study.id,
+              seriesInstanceUID: seriesUID,
+              modality,
+              seriesDescription,
+              seriesNumber,
+            });
+            importedSeries.push(series);
+          }
+
+          // Create image record
+          const sliceLocation = dataSet.string('x00201041') ? parseFloat(dataSet.string('x00201041')) : undefined;
+          await storage.createImage({
+            seriesId: series.id,
+            sopInstanceUID,
+            instanceNumber,
+            filePath,
+            fileName,
+            sliceLocation: sliceLocation?.toString(),
+          });
+        } catch (parseError: any) {
+          console.warn(`[Orthanc Import] Failed to parse file ${filePath}:`, parseError.message);
+        }
+      }
+
+      console.log(`[Orthanc Import] Complete: ${importedPatients.length} patients, ${importedStudies.length} studies, ${importedSeries.length} series`);
+
+      res.json({
+        success: true,
+        message: `Imported ${result.filePaths.length} files`,
+        patients: importedPatients.length,
+        studies: importedStudies.length,
+        series: importedSeries.length,
+        files: result.filePaths.length,
+      });
+      
+    } catch (error: any) {
+      console.error('[Orthanc Import] Error:', error);
+      res.status(500).json({ message: error.message || "Failed to import from Orthanc" });
     }
   });
 
@@ -5990,15 +5942,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const studies = await storage.getStudiesByPatient(patientId);
           const allFilePaths: string[] = [];
           
-          // Collect all image file paths
+          // Collect all image file paths with fallback path resolution
           for (const study of studies) {
             const seriesList = await storage.getSeriesByStudyId(study.id);
             for (const seriesItem of seriesList) {
               const images = await storage.getImagesBySeriesId(seriesItem.id);
               for (const image of images) {
-                if (image.filePath && fs.existsSync(image.filePath)) {
-                  allFilePaths.push(image.filePath);
+                if (!image.filePath) continue;
+                
+                // Use same path resolution logic as export to find files
+                let resolvedPath = image.filePath;
+                if (!path.isAbsolute(resolvedPath)) {
+                  resolvedPath = path.resolve(resolvedPath);
                 }
+                
+                if (!fs.existsSync(resolvedPath)) {
+                  // Try with storage/ prefix if not found
+                  const altPath = path.resolve('storage', image.filePath.replace(/^storage[\/\\]?/, ''));
+                  if (fs.existsSync(altPath)) {
+                    resolvedPath = altPath;
+                  } else {
+                    continue; // File not found, skip silently
+                  }
+                }
+                
+                allFilePaths.push(resolvedPath);
               }
             }
           }
@@ -6043,6 +6011,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating patient metadata:', error);
       next(error);
+    }
+  });
+
+  // DICOM Export endpoint - creates a zip file with selected series
+  app.post("/api/export/dicom", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { seriesIds } = req.body as { seriesIds: number[] };
+      
+      console.log('[DICOM Export] Request received with seriesIds:', seriesIds);
+      
+      if (!seriesIds || !Array.isArray(seriesIds) || seriesIds.length === 0) {
+        return res.status(400).json({ error: 'No series selected for export' });
+      }
+      
+      // Dynamic import of archiver
+      const archiver = (await import('archiver')).default;
+      
+      // Set up response headers for zip download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `dicom-export-${timestamp}.zip`;
+      
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Create archiver instance
+      const archive = archiver('zip', {
+        zlib: { level: 5 } // Moderate compression for speed
+      });
+      
+      // Pipe archive to response
+      archive.pipe(res);
+      
+      // Handle archiver errors
+      archive.on('error', (err) => {
+        console.error('Archiver error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to create archive' });
+        }
+      });
+      
+      let totalFiles = 0;
+      let processedSeries = 0;
+      let missingFiles = 0;
+      
+      // Process each series
+      for (const seriesId of seriesIds) {
+        try {
+          const series = await storage.getSeriesById(seriesId);
+          if (!series) {
+            console.warn(`[DICOM Export] Series ${seriesId} not found, skipping`);
+            continue;
+          }
+          
+          console.log(`[DICOM Export] Processing series ${seriesId}: ${series.modality} - ${series.seriesDescription}`);
+          
+          // Get the study for folder naming
+          const study = await storage.getStudy(series.studyId);
+          const patient = study ? await storage.getPatient(study.patientId) : null;
+          
+          // Create folder structure: PatientName_PatientID/StudyDate_StudyDesc/SeriesNumber_Modality_SeriesDesc/
+          const patientFolder = patient 
+            ? `${(patient.patientName || 'Unknown').replace(/[^a-zA-Z0-9^]/g, '_')}_${patient.patientID || 'Unknown'}`
+            : 'Unknown_Patient';
+          const studyFolder = study
+            ? `${study.studyDate || 'NoDate'}_${(study.studyDescription || 'Study').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30)}`
+            : 'Unknown_Study';
+          const seriesFolder = `${series.seriesNumber || 0}_${series.modality || 'Unknown'}_${(series.seriesDescription || 'Series').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30)}`;
+          
+          const basePath = `${patientFolder}/${studyFolder}/${seriesFolder}`;
+          
+          // Get all images for this series
+          const images = await storage.getImagesBySeriesId(seriesId);
+          console.log(`[DICOM Export] Found ${images.length} images in series ${seriesId}`);
+          
+          for (const image of images) {
+            if (!image.filePath) {
+              console.warn(`[DICOM Export] Image ${image.id} has no filePath`);
+              missingFiles++;
+              continue;
+            }
+            
+            // Handle both absolute and relative paths
+            let resolvedPath = image.filePath;
+            if (!path.isAbsolute(resolvedPath)) {
+              resolvedPath = path.resolve(resolvedPath);
+            }
+            
+            if (!fs.existsSync(resolvedPath)) {
+              // Try with storage/ prefix if not found
+              const altPath = path.resolve('storage', image.filePath.replace(/^storage[\/\\]?/, ''));
+              if (fs.existsSync(altPath)) {
+                resolvedPath = altPath;
+              } else {
+                console.warn(`[DICOM Export] File not found: ${image.filePath} (tried: ${resolvedPath}, ${altPath})`);
+                missingFiles++;
+                continue;
+              }
+            }
+            
+            // Use instance number or SOP UID for filename
+            const instanceNum = image.instanceNumber?.toString().padStart(4, '0') || image.id.toString().padStart(4, '0');
+            const fileName = `${instanceNum}.dcm`;
+            
+            archive.file(resolvedPath, { name: `${basePath}/${fileName}` });
+            totalFiles++;
+          }
+          
+          processedSeries++;
+        } catch (err) {
+          console.error(`[DICOM Export] Error processing series ${seriesId}:`, err);
+        }
+      }
+      
+      console.log(`[DICOM Export] Complete: ${processedSeries} series, ${totalFiles} files added, ${missingFiles} missing`);
+      
+      if (totalFiles === 0) {
+        console.warn('[DICOM Export] WARNING: No files were added to the archive!');
+      }
+      
+      // Finalize the archive
+      await archive.finalize();
+      
+    } catch (error) {
+      console.error('[DICOM Export] Error:', error);
+      if (!res.headersSent) {
+        next(error);
+      }
     }
   });
 
@@ -6923,9 +7018,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register SegVol API routes
   app.use('/api', segvolRouter);
-
-  // Register MONAI API routes
-  app.use('/api', monaiRouter);
 
   // Register Mem3D API routes
   app.use('/api', mem3dRouter);

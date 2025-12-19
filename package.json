@@ -4,7 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "node scripts/ensure-monai.js && node scripts/ensure-segvol.js && npm run dev:setup && NODE_ENV=development tsx watch server/index.ts",
+    "dev": "node scripts/ensure-segvol.js && npm run dev:setup && NODE_ENV=development tsx watch server/index.ts",
     "dev:itk": "npm run dev:setup && DICOM_REG_CONVERTER=/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/build/dicom-reg-converter/dicom_reg_to_h5 FUSEBOX_PYTHON=/Users/joshua/Documents/CONVERGE_REPLIT_VIEWER/sam_env/bin/python PORT=3000 NODE_ENV=development tsx watch server/index.ts",
     "dev:replit": "DICOM_REG_CONVERTER=${REPLIT_WORKSPACE:-$(pwd)}/build/dicom-reg-converter/dicom_reg_to_h5 FUSEBOX_PYTHON=${REPLIT_WORKSPACE:-$(pwd)}/sam_env/bin/python PORT=3000 NODE_ENV=development tsx watch server/index.ts",
     "dev:setup": "node -e \"console.log('🔧 Checking Fusebox setup...'); const fs = require('fs'); const path = require('path'); const helperPath = path.join(__dirname, 'build/dicom-reg-converter/dicom_reg_to_h5'); const pythonPath = path.join(__dirname, 'sam_env/bin/python'); if (!fs.existsSync(helperPath)) { console.error('❌ DICOM helper not found at:', helperPath); console.error('Run: cmake --build build/dicom-reg-converter'); process.exit(1); } if (!fs.existsSync(pythonPath)) { console.error('❌ Python venv not found at:', pythonPath); console.error('Run: python -m venv sam_env && source sam_env/bin/activate && pip install -e .'); process.exit(1); } console.log('✅ Fusebox setup verified'); console.log('🐟 DICOM helper:', helperPath); console.log('🐍 Python interpreter:', pythonPath);\"",
@@ -18,9 +18,11 @@
     "data:download": "./scripts/sync-test-data.sh download",
     "data:upload": "./scripts/sync-test-data.sh upload",
     "data:list": "./scripts/sync-test-data.sh list",
-    "setup:new-dev": "npm install && ./scripts/sync-test-data.sh download && npm run dev:setup"
+    "setup:new-dev": "npm install && ./scripts/sync-test-data.sh download && npm run dev:setup",
+    "sam:download": "node scripts/download-sam-models.js"
   },
   "dependencies": {
+    "@cornerstonejs/ai": "^4.12.6",
     "@cornerstonejs/core": "^3.32.0",
     "@cornerstonejs/streaming-image-volume-loader": "^1.86.1",
     "@cornerstonejs/tools": "^3.32.0",

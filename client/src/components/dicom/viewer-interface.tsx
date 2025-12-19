@@ -652,6 +652,15 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             const prev = mapping[primaryId as number] || [];
             const combined = Array.from(new Set([...prev, ...secondaryIds]));
             mapping[primaryId as number] = combined;
+            
+            // Add bidirectional mapping: each source should also know about the target
+            // This enables fusion to work regardless of which series is selected as primary
+            for (const sourceId of secondaryIds) {
+              const sourcePrev = mapping[sourceId] || [];
+              if (!sourcePrev.includes(primaryId as number)) {
+                mapping[sourceId] = [...sourcePrev, primaryId as number];
+              }
+            }
           }
 
           const entry: RegistrationAssociation = {
@@ -1175,7 +1184,8 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     const mode = (modality || '').toUpperCase();
     switch (mode) {
       case 'MR':
-        return { window: 80, level: 40 };
+        // MRI: return null to use auto windowing based on actual pixel data min/max
+        return null;
       case 'PT':
       case 'PET':
         // Standard PET SUV windowing: 0-5 SUV range (common clinical setting)
@@ -2831,11 +2841,12 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             });
           }}
           onToolChange={(toolState) => {
-            setBrushToolState({
-              ...brushToolState,
+            // Use functional update to avoid stale closure issues
+            setBrushToolState((prev) => ({
+              ...prev,
               ...toolState,
-              predictionEnabled: toolState.predictionEnabled ?? brushToolState.predictionEnabled
-            });
+              predictionEnabled: toolState.predictionEnabled ?? prev.predictionEnabled
+            }));
           }}
           currentSlicePosition={currentSlicePosition}
           onContourUpdate={handleContourUpdate}

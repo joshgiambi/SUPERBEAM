@@ -667,10 +667,21 @@ export class DatabaseStorage implements IStorage {
       }
     } catch {}
 
-    // Delete RT structure sets referencing this series
+    // Delete RT structure sets referencing this series (both as seriesId and referencedSeriesId)
     try {
-      const [rtSet] = await db.select().from(rtStructureSets).where(eq(rtStructureSets.seriesId, seriesId));
-      if (rtSet) {
+      // Find all RT structure sets that reference this series (either as the RT series or the referenced CT/MR)
+      const rtSetsToDelete = await db.select().from(rtStructureSets).where(
+        or(
+          eq(rtStructureSets.seriesId, seriesId),
+          eq(rtStructureSets.referencedSeriesId, seriesId)
+        )
+      );
+      
+      for (const rtSet of rtSetsToDelete) {
+        // Delete rt_structure_history first (references rtStructureSetId)
+        await db.delete(rtStructureHistory).where(eq(rtStructureHistory.rtStructureSetId, (rtSet as any).id));
+        
+        // Delete structures and their contours
         const structs = await db.select().from(rtStructures).where(eq(rtStructures.rtStructureSetId, (rtSet as any).id));
         for (const s of structs) {
           await db.delete(rtStructureContours).where(eq(rtStructureContours.rtStructureId, (s as any).id));
@@ -678,7 +689,9 @@ export class DatabaseStorage implements IStorage {
         await db.delete(rtStructures).where(eq(rtStructures.rtStructureSetId, (rtSet as any).id));
         await db.delete(rtStructureSets).where(eq(rtStructureSets.id, (rtSet as any).id));
       }
-    } catch {}
+    } catch (error) {
+      console.warn(`Failed to delete RT structure sets for series ${seriesId}:`, error);
+    }
 
     // Clean up fusion data for this series
     try {
