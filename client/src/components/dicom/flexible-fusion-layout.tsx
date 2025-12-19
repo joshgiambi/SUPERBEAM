@@ -128,6 +128,9 @@ interface FlexibleFusionLayoutProps {
   externalZoom?: number;
   onZoomChange?: (zoom: number) => void;
   
+  // Initial slice index - preserves slice position when switching to multi-viewer mode
+  initialSliceIndex?: number;
+  
   // Exit callback - return to overlay/single mode
   onExitToOverlay?: () => void;
   
@@ -963,6 +966,7 @@ export function FlexibleFusionLayout({
   onMPRToggle,
   externalZoom,
   onZoomChange,
+  initialSliceIndex,
   onExitToOverlay,
   onViewportAssignmentsChange,
 }: FlexibleFusionLayoutProps) {
@@ -1137,7 +1141,7 @@ export function FlexibleFusionLayout({
   const [activeViewportId, setActiveViewportId] = useState<string>('primary');
 
   const [syncState, setSyncState] = useState<SyncState>({
-    currentIndex: 0,
+    currentIndex: initialSliceIndex ?? 0,
     zoom: 1,
     panX: 0,
     panY: 0,

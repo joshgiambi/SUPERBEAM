@@ -604,10 +604,10 @@ export class SAMStandalone {
     // Create input tensor [1, 3, 1024, 1024]
     const inputTensor = new ort.Tensor('float32', input, [1, 3, MODEL_SIZE, MODEL_SIZE]);
 
-    // Run encoder
+    // Run encoder - SAM uses 'input_image' as the input name
     const startTime = performance.now();
     const results = await this.encoderSession!.run({
-      input: inputTensor,
+      input_image: inputTensor,
     });
     const elapsed = performance.now() - startTime;
     console.log(`🤖 SAM: Encoder completed in ${elapsed.toFixed(0)}ms`);

@@ -1161,12 +1161,20 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   };
 
   // Save contour updates using debounced save
-  const saveContourUpdates = (updatedStructures: any, action?: string) => {
+  // Optionally pass modifiedRoiNumbers to trigger auto-update for dependent superstructures
+  const saveContourUpdates = (updatedStructures: any, action?: string, modifiedRoiNumbers?: number[]) => {
     log.debug(`Queuing save for ${action || 'unknown action'}`, 'viewer');
     if (debouncedSaveRef.current) {
       debouncedSaveRef.current(updatedStructures);
     } else {
       log.warn('Debounced save not initialized', 'viewer');
+    }
+    
+    // Emit event to trigger auto-updates for dependent superstructures
+    if (modifiedRoiNumbers && modifiedRoiNumbers.length > 0) {
+      window.dispatchEvent(new CustomEvent('structure:modified', {
+        detail: { roiNumbers: modifiedRoiNumbers }
+      }));
     }
   };
 
@@ -1285,7 +1293,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   };
 
-  // Handle Eclipse TPS margin operation
+  // Handle Eclipse TPS margin operation (single slice legacy)
   const handleMarginOperation = (payload: any) => {
     log.debug('🔹 handleMarginOperation called', 'viewer');
     
@@ -1295,49 +1303,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
 
     const structures = localRTStructures || rtStructures;
-    const { structureId, parameters } = payload;
-    
-    // Check if this is an execute operation (applying preview)
-    if (payload.action === 'apply_margin' && !payload.isPreview && previewContours.length > 0) {
-      log.debug('🔹 Executing margin operation - applying preview contours', 'viewer');
-      
-      // Create a deep copy of RT structures
-      const updatedRTStructures = structuredClone ? structuredClone(structures) : JSON.parse(JSON.stringify(structures));
-      
-      // Find the target structure
-      const structure = updatedRTStructures.structures?.find(
-        (s: any) => s.roiNumber === structureId,
-      );
-      
-      if (!structure) {
-        log.error(`Structure ${structureId} not found`, 'viewer');
-        return;
-      }
-      
-      // Replace structure contours with preview contours
-      structure.contours = previewContours.map((preview: any) => ({
-        slicePosition: preview.slicePosition,
-        points: preview.points,
-        numberOfPoints: preview.points.length / 3
-      }));
-      
-      log.debug(`🔹 Replaced ${structure.contours.length} contours with preview contours`, 'viewer');
-      
-      // Clear preview
-      setPreviewContours([]);
-      
-      // Update local structures and save
-      setLocalRTStructures(updatedRTStructures);
-      saveContourUpdates(updatedRTStructures, 'apply_margin');
-      
-      // Pass the updated structures up to parent component
-      if (onContourUpdate) {
-        onContourUpdate(updatedRTStructures);
-      }
-      
-      log.debug(`✅ Applied margin to structure ${structureId}`, 'viewer');
-      return;
-    }
+    const { structureId } = payload;
     
     // For single slice margin operations (legacy)
     if (payload.slicePosition !== undefined) {
@@ -1398,69 +1364,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       } catch (error) {
         log.error(`Error applying margin operation: ${String(error)}`, 'viewer');
       }
-    }
-  };
-
-  // Handle preview grow contour operation
-  const handlePreviewGrowOperation = async (payload: any) => {
-    if (!localRTStructures) {
-      log.error('RT structures not available for preview', 'viewer');
-      return;
-    }
-
-    const { structureId, slicePosition, distance, direction = 'all' } = payload;
-    log.debug(`🔹 Generating preview for structure ${structureId} by ${distance}mm @ slice ${slicePosition}`, 'viewer');
-
-    // Find the target structure
-    const structure = localRTStructures.structures?.find(
-      (s: any) => s.roiNumber === structureId,
-    );
-    if (!structure) {
-      console.error(`Structure ${structureId} not found`);
-      return;
-    }
-
-    // Find the contour for the specified slice
-    const contour = structure.contours?.find(
-      (c: any) => Math.abs(c.slicePosition - slicePosition) < SLICE_TOL_MM,
-    );
-
-    if (!contour || !contour.points || contour.points.length < 9) {
-      console.error(`No contour found for structure ${structureId} at slice ${slicePosition}`);
-      return;
-    }
-
-    try {
-      // Use the simple grow operation for preview
-      let previewPoints: number[];
-      
-      if (distance > 0) {
-        // Growing - use simple operations
-        const { growContourSimple } = await import('@/lib/simple-polygon-operations');
-        previewPoints = growContourSimple(contour.points, distance);
-      } else {
-        // For shrinking, use the original algorithm for now
-        const grownContour = growContour(
-          {
-            points: contour.points,
-            slicePosition: slicePosition,
-          },
-          distance,
-        );
-        previewPoints = grownContour.points;
-      }
-
-      // Set preview contours for rendering
-      setPreviewContours([{
-        points: previewPoints,
-        slicePosition: slicePosition,
-        meta: { type: 'grow_preview' }
-      }]);
-      
-      console.log(`🔹 ✅ Generated preview with ${previewPoints.length / 3} points`);
-      
-    } catch (error) {
-      console.error(`🔹 ❌ Error generating preview:`, error);
     }
   };
 
@@ -1549,270 +1452,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   };
 
-  // Handle preview grow structure operation - works on ALL slices
-  const handlePreviewGrowStructure = async (payload: any) => {
-    console.log('🔹 🚀 handlePreviewGrowStructure called with payload:', payload);
-    
-    if (!localRTStructures) {
-      console.error("🔹 ❌ RT structures not available for structure preview");
-      console.log('🔹 localRTStructures is:', localRTStructures);
-      return;
-    }
-
-    console.log('🔹 ✅ localRTStructures available:', localRTStructures);
-    console.log('🔹 Available structures:', localRTStructures.structures?.map((s: any) => ({
-      roiNumber: s.roiNumber,
-      structureName: s.structureName,
-      contourCount: s.contours?.length || 0
-    })));
-
-    const { structureId, targetStructureId, parameters } = payload;
-    const marginValue = parameters?.marginValues?.uniform || parameters?.margin || 5;
-    console.log(`🔹 Generating simple margin preview for structure ${structureId} by ${marginValue}mm`);
-    console.log(`🔹 Target structure: ${targetStructureId || 'same structure'}`);
-
-    // Find the target structure
-    const structure = localRTStructures.structures?.find(
-      (s: any) => s.roiNumber === structureId,
-    );
-    if (!structure) {
-      console.error(`🔹 ❌ Structure ${structureId} not found`);
-      return;
-    }
-
-    console.log(`🔹 ✅ Found structure:`, {
-      roiNumber: structure.roiNumber,
-      structureName: structure.structureName,
-      contourCount: structure.contours?.length || 0
-    });
-
-    // Get all contours for this structure
-    const allContours = structure.contours || [];
-    if (allContours.length === 0) {
-      console.error(`🔹 ❌ No contours found for structure ${structureId}`);
-      return;
-    }
-
-    console.log(`🔹 ✅ Found ${allContours.length} contours for processing`);
-
-    try {
-      const previewContoursWithSlices: Array<{points: number[], slicePosition: number}> = [];
-      
-      for (const contour of allContours) {
-        if (!contour.points || contour.points.length < 9) {
-          console.log('🔹 ⚠️ Skipping contour with insufficient points:', contour.points?.length);
-          continue;
-        }
-        
-        console.log(`🔹 Processing contour with ${contour.points.length / 3} points on slice ${contour.slicePosition}`);
-        
-        let previewPoints: number[];
-        
-        // Use simple grow operation for consistent results
-        const { growContourSimple } = await import('@/lib/simple-polygon-operations');
-        previewPoints = growContourSimple(contour.points, marginValue);
-        
-        // Store preview contour with slice position metadata
-        previewContoursWithSlices.push({
-          points: previewPoints,
-          slicePosition: contour.slicePosition
-        });
-        console.log(`🔹 ✅ Generated preview contour with ${previewPoints.length / 3} points for slice ${contour.slicePosition}`);
-      }
-
-      // Convert to the format expected by the renderer
-      setPreviewContours(previewContoursWithSlices as any);
-      console.log(`🔹 ✅ Set ${previewContoursWithSlices.length} preview contours for rendering`);
-      
-      console.log(`🔹 ✅ Generated structure preview with ${previewContoursWithSlices.length} slices`);
-      
-    } catch (error) {
-      console.error(`🔹 ❌ Error generating structure preview:`, error);
-    }
-  };
-
-  // Handle advanced margin preview operation
-  const handleAdvancedMarginPreview = async (payload: any) => {
-    console.log('🔹 🎯 Working Viewer: handleAdvancedMarginPreview called with payload:', payload);
-    
-    // Use rtStructures from props if localRTStructures is not available
-    const structures = localRTStructures || rtStructures;
-    
-    if (!structures) {
-      console.error("🔹 ❌ RT structures not available for margin preview");
-      return;
-    }
-
-    const { structureId, parameters } = payload;
-    console.log(`🔹 📊 Generating 3D volumetric margin preview for structure ${structureId} with parameters:`, parameters);
-    console.log('🔹 📊 Parameters detail:', JSON.stringify(parameters, null, 2));
-
-    try {
-      // Find the target structure
-      const structure = structures.structures?.find(
-        (s: any) => s.roiNumber === structureId,
-      );
-      if (!structure) {
-        console.error(`🔹 ❌ Structure ${structureId} not found`);
-        return;
-      }
-      
-      console.log(`🔹 ✅ Found structure: ${structure.structureName || structure.name} with ${structure.contours?.length || 0} contours`);
-
-      // Clear any existing preview
-      setPreviewContours([]);
-
-      const marginValue = parameters.margin || 5;
-      console.log('🔹 📊 Margin value:', marginValue);
-
-      // Uniform margin preview: use DT worker for large |margin|, otherwise fast 2D offset
-      if (parameters?.marginType === 'UNIFORM') {
-        const useWorker = Math.abs(marginValue) >= 3;
-        if (useWorker) {
-          try {
-            // Abort any in-flight preview worker
-            if ((window as any).__marginPreviewWorker) {
-              try { (window as any).__marginPreviewWorker.terminate(); } catch {}
-            }
-            const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
-            (window as any).__marginPreviewWorker = worker;
-            const px = imageMetadata?.pixelSpacing || [1, 1];
-            const th = imageMetadata?.sliceThickness || 2;
-            const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
-            const jobId = `prev-${Date.now()}`;
-            const padding = Math.abs(marginValue) + 5;
-            const srcContours = structure.contours || [];
-            const previewPromise: Promise<any> = new Promise((resolve, reject) => {
-              worker.onmessage = (ev: MessageEvent<any>) => {
-                if (!ev.data || ev.data.jobId !== jobId) return;
-                try { worker.terminate(); } catch {}
-                (window as any).__marginPreviewWorker = null;
-                if (ev.data.ok) resolve(ev.data.contours); else reject(ev.data.error);
-              };
-              worker.onerror = (err) => {
-                try { worker.terminate(); } catch {}
-                (window as any).__marginPreviewWorker = null;
-                reject(err);
-              };
-            });
-            worker.postMessage({ jobId, kind: 'UNIFORM', contours: srcContours, spacing, padding, margin: marginValue });
-            const workerContours = await previewPromise;
-            const previewContoursWithSlices: any[] = (workerContours || []).map((c: any) => ({
-              points: c.points,
-              slicePosition: c.slicePosition,
-              isPreview: true,
-              previewColor: '#FFFF00'
-            }));
-            setPreviewContours(previewContoursWithSlices);
-            return;
-          } catch (err) {
-            console.warn('DT preview worker failed, falling back to 2D offset:', err);
-          }
-        }
-        // Fallback/fast path: 2D offset per slice
-        const { offsetContour } = await import('@/lib/clipper-boolean-operations');
-        const previewContoursWithSlices: any[] = [];
-        for (const contour of structure.contours) {
-          if (!contour.points || contour.points.length < 9) continue;
-          try {
-            const outs = await offsetContour(contour.points, marginValue);
-            outs?.forEach(out => {
-              if (out.length >= 9) {
-                previewContoursWithSlices.push({
-                  points: out,
-                  slicePosition: contour.slicePosition,
-                  isPreview: true,
-                  previewColor: '#FFFF00'
-                });
-              }
-            });
-          } catch (err) {
-            console.warn(`Offset preview failed for slice ${contour.slicePosition}:`, err);
-          }
-        }
-        setPreviewContours(previewContoursWithSlices);
-        return;
-      }
-
-      // Import the optimized 3D volumetric margin operation handler
-      const { apply3DMarginOptimized } = await import('@/lib/volumetric-margin-operations-optimized');
-      
-      // Get pixel spacing from image metadata
-      const pixelSpacing: [number, number, number] = imageMetadata?.pixelSpacing 
-        ? [imageMetadata.pixelSpacing[0], imageMetadata.pixelSpacing[1], imageMetadata.sliceThickness || 2]
-        : [1, 1, 2];
-      
-      console.log('🔹 Using pixel spacing for optimized 3D operation:', pixelSpacing);
-      
-      // Use fast 3D algorithm for preview if margin is large enough
-      const useFast3D = Math.abs(marginValue) > 1;
-      
-      if (useFast3D) {
-        console.log(`🚀 Using fast 3D preview for ${marginValue}mm margin`);
-        
-        const { applyFast3DMargin } = await import('@/lib/fast-3d-margin-operations');
-        
-        // Get image metadata for 3D processing
-        const imgPixelSpacing = imageMetadata?.pixelSpacing || [1, 1];
-        const sliceThickness = imageMetadata?.sliceThickness || 2;
-        
-        const fast3DResults = await applyFast3DMargin(
-          structure.contours,
-          {
-            marginMm: marginValue,
-            pixelSpacing: [imgPixelSpacing[0], imgPixelSpacing[1], sliceThickness],
-            imageMetadata: {
-              imagePosition: [0, 0, 0], // Will be calculated from contours
-              imageSize: { width: 512, height: 512, depth: 100 }
-            },
-            useOptimizedAlgorithm: true,
-            maxProcessingTime: 5000 // 5 seconds max for preview
-          }
-        );
-        
-        // Create preview contours
-        const previewContoursWithSlices: any[] = fast3DResults.map((contour: any) => ({
-          points: contour.points,
-          slicePosition: contour.slicePosition,
-          isPreview: true,
-          previewColor: '#FFFF00'  // Yellow for preview
-        }));
-        
-        console.log(`🚀 ✅ Generated ${previewContoursWithSlices.length} fast 3D preview contours`);
-        setPreviewContours(previewContoursWithSlices);
-        
-      } else {
-        // Use existing simple 2D preview for small margins
-        console.log(`🔹 Using 2D preview for small ${marginValue}mm margin`);
-        
-        const { growContourSimple } = await import('@/lib/simple-polygon-operations');
-        const previewContoursWithSlices: any[] = [];
-        
-        for (const contour of structure.contours) {
-          if (!contour.points || contour.points.length < 9) continue;
-          
-          try {
-            const expandedPoints = growContourSimple(contour.points, marginValue);
-            previewContoursWithSlices.push({
-              points: expandedPoints,
-              slicePosition: contour.slicePosition,
-              isPreview: true,
-              previewColor: '#FFFF00'  // Yellow for preview
-            });
-          } catch (error) {
-            console.warn(`Preview failed for contour at slice ${contour.slicePosition}:`, error);
-          }
-        }
-        
-        console.log(`🔹 ✅ Generated ${previewContoursWithSlices.length} 2D preview contours`);
-        setPreviewContours(previewContoursWithSlices);
-      }
-    } catch (error) {
-      console.error('🔹 ❌ 3D margin preview failed:', error);
-      setPreviewContours([]);
-    }
-  };
-
   // Handle advanced margin execution operation
   const handleAdvancedMarginExecution = async (payload: any) => {
     console.log('🔹 🎯 Working Viewer: handleAdvancedMarginExecution called with payload:', payload);
@@ -1892,33 +1531,49 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       
       console.log(`🔹 Applying margin of ${marginValue}mm to ${sourceStructure.contours?.length || 0} contours`);
 
-      // Uniform margin: prefer fast 3D execution to match Eclipse volumetric margin
+      // Uniform margin: use DT-based margin-worker (same as preview) for accurate Eclipse-like results
       if (parameters?.marginType === 'UNIFORM') {
         try {
-          const { applyFast3DMargin } = await import('@/lib/fast-3d-margin-operations');
+          console.log('🔹 Using DT-based margin-worker for accurate margin execution');
+          const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
           const px = imageMetadata?.pixelSpacing || [1, 1];
           const th = imageMetadata?.sliceThickness || 2;
-          const fast3DResults = await applyFast3DMargin(
-            sourceStructure.contours || [],
-            {
-              marginMm: marginValue,
-              pixelSpacing: [px[0], px[1], th],
-              imageMetadata: {
-                imagePosition: [0, 0, 0],
-                imageSize: { width: 512, height: 512, depth: 100 }
-              },
-              useOptimizedAlgorithm: true,
-              maxProcessingTime: 15000
-            }
-          );
-          const processedContours = fast3DResults.map((c: any) => ({
+          const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
+          const jobId = `exec-${Date.now()}`;
+          const padding = Math.abs(marginValue) + 5;
+          const srcContours = sourceStructure.contours || [];
+          
+          const workerPromise: Promise<any> = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              try { worker.terminate(); } catch {}
+              reject(new Error('Margin worker timeout'));
+            }, 30000); // 30 second timeout
+            
+            worker.onmessage = (ev: MessageEvent<any>) => {
+              if (!ev.data || ev.data.jobId !== jobId) return;
+              clearTimeout(timeout);
+              try { worker.terminate(); } catch {}
+              if (ev.data.ok) resolve(ev.data.contours); else reject(ev.data.error);
+            };
+            worker.onerror = (err) => {
+              clearTimeout(timeout);
+              try { worker.terminate(); } catch {}
+              reject(err);
+            };
+          });
+          
+          worker.postMessage({ jobId, kind: 'UNIFORM', contours: srcContours, spacing, padding, margin: marginValue });
+          const workerContours = await workerPromise;
+          
+          const processedContours = (workerContours || []).map((c: any) => ({
             slicePosition: c.slicePosition,
             points: c.points,
-            numberOfPoints: c.numberOfPoints || c.points.length / 3
+            numberOfPoints: c.points.length / 3
           }));
           targetStructure.contours = processedContours;
+          console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours`);
         } catch (e2) {
-          console.warn('Fast 3D execution failed, falling back to 2D offset:', e2);
+          console.warn('DT margin worker failed, falling back to clipper offset:', e2);
           const { offsetContour } = await import('@/lib/clipper-boolean-operations');
           const processedContours: any[] = [];
           for (const contour of sourceStructure.contours || []) {
@@ -1946,8 +1601,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           targetStructure.contours = processedContours;
         }
 
-        // Clear preview and persist
-        setPreviewContours([]);
+        // Persist to undo/redo
         if (seriesId) {
           undoRedoManager.saveState(
             seriesId, 
@@ -2002,71 +1656,75 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         return;
       }
       
-      // Choose algorithm based on margin parameters and structure size
-      let use3D = Math.abs(marginValue) > 2 || (sourceStructure.contours?.length || 0) > 5;
+      // Use DT-based margin-worker for accurate directional/anisotropic margins
       let processedContours: any[] = [];
       
-      if (use3D) {
-        console.log(`🚀 Using fast 3D margin algorithm for ${marginValue}mm margin`);
-        try {
-          // Use fast 3D algorithm for true volumetric expansion
-          const { applyFast3DMargin } = await import('@/lib/fast-3d-margin-operations');
-          
-          // Get image metadata for 3D processing
-          const pixelSpacing = imageMetadata?.pixelSpacing || [1, 1];
-          const sliceThickness = imageMetadata?.sliceThickness || 2;
-          
-          const fast3DResults = await applyFast3DMargin(
-            sourceStructure.contours || [],
-            {
-              marginMm: marginValue,
-              pixelSpacing: [pixelSpacing[0], pixelSpacing[1], sliceThickness],
-              imageMetadata: {
-                imagePosition: [0, 0, 0], // Will be calculated from contours
-                imageSize: { width: 512, height: 512, depth: 100 }
-              },
-              useOptimizedAlgorithm: true,
-              maxProcessingTime: 15000 // 15 seconds max
-            }
-          );
-          
-          processedContours = fast3DResults.map(contour => ({
-            slicePosition: contour.slicePosition,
-            points: contour.points,
-            numberOfPoints: contour.numberOfPoints || contour.points.length / 3
-          }));
-          
-          console.log(`🚀 ✅ Fast 3D margin generated ${processedContours.length} contours`);
-          
-        } catch (error) {
-          console.warn('🚀 ⚠️ Fast 3D margin failed, falling back to 2D:', error);
-          use3D = false; // Fall back to 2D
-        }
-      }
-      
-      if (!use3D || processedContours.length === 0) {
-        console.log(`🔹 Using 2D simple algorithm for ${marginValue}mm margin`);
+      try {
+        console.log(`🔹 Using DT-based margin-worker for ${parameters?.marginType || 'directional'} margin`);
+        const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
+        const px = imageMetadata?.pixelSpacing || [1, 1];
+        const th = imageMetadata?.sliceThickness || 2;
+        const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
+        const jobId = `exec-dir-${Date.now()}`;
+        const padding = Math.abs(marginValue) + 10;
+        const srcContours = sourceStructure.contours || [];
         
-        // Import the simple grow operation
-        const { growContourSimple } = await import('@/lib/simple-polygon-operations');
+        // Prepare directional margins if available
+        const perSide = parameters?.marginValues || { post: marginValue, ant: marginValue, left: marginValue, right: marginValue, sup: marginValue, inf: marginValue };
+        const kind = parameters?.marginType === 'ANISOTROPIC' ? 'ANISOTROPIC' : 'DIRECTIONAL';
         
-        // Process each contour using the simple algorithm
-        processedContours = [];
+        const workerPromise: Promise<any> = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            try { worker.terminate(); } catch {}
+            reject(new Error('Margin worker timeout'));
+          }, 30000);
+          
+          worker.onmessage = (ev: MessageEvent<any>) => {
+            if (!ev.data || ev.data.jobId !== jobId) return;
+            clearTimeout(timeout);
+            try { worker.terminate(); } catch {}
+            if (ev.data.ok) resolve(ev.data.contours); else reject(ev.data.error);
+          };
+          worker.onerror = (err) => {
+            clearTimeout(timeout);
+            try { worker.terminate(); } catch {}
+            reject(err);
+          };
+        });
+        
+        worker.postMessage({ jobId, kind, contours: srcContours, spacing, padding, perSide });
+        const workerContours = await workerPromise;
+        
+        processedContours = (workerContours || []).map((c: any) => ({
+          slicePosition: c.slicePosition,
+          points: c.points,
+          numberOfPoints: c.points.length / 3
+        }));
+        
+        console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours`);
+        
+      } catch (error) {
+        console.warn('🔹 ⚠️ DT margin worker failed, falling back to clipper offset:', error);
+        
+        // Fallback to clipper offset for robustness
+        const { offsetContour } = await import('@/lib/clipper-boolean-operations');
+        
         for (const contour of sourceStructure.contours || []) {
-          if (!contour.points || contour.points.length < 9) {
-            continue;
-          }
+          if (!contour.points || contour.points.length < 9) continue;
           
           try {
-            const expandedPoints = growContourSimple(contour.points, marginValue);
-            
-            processedContours.push({
-              slicePosition: contour.slicePosition,
-              points: expandedPoints,
-              numberOfPoints: expandedPoints.length / 3
+            const outs = await offsetContour(contour.points, marginValue);
+            outs?.forEach(out => {
+              if (out.length >= 9) {
+                processedContours.push({
+                  slicePosition: contour.slicePosition,
+                  points: out,
+                  numberOfPoints: out.length / 3
+                });
+              }
             });
-          } catch (error) {
-            console.warn(`Failed to process contour at slice ${contour.slicePosition}:`, error);
+          } catch (err) {
+            console.warn(`Failed to process contour at slice ${contour.slicePosition}:`, err);
           }
         }
       }
@@ -2075,9 +1733,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       targetStructure.contours = processedContours;
       
       console.log(`🔹 ✅ Applied simple/3D margin, generated ${processedContours.length} contours`);
-      
-      // Clear preview contours
-      setPreviewContours([]);
       
       // Save to undo/redo and persist
       if (seriesId) {
@@ -3079,24 +2734,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const handleContourUpdate = async (payload: any) => {
     // Handle margin toolbar operations
     if (payload && payload.type && payload.type.includes('margin')) {
-      if (payload.preview) {
-        console.log("🔹 Margin preview request from toolbar:", payload);
-        await handlePreviewGrowStructure({
-          structureId: payload.structureId,
-          targetStructureId: payload.targetStructureId,
-          parameters: payload.parameters
-        });
-        return;
-      } else {
-        console.log("🔹 Margin execution request from toolbar:", payload);
-        await handleAdvancedMarginExecution({
-          action: 'execute_margin',
-          structureId: payload.structureId,
-          targetStructureId: payload.targetStructureId,
-          parameters: payload.parameters
-        });
-        return;
-      }
+      console.log("🔹 Margin execution request from toolbar:", payload);
+      await handleAdvancedMarginExecution({
+        action: 'execute_margin',
+        structureId: payload.structureId,
+        targetStructureId: payload.targetStructureId,
+        parameters: payload.parameters
+      });
+      return;
     }
 
     // Handle refresh action from undo/redo
@@ -3107,32 +2752,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       if (onContourUpdate) {
         onContourUpdate(payload.rtStructures);
       }
-      return;
-    }
-
-    // Handle preview operations
-    if (payload && payload.action === "preview_grow_contour") {
-      console.log("🔹 Preview grow contour request:", payload);
-      await handlePreviewGrowOperation(payload);
-      return;
-    }
-
-    if (payload && payload.action === "preview_grow_structure") {
-      console.log("🔹 Preview grow STRUCTURE request:", payload);
-      await handlePreviewGrowStructure(payload);
-      return;
-    }
-
-    if (payload && payload.action === "clear_preview") {
-      console.log("🔹 Clearing preview contours");
-      setPreviewContours([]);
-      return;
-    }
-
-    // Handle advanced margin preview operations
-    if (payload && payload.action === "preview_margin") {
-      console.log("🔹 Advanced margin preview request:", payload);
-      await handleAdvancedMarginPreview(payload);
       return;
     }
 
@@ -3437,7 +3056,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           structure.structureName
         );
       }
-      saveContourUpdates(newStructures, 'add_brush_stroke');
+      saveContourUpdates(newStructures, 'add_brush_stroke', [payload.structureId]);
       
       // Force immediate render - bypass throttling for editing operations
       setForceRenderTrigger(prev => prev + 1);
@@ -3567,7 +3186,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           structure.structureName
         );
       }
-      saveContourUpdates(newStructures, 'smart_brush_stroke');
+      saveContourUpdates(newStructures, 'smart_brush_stroke', [payload.structureId]);
       
       // Force immediate render - bypass throttling for editing operations
       setForceRenderTrigger(prev => prev + 1);
@@ -3709,7 +3328,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           structure.structureName
         );
       }
-      saveContourUpdates(newStructures, 'erase_brush_stroke');
+      saveContourUpdates(newStructures, 'erase_brush_stroke', [payload.structureId]);
       
       // Force immediate render - bypass throttling for editing operations
       setForceRenderTrigger(prev => prev + 1);
@@ -3794,7 +3413,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         );
       }
       // Save contour updates to server
-      saveContourUpdates(updatedStructures, payload.action);
+      saveContourUpdates(updatedStructures, payload.action, [payload.structureId]);
       
       // Immediate render for pen tool operations
       setForceRenderTrigger(prev => prev + 1);
@@ -3955,7 +3574,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         onContourUpdate(updatedStructures);
       }
       
-      saveContourUpdates(updatedStructures, 'pen_boolean_operation');
+      saveContourUpdates(updatedStructures, 'pen_boolean_operation', [payload.structureId]);
       
       // Immediate render for pen boolean operations
       setForceRenderTrigger(prev => prev + 1);
@@ -3975,7 +3594,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         undoRedoManager.saveState(seriesId, 'pen_tool', payload.structureId, updatedStructures);
       }
       // Save to server
-      saveContourUpdates(updatedStructures, 'pen_tool');
+      saveContourUpdates(updatedStructures, 'pen_tool', [payload.structureId]);
       
       // Immediate render for pen update operations
       setForceRenderTrigger(prev => prev + 1);
@@ -4083,17 +3702,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       // Handle contour growing
       handleGrowContour(payload);
     } else if (payload.action === "apply_grow_contour") {
-      // Handle applying previewed grow/shrink operation (single slice - legacy)
+      // Handle applying grow/shrink operation (single slice - legacy)
       console.log("🔹 Applying grow/shrink operation:", payload);
       handleGrowContour(payload);
-      // Clear preview after applying
-      setPreviewContours([]);
     } else if (payload.action === "apply_grow_structure") {
       // Handle applying grow/shrink to entire structure
       console.log("🔹 Applying grow/shrink to ENTIRE STRUCTURE:", payload);
       handleGrowStructure(payload);
-      // Clear preview after applying
-      setPreviewContours([]);
     } else if (payload.action === "apply_margin") {
       // Handle margin operation (Eclipse TPS style)
       handleMarginOperation(payload);
@@ -4146,7 +3761,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       if (onContourUpdate) {
         onContourUpdate(newStructures);
       }
-      saveContourUpdates(newStructures, 'delete_slice');
+      saveContourUpdates(newStructures, 'delete_slice', [payload.structureId]);
       
       // Force immediate render to show deletion
       setForceRenderTrigger(prev => prev + 1);
@@ -4180,7 +3795,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
-      saveContourUpdates(newStructures, 'clear_all');
+      saveContourUpdates(newStructures, 'clear_all', [payload.structureId]);
       
       // Force immediate render
       setForceRenderTrigger(prev => prev + 1);
@@ -4282,7 +3897,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
-      saveContourUpdates(newStructures, 'interpolate');
+      saveContourUpdates(newStructures, 'interpolate', [payload.structureId]);
       
       // Force immediate render
       setForceRenderTrigger(prev => prev + 1);

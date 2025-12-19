@@ -5637,17 +5637,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "New label is required" });
       }
 
-      // First save current modifications to the original series
+      // ALWAYS get and save the current state to database first
+      // This ensures a DB record exists before we try to duplicate
+      const { rtStructSeries, rtStructureSet: currentSet } = await getCurrentRTStructureSet(seriesId);
+      
+      // If structures were passed from frontend, use those; otherwise use parsed data
       if (structures && Array.isArray(structures)) {
-        const rtStructureSet = await getCurrentRTStructureSet(seriesId);
-        rtStructureSet.structures = structures;
-        await storage.saveRTStructureSet(
-          seriesId,
-          rtStructureSet,
-          'save_before_duplicate',
-          { timestamp: new Date().toISOString() }
-        );
+        currentSet.structures = structures;
       }
+      
+      // Save current state to database (creates or updates the record)
+      await storage.saveRTStructureSet(
+        seriesId,
+        currentSet,
+        'save_before_duplicate',
+        { timestamp: new Date().toISOString(), newLabel }
+      );
 
       // Duplicate the RT structure set with new name
       const { newSeriesId, rtStructureSet } = await storage.duplicateRTStructureSet(seriesId, newLabel);

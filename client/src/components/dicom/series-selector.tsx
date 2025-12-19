@@ -178,6 +178,7 @@ export function SeriesSelector({
     regenerateSuperstructure,
     deleteSuperstructure,
     toggleAutoUpdate,
+    checkAndRegenerateAutoUpdates,
     reload: reloadSuperstructures
   } = useSuperstructures(rtStructures?.seriesId || null);
   
@@ -244,6 +245,27 @@ export function SeriesSelector({
       window.removeEventListener('superstructures:reload' as any, handleReload);
     };
   }, [reloadSuperstructures, rtSeries]);
+  
+  // Listen for structure modification events to trigger auto-updates
+  useEffect(() => {
+    const handleStructureModified = async (event: CustomEvent) => {
+      const { roiNumbers } = event.detail || {};
+      if (!roiNumbers || roiNumbers.length === 0) return;
+      
+      console.log('🔄 Structure modification detected, checking for auto-updates...', roiNumbers);
+      
+      try {
+        await checkAndRegenerateAutoUpdates(roiNumbers);
+      } catch (error) {
+        console.error('Failed to auto-update superstructures:', error);
+      }
+    };
+    
+    window.addEventListener('structure:modified' as any, handleStructureModified);
+    return () => {
+      window.removeEventListener('structure:modified' as any, handleStructureModified);
+    };
+  }, [checkAndRegenerateAutoUpdates]);
   
   // Debug superstructures changes
   useEffect(() => {

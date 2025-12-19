@@ -148,6 +148,11 @@ export default function PenToolV2({
       overlay.style.top = `${mainRect.top - parentRect.top}px`;
       overlay.style.left = `${mainRect.left - parentRect.left}px`;
       
+      // Match CSS dimensions to main canvas
+      const computedStyle = window.getComputedStyle(mainCanvas);
+      overlay.style.width = computedStyle.width;
+      overlay.style.height = computedStyle.height;
+      
       overlay.style.pointerEvents = 'none';
       overlay.style.zIndex = '10';
       overlay.className = 'pen-tool-overlay';
@@ -164,6 +169,11 @@ export default function PenToolV2({
     const parentRect = mainCanvas.parentElement!.getBoundingClientRect();
     overlay.style.top = `${mainRect.top - parentRect.top}px`;
     overlay.style.left = `${mainRect.left - parentRect.left}px`;
+    
+    // CRITICAL: Match CSS dimensions to main canvas so coordinates align
+    const computedStyle = window.getComputedStyle(mainCanvas);
+    overlay.style.width = computedStyle.width;
+    overlay.style.height = computedStyle.height;
 
     return () => {
       const overlayElement = document.querySelector('.pen-tool-overlay');

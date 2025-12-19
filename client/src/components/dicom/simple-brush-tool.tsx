@@ -335,7 +335,10 @@ export function SimpleBrushTool({
 
   // Draw cursor and brush strokes
   const drawOverlay = () => {
-    if (!overlayCanvasRef.current || !isActive) return;
+    if (!overlayCanvasRef.current || !isActive) {
+      // console.log('drawOverlay: early return', { hasOverlay: !!overlayCanvasRef.current, isActive });
+      return;
+    }
 
     const ctx = overlayCanvasRef.current.getContext("2d");
     if (!ctx) return;
@@ -387,7 +390,9 @@ export function SimpleBrushTool({
 
     // Draw the preview of the entire brush path - optimized for performance
     if (isDrawing) {
-        if (!smartBrushEnabled && brushPointsRef.current.length > 0) {
+        // Show brush path preview for: regular brush OR smart brush in erase mode
+        const isSmartBrushErasing = smartBrushEnabled && (isEraseMode || isTemporaryEraseMode);
+        if ((!smartBrushEnabled || isSmartBrushErasing) && brushPointsRef.current.length > 0) {
             // Regular brush path preview - optimized rendering
             ctx.strokeStyle = structureColor;
             const pixelSpacing = imageMetadata?.pixelSpacing ? imageMetadata.pixelSpacing.split('\\').map(Number)[0] : 0.9765625;
@@ -676,7 +681,12 @@ export function SimpleBrushTool({
         }
 
         if (isDrawingRef.current && selectedStructure) {
-            if (!smartBrushEnabled) {
+            // Collect brush points when:
+            // 1. Smart brush is disabled (regular brush mode)
+            // 2. Smart brush is enabled but in erase mode (shift held)
+            const shouldCollectBrushPoints = !smartBrushEnabled || isEraseMode || isTemporaryEraseMode;
+            
+            if (shouldCollectBrushPoints) {
                 const lastPoint = brushPointsRef.current[brushPointsRef.current.length - 1];
                 if (!lastPoint) {
                   brushPointsRef.current.push(coords);
@@ -780,13 +790,14 @@ export function SimpleBrushTool({
         brushPointsRef.current = [coords];
         adaptiveShapesRef.current = []; // Clear adaptive shapes for new stroke
         
-        log.debug(`🎨 Smart brush enabled: ${smartBrushEnabled}`, 'brush');
-        if (smartBrushEnabled) {
+        const isInEraseState = isEraseMode || isTemporaryEraseMode;
+        log.debug(`🎨 Smart brush enabled: ${smartBrushEnabled}, erase mode: ${isInEraseState}`, 'brush');
+        if (smartBrushEnabled && !isInEraseState) {
           log.debug("🎨 Smart brush stroke started - adaptive shapes cleared", 'brush');
         }
         
-        // For standard brush, start collecting points
-        if (!smartBrushEnabled) {
+        // Collect brush points for: regular brush OR smart brush in erase mode
+        if (!smartBrushEnabled || isInEraseState) {
           addBrushPoint(coords.x, coords.y);
         }
       } else if (e.button === 2) {
@@ -1018,6 +1029,47 @@ export function SimpleBrushTool({
                         slicePosition: currentSlicePosition
                     });
                 }
+            }
+        } else if (smartBrushEnabled && brushPointsRef.current.length > 0 && isInEraseMode) {
+            // Smart brush ERASE mode - works exactly like standard brush erase
+            console.log(`🔴 Finalizing smart brush ERASE with ${brushPointsRef.current.length} points`);
+            
+            const worldPoints = brushPointsRef.current.map((point) => {
+                const pixelX = (point.x - transform.offsetX) / transform.scale;
+                const pixelY = (point.y - transform.offsetY) / transform.scale;
+                return pixelToWorld(pixelX, pixelY, imageMetadata, currentSlicePosition);
+            });
+            
+            // Apply same decimation as standard brush
+            const decimateByDistance = (pts: [number, number, number][], minDistMm = 0.5) => {
+              if (pts.length <= 2) return pts;
+              const out: [number, number, number][] = [pts[0]];
+              let last = pts[0];
+              for (let i = 1; i < pts.length - 1; i++) {
+                const p = pts[i];
+                const dx = p[0] - last[0];
+                const dy = p[1] - last[1];
+                const dist = Math.hypot(dx, dy);
+                if (dist >= minDistMm) {
+                  out.push(p);
+                  last = p;
+                }
+              }
+              out.push(pts[pts.length - 1]);
+              return out;
+            };
+            const filteredPoints = decimateByDistance(worldPoints);
+            
+            if (onContourUpdate) {
+                onContourUpdate({
+                    action: "erase_stroke",
+                    structureId: selectedStructure,
+                    slicePosition: currentSlicePosition,
+                    pointCount: filteredPoints.length,
+                    points: filteredPoints,
+                    brushSize: brushSize,
+                    isEraseMode: true,
+                });
             }
         } else if (!smartBrushEnabled && brushPointsRef.current.length > 0) {
             log.debug(`Finalizing regular brush with ${brushPointsRef.current.length} points`, 'brush');

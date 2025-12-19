@@ -77,6 +77,228 @@ export function contoursToStructure(
   return { grid, mask: { values: mask, grid } };
 }
 
+/**
+ * Extract boundary contours using marching squares algorithm
+ * This produces cleaner, sub-pixel accurate boundaries
+ */
+function extractBoundaryContours(slice: Uint8Array, width: number, height: number): number[][] {
+  // Build edges using marching squares on a padded grid
+  const get = (x: number, y: number): number => {
+    if (x < 0 || x >= width || y < 0 || y >= height) return 0;
+    return slice[x + y * width] ? 1 : 0;
+  };
+  
+  // Collect all boundary edges
+  type Edge = { x1: number; y1: number; x2: number; y2: number };
+  const edges: Edge[] = [];
+  
+  for (let y = -1; y < height; y++) {
+    for (let x = -1; x < width; x++) {
+      // Sample 2x2 cell corners
+      const tl = get(x, y);
+      const tr = get(x + 1, y);
+      const bl = get(x, y + 1);
+      const br = get(x + 1, y + 1);
+      const code = (tl << 3) | (tr << 2) | (br << 1) | bl;
+      
+      // Marching squares lookup - each case produces 0, 1, or 2 edges
+      // Cell corners: TL(x,y) TR(x+1,y) BL(x,y+1) BR(x+1,y+1)
+      // Midpoints: top(x+0.5,y) right(x+1,y+0.5) bottom(x+0.5,y+1) left(x,y+0.5)
+      const cx = x + 0.5, cy = y + 0.5; // cell center offset
+      
+      switch (code) {
+        case 0: case 15: break; // all same
+        case 1: // BL only
+          edges.push({ x1: x, y1: cy + 0.5, x2: cx, y2: y + 1 });
+          break;
+        case 2: // BR only  
+          edges.push({ x1: cx, y1: y + 1, x2: x + 1, y2: cy + 0.5 });
+          break;
+        case 3: // bottom row
+          edges.push({ x1: x, y1: cy + 0.5, x2: x + 1, y2: cy + 0.5 });
+          break;
+        case 4: // TR only
+          edges.push({ x1: x + 1, y1: cy + 0.5, x2: cx, y2: y });
+          break;
+        case 5: // TR + BL (saddle)
+          edges.push({ x1: cx, y1: y, x2: x + 1, y2: cy + 0.5 });
+          edges.push({ x1: x, y1: cy + 0.5, x2: cx, y2: y + 1 });
+          break;
+        case 6: // right column
+          edges.push({ x1: cx, y1: y + 1, x2: cx, y2: y });
+          break;
+        case 7: // all except TL
+          edges.push({ x1: x, y1: cy + 0.5, x2: cx, y2: y });
+          break;
+        case 8: // TL only
+          edges.push({ x1: cx, y1: y, x2: x, y2: cy + 0.5 });
+          break;
+        case 9: // left column
+          edges.push({ x1: cx, y1: y, x2: cx, y2: y + 1 });
+          break;
+        case 10: // TL + BR (saddle)
+          edges.push({ x1: cx, y1: y, x2: x, y2: cy + 0.5 });
+          edges.push({ x1: x + 1, y1: cy + 0.5, x2: cx, y2: y + 1 });
+          break;
+        case 11: // all except TR
+          edges.push({ x1: cx, y1: y, x2: x + 1, y2: cy + 0.5 });
+          break;
+        case 12: // top row
+          edges.push({ x1: x + 1, y1: cy + 0.5, x2: x, y2: cy + 0.5 });
+          break;
+        case 13: // all except BR
+          edges.push({ x1: x + 1, y1: cy + 0.5, x2: cx, y2: y + 1 });
+          break;
+        case 14: // all except BL
+          edges.push({ x1: cx, y1: y + 1, x2: x, y2: cy + 0.5 });
+          break;
+      }
+    }
+  }
+  
+  if (edges.length === 0) return [];
+  
+  // Connect edges into contours
+  const contours: number[][] = [];
+  const used = new Array(edges.length).fill(false);
+  const eps = 1e-6;
+  
+  for (let i = 0; i < edges.length; i++) {
+    if (used[i]) continue;
+    
+    const pts: number[] = [];
+    let current = edges[i];
+    used[i] = true;
+    pts.push(current.x1, current.y1);
+    pts.push(current.x2, current.y2);
+    
+    // Extend forward from x2,y2
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const endX = pts[pts.length - 2];
+      const endY = pts[pts.length - 1];
+      
+      for (let j = 0; j < edges.length; j++) {
+        if (used[j]) continue;
+        const e = edges[j];
+        
+        if (Math.abs(e.x1 - endX) < eps && Math.abs(e.y1 - endY) < eps) {
+          pts.push(e.x2, e.y2);
+          used[j] = true;
+          changed = true;
+          break;
+        }
+        if (Math.abs(e.x2 - endX) < eps && Math.abs(e.y2 - endY) < eps) {
+          pts.push(e.x1, e.y1);
+          used[j] = true;
+          changed = true;
+          break;
+        }
+      }
+    }
+    
+    // Extend backward from first point
+    changed = true;
+    while (changed) {
+      changed = false;
+      const startX = pts[0];
+      const startY = pts[1];
+      
+      for (let j = 0; j < edges.length; j++) {
+        if (used[j]) continue;
+        const e = edges[j];
+        
+        if (Math.abs(e.x2 - startX) < eps && Math.abs(e.y2 - startY) < eps) {
+          pts.unshift(e.x1, e.y1);
+          used[j] = true;
+          changed = true;
+          break;
+        }
+        if (Math.abs(e.x1 - startX) < eps && Math.abs(e.y1 - startY) < eps) {
+          pts.unshift(e.x2, e.y2);
+          used[j] = true;
+          changed = true;
+          break;
+        }
+      }
+    }
+    
+    if (pts.length >= 6) {
+      contours.push(pts);
+    }
+  }
+  
+  return contours;
+}
+
+/**
+ * Simplify contour using Douglas-Peucker algorithm
+ */
+function simplifyContour(points: number[], epsilon: number): number[] {
+  if (points.length < 12) return points; // Need at least 4 points (12 values for x,y,z)
+  
+  const n = points.length / 3;
+  if (n < 4) return points;
+  
+  // Convert to 2D point array for processing
+  const pts: [number, number][] = [];
+  for (let i = 0; i < points.length; i += 3) {
+    pts.push([points[i], points[i + 1]]);
+  }
+  
+  // Find point with maximum distance from line between first and last
+  function perpDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+    const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+  }
+  
+  function simplifyRange(start: number, end: number): number[] {
+    if (end - start < 2) {
+      return [start];
+    }
+    
+    let maxDist = 0;
+    let maxIdx = start;
+    
+    for (let i = start + 1; i < end; i++) {
+      const d = perpDistance(
+        pts[i][0], pts[i][1],
+        pts[start][0], pts[start][1],
+        pts[end][0], pts[end][1]
+      );
+      if (d > maxDist) {
+        maxDist = d;
+        maxIdx = i;
+      }
+    }
+    
+    if (maxDist > epsilon) {
+      const left = simplifyRange(start, maxIdx);
+      const right = simplifyRange(maxIdx, end);
+      return [...left, ...right.slice(1)];
+    } else {
+      return [start, end];
+    }
+  }
+  
+  const indices = simplifyRange(0, n - 1);
+  const z = points[2]; // All points have same Z
+  
+  const result: number[] = [];
+  for (const idx of indices) {
+    result.push(pts[idx][0], pts[idx][1], z);
+  }
+  
+  return result;
+}
+
 export function structureToContours(
   mask: Mask3D,
   originalSlicePositions: number[],
@@ -89,8 +311,10 @@ export function structureToContours(
   const sliceSet = Array.from(new Set(originalSlicePositions)).sort((a, b) => a - b);
   const used = new Set<number>();
   const xy = grid.xSize * grid.ySize;
+  
   for (let zi = 0; zi < grid.zSize; zi++) {
     const zWorld = grid.origin.z + zi * grid.zRes;
+    
     // Find nearest unmatched slice within tolerance
     let matchedZ: number | undefined = undefined;
     let bestDelta = Infinity;
@@ -102,69 +326,54 @@ export function structureToContours(
     if (matchedZ === undefined && !includeNewSlices) continue;
     const targetZ = matchedZ !== undefined ? matchedZ : zWorld;
     if (matchedZ !== undefined) used.add(matchedZ);
+    
     const slice = mask.values.subarray(zi * xy, zi * xy + xy);
-    // Moore-neighbor boundary tracing; gather all contours and pick the largest
-    const visited = new Uint8Array(slice.length);
-    const contoursOnSlice: number[][] = [];
-    const neighbors = [
-      [1, 0], [1, 1], [0, 1], [-1, 1],
-      [-1, 0], [-1, -1], [0, -1], [1, -1]
-    ];
-
-    for (let sy = 1; sy < grid.ySize - 1; sy++) {
-      for (let sx = 1; sx < grid.xSize - 1; sx++) {
-        const si = sx + sy * grid.xSize;
-        if (slice[si] !== 1 || visited[si]) continue;
-        // start boundary only if neighbor has background
-        if (slice[si - 1] && slice[si + 1] && slice[si - grid.xSize] && slice[si + grid.xSize]) continue;
-
-        let cx = sx, cy = sy;
-        let dir = 0; // initial direction
-        const chain: number[] = [];
-        const maxSteps = slice.length * 4;
-
-        for (let steps = 0; steps < maxSteps; steps++) {
-          const idxPix = cx + cy * grid.xSize;
-          if (!visited[idxPix]) {
-            visited[idxPix] = 1;
-            const wx = grid.origin.x + cx * grid.xRes;
-            const wy = grid.origin.y + cy * grid.yRes;
-            chain.push(wx, wy, targetZ);
-          }
-          // find next boundary neighbor, prefer turning left
-          let moved = false;
-          for (let i = 0; i < 8; i++) {
-            const nd = (dir + 7 + i) % 8; // bias to left-hand rule
-            const nx = cx + neighbors[nd][0];
-            const ny = cy + neighbors[nd][1];
-            if (nx <= 0 || nx >= grid.xSize - 1 || ny <= 0 || ny >= grid.ySize - 1) continue;
-            const nidx = nx + ny * grid.xSize;
-            if (slice[nidx] === 1) {
-              cx = nx; cy = ny; dir = nd; moved = true; break;
-            }
-          }
-          if (!moved || (cx === sx && cy === sy)) break;
-        }
-        if (chain.length >= 9) contoursOnSlice.push(chain);
+    
+    // Extract boundary contours
+    const gridContours = extractBoundaryContours(slice, grid.xSize, grid.ySize);
+    
+    if (gridContours.length === 0) continue;
+    
+    // Convert to world coordinates and find largest
+    let bestContour: number[] = [];
+    let bestArea = -Infinity;
+    
+    for (const gc of gridContours) {
+      const worldPts: number[] = [];
+      for (let i = 0; i < gc.length; i += 2) {
+        const wx = grid.origin.x + gc[i] * grid.xRes;
+        const wy = grid.origin.y + gc[i + 1] * grid.yRes;
+        worldPts.push(wx, wy, targetZ);
+      }
+      
+      // Calculate area using shoelace
+      let area = 0;
+      const n = worldPts.length / 3;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        area += worldPts[i * 3] * worldPts[j * 3 + 1] - worldPts[j * 3] * worldPts[i * 3 + 1];
+      }
+      area = Math.abs(area) * 0.5;
+      
+      if (area > bestArea) {
+        bestArea = area;
+        bestContour = worldPts;
       }
     }
-
-    if (contoursOnSlice.length > 0) {
-      // pick the largest by area (shoelace)
-      let best = contoursOnSlice[0];
-      let bestArea = -Infinity;
-      for (const c of contoursOnSlice) {
-        let area = 0;
-        for (let i = 0; i < c.length; i += 3) {
-          const j = (i + 3) % c.length;
-          area += c[i] * c[j + 1] - c[j] * c[i + 1];
-        }
-        area = Math.abs(area) * 0.5;
-        if (area > bestArea) { bestArea = area; best = c; }
+    
+    if (bestContour.length >= 9) {
+      // Simplify to reduce redundant points while preserving shape
+      const simplifyEpsilon = Math.min(grid.xRes, grid.yRes) * 0.25;
+      const simplified = simplifyContour(bestContour, simplifyEpsilon);
+      
+      if (simplified.length >= 9) {
+        contours.push({ points: simplified, slicePosition: targetZ });
+      } else {
+        contours.push({ points: bestContour, slicePosition: targetZ });
       }
-      contours.push({ points: best, slicePosition: targetZ });
     }
   }
+  
   return contours;
 }
 

@@ -28,6 +28,7 @@ import { fusionLayoutService, useFusionLayoutService } from '@/lib/fusion-layout
 import { ContourEditProvider } from '@/contexts/contour-edit-context';
 import { globalSeriesCache } from '@/lib/global-series-cache';
 import { globalFusionCache } from '@/lib/global-fusion-cache';
+import { useRTAutoSave } from '@/hooks/useRTAutoSave';
 
 // TypeScript declaration for cornerstone
 declare global {
@@ -103,6 +104,25 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   
   // Track loaded RT series for selection state
   const [loadedRTSeriesId, setLoadedRTSeriesId] = useState<number | null>(null);
+  
+  // Auto-save RT structures with 5-second debounce
+  const { saveStatus, lastSaved, error: autoSaveError, saveNow } = useRTAutoSave({
+    seriesId: loadedRTSeriesId,
+    structures: rtStructures?.structures || null,
+    enabled: !!loadedRTSeriesId && !!rtStructures?.structures,
+    debounceMs: 5000,
+    onSaveSuccess: () => {
+      console.log('✅ RT structures auto-saved successfully');
+    },
+    onSaveError: (error) => {
+      console.error('❌ RT structures auto-save failed:', error);
+      toast({
+        title: 'Auto-save failed',
+        description: error.message || 'Failed to save RT structures',
+        variant: 'destructive',
+      });
+    }
+  });
   
   // MPR visibility state
   const [mprVisible, setMprVisible] = useState(false);
@@ -2502,6 +2522,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   onMPRToggle={() => setMprVisible(!mprVisible)}
                   externalZoom={syncedZoom}
                   onZoomChange={setSyncedZoom}
+                  initialSliceIndex={currentSliceIndex}
                   onExitToOverlay={handleExitToOverlay}
                   onViewportAssignmentsChange={setViewportAssignments}
                 />
@@ -2557,14 +2578,17 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       fusionManifestLoading={false}
                       fusionManifestPrimarySeriesId={null}
                       onActivePredictionsChange={setActivePredictions}
-                      // Sync callbacks - primary drives
+                      // Bidirectional sync - both drives and follows
+                      externalSliceIndex={syncedSliceIdx}
+                      externalZoom={syncedZoom}
+                      externalPan={syncedPan}
                       onZoomChange={setSyncedZoom}
                       onPanChange={(x, y) => setSyncedPan({ x, y })}
                       hideSidebar
                       hideToolbar
                     />
                   </div>
-                  {/* Right: Secondary scan only - FOLLOWS primary sync */}
+                  {/* Right: Secondary scan only - BIDIRECTIONAL sync with primary */}
                   <div className="flex-1 relative" style={{ minHeight: 0 }}>
                     <WorkingViewer 
                       seriesId={selectedSeries.id}
@@ -2584,8 +2608,11 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                         } catch {}
                       }}
                       onContourUpdate={handleContourUpdate}
-                      onSlicePositionChange={() => {}}
-                      onSliceIndexChange={() => {}}
+                      onSlicePositionChange={setCurrentSlicePosition}
+                      onSliceIndexChange={(idx) => {
+                        setCurrentSliceIndex(idx);
+                        setSyncedSliceIdx(idx); // Sync back to primary (bidirectional)
+                      }}
                       contourSettings={contourSettings}
                       autoZoomLevel={autoZoomLevel}
                       autoLocalizeTarget={autoLocalizeTarget}
@@ -2609,10 +2636,12 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       fusionManifestLoading={fusionManifestLoading}
                       fusionManifestPrimarySeriesId={fusionManifest?.primarySeriesId ?? null}
                       onActivePredictionsChange={() => {}}
-                      // External sync - follows primary
+                      // Bidirectional sync - both drives and follows
                       externalSliceIndex={syncedSliceIdx}
                       externalZoom={syncedZoom}
                       externalPan={syncedPan}
+                      onZoomChange={setSyncedZoom}
+                      onPanChange={(x, y) => setSyncedPan({ x, y })}
                       hideSidebar
                       hideToolbar
                     />

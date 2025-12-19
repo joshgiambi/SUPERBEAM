@@ -16,3 +16,4 @@ echo "✅ SAM models downloaded successfully!"
 echo "   Encoder: $MODEL_DIR/sam_vit_b_encoder.onnx"
 echo "   Decoder: $MODEL_DIR/sam_vit_b_decoder.onnx"
 
+

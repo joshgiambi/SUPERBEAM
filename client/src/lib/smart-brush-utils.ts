@@ -64,6 +64,9 @@ export function createAdaptivePreview(
     // Minimum distance from center (don't collapse to nothing)
     const minDistance = radius * 0.3;
     
+    // Debug: log gradient stats for first call
+    let maxGradientSeen = 0;
+    
     for (let i = 0; i < numRays; i++) {
       const angle = (i / numRays) * Math.PI * 2;
       const dx = Math.cos(angle);
@@ -85,18 +88,20 @@ export function createAdaptivePreview(
         const gradient = getGradientMagnitude(pixelData, width, height, x, y);
         
         // Prefer edges closer to center (slight bias)
-        const distanceBias = 1 - (d / radius) * 0.1;
+        const distanceBias = 1 - (d / radius) * 0.2;
         const score = gradient * distanceBias;
         
         if (score > bestGradient) {
           bestGradient = score;
           bestDistance = d;
         }
+        if (gradient > maxGradientSeen) maxGradientSeen = gradient;
       }
       
       // If no significant edge found, use the full radius
-      // A "significant" gradient is one that's notably above the noise floor
-      const gradientThreshold = 20; // Minimum gradient to consider as an edge
+      // For 8-bit canvas data (0-255), gradients range from 0-~1500
+      // Threshold of 50 catches most real edges
+      const gradientThreshold = 50;
       if (bestGradient < gradientThreshold) {
         bestDistance = radius;
       }
@@ -106,6 +111,9 @@ export function createAdaptivePreview(
         y: centerY + dy * bestDistance
       });
     }
+    
+    // Debug log (disabled to prevent console spam)
+    // console.log(`🖌️ Smart brush: maxGradient=${maxGradientSeen.toFixed(0)}, radius=${radius.toFixed(1)}, threshold=50`);
     
     // Multi-pass smoothing for less jagged appearance
     let smoothedPoints = [...shapePoints];
