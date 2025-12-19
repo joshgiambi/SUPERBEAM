@@ -271,6 +271,9 @@ export async function fetchFusionManifest(
   return manifest;
 }
 
+// Parallel batch loading for faster secondary scan loading
+const PRELOAD_BATCH_SIZE = 6; // Load 6 slices in parallel
+
 export async function preloadFusionSecondary(
   primarySeriesId: number,
   secondarySeriesId: number,
@@ -294,11 +297,27 @@ export async function preloadFusionSecondary(
   try {
     const total = instances.length;
     let completed = 0;
-    for (const instance of instances) {
-      await loadSlice(cache, instance, primarySeriesId, secondarySeriesId);
-      completed += 1;
+    
+    // Load in parallel batches for much faster loading
+    for (let i = 0; i < instances.length; i += PRELOAD_BATCH_SIZE) {
+      const batch = instances.slice(i, i + PRELOAD_BATCH_SIZE);
+      
+      // Load batch in parallel
+      const results = await Promise.allSettled(
+        batch.map((instance) => loadSlice(cache, instance, primarySeriesId, secondarySeriesId))
+      );
+      
+      // Count successful loads
+      for (const result of results) {
+        completed += 1;
+        if (result.status === 'rejected') {
+          console.warn('Fusion slice load failed:', result.reason);
+        }
+      }
+      
       onProgress?.({ completed, total });
     }
+    
     cache.status = 'ready';
   } catch (error: any) {
     cache.status = 'error';

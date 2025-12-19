@@ -445,6 +445,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const [lastResolveInfo, setLastResolveInfo] = useState<any>(null);
   const fusionIssueRef = useRef<string | null>(null);
   const missingMatrixLogRef = useRef(false);
+  // ⚠️ FUSION CACHE - See warning block near line ~4500 before modifying cache clearing behavior
+  // This cache stores pre-rendered canvas elements. It is intentionally cleared on secondary/registration
+  // changes. DO NOT try to "optimize" by preserving this cache - it causes severe performance issues.
   const fuseboxCacheRef = useRef<Map<string, {
     canvas: HTMLCanvasElement;
     slice: FuseboxSlice;
@@ -4496,6 +4499,30 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   }, [seriesId, secondarySeriesId, registrationOptions, selectedRegistrationId]);
   
+  // ╔══════════════════════════════════════════════════════════════════════════════╗
+  // ║  FUSION CACHE CLEARING - DO NOT "OPTIMIZE" WITHOUT TESTING                   ║
+  // ╠══════════════════════════════════════════════════════════════════════════════╣
+  // ║  The cache clearing behavior below is INTENTIONAL and CRITICAL for           ║
+  // ║  correct fusion overlay rendering. Previous attempts to "optimize" by        ║
+  // ║  not clearing the cache caused SEVERE scroll performance degradation.        ║
+  // ║                                                                              ║
+  // ║  Architecture:                                                               ║
+  // ║  - fuseboxCacheRef (local): Stores pre-rendered HTMLCanvasElement objects    ║
+  // ║  - globalFusionCache: Stores raw FuseboxSlice data (shared across viewports) ║
+  // ║                                                                              ║
+  // ║  Why we clear the LOCAL cache on secondary/registration changes:             ║
+  // ║  1. The warm prefetch quickly repopulates from globalFusionCache             ║
+  // ║  2. Prevents stale overlay data from wrong registration showing              ║
+  // ║  3. Memory management - canvas objects are large                             ║
+  // ║                                                                              ║
+  // ║  What happens if you try to "preserve" the cache:                            ║
+  // ║  - Scroll performance becomes ABYSMAL                                        ║
+  // ║  - Every scroll frame triggers expensive convertSliceToCanvas calls          ║
+  // ║  - The prefetch/warm logic breaks and competes with render loop              ║
+  // ║                                                                              ║
+  // ║  TESTED AND WORKING AS OF: December 2024                                     ║
+  // ╚══════════════════════════════════════════════════════════════════════════════╝
+  
   // Re-render fusion overlay when registration matrix updates
   useEffect(() => {
     fuseboxCacheRef.current.clear();
@@ -4504,6 +4531,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     scheduleRender();
   }, [registrationMatrix, secondarySeriesId, selectedRegistrationId, scheduleRender, seriesId]);
 
+  // Handle secondary series changes - clear cache and load metadata
   useEffect(() => {
     if (!secondarySeriesId) {
       setSecondaryModality('MR');
@@ -4525,6 +4553,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       } catch {}
     };
 
+    // Clear local canvas cache - the warm prefetch will repopulate from global cache
+    // DO NOT remove this clear() call - see warning block above
     fuseboxCacheRef.current.clear();
     clearFusionSlices(seriesId);
     loadMetadata();

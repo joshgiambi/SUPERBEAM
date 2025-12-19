@@ -451,18 +451,24 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           return normalized;
         };
 
-        const resolvePatientIdentifier = (): string | number | null => {
-          const urlPatientId = typeof window !== 'undefined'
-            ? ensureString(new URL(window.location.href).searchParams.get('patientId'))
-            : null;
-          if (urlPatientId) return urlPatientId;
-
+        const resolvePatientIdentifier = (): number | null => {
+          // Always prefer the numeric database patient ID for API calls
+          // The server expects the database ID, not the DICOM Patient ID string
           const patient = studyData?.patient;
-          if (patient) {
-            const dicomId = ensureString((patient as any).patientID ?? (patient as any).patientId);
-            if (dicomId) return dicomId;
-            if (Number.isFinite(patient.id)) return patient.id as number;
+          if (patient && Number.isFinite(patient.id)) {
+            return patient.id as number;
           }
+          
+          // Fallback: try URL patientId if it's numeric
+          const urlPatientId = typeof window !== 'undefined'
+            ? new URL(window.location.href).searchParams.get('patientId')
+            : null;
+          if (urlPatientId) {
+            const parsed = Number(urlPatientId.trim());
+            if (Number.isFinite(parsed)) return parsed;
+          }
+
+          // Fallback: get from study's patientId
           const studyWithPatientId = Array.isArray(studyData?.studies)
             ? studyData.studies.find((st: any) => Number.isFinite(st?.patientId))
             : null;

@@ -101,7 +101,7 @@ class ViewportScrollSyncManager {
   ): void {
     const now = performance.now();
     
-    // Throttle updates to prevent overwhelming
+    // Throttle updates to prevent overwhelming (original logic)
     if (!options.immediate && now - this.lastScrollTime < this.MIN_SCROLL_INTERVAL_MS) {
       return;
     }
@@ -125,12 +125,12 @@ class ViewportScrollSyncManager {
       }
       
       try {
-        // Call the direct canvas redraw if available (fastest path)
+        // Always call onUpdate to sync the slice index
+        registration.onUpdate(updates);
+        
+        // Also call canvasRedraw for immediate visual update if available
         if (registration.canvasRedraw) {
           registration.canvasRedraw();
-        } else {
-          // Fall back to update callback
-          registration.onUpdate(updates);
         }
       } catch (e) {
         console.error(`Viewport sync error for ${viewportId}:`, e);

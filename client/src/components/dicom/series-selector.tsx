@@ -1360,8 +1360,10 @@ export function SeriesSelector({
                     const otherSeries = series.filter(s => !['CT', 'MR', 'PT', 'PET', 'NM', 'REG', 'RTSTRUCT'].includes(modalityOf(s)));
 
                     // Helper: get all planning CTs (CTs referenced by RT structures or that are registration primaries)
+                    // Excludes CTAC CTs (CTs that share Frame of Reference with PET) as they should be grouped with PET
                     const getAllPlanningCTs = () => {
-                      const allCTSeries = series.filter(s => modalityOf(s) === 'CT');
+                      const ctacIdSet = new Set(regCtacSeriesIds ?? []);
+                      const allCTSeries = series.filter(s => modalityOf(s) === 'CT' && !ctacIdSet.has(s.id));
                       if (allCTSeries.length === 0) return [];
 
                       // Gather signals
@@ -1504,20 +1506,56 @@ export function SeriesSelector({
 
                           const hasExplicitPetCandidates = Boolean(petMapForPrimary && petMapForPrimary.size);
 
+                          // Compute ALL CT IDs that will be shown under PET/CT section
+                          // This includes explicitly linked CTs, CTAC CTs, and studyId-based fallback CTs
+                          const ctIdsShownUnderPet = new Set<number>(ctIdsLinkedToPet);
+                          
+                          // Add all CTAC CTs (identified by server as sharing Frame of Reference with PET)
+                          regCtacSeriesIds?.forEach((ctacId) => {
+                            if (Number.isFinite(ctacId) && ctacId !== seriesItem.id) {
+                              ctIdsShownUnderPet.add(ctacId);
+                            }
+                          });
+                          
+                          // Add CTs that match studyId with any PT (mimics the fallback logic in PET/CT section)
+                          ptAssoc.forEach((pt) => {
+                            const ptStudyIdNum = Number(pt?.studyId);
+                            if (!Number.isFinite(ptStudyIdNum)) return;
+                            series.forEach((s) => {
+                              if (modalityOf(s) !== 'CT') return;
+                              if (s.id === seriesItem.id) return;
+                              const ctStudyIdNum = Number(s?.studyId);
+                              if (Number.isFinite(ctStudyIdNum) && ctStudyIdNum === ptStudyIdNum) {
+                                ctIdsShownUnderPet.add(s.id);
+                              }
+                            });
+                          });
+
                           const registeredCtAssocFromReg = series.filter((s) => {
                             if (modalityOf(s) !== 'CT') return false;
                             if (!candidateSet.has(s.id)) return false;
-                            if (ctIdsLinkedToPet.has(s.id)) return false;
-                            if (ptAssoc.length && ptAssoc.some((pet) => Number(pet.studyId) === Number(s.studyId))) return false;
+                            // Exclude any CT that will be shown under PET/CT section
+                            if (ctIdsShownUnderPet.has(s.id)) return false;
+                            // Exclude CTAC CTs (identified by server as sharing FoR with PET)
+                            if (regCtacSeriesIds?.includes?.(s.id)) return false;
                             return true;
                           });
                           
                           // Combine registration-derived CTs with user-demoted planning CTs
                           // nestedSecondaryCTs are planning CTs that were moved under the user-selected primary
+                          // But exclude CTAC CTs which should only appear under PET section
                           const nestedSecondaryCtIds = new Set(nestedSecondaryCTs.map(ct => ct.id));
+                          const filteredNestedSecondaryCTs = nestedSecondaryCTs.filter(ct => {
+                            if (ct.id === seriesItem.id) return false;
+                            // Exclude CTAC CTs - they belong under PET section
+                            if (regCtacSeriesIds?.includes?.(ct.id)) return false;
+                            // Exclude CTs that will be shown under PET section
+                            if (ctIdsShownUnderPet.has(ct.id)) return false;
+                            return true;
+                          });
                           const registeredCtAssoc = [
-                            // First: show nestedSecondaryCTs (user-demoted planning CTs)
-                            ...nestedSecondaryCTs.filter(ct => ct.id !== seriesItem.id),
+                            // First: show filtered nestedSecondaryCTs (user-demoted planning CTs, excluding CTAC)
+                            ...filteredNestedSecondaryCTs,
                             // Then: show registration-derived CTs (excluding those already in nestedSecondaryCTs)
                             ...registeredCtAssocFromReg.filter(ct => !nestedSecondaryCtIds.has(ct.id))
                           ];
