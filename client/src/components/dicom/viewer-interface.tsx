@@ -2674,7 +2674,11 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   }}
                   onContourUpdate={handleContourUpdate}
                   onSlicePositionChange={setCurrentSlicePosition}
-                  onSliceIndexChange={setCurrentSliceIndex}
+                  onSliceIndexChange={(idx) => {
+                    setCurrentSliceIndex(idx);
+                    // Keep syncedSliceIdx in sync so side-by-side mode starts at same slice
+                    setSyncedSliceIdx(idx);
+                  }}
                   // Pass external slice index for topbar navigation control
                   externalSliceIndex={currentSliceIndex}
                   contourSettings={contourSettings}
