@@ -31,6 +31,7 @@ import segvolRouter from './segvol-api';
 import mem3dRouter from './mem3d-api';
 import nninteractiveRouter from './nninteractive-api';
 import supersegRouter from './superseg-api';
+import rtDoseRouter from './rt-dose-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
 import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
 const isDev = process.env.NODE_ENV !== 'production';
@@ -7032,6 +7033,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register SuperSeg API routes
   app.use('/api/superseg', supersegRouter);
+
+  // Register RT Dose API routes
+  app.use('/api/rt-dose', rtDoseRouter);
 
   // Register Robust Import routes (handles large 20k+ file uploads)
   registerRobustImportRoutes(app);

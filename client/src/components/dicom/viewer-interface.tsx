@@ -6,6 +6,8 @@ import { FlexibleFusionLayout } from './flexible-fusion-layout';
 import { BottomToolbarPrototypeV2 } from './bottom-toolbar-prototype-v2';
 import { ContourEditToolbar } from './contour-edit-toolbar';
 import { FusionControlPanelV2, type FusionLayoutPreset } from './fusion-control-panel-v2';
+import { DoseControlPanel } from './dose-control-panel';
+import type { DoseColormap, RTDoseMetadata } from '@/lib/rt-dose-manager';
 import { UnifiedFusionTopbar } from './unified-fusion-topbar';
 import { ErrorModal } from './error-modal';
 import { BooleanPipelinePrototypeCombined } from './boolean-pipeline-prototype-combined';
@@ -85,6 +87,19 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [secondarySeriesId, setSecondarySeriesId] = useState<number | null>(null);
   const [fusionOpacity, setFusionOpacity] = useState(0.5);
   const [fusionDisplayMode, setFusionDisplayMode] = useState<'overlay' | 'side-by-side'>('overlay');
+  
+  // RT Dose state
+  const [showDosePanel, setShowDosePanel] = useState(false);
+  const [selectedDoseSeriesId, setSelectedDoseSeriesId] = useState<number | null>(null);
+  const [doseSeries, setDoseSeries] = useState<any[]>([]);
+  const [doseOpacity, setDoseOpacity] = useState(0.5);
+  const [doseColormap, setDoseColormap] = useState<DoseColormap>('rainbow');
+  const [showIsodose, setShowIsodose] = useState(false);
+  const [doseVisible, setDoseVisible] = useState(true);
+  const [doseMetadata, setDoseMetadata] = useState<RTDoseMetadata | null>(null);
+  const [doseLoading, setDoseLoading] = useState(false);
+  const [prescriptionDose, setPrescriptionDose] = useState(60);
+  const [dosePanelMinimized, setDosePanelMinimized] = useState(false);
   // Flexible fusion layout state
   const [fusionLayoutPreset, setFusionLayoutPreset] = useState<FusionLayoutPreset>('overlay');
   const [enableFlexibleLayout, setEnableFlexibleLayout] = useState(true); // Enable by default
@@ -769,6 +784,61 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       }
     }
   }, [seriesData, selectedSeries, shouldHideSeries]);
+
+  // Extract RT Dose series from loaded series
+  useEffect(() => {
+    if (seriesData && Array.isArray(seriesData)) {
+      const doseSeriesData = seriesData.filter(
+        (s: any) => s.modality?.toUpperCase() === 'RTDOSE'
+      );
+      setDoseSeries(doseSeriesData);
+      if (doseSeriesData.length > 0) {
+        console.log(`📊 Found ${doseSeriesData.length} RT Dose series`);
+      }
+    }
+  }, [seriesData]);
+
+  // Load dose metadata when dose series is selected
+  useEffect(() => {
+    if (!selectedDoseSeriesId) {
+      setDoseMetadata(null);
+      return;
+    }
+
+    let isCancelled = false;
+    setDoseLoading(true);
+
+    const loadDoseMetadata = async () => {
+      try {
+        const response = await fetch(`/api/rt-dose/${selectedDoseSeriesId}/metadata`);
+        if (!response.ok) {
+          throw new Error('Failed to load dose metadata');
+        }
+        const metadata = await response.json();
+        if (!isCancelled) {
+          setDoseMetadata(metadata);
+          // Auto-set prescription based on max dose
+          if (metadata.maxDose && metadata.maxDose > 0) {
+            // Assume prescription is about 95% of max for most plans
+            const estimatedRx = Math.round(metadata.maxDose * 0.95);
+            setPrescriptionDose(estimatedRx);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading dose metadata:', error);
+      } finally {
+        if (!isCancelled) {
+          setDoseLoading(false);
+        }
+      }
+    };
+
+    loadDoseMetadata();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedDoseSeriesId]);
 
   const handleSeriesSelect = async (seriesData: DICOMSeries) => {
     try {
@@ -2349,6 +2419,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             fusionSiblingMap={fusionSiblingMap}
             viewportAssignments={viewportAssignments}
             isInSplitView={fusionLayoutPreset !== 'overlay' && secondarySeriesId !== null}
+            // RT Dose props
+            selectedDoseSeriesId={selectedDoseSeriesId}
+            onDoseSeriesSelect={setSelectedDoseSeriesId}
+            onShowDosePanel={setShowDosePanel}
           />
         </div>
 
@@ -2539,6 +2613,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   {/* Left: Primary CT only - DRIVES sync */}
                   <div className="flex-1 relative" style={{ minHeight: 0 }}>
                     <WorkingViewer 
+                      viewportId={`sbs-primary-${selectedSeries.id}`}
                       seriesId={selectedSeries.id}
                       studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
                       windowLevel={windowLevel}
@@ -2597,6 +2672,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   {/* Right: Secondary scan only - BIDIRECTIONAL sync with primary */}
                   <div className="flex-1 relative" style={{ minHeight: 0 }}>
                     <WorkingViewer 
+                      viewportId={`sbs-secondary-${selectedSeries.id}`}
                       seriesId={selectedSeries.id}
                       studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
                       windowLevel={windowLevel}
@@ -3744,6 +3820,38 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         */ /* End of original BooleanOperationsToolbar props */
       )}
 
+
+      {/* RT Dose Control Panel - Shows ONLY when dose series is selected */}
+      {selectedDoseSeriesId && doseSeries.length > 0 && (
+        <DoseControlPanel
+          doseSeriesOptions={doseSeries.map((d: any) => ({
+            id: d.id,
+            seriesDescription: d.seriesDescription || 'RT Dose',
+            maxDose: doseMetadata?.maxDose,
+            doseType: doseMetadata?.doseType,
+          }))}
+          selectedDoseSeriesId={selectedDoseSeriesId}
+          onDoseSeriesSelect={(id) => {
+            setSelectedDoseSeriesId(id);
+          }}
+          opacity={doseOpacity}
+          onOpacityChange={setDoseOpacity}
+          colormap={doseColormap}
+          onColormapChange={setDoseColormap}
+          showIsodose={showIsodose}
+          onShowIsodoseChange={setShowIsodose}
+          isodoseLevels={[30, 50, 70, 80, 90, 95, 100, 105]}
+          prescriptionDose={prescriptionDose}
+          onPrescriptionDoseChange={setPrescriptionDose}
+          isVisible={doseVisible}
+          onVisibilityChange={setDoseVisible}
+          isLoading={doseLoading}
+          metadata={doseMetadata}
+          minimized={dosePanelMinimized}
+          onToggleMinimized={setDosePanelMinimized}
+          fusionPanelVisible={secondarySeriesId !== null}
+        />
+      )}
 
       {/* Fusion Control Panel - Deprecated: UnifiedFusionTopbar now handles fusion controls */}
       {/* Keep this for fallback but never show since UnifiedFusionTopbar is always active */}

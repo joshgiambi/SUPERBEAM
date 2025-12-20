@@ -52,6 +52,8 @@ export function pillClassForModality(modality?: string | null, tone: PillTone = 
   if (m === "MR" || m === "MRI") return pillClass("purple", tone);
   if (m === "PT" || m === "PET" || m === "NM") return pillClass("amber", tone);
   if (m === "RT" || m === "RTSTRUCT") return pillClass("green", tone);
+  if (m === "RTDOSE") return pillClass("orange", tone);
+  if (m === "RTPLAN") return pillClass("cyan", tone);
   if (m === "REG") return pillClass("cyan", tone);
   return pillClass("gray", tone);
 }

@@ -32,7 +32,7 @@ import {
 import { applyDirectionalGrow } from "@/lib/contour-directional-grow";
 import { naiveCombineContours as combineContours, naiveSubtractContours as subtractContours } from "@/lib/contour-boolean-operations";
 import { predictNextSliceContour, type PredictionResult, type PropagationMode } from "@/lib/contour-prediction";
-import { generatePrediction, findNearestContour, predictContourWithEdges, predictContourSimple, type SimplePredictionResult, type ImageDataForPrediction, type CoordinateTransforms } from "@/lib/simple-contour-prediction";
+import { generatePrediction, findNearestContour, findBracketingContours, predictContourWithEdges, predictContourSimple, predictContourInterpolated, predictContourSmart, type SimplePredictionResult, type ImageDataForPrediction, type CoordinateTransforms } from "@/lib/simple-contour-prediction";
 import { PredictionHistoryManager, type ContourSnapshot } from "@/lib/prediction-history-manager";
 import { PredictionOverlay } from "./prediction-overlay";
 import { getFusedSlice, getFusedSliceSmart, fuseboxSliceToImageData, clearFusionSlices, getFusionManifest } from "@/lib/fusion-utils";
@@ -145,7 +145,7 @@ interface WorkingViewerProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'geometric' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'fast-raycast';
+    predictionMode?: 'geometric' | 'nitro' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'fast-raycast';
     mem3dParams?: import('@/lib/fast-slice-prediction').PredictionParams;
   };
   selectedForEdit?: number | null;
@@ -157,7 +157,7 @@ interface WorkingViewerProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'geometric' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'fast-raycast';
+    predictionMode?: 'geometric' | 'nitro' | 'sam' | 'fast' | 'balanced' | 'segvol' | 'fast-raycast';
     mem3dParams?: import('@/lib/fast-slice-prediction').PredictionParams;
   }) => void;
   onContourUpdate?: (updatedStructures: any) => void;
@@ -215,6 +215,14 @@ interface WorkingViewerProps {
   
   /** Unique viewport ID for cross-viewport ghost contour synchronization */
   viewportId?: string;
+  
+  // RT Dose overlay props
+  doseSeriesId?: number | null;
+  doseOpacity?: number;
+  doseVisible?: boolean;
+  doseColormap?: 'rainbow' | 'hot' | 'jet' | 'cool' | 'dosimetry' | 'grayscale';
+  showIsodose?: boolean;
+  prescriptionDose?: number;
 }
 
 // Expose sidebar ref globally for fusion panel placement
@@ -275,11 +283,19 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
     hideSidebar = false,
     compactMode = false,
     // Cross-viewport ghost contour sync
-    viewportId = `viewport-${seriesId || 'default'}`
+    viewportId = `viewport-${seriesId || 'default'}`,
+    // RT Dose overlay props
+    doseSeriesId,
+    doseOpacity = 0.5,
+    doseVisible = true,
+    doseColormap = 'rainbow',
+    showIsodose = false,
+    prescriptionDose = 60,
   } = props;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fusionOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const doseOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const contoursOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const sagittalCanvasRef = useRef<HTMLCanvasElement>(null);
   const coronalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -287,16 +303,23 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
   const [currentIndex, setCurrentIndex] = useState(0);
   // Ref-based index for high-frequency scroll updates (bypasses React during rapid scrolling)
   const currentIndexRef = useRef(currentIndex);
-  // Keep ref in sync
+  // Track if we are actively scrolling (to ignore stale external sync)
+  const isLocalScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep ref in sync (only when NOT actively scrolling)
   useEffect(() => {
-    currentIndexRef.current = currentIndex;
+    if (!isLocalScrollingRef.current) {
+      currentIndexRef.current = currentIndex;
+    }
   }, [currentIndex]);
   
   // Register with viewport scroll sync for multi-viewport synchronization
   useEffect(() => {
     // Handler for when other viewports update the position
     const handleSyncUpdate = (state: { sliceIndex?: number; zoom?: number; panX?: number; panY?: number }) => {
-      if (state.sliceIndex !== undefined && state.sliceIndex !== currentIndexRef.current) {
+      // Ignore slice sync if we're actively scrolling (we're the source, not the follower)
+      if (state.sliceIndex !== undefined && state.sliceIndex !== currentIndexRef.current && !isLocalScrollingRef.current) {
+        console.log(`[SyncUpdate] External sync: ${currentIndexRef.current} → ${state.sliceIndex}`);
         currentIndexRef.current = state.sliceIndex;
         // Sync React state after a short debounce (handled by scroll sync manager)
         setCurrentIndex(state.sliceIndex);
@@ -318,6 +341,24 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // RT Dose state
+  const [doseFrames, setDoseFrames] = useState<Map<number, Float32Array>>(new Map());
+  const [doseMetadata, setDoseMetadata] = useState<{
+    rows: number;
+    columns: number;
+    frames: number;
+    gridFrameOffsetVector: number[];
+    doseGridScaling: number;
+    maxDose: number;
+    imagePositionPatient: [number, number, number];
+    pixelSpacing: [number, number];
+    sliceThickness: number;
+  } | null>(null);
+  const doseFramesRef = useRef(doseFrames);
+  const doseMetadataRef = useRef(doseMetadata);
+  useEffect(() => { doseFramesRef.current = doseFrames; }, [doseFrames]);
+  useEffect(() => { doseMetadataRef.current = doseMetadata; }, [doseMetadata]);
   // Use external RT structures if provided, otherwise load our own
   const [localRTStructures, setLocalRTStructures] =
     useState(externalRTStructures);
@@ -804,10 +845,19 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const [panY, setPanY] = useState(0);
   
   // External sync: Slice index
+  // IGNORE during active local scrolling to prevent feedback loops from stale state
   useEffect(() => {
-    if (externalSliceIndex !== undefined && externalSliceIndex !== currentIndex && images.length > 0) {
+    if (externalSliceIndex !== undefined && images.length > 0) {
+      // If we're actively scrolling, ignore external sync (it's just stale feedback)
+      if (isLocalScrollingRef.current) {
+        return;
+      }
       const clampedIndex = Math.max(0, Math.min(externalSliceIndex, images.length - 1));
-      setCurrentIndex(clampedIndex);
+      if (clampedIndex !== currentIndexRef.current) {
+        console.log(`[ExternalSync] Applying external index: ${currentIndexRef.current} → ${clampedIndex}`);
+        currentIndexRef.current = clampedIndex;
+        setCurrentIndex(clampedIndex);
+      }
     }
   }, [externalSliceIndex, images.length]);
   
@@ -1121,11 +1171,188 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     overlay.style.visibility = clamped === 0 ? 'hidden' : 'visible';
   }, [fusionOpacity]);
 
+  // Dose overlay opacity effect
+  useEffect(() => {
+    const doseOverlay = doseOverlayCanvasRef.current;
+    if (!doseOverlay) return;
+    const clamped = Math.max(0, Math.min(1, doseOpacity));
+    doseOverlay.style.opacity = `${clamped}`;
+    doseOverlay.style.visibility = (clamped === 0 || !doseVisible) ? 'hidden' : 'visible';
+  }, [doseOpacity, doseVisible]);
+
   useEffect(() => {
     if (!secondarySeriesId) {
       clearFusionOverlayCanvas();
     }
   }, [secondarySeriesId, clearFusionOverlayCanvas]);
+
+  // Fetch dose metadata and frames when doseSeriesId changes
+  useEffect(() => {
+    if (!doseSeriesId) {
+      setDoseMetadata(null);
+      setDoseFrames(new Map());
+      // Clear dose canvas
+      const doseCanvas = doseOverlayCanvasRef.current;
+      if (doseCanvas) {
+        const ctx = doseCanvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, doseCanvas.width, doseCanvas.height);
+      }
+      return;
+    }
+
+    // Fetch metadata first
+    const fetchDoseData = async () => {
+      try {
+        const metaRes = await fetch(`/api/rt-dose/${doseSeriesId}/metadata`);
+        if (!metaRes.ok) {
+          console.error('Failed to fetch dose metadata:', metaRes.status);
+          return;
+        }
+        const meta = await metaRes.json();
+        setDoseMetadata(meta);
+
+        // Prefetch first frame
+        const frameRes = await fetch(`/api/rt-dose/${doseSeriesId}/frame/0`);
+        if (frameRes.ok) {
+          const arrayBuffer = await frameRes.arrayBuffer();
+          const frameData = new Float32Array(arrayBuffer);
+          setDoseFrames(new Map([[0, frameData]]));
+        }
+      } catch (err) {
+        console.error('Error fetching dose data:', err);
+      }
+    };
+
+    fetchDoseData();
+  }, [doseSeriesId]);
+
+  // Draw dose overlay when frame data, slice position, or settings change
+  const drawDoseOverlay = useCallback(() => {
+    const doseCanvas = doseOverlayCanvasRef.current;
+    const baseCanvas = canvasRef.current;
+    if (!doseCanvas || !baseCanvas || !doseMetadataRef.current || !doseVisible) return;
+
+    const ctx = doseCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Match canvas dimensions
+    if (doseCanvas.width !== baseCanvas.width || doseCanvas.height !== baseCanvas.height) {
+      doseCanvas.width = baseCanvas.width;
+      doseCanvas.height = baseCanvas.height;
+    }
+
+    ctx.clearRect(0, 0, doseCanvas.width, doseCanvas.height);
+
+    const meta = doseMetadataRef.current;
+    const frames = doseFramesRef.current;
+
+    // Find the closest dose frame to current slice
+    // For now, use frame 0 as a simple overlay
+    const frameData = frames.get(0);
+    if (!frameData || !meta.rows || !meta.columns) return;
+
+    const maxDose = meta.maxDose || prescriptionDose;
+    const { rows, columns } = meta;
+
+    // Create ImageData for the dose overlay
+    const imageData = ctx.createImageData(columns, rows);
+    const data = imageData.data;
+
+    // Apply colormap
+    for (let i = 0; i < frameData.length; i++) {
+      const doseValue = frameData[i];
+      const normalizedDose = Math.min(1, doseValue / maxDose);
+
+      // Skip very low doses (threshold at 10%)
+      if (normalizedDose < 0.1) {
+        data[i * 4] = 0;
+        data[i * 4 + 1] = 0;
+        data[i * 4 + 2] = 0;
+        data[i * 4 + 3] = 0;
+        continue;
+      }
+
+      // Apply colormap (rainbow)
+      let r = 0, g = 0, b = 0;
+      if (doseColormap === 'rainbow' || doseColormap === 'dosimetry') {
+        // Rainbow: blue -> cyan -> green -> yellow -> red
+        if (normalizedDose < 0.25) {
+          const t = normalizedDose / 0.25;
+          r = 0; g = Math.floor(255 * t); b = 255;
+        } else if (normalizedDose < 0.5) {
+          const t = (normalizedDose - 0.25) / 0.25;
+          r = 0; g = 255; b = Math.floor(255 * (1 - t));
+        } else if (normalizedDose < 0.75) {
+          const t = (normalizedDose - 0.5) / 0.25;
+          r = Math.floor(255 * t); g = 255; b = 0;
+        } else {
+          const t = (normalizedDose - 0.75) / 0.25;
+          r = 255; g = Math.floor(255 * (1 - t)); b = 0;
+        }
+      } else if (doseColormap === 'hot') {
+        // Hot: black -> red -> yellow -> white
+        if (normalizedDose < 0.33) {
+          r = Math.floor(255 * normalizedDose / 0.33); g = 0; b = 0;
+        } else if (normalizedDose < 0.67) {
+          r = 255; g = Math.floor(255 * (normalizedDose - 0.33) / 0.34); b = 0;
+        } else {
+          r = 255; g = 255; b = Math.floor(255 * (normalizedDose - 0.67) / 0.33);
+        }
+      } else if (doseColormap === 'jet') {
+        // Jet: blue -> cyan -> green -> yellow -> red
+        if (normalizedDose < 0.125) {
+          r = 0; g = 0; b = Math.floor(128 + 127 * normalizedDose / 0.125);
+        } else if (normalizedDose < 0.375) {
+          const t = (normalizedDose - 0.125) / 0.25;
+          r = 0; g = Math.floor(255 * t); b = 255;
+        } else if (normalizedDose < 0.625) {
+          const t = (normalizedDose - 0.375) / 0.25;
+          r = Math.floor(255 * t); g = 255; b = Math.floor(255 * (1 - t));
+        } else if (normalizedDose < 0.875) {
+          const t = (normalizedDose - 0.625) / 0.25;
+          r = 255; g = Math.floor(255 * (1 - t)); b = 0;
+        } else {
+          const t = (normalizedDose - 0.875) / 0.125;
+          r = Math.floor(255 - 127 * t); g = 0; b = 0;
+        }
+      } else {
+        // Grayscale fallback
+        const gray = Math.floor(255 * normalizedDose);
+        r = gray; g = gray; b = gray;
+      }
+
+      data[i * 4] = r;
+      data[i * 4 + 1] = g;
+      data[i * 4 + 2] = b;
+      data[i * 4 + 3] = Math.floor(200 * normalizedDose); // Alpha based on dose
+    }
+
+    // Draw to offscreen canvas first, then scale to viewport
+    const offscreen = document.createElement('canvas');
+    offscreen.width = columns;
+    offscreen.height = rows;
+    const offCtx = offscreen.getContext('2d');
+    if (offCtx) {
+      offCtx.putImageData(imageData, 0, 0);
+
+      // Scale to fit viewport (matching the base canvas transform)
+      const scaleX = doseCanvas.width / columns;
+      const scaleY = doseCanvas.height / rows;
+      const scale = Math.min(scaleX, scaleY);
+      const offsetX = (doseCanvas.width - columns * scale) / 2;
+      const offsetY = (doseCanvas.height - rows * scale) / 2;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(offscreen, offsetX, offsetY, columns * scale, rows * scale);
+    }
+  }, [doseVisible, doseColormap, prescriptionDose]);
+
+  // Trigger dose redraw when relevant states change
+  useEffect(() => {
+    if (doseSeriesId && doseVisible) {
+      drawDoseOverlay();
+    }
+  }, [doseSeriesId, doseVisible, doseFrames, currentIndex, drawDoseOverlay]);
   
   // Abort controller for series changes
   const seriesAbortRef = useRef<AbortController | null>(null);
@@ -2056,18 +2283,12 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       sliceSpacing = Math.abs(z1 - z0) || 2.5;
     }
     
-    // Find nearest contour (with max distance limit of 3 slices)
-    const nearest = findNearestContour(structure.contours, slicePosition, sliceSpacing);
-    if (!nearest) {
-      updateActivePredictions(new Map());
-      return;
-    }
-    
     // Check prediction mode
     const predictionMode = brushToolState?.predictionMode || 'geometric';
     let finalContour: number[] = [];
     let method = 'simple_copy';
     let confidence = 0.5;
+    let referenceSlice = slicePosition;
     
     // Try to get image data for edge detection (geometric mode)
     const targetSliceData = extractImageDataForPrediction(currentIndex);
@@ -2096,29 +2317,85 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       };
     }
     
-    // Use edge detection for geometric mode if we have image data
-    if (predictionMode === 'geometric' && targetSliceData?.pixels && coordinateTransforms) {
-      const edgeResult = predictContourWithEdges(
-        nearest.points,
-        nearest.slicePosition,
-        slicePosition,
-        {
-          pixels: targetSliceData.pixels,
-          width: targetSliceData.width,
-          height: targetSliceData.height
-        },
-        coordinateTransforms
-      );
-      
-      if (edgeResult.contour.length >= 9) {
-        finalContour = edgeResult.contour;
-        method = edgeResult.method;
-        confidence = edgeResult.confidence;
+    // Handle different prediction modes
+    if (predictionMode === 'geometric') {
+      // GEO mode: Simple copy from nearest contour (fast, basic)
+      const nearest = findNearestContour(structure.contours, slicePosition, sliceSpacing);
+      if (!nearest) {
+        updateActivePredictions(new Map());
+        return;
       }
-    }
-    
-    // Fallback to simple copy if edge detection didn't work
-    if (finalContour.length < 9) {
+      
+      referenceSlice = nearest.slicePosition;
+      
+      // Use edge detection if we have image data
+      if (targetSliceData?.pixels && coordinateTransforms) {
+        const edgeResult = predictContourWithEdges(
+          nearest.points,
+          nearest.slicePosition,
+          slicePosition,
+          {
+            pixels: targetSliceData.pixels,
+            width: targetSliceData.width,
+            height: targetSliceData.height
+          },
+          coordinateTransforms
+        );
+        
+        if (edgeResult.contour.length >= 9) {
+          finalContour = edgeResult.contour;
+          method = edgeResult.method;
+          confidence = edgeResult.confidence;
+        }
+      }
+      
+      // Fallback to simple copy if edge detection didn't work
+      if (finalContour.length < 9) {
+        const simpleResult = predictContourSimple(nearest.points, nearest.slicePosition, slicePosition);
+        finalContour = simpleResult.contour;
+        method = simpleResult.method;
+        confidence = simpleResult.confidence;
+      }
+      
+      console.log(`🔮 GEO: ${method}, ${finalContour.length / 3} points`);
+      
+    } else if (predictionMode === 'nitro') {
+      // NITRO mode: Smart prediction with trend analysis
+      const smartResult = predictContourInterpolated(structure.contours, slicePosition, sliceSpacing);
+      
+      if (smartResult && smartResult.contour.length >= 9) {
+        finalContour = smartResult.contour;
+        method = smartResult.method;
+        confidence = smartResult.confidence;
+        referenceSlice = smartResult.referenceSlice;
+        
+        console.log(`🚀 NITRO: ${method}, ${finalContour.length / 3} points, confidence=${confidence.toFixed(2)}`);
+      } else {
+        // Fallback to simple copy if smart prediction failed
+        const nearest = findNearestContour(structure.contours, slicePosition, sliceSpacing);
+        if (!nearest) {
+          updateActivePredictions(new Map());
+          return;
+        }
+        
+        referenceSlice = nearest.slicePosition;
+        const simpleResult = predictContourSimple(nearest.points, nearest.slicePosition, slicePosition);
+        finalContour = simpleResult.contour;
+        method = 'nitro_fallback';
+        confidence = simpleResult.confidence;
+        
+        console.log(`🚀 NITRO: fallback to simple copy, ${finalContour.length / 3} points`);
+      }
+      
+    } else {
+      // For other modes (SAM), use the nearest contour approach
+      const nearest = findNearestContour(structure.contours, slicePosition, sliceSpacing);
+      if (!nearest) {
+        updateActivePredictions(new Map());
+        return;
+      }
+      
+      referenceSlice = nearest.slicePosition;
       const simpleResult = predictContourSimple(nearest.points, nearest.slicePosition, slicePosition);
       finalContour = simpleResult.contour;
       method = simpleResult.method;
@@ -2129,7 +2406,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     const simpleResult = {
       contour: finalContour,
       confidence,
-      referenceSlice: nearest.slicePosition,
+      referenceSlice,
       targetSlice: slicePosition,
       method
     };
@@ -7085,8 +7362,16 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       setZoom(newZoom);
       notifyZoomChange(newZoom);
     } else {
-      // OPTIMIZED: Use ref-based scroll for high-frequency updates
-      // This bypasses React state during rapid scrolling for smooth performance
+      // Mark as actively scrolling to ignore stale external sync
+      isLocalScrollingRef.current = true;
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        isLocalScrollingRef.current = false;
+      }, 200); // Clear after 200ms of no scrolling
+      
+      // Simple slice scrolling - move 1 slice per scroll event
       const maxIndex = images.length - 1;
       const current = currentIndexRef.current;
       let newIndex: number;
@@ -7107,7 +7392,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         scheduleRender();
         
         // Notify parent through scroll sync (debounced React state update)
-        viewportScrollSync.update(viewportId, { sliceIndex: newIndex });
+        // Use skipSource to prevent feedback loop to ourselves
+        viewportScrollSync.update(viewportId, { sliceIndex: newIndex }, { skipSource: true });
         
         // Also notify via callback for components not using scroll sync
         notifySliceChange(newIndex);

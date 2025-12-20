@@ -61,6 +61,10 @@ interface SeriesSelectorProps {
   isInSplitView?: boolean;  // Whether we're in split-view mode (FlexibleFusionLayout)
   // External structure visibility state (for sync with topbar toggle)
   externalStructureVisibility?: Map<number, boolean>;
+  // RT Dose props
+  selectedDoseSeriesId?: number | null;
+  onDoseSeriesSelect?: (seriesId: number | null) => void;
+  onShowDosePanel?: (show: boolean) => void;
 }
 
 export function SeriesSelector({
@@ -101,11 +105,16 @@ export function SeriesSelector({
   viewportAssignments,
   isInSplitView = false,
   externalStructureVisibility,
+  selectedDoseSeriesId,
+  onDoseSeriesSelect,
+  onShowDosePanel,
 }: SeriesSelectorProps) {
   
   // Debug logging removed for performance
   const [rtSeries, setRTSeries] = useState<any[]>([]);
   const [selectedRTSeries, setSelectedRTSeries] = useState<any>(null);
+  // RT Dose series state
+  const [doseSeries, setDoseSeries] = useState<any[]>([]);
   const [userSelectedPrimaryCT, setUserSelectedPrimaryCT] = useState<number | null>(null); // User-selected primary CT for hierarchy
   const [structureVisibility, setStructureVisibility] = useState<Map<number, boolean>>(new Map());
   const [selectedStructures, setSelectedStructures] = useState<Set<number>>(new Set());
@@ -539,6 +548,51 @@ export function SeriesSelector({
       isCancelled = true;
     };
   }, [studyId, studyIds?.join(','), preventRTLoading]); // Stable dependency for studyIds array
+
+  // Load RT Dose series for all studies
+  useEffect(() => {
+    const studyIdsToLoad = studyIds || (studyId ? [studyId] : []);
+    if (studyIdsToLoad.length === 0) return;
+    
+    let isCancelled = false;
+    
+    const loadDoseSeries = async () => {
+      try {
+        const allDoseSeries: any[] = [];
+        
+        for (const id of studyIdsToLoad) {
+          if (isCancelled) break;
+          
+          // Fetch series with RTDOSE modality
+          const response = await fetch(`/api/studies/${id}/series`);
+          if (response.ok) {
+            const allSeries = await response.json();
+            const doseSeriesData = allSeries.filter((s: any) => 
+              s.modality?.toUpperCase() === 'RTDOSE'
+            );
+            allDoseSeries.push(...doseSeriesData);
+          }
+        }
+        
+        if (!isCancelled) {
+          setDoseSeries(allDoseSeries);
+          if (allDoseSeries.length > 0) {
+            console.log(`📊 Loaded ${allDoseSeries.length} RT Dose series`);
+          }
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Error loading RT Dose series:', error);
+        }
+      }
+    };
+    
+    loadDoseSeries();
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [studyId, studyIds?.join(',')]);
 
   // Initialize structure visibility when RT structures are loaded
   useEffect(() => {
@@ -1706,6 +1760,55 @@ export function SeriesSelector({
                                           <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
                                         </TooltipContent>
                                       </Tooltip>
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* RT Dose Series nested under CT - after RT structures */}
+                              {doseSeries && doseSeries.length > 0 && doseSeries.filter((doseS: any) => 
+                                doseS.referencedSeriesId === seriesItem.id || 
+                                (!doseS.referencedSeriesId && doseSeries.length === 1)
+                              ).length > 0 && (
+                                <div className="space-y-2 border-l-2 border-orange-500/40 pl-2">
+                                  {doseSeries.filter((doseS: any) => 
+                                    doseS.referencedSeriesId === seriesItem.id || 
+                                    (!doseS.referencedSeriesId && doseSeries.length === 1)
+                                  ).map((doseS: any) => (
+                                    <Button
+                                      key={doseS.id}
+                                      variant="ghost"
+                                      className={cn(
+                                        "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                        selectedDoseSeriesId === doseS.id 
+                                          ? 'bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-400/60 shadow-md shadow-orange-500/20 text-gray-200' 
+                                          : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
+                                      )}
+                                      onClick={() => {
+                                        if (onDoseSeriesSelect) {
+                                          onDoseSeriesSelect(selectedDoseSeriesId === doseS.id ? null : doseS.id);
+                                        }
+                                        if (onShowDosePanel) {
+                                          onShowDosePanel(selectedDoseSeriesId !== doseS.id);
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <Badge className={cn("flex-shrink-0", pillClassForModality('RTDOSE'))}>
+                                          DOSE
+                                        </Badge>
+                                        <span className={cn(
+                                          "truncate text-xs leading-tight",
+                                          selectedDoseSeriesId === doseS.id ? "text-orange-200" : "text-gray-300"
+                                        )}>
+                                          {doseS.seriesDescription || 'RT Dose'}
+                                        </span>
+                                      </div>
+                                      {selectedDoseSeriesId === doseS.id && (
+                                        <Badge variant="outline" className="bg-orange-500/20 text-orange-200 border-orange-400/40 text-[9px]">
+                                          Active
+                                        </Badge>
+                                      )}
                                     </Button>
                                   ))}
                                 </div>

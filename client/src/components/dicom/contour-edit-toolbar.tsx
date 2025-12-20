@@ -172,7 +172,7 @@ interface ContourEditToolbarProps {
     isActive: boolean;
     predictionEnabled?: boolean;
     smartBrushEnabled?: boolean;
-    predictionMode?: 'geometric' | 'sam';
+    predictionMode?: 'geometric' | 'nitro' | 'sam';
     aiTumorSmoothOutput?: boolean;
     aiTumorUseSAM?: boolean;
   }) => void;
@@ -232,7 +232,7 @@ export function ContourEditToolbar({
   const [brushThickness, setBrushThickness] = useState([9]);
   const [smartBrush, setSmartBrush] = useState(false);
   const [isPredictionEnabled, setIsPredictionEnabled] = useState(false);
-  const [predictionMode, setPredictionMode] = useState<'geometric' | 'sam'>('geometric');
+  const [predictionMode, setPredictionMode] = useState<'geometric' | 'nitro' | 'sam'>('geometric');
   const [samLoading, setSamLoading] = useState(false);
   const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
   const [aiTumorUseSAM, setAiTumorUseSAM] = useState(false); // AI tumor mode: false = SuperSeg, true = SAM
@@ -724,7 +724,38 @@ export function ContourEditToolbar({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                      Geometric prediction - Fast, runs locally
+                      Geometric prediction - Fast, simple copy
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setPredictionMode('nitro');
+                          if (onToolChange) {
+                            onToolChange({
+                              tool: 'brush',
+                              brushSize: brushThickness[0],
+                              isActive: true,
+                              smartBrushEnabled: smartBrush,
+                              predictionEnabled: isPredictionEnabled,
+                              predictionMode: 'nitro',
+                            });
+                          }
+                        }}
+                        className={cn(
+                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
+                          predictionMode === 'nitro'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
+                        )}
+                      >
+                        <Zap className="w-3 h-3" />
+                        Nitro
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Smart prediction - Uses trends from multiple slices
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>

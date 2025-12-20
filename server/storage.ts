@@ -313,7 +313,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePatient(id: number): Promise<void> {
-    await db.delete(patients).where(eq(patients.id, id));
+    // Always use full delete to prevent orphaned studies/series/images
+    // The simple delete was leaving orphaned records that blocked re-imports
+    await this.deletePatientFully(id);
   }
 
   // Fully delete a patient: images, series, studies, registrations, media, RT data, filesystem, fusion data
