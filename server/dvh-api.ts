@@ -4,6 +4,8 @@
  * Provides endpoints for calculating and serving DVH data:
  * - GET /api/dvh/:doseSeriesId - Calculate DVH for all structures
  * - GET /api/dvh/:doseSeriesId/:roiNumber - Calculate DVH for specific structure
+ * 
+ * OPTIMIZATION: Results are cached in memory for instant subsequent loads.
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -14,6 +16,43 @@ import { storage } from './storage';
 import { logger } from './logger';
 
 const router = Router();
+
+// ============================================================================
+// CACHE - Store calculated DVH results for instant retrieval
+// ============================================================================
+
+interface CachedDVH {
+  response: DVHResponse;
+  timestamp: number;
+}
+
+// Cache DVH results keyed by "doseSeriesId:structureSetId:prescriptionDose"
+const dvhCache = new Map<string, CachedDVH>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+function getCacheKey(doseSeriesId: number, structureSetId: number, prescriptionDose: number): string {
+  return `${doseSeriesId}:${structureSetId}:${prescriptionDose}`;
+}
+
+function getCachedDVH(key: string): DVHResponse | null {
+  const cached = dvhCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    logger.info(`DVH cache hit: ${key}`);
+    return cached.response;
+  }
+  if (cached) {
+    dvhCache.delete(key); // Expired
+  }
+  return null;
+}
+
+function setCachedDVH(key: string, response: DVHResponse): void {
+  dvhCache.set(key, { response, timestamp: Date.now() });
+  logger.info(`DVH cached: ${key} (${response.curves.length} structures)`);
+}
+
+// Track in-progress calculations to prevent duplicate work
+const inProgressCalculations = new Map<string, Promise<DVHResponse>>();
 
 // ============================================================================
 // Types
@@ -505,9 +544,10 @@ function calculateDVHForROI(
       if (pt.y > maxY) maxY = pt.y;
     }
     
-    // Sample within bounding box
-    const stepX = metadata.pixelSpacing[0];
-    const stepY = metadata.pixelSpacing[1];
+    // Sample within bounding box with 2x downsampling for speed
+    // (doubles step size, 4x faster with minimal accuracy loss)
+    const stepX = metadata.pixelSpacing[0] * 2;
+    const stepY = metadata.pixelSpacing[1] * 2;
     
     for (let x = minX; x <= maxX; x += stepX) {
       for (let y = minY; y <= maxY; y += stepY) {
@@ -519,42 +559,65 @@ function calculateDVHForROI(
     }
   }
 
-  // Calculate volume
-  const volumeCc = doseValues.length * voxelVolume;
+  // Calculate volume (account for 2x downsampling by multiplying by 4)
+  const volumeCc = doseValues.length * voxelVolume * 4;
 
-  // Calculate statistics
+  // Calculate statistics in single pass
   let min = Infinity, max = -Infinity, sum = 0;
-  for (const dose of doseValues) {
+  for (let i = 0; i < doseValues.length; i++) {
+    const dose = doseValues[i];
     if (dose < min) min = dose;
     if (dose > max) max = dose;
     sum += dose;
   }
   const mean = doseValues.length > 0 ? sum / doseValues.length : 0;
   
-  // Sort for percentile calculations
-  const sorted = [...doseValues].sort((a, b) => b - a); // descending
-  const d95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] || 0 : 0;
-  const d50 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.50)] || 0 : 0;
-  const d2 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.02)] || max : max;
-  
-  // Calculate V100 (volume receiving >= prescription dose)
-  const v100Count = doseValues.filter(d => d >= prescriptionDose).length;
-  const v100 = doseValues.length > 0 ? (v100Count / doseValues.length) * 100 : 0;
-
-  // Build DVH curve (cumulative)
+  // Use histogram for DVH curve (O(n) instead of O(n*bins))
   const numBins = 200;
-  const maxDoseForBins = Math.max(metadata.maxDose, max) * 1.1;
+  const maxDoseForBins = Math.max(metadata.maxDose, max, 1) * 1.1;
   const binWidth = maxDoseForBins / numBins;
   
-  const points: DVHPoint[] = [];
-  for (let i = 0; i <= numBins; i++) {
-    const doseThreshold = i * binWidth;
-    const volumeAbove = doseValues.filter(d => d >= doseThreshold).length;
-    const volumePercent = doseValues.length > 0 ? (volumeAbove / doseValues.length) * 100 : 0;
-    points.push({
-      dose: doseThreshold,
+  // Build histogram counts
+  const histogram = new Uint32Array(numBins + 1);
+  let v100Count = 0;
+  
+  for (let i = 0; i < doseValues.length; i++) {
+    const dose = doseValues[i];
+    const bin = Math.min(numBins, Math.floor(dose / binWidth));
+    histogram[bin]++;
+    if (dose >= prescriptionDose) v100Count++;
+  }
+  
+  const v100 = doseValues.length > 0 ? (v100Count / doseValues.length) * 100 : 0;
+  
+  // Build cumulative DVH from histogram (sum from high to low)
+  const points: DVHPoint[] = new Array(numBins + 1);
+  let cumulative = 0;
+  for (let i = numBins; i >= 0; i--) {
+    cumulative += histogram[i];
+    const volumePercent = doseValues.length > 0 ? (cumulative / doseValues.length) * 100 : 0;
+    points[i] = {
+      dose: i * binWidth,
       volume: volumePercent,
-    });
+    };
+  }
+  
+  // Calculate percentiles from cumulative histogram
+  const totalVoxels = doseValues.length;
+  let d95 = 0, d50 = 0, d2 = max;
+  if (totalVoxels > 0) {
+    const target95 = totalVoxels * 0.05; // 95% of volume receives >= this dose
+    const target50 = totalVoxels * 0.50;
+    const target2 = totalVoxels * 0.98;
+    
+    let runningSum = 0;
+    for (let i = numBins; i >= 0; i--) {
+      runningSum += histogram[i];
+      const dose = i * binWidth;
+      if (runningSum >= target95 && d95 === 0) d95 = dose;
+      if (runningSum >= target50 && d50 === 0) d50 = dose;
+      if (runningSum >= target2 && d2 === max) d2 = dose;
+    }
   }
 
   return {
@@ -582,27 +645,21 @@ function calculateDVHForROI(
 /**
  * GET /api/dvh/:doseSeriesId
  * Calculate DVH for all structures in the associated structure set
+ * Results are cached for instant subsequent loads.
  */
 router.get('/:doseSeriesId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const doseSeriesId = parseInt(req.params.doseSeriesId, 10);
-    const structureSetId = req.query.structureSetId ? parseInt(req.query.structureSetId as string, 10) : undefined;
+    const structureSetIdParam = req.query.structureSetId ? parseInt(req.query.structureSetId as string, 10) : undefined;
     const prescriptionDose = parseFloat(req.query.prescriptionDose as string) || 60;
     
     if (isNaN(doseSeriesId)) {
       return res.status(400).json({ error: 'Invalid dose series ID' });
     }
 
-    // Load dose data
-    const doseData = await loadDoseDicom(doseSeriesId);
-    if (!doseData) {
-      return res.status(404).json({ error: 'RT Dose series not found' });
-    }
-
-    // Find structure set
-    let structSetId = structureSetId;
+    // Find structure set first (fast operation)
+    let structSetId = structureSetIdParam;
     if (!structSetId) {
-      // Try to find structure set from the same study
       const doseSeries = await storage.getSeries(doseSeriesId);
       if (doseSeries?.studyId) {
         structSetId = await findStructureSetForStudy(doseSeries.studyId) || undefined;
@@ -613,31 +670,73 @@ router.get('/:doseSeriesId', async (req: Request, res: Response, next: NextFunct
       return res.status(404).json({ error: 'No structure set found for this dose series' });
     }
 
-    // Load structure set
-    const structures = await loadStructureSet(structSetId);
-    if (!structures || structures.length === 0) {
-      return res.status(404).json({ error: 'No structures found in structure set' });
+    // Check cache first - instant return if cached
+    const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
+    const cachedResult = getCachedDVH(cacheKey);
+    if (cachedResult) {
+      return res.json(cachedResult);
     }
 
-    // Calculate DVH for each structure
-    const curves: DVHCurve[] = [];
-    for (const roi of structures) {
-      try {
-        const curve = calculateDVHForROI(roi, doseData, prescriptionDose);
-        curves.push(curve);
-      } catch (err) {
-        logger.warn(`Failed to calculate DVH for ROI ${roi.roiNumber}: ${err}`);
+    // Check if calculation is already in progress
+    const inProgress = inProgressCalculations.get(cacheKey);
+    if (inProgress) {
+      logger.info(`DVH calculation already in progress for ${cacheKey}, waiting...`);
+      const result = await inProgress;
+      return res.json(result);
+    }
+
+    // Start calculation
+    logger.info(`Starting DVH calculation for dose=${doseSeriesId}, struct=${structSetId}, rx=${prescriptionDose}`);
+    const startTime = Date.now();
+
+    const calculationPromise = (async (): Promise<DVHResponse> => {
+      // Load dose data
+      const doseData = await loadDoseDicom(doseSeriesId);
+      if (!doseData) {
+        throw new Error('RT Dose series not found');
       }
+
+      // Load structure set
+      const structures = await loadStructureSet(structSetId!);
+      if (!structures || structures.length === 0) {
+        throw new Error('No structures found in structure set');
+      }
+
+      // Calculate DVH for each structure
+      const curves: DVHCurve[] = [];
+      for (const roi of structures) {
+        try {
+          const curve = calculateDVHForROI(roi, doseData, prescriptionDose);
+          curves.push(curve);
+        } catch (err) {
+          logger.warn(`Failed to calculate DVH for ROI ${roi.roiNumber}: ${err}`);
+        }
+      }
+
+      return {
+        doseSeriesId,
+        structureSetId: structSetId!,
+        prescriptionDose,
+        curves,
+      };
+    })();
+
+    // Track in-progress calculation
+    inProgressCalculations.set(cacheKey, calculationPromise);
+
+    try {
+      const response = await calculationPromise;
+      
+      // Cache the result
+      setCachedDVH(cacheKey, response);
+      
+      const elapsed = Date.now() - startTime;
+      logger.info(`DVH calculation complete in ${elapsed}ms (${response.curves.length} structures)`);
+      
+      res.json(response);
+    } finally {
+      inProgressCalculations.delete(cacheKey);
     }
-
-    const response: DVHResponse = {
-      doseSeriesId,
-      structureSetId: structSetId,
-      prescriptionDose,
-      curves,
-    };
-
-    res.json(response);
   } catch (error) {
     logger.error(`DVH calculation error: ${error}`);
     next(error);

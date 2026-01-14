@@ -60,7 +60,8 @@ import {
   Check,
 } from 'lucide-react';
 import { WorkingViewer } from '@/components/dicom/working-viewer';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { MPRFloating } from '@/components/dicom/mpr-floating';
+import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { fetchFusionManifest } from '@/lib/fusion-utils';
 
@@ -281,6 +282,30 @@ function FuseBoxContent() {
   // Panel state
   const [activePanel, setActivePanel] = useState<'controls' | 'transform' | 'autoReg'>('controls');
   
+  // Drag state for translation
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragMode, setDragMode] = useState<'translate' | 'pan'>('translate');
+  
+  // View layout mode - 2up = side-by-side axial only, 4up = axial + coronal for both
+  const [viewLayout, setViewLayout] = useState<'2up' | '4up'>('2up');
+  
+  // Crosshair position for MPR slice selection
+  const [crosshairPos, setCrosshairPos] = useState({ x: 256, y: 256 });
+  
+  // Fetch primary series images for MPR views
+  const { data: primaryImages = [] } = useQuery({
+    queryKey: ['series-images', fuseboxData?.primarySeriesId],
+    queryFn: async () => {
+      if (!fuseboxData?.primarySeriesId) return [];
+      const response = await fetch(`/api/series/${fuseboxData.primarySeriesId}/images`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!fuseboxData?.primarySeriesId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+  
   // Image cache ref for WorkingViewer
   const imageCache = useRef(new Map());
   
@@ -479,6 +504,48 @@ function FuseBoxContent() {
       translation: { ...prev.translation, [axis]: value },
     }));
   };
+
+  // Drag handlers for translation
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    if (dragMode !== 'translate') return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    e.preventDefault();
+  }, [dragMode]);
+
+  const handleDragMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !dragStart || dragMode !== 'translate') return;
+    
+    // Calculate delta in pixels
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    
+    // Convert pixels to mm (approximate - assumes ~1 pixel per mm at default zoom)
+    // This scaling factor can be adjusted based on actual pixel spacing and zoom level
+    const scaleFactor = 0.5; // Adjust sensitivity
+    
+    setCurrentTransform(prev => ({
+      ...prev,
+      translation: {
+        x: prev.translation.x + (deltaX * scaleFactor),
+        y: prev.translation.y + (deltaY * scaleFactor),
+        z: prev.translation.z,
+      },
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  }, [isDragging, dragStart, dragMode]);
+
+  const handleDragEnd = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      setDragStart(null);
+      // Add to history when drag ends
+      if (currentTransform.translation.x !== 0 || currentTransform.translation.y !== 0) {
+        addToHistory(currentTransform, 'Manual translation drag');
+      }
+    }
+  }, [isDragging, currentTransform, addToHistory]);
 
   const updateRotation = (axis: 'x' | 'y' | 'z', value: number) => {
     setCurrentTransform(prev => ({
@@ -703,6 +770,56 @@ function FuseBoxContent() {
                   </TooltipTrigger>
                   <TooltipContent>{isLinked ? 'Viewports linked' : 'Viewports unlinked'}</TooltipContent>
                 </Tooltip>
+                
+                <div className="w-px h-5 bg-gray-700/50" />
+                
+                {/* Translate mode toggle */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setDragMode(dragMode === 'translate' ? 'pan' : 'translate')}
+                      className={cn(
+                        "h-7 px-2 flex items-center gap-1.5 rounded-lg transition-colors text-[10px] font-medium",
+                        dragMode === 'translate' 
+                          ? "bg-purple-500/20 text-purple-400 border border-purple-500/40" 
+                          : "text-gray-400 hover:bg-white/10"
+                      )}
+                    >
+                      <Move className="w-3.5 h-3.5" />
+                      Translate
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {dragMode === 'translate' 
+                      ? 'Drag fusion viewport to adjust translation (active)' 
+                      : 'Click to enable drag-to-translate mode'}
+                  </TooltipContent>
+                </Tooltip>
+                
+                <div className="w-px h-5 bg-gray-700/50" />
+                
+                {/* View layout toggle */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setViewLayout(viewLayout === '2up' ? '4up' : '2up')}
+                      className={cn(
+                        "h-7 px-2 flex items-center gap-1.5 rounded-lg transition-colors text-[10px] font-medium",
+                        viewLayout === '4up' 
+                          ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40" 
+                          : "text-gray-400 hover:bg-white/10"
+                      )}
+                    >
+                      <Grid3X3 className="w-3.5 h-3.5" />
+                      {viewLayout === '2up' ? 'Axial' : 'Ax+Cor'}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {viewLayout === '2up' 
+                      ? 'Add Coronal views (2x2 grid)' 
+                      : 'Axial only (side-by-side)'}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {/* Quick opacity presets */}
@@ -724,9 +841,12 @@ function FuseBoxContent() {
               </div>
             </div>
             
-            {/* Side-by-side viewports */}
-            <div className="flex-1 grid grid-cols-2 gap-3 min-h-0">
-              {/* Primary viewport (no fusion) */}
+            {/* Viewport Grid - 2-up or 4-up layout */}
+            <div className={cn(
+              "flex-1 gap-2 min-h-0",
+              viewLayout === '2up' ? "grid grid-cols-2" : "grid grid-cols-2 grid-rows-2"
+            )}>
+              {/* Primary viewport (no fusion) - Axial */}
               <div className="relative rounded-xl overflow-hidden border-2 border-cyan-500/30 bg-black flex flex-col">
                 <div className="absolute top-2 left-2 z-10">
                   <Badge className={cn(
@@ -746,6 +866,7 @@ function FuseBoxContent() {
                     windowLevel={primaryWindowLevel}
                     onWindowLevelChange={setPrimaryWindowLevel}
                     imageCache={imageCache}
+                    orientation="axial"
                     hideToolbar
                     hideSidebar
                     compactMode
@@ -757,13 +878,31 @@ function FuseBoxContent() {
                     onPanChange={isLinked ? (x, y) => setSyncedPan({ x, y }) : undefined}
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-1 pointer-events-none">
-                  <span className="text-[9px] font-medium text-cyan-400">Primary (Reference)</span>
+                <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-0.5 pointer-events-none">
+                  <span className="text-[9px] font-medium text-cyan-400">Axial • Primary</span>
                 </div>
               </div>
               
-              {/* Secondary viewport with fusion overlay */}
-              <div className="relative rounded-xl overflow-hidden border-2 border-purple-500/30 bg-black flex flex-col">
+              {/* Fusion viewport - Axial (with translation drag) */}
+              <div 
+                className={cn(
+                  "relative rounded-xl overflow-hidden border-2 border-purple-500/30 bg-black flex flex-col",
+                  dragMode === 'translate' && "cursor-move",
+                  isDragging && "border-purple-400/60"
+                )}
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+              >
+                {dragMode === 'translate' && (
+                  <div className="absolute top-2 right-2 z-20">
+                    <Badge className="bg-purple-500/30 border-purple-400/50 text-purple-200 text-[9px]">
+                      <Move className="w-3 h-3 mr-1" />
+                      Drag to translate
+                    </Badge>
+                  </div>
+                )}
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
                   <Badge className={cn(
                     "text-[10px] font-semibold",
@@ -796,20 +935,19 @@ function FuseBoxContent() {
                     windowLevel={primaryWindowLevel}
                     onWindowLevelChange={setPrimaryWindowLevel}
                     imageCache={imageCache}
+                    orientation="axial"
                     hideToolbar
                     hideSidebar
                     compactMode
-                    // Fusion props - only enable when fusion manifest is ready
                     secondarySeriesId={showFusion && !fusionManifestLoading && !fusionManifestError ? fuseboxData.secondarySeriesId : null}
                     fusionOpacity={fusionOpacity}
                     fusionDisplayMode="overlay"
                     hasSecondarySeriesForFusion={showFusion && !fusionManifestLoading && !fusionManifestError}
                     fusionWindowLevel={secondaryWindowLevel}
-                    // Fusion manifest status props - required for fusion rendering
                     fusionSecondaryStatuses={fusionSecondaryStatuses}
                     fusionManifestLoading={fusionManifestLoading}
                     fusionManifestPrimarySeriesId={fuseboxData.primarySeriesId}
-                    // Sync props
+                    fusionTranslation={currentTransform.translation}
                     externalSliceIndex={isLinked ? syncedSliceIndex : undefined}
                     onSliceIndexChange={isLinked ? setSyncedSliceIndex : undefined}
                     externalZoom={isLinked ? syncedZoom : undefined}
@@ -818,10 +956,97 @@ function FuseBoxContent() {
                     onPanChange={isLinked ? (x, y) => setSyncedPan({ x, y }) : undefined}
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-1 pointer-events-none">
-                  <span className="text-[9px] font-medium text-purple-400">With Fusion Overlay</span>
+                <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-0.5 pointer-events-none">
+                  <span className="text-[9px] font-medium text-purple-400">Axial • Fusion</span>
                 </div>
               </div>
+              
+              {/* Primary Coronal viewport (only in 4-up mode) - using MPRFloating */}
+              {viewLayout === '4up' && (
+                <div className="relative rounded-xl overflow-hidden border-2 border-cyan-500/30 bg-black flex flex-col">
+                  <div className="absolute top-2 left-2 z-10">
+                    <Badge className="bg-cyan-600/80 text-white border-cyan-400/50 text-[10px] font-semibold">
+                      {fuseboxData.primaryModality} • Coronal
+                    </Badge>
+                  </div>
+                  <div className="flex-1 min-h-0 flex items-center justify-center">
+                    {primaryImages.length > 0 ? (
+                      <MPRFloating
+                        images={primaryImages}
+                        orientation="coronal"
+                        sliceIndex={Math.max(0, Math.min(crosshairPos.y, (primaryImages[0]?.rows || 512) - 1))}
+                        windowWidth={primaryWindowLevel.window}
+                        windowCenter={primaryWindowLevel.level}
+                        crosshairPos={crosshairPos}
+                        currentZIndex={syncedSliceIndex}
+                      />
+                    ) : (
+                      <div className="text-gray-500 text-sm">Loading...</div>
+                    )}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-0.5 pointer-events-none">
+                    <span className="text-[9px] font-medium text-cyan-400">Coronal • Primary</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Fusion Coronal viewport (only in 4-up mode) - using MPRFloating */}
+              {viewLayout === '4up' && (
+                <div className="relative rounded-xl overflow-hidden border-2 border-purple-500/30 bg-black flex flex-col">
+                  <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+                    <Badge className={cn(
+                      "text-[10px] font-semibold",
+                      primaryColor === 'cyan' ? 'bg-cyan-600/80 text-white border-cyan-400/50' :
+                      primaryColor === 'purple' ? 'bg-purple-600/80 text-white border-purple-400/50' :
+                      primaryColor === 'amber' ? 'bg-amber-600/80 text-white border-amber-400/50' :
+                      'bg-gray-600/80 text-white border-gray-400/50'
+                    )}>
+                      Coronal
+                    </Badge>
+                    {showFusion && (
+                      <>
+                        <span className="text-gray-500">+</span>
+                        <Badge className={cn(
+                          "text-[9px] font-semibold",
+                          secondaryColor === 'cyan' ? 'bg-cyan-600/60 text-white border-cyan-400/50' :
+                          secondaryColor === 'purple' ? 'bg-purple-600/60 text-white border-purple-400/50' :
+                          secondaryColor === 'amber' ? 'bg-amber-600/60 text-white border-amber-400/50' :
+                          'bg-gray-600/60 text-white border-gray-400/50'
+                        )}>
+                          {fuseboxData.secondaryModality}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1 min-h-0 flex items-center justify-center">
+                    {primaryImages.length > 0 ? (
+                      <MPRFloating
+                        images={primaryImages}
+                        orientation="coronal"
+                        sliceIndex={Math.max(0, Math.min(crosshairPos.y, (primaryImages[0]?.rows || 512) - 1))}
+                        windowWidth={primaryWindowLevel.window}
+                        windowCenter={primaryWindowLevel.level}
+                        crosshairPos={crosshairPos}
+                        currentZIndex={syncedSliceIndex}
+                      />
+                    ) : (
+                      <div className="text-gray-500 text-sm">Loading...</div>
+                    )}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-0.5 pointer-events-none">
+                    <span className="text-[9px] font-medium text-purple-400">Coronal • Fusion</span>
+                  </div>
+                  {/* Note: MPRFloating shows primary-only reconstruction. 
+                      Fusion overlay on coronal would require server-side coronal reconstruction of both series */}
+                  {showFusion && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <Badge className="bg-amber-500/30 border-amber-400/50 text-amber-200 text-[8px]">
+                        Primary view only
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           

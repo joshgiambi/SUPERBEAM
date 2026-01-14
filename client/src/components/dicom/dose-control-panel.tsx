@@ -554,8 +554,9 @@ export function DoseControlPanel({
                   params.set('prescriptionDose', prescriptionDose.toString());
                   params.set('doseUnit', doseUnit);
                   
-                  const width = 950;
-                  const height = 700;
+                  // Default to 80% of screen size for large statistics tables
+                  const width = Math.min(1400, Math.floor(window.screen.width * 0.8));
+                  const height = Math.min(900, Math.floor(window.screen.height * 0.85));
                   const left = (window.screen.width - width) / 2;
                   const top = (window.screen.height - height) / 2;
                   

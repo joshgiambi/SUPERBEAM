@@ -223,6 +223,10 @@ interface WorkingViewerProps {
   doseColormap?: 'rainbow' | 'hot' | 'jet' | 'cool' | 'dosimetry' | 'grayscale';
   showIsodose?: boolean;
   prescriptionDose?: number;
+  
+  // FuseBox translation offset for manual registration adjustment
+  // Applied as additional offset to the fusion overlay rendering
+  fusionTranslation?: { x: number; y: number; z: number };
 }
 
 // Expose sidebar ref globally for fusion panel placement
@@ -291,6 +295,7 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
     doseColormap = 'rainbow',
     showIsodose = false,
     prescriptionDose = 60,
+    fusionTranslation,
   } = props;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -657,6 +662,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       overlaySource: HTMLCanvasElement | null,
       transform: { scale: number; offsetX: number; offsetY: number; imageWidth: number; imageHeight: number } | null,
       hasSignal: boolean,
+      translationOffset?: { x: number; y: number; z: number },
     ) => {
       const overlayCanvas = fusionOverlayCanvasRef.current;
       const baseCanvas = canvasRef.current;
@@ -681,6 +687,12 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
+      // Apply FuseBox translation offset if provided (for manual registration adjustment)
+      // Translation is in mm, convert to pixels using scale
+      // Positive X moves the overlay to the right, positive Y moves down
+      const translationX = translationOffset?.x ? translationOffset.x * transform.scale : 0;
+      const translationY = translationOffset?.y ? translationOffset.y * transform.scale : 0;
+      
       // Draw overlay using same position and size as primary image
       // This guarantees pixel-perfect alignment
       ctx.drawImage(
@@ -689,8 +701,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         0,
         overlaySource.width,
         overlaySource.height,
-        transform.offsetX,
-        transform.offsetY,
+        transform.offsetX + translationX,
+        transform.offsetY + translationY,
         targetWidth,
         targetHeight,
       );
@@ -1170,6 +1182,15 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     overlay.style.opacity = `${clamped}`;
     overlay.style.visibility = clamped === 0 ? 'hidden' : 'visible';
   }, [fusionOpacity]);
+
+  // Re-render fusion overlay when fusionTranslation changes (for FuseBox manual registration)
+  useEffect(() => {
+    if (!secondarySeriesId || !fusionTranslation) return;
+    // Trigger re-render of the current image to apply new translation
+    if (displayCurrentImageRef.current && images.length > 0) {
+      displayCurrentImageRef.current();
+    }
+  }, [fusionTranslation, secondarySeriesId, images.length]);
 
   // Dose overlay opacity effect
   useEffect(() => {
@@ -6962,7 +6983,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     setFuseboxTransformSource(source);
     fusionIssueRef.current = null;
 
-    updateFusionOverlayCanvas(cached.canvas, transform, cached.hasSignal);
+    updateFusionOverlayCanvas(cached.canvas, transform, cached.hasSignal, fusionTranslation);
     prefetchFusionSlices(currentIndex);
   };
 

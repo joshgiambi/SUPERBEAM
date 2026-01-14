@@ -5,7 +5,7 @@
  * Opens in a popup window from the Dose Control Panel.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,8 @@ import {
   Copy,
   RefreshCw,
   Loader2,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 
 // ============================================================================
@@ -69,9 +70,9 @@ interface StructureDisplay {
 // Constants
 // ============================================================================
 
-const DVH_CHART_WIDTH = 520;
-const DVH_CHART_HEIGHT = 280;
-const DVH_PADDING = { top: 20, right: 20, bottom: 40, left: 50 };
+const DVH_PADDING = { top: 20, right: 20, bottom: 40, left: 55 };
+const MIN_CHART_WIDTH = 500;
+const MIN_CHART_HEIGHT = 300;
 
 // ============================================================================
 // Component
@@ -98,10 +99,39 @@ export default function DVHViewerPage() {
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number; dose: number; volume: number } | null>(null);
   const [dxxQuery, setDxxQuery] = useState('93');
   const [vxxQuery, setVxxQuery] = useState('100');
+  const [statsSearchQuery, setStatsSearchQuery] = useState('');
+
+  // Responsive chart dimensions
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartDimensions, setChartDimensions] = useState({ width: 700, height: 400 });
+
+  // Update chart dimensions on window resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (chartContainerRef.current) {
+        const rect = chartContainerRef.current.getBoundingClientRect();
+        setChartDimensions({
+          width: Math.max(MIN_CHART_WIDTH, rect.width - 8),
+          height: Math.max(MIN_CHART_HEIGHT, Math.min(500, window.innerHeight * 0.45))
+        });
+      }
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    // Also update after a short delay to ensure container is rendered
+    const timer = setTimeout(updateDimensions, 100);
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Chart dimensions
-  const plotWidth = DVH_CHART_WIDTH - DVH_PADDING.left - DVH_PADDING.right;
-  const plotHeight = DVH_CHART_HEIGHT - DVH_PADDING.top - DVH_PADDING.bottom;
+  const plotWidth = chartDimensions.width - DVH_PADDING.left - DVH_PADDING.right;
+  const plotHeight = chartDimensions.height - DVH_PADDING.top - DVH_PADDING.bottom;
 
   // Calculate max dose for chart
   const maxDoseForChart = useMemo(() => {
@@ -134,7 +164,7 @@ export default function DVHViewerPage() {
     return Math.max(0, Math.min(100, (1 - (py - DVH_PADDING.top) / plotHeight) * 100));
   }, [plotHeight]);
 
-  // Fetch DVH data
+  // Fetch DVH data from server (cached after first calculation)
   const fetchDVH = useCallback(async () => {
     if (!doseSeriesId) return;
     
@@ -154,14 +184,14 @@ export default function DVHViewerPage() {
       
       const data: DVHData = await response.json();
       
-      // Convert to display format with selection state
-      const displayStructures: StructureDisplay[] = data.curves.map(curve => ({
+      // Convert to display format
+      const displayStructures: StructureDisplay[] = data.curves.map((curve, idx) => ({
         roiNumber: curve.roiNumber,
         roiName: curve.roiName,
         color: curve.color,
         volumeCc: curve.volumeCc,
         statistics: curve.statistics,
-        selected: true, // Select all by default
+        selected: idx < 7, // Select first 7 by default
         points: curve.points,
       }));
       
@@ -261,8 +291,8 @@ export default function DVHViewerPage() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    if (x >= DVH_PADDING.left && x <= DVH_CHART_WIDTH - DVH_PADDING.right &&
-        y >= DVH_PADDING.top && y <= DVH_CHART_HEIGHT - DVH_PADDING.bottom) {
+    if (x >= DVH_PADDING.left && x <= chartDimensions.width - DVH_PADDING.right &&
+        y >= DVH_PADDING.top && y <= chartDimensions.height - DVH_PADDING.bottom) {
       setCursorPosition({
         x,
         y,
@@ -310,10 +340,10 @@ export default function DVHViewerPage() {
   }, [doseSeriesId]);
 
   return (
-    <div className="min-h-screen bg-[#0a0e14] p-6">
-      <Card className="w-[900px] mx-auto bg-[#0d1117]/95 backdrop-blur-xl border border-white/10 rounded-xl">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+    <div className="h-screen w-screen bg-[#0a0e14] p-3 flex flex-col overflow-hidden">
+      <Card className="flex-1 flex flex-col bg-[#0d1117]/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+        <CardHeader className="pb-2 flex-shrink-0">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-green-400" />
               <CardTitle className="text-base font-semibold text-white">Dose Volume Histogram</CardTitle>
@@ -356,9 +386,9 @@ export default function DVHViewerPage() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden p-3 pt-0">
           {loading && (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex-1 flex items-center justify-center">
               <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
               <span className="ml-2 text-gray-400">Loading DVH data...</span>
             </div>
@@ -371,30 +401,76 @@ export default function DVHViewerPage() {
           )}
 
           {!loading && !error && (
-            <div className="flex gap-4">
-              {/* Structure List */}
-              <div className="w-[180px] space-y-2">
-                <div className="text-xs text-gray-400 font-medium mb-2">Structures</div>
-                <div className="space-y-1 max-h-[280px] overflow-y-auto pr-1">
-                  {structures.map((struct) => (
-                    <button
-                      key={struct.roiNumber}
-                      onClick={() => toggleStructure(struct.roiNumber)}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all",
-                        struct.selected
-                          ? "bg-gray-800/80 border border-gray-600"
-                          : "bg-gray-800/30 border border-transparent hover:bg-gray-800/50"
-                      )}
-                    >
-                      <div
-                        className="w-3 h-3 rounded-sm flex-shrink-0"
-                        style={{ backgroundColor: struct.color }}
-                      />
-                      <span className="text-xs text-white truncate flex-1">{struct.roiName}</span>
-                      {struct.selected && <Check className="w-3 h-3 text-green-400" />}
-                    </button>
-                  ))}
+            <div className="flex-1 flex gap-3 min-h-0">
+              {/* LEFT SIDEBAR - Structure List (spans full height) */}
+              <div className="w-[200px] flex-shrink-0 flex flex-col border-r border-gray-700/30 pr-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-400 font-medium">
+                    Structures ({selectedStructures.length}/{structures.length})
+                  </div>
+                  <button
+                    onClick={() => {
+                      const allSelected = structures.every(s => s.selected);
+                      setStructures(structures.map(s => ({ ...s, selected: !allSelected })));
+                    }}
+                    className="text-[10px] text-green-400 hover:text-green-300"
+                  >
+                    {structures.every(s => s.selected) ? 'None' : 'All'}
+                  </button>
+                </div>
+                
+                {/* Structure Search */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Search..."
+                    value={statsSearchQuery}
+                    onChange={(e) => setStatsSearchQuery(e.target.value)}
+                    className="h-7 pl-7 text-xs bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
+                  />
+                </div>
+                
+                {/* Structure List */}
+                <div className="flex-1 space-y-px overflow-y-auto pr-1 min-h-0">
+                  {structures
+                    .filter(s => !statsSearchQuery || s.roiName.toLowerCase().includes(statsSearchQuery.toLowerCase()))
+                    .map((struct) => (
+                      <button
+                        key={struct.roiNumber}
+                        onClick={() => toggleStructure(struct.roiNumber)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left transition-all group",
+                          struct.selected
+                            ? "bg-white/5"
+                            : "hover:bg-white/[0.03]"
+                        )}
+                      >
+                        {/* Checkbox */}
+                        <div
+                          className={cn(
+                            "w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all",
+                            struct.selected
+                              ? "border-green-500 bg-green-500/20"
+                              : "border-gray-600 group-hover:border-gray-500"
+                          )}
+                        >
+                          {struct.selected && <Check className="w-2.5 h-2.5 text-green-400" />}
+                        </div>
+                        {/* Color swatch */}
+                        <div
+                          className="w-3 h-3 rounded-sm flex-shrink-0 ring-1 ring-white/10"
+                          style={{ backgroundColor: struct.color }}
+                        />
+                        {/* Name */}
+                        <span className={cn(
+                          "text-[11px] truncate flex-1 transition-colors",
+                          struct.selected ? "text-white" : "text-gray-400 group-hover:text-gray-300"
+                        )}>
+                          {struct.roiName}
+                        </span>
+                      </button>
+                    ))}
                   {structures.length === 0 && !loading && (
                     <div className="text-xs text-gray-500 py-4 text-center">
                       No structures found
@@ -403,40 +479,42 @@ export default function DVHViewerPage() {
                 </div>
                 
                 {/* Query Values */}
-                <div className="pt-2 border-t border-gray-700/50 space-y-2">
-                  <div className="text-[10px] text-gray-500 font-medium">Query Values</div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-cyan-400 w-6">D</span>
-                    <Input
-                      type="number"
-                      value={dxxQuery}
-                      onChange={(e) => setDxxQuery(e.target.value)}
-                      className="h-6 w-14 text-xs bg-gray-800/50 border-gray-700 px-1 text-white"
-                      min={0}
-                      max={100}
-                    />
-                    <span className="text-[10px] text-gray-500">%</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-purple-400 w-6">V</span>
-                    <Input
-                      type="number"
-                      value={vxxQuery}
-                      onChange={(e) => setVxxQuery(e.target.value)}
-                      className="h-6 w-14 text-xs bg-gray-800/50 border-gray-700 px-1 text-white"
-                      min={0}
-                      max={200}
-                    />
-                    <span className="text-[10px] text-gray-500">%</span>
+                <div className="pt-3 mt-2 border-t border-gray-700/50 space-y-2 flex-shrink-0">
+                  <div className="text-[10px] text-gray-500 font-medium">DVH Query Values</div>
+                  <div className="flex gap-3">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-cyan-400 font-medium">D</span>
+                      <Input
+                        type="number"
+                        value={dxxQuery}
+                        onChange={(e) => setDxxQuery(e.target.value)}
+                        className="h-6 w-12 text-xs bg-gray-800/50 border-gray-700 px-1 text-white text-center"
+                        min={0}
+                        max={100}
+                      />
+                      <span className="text-[10px] text-gray-500">%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-purple-400 font-medium">V</span>
+                      <Input
+                        type="number"
+                        value={vxxQuery}
+                        onChange={(e) => setVxxQuery(e.target.value)}
+                        className="h-6 w-12 text-xs bg-gray-800/50 border-gray-700 px-1 text-white text-center"
+                        min={0}
+                        max={200}
+                      />
+                      <span className="text-[10px] text-gray-500">%</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* DVH Chart Area */}
-              <div className="flex-1 space-y-2">
+              {/* RIGHT MAIN AREA - Chart + Statistics */}
+              <div className="flex-1 flex flex-col gap-3 min-w-0 min-h-0">
                 {/* Chart Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 p-0.5 bg-gray-800/50 rounded-lg">
                       <button
                         onClick={() => setViewMode('cumulative')}
@@ -533,10 +611,13 @@ export default function DVHViewerPage() {
                 </div>
 
                 {/* SVG Chart */}
-                <div className="relative bg-gray-900/50 rounded-lg border border-gray-700/50">
+                <div 
+                  ref={chartContainerRef}
+                  className="relative flex-1 bg-gray-900/50 rounded-lg border border-gray-700/50 overflow-hidden min-h-[300px]"
+                >
                   <svg 
-                    width={DVH_CHART_WIDTH} 
-                    height={DVH_CHART_HEIGHT}
+                    width={chartDimensions.width} 
+                    height={chartDimensions.height}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={() => setCursorPosition(null)}
                     className="cursor-crosshair"
@@ -559,7 +640,7 @@ export default function DVHViewerPage() {
                             key={`h-${v}`}
                             x1={DVH_PADDING.left}
                             y1={scaleY(v)}
-                            x2={DVH_CHART_WIDTH - DVH_PADDING.right}
+                            x2={chartDimensions.width - DVH_PADDING.right}
                             y2={scaleY(v)}
                             stroke="#374151"
                             strokeWidth="1"
@@ -573,7 +654,7 @@ export default function DVHViewerPage() {
                             x1={scaleX(v)}
                             y1={DVH_PADDING.top}
                             x2={scaleX(v)}
-                            y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                            y2={chartDimensions.height - DVH_PADDING.bottom}
                             stroke="#374151"
                             strokeWidth="1"
                             strokeDasharray="3,3"
@@ -587,7 +668,7 @@ export default function DVHViewerPage() {
                       x1={scaleX(xAxisUnit === 'percent' ? 100 : prescriptionDose)}
                       y1={DVH_PADDING.top}
                       x2={scaleX(xAxisUnit === 'percent' ? 100 : prescriptionDose)}
-                      y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                      y2={chartDimensions.height - DVH_PADDING.bottom}
                       stroke="#f97316"
                       strokeWidth="1.5"
                       strokeDasharray="5,3"
@@ -617,9 +698,9 @@ export default function DVHViewerPage() {
                     {/* X-Axis */}
                     <line
                       x1={DVH_PADDING.left}
-                      y1={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
-                      x2={DVH_CHART_WIDTH - DVH_PADDING.right}
-                      y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                      y1={chartDimensions.height - DVH_PADDING.bottom}
+                      x2={chartDimensions.width - DVH_PADDING.right}
+                      y2={chartDimensions.height - DVH_PADDING.bottom}
                       stroke="#6b7280"
                       strokeWidth="1"
                     />
@@ -627,15 +708,15 @@ export default function DVHViewerPage() {
                       <g key={`xt-${v}`}>
                         <line
                           x1={scaleX(v)}
-                          y1={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                          y1={chartDimensions.height - DVH_PADDING.bottom}
                           x2={scaleX(v)}
-                          y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom + 4}
+                          y2={chartDimensions.height - DVH_PADDING.bottom + 4}
                           stroke="#6b7280"
                           strokeWidth="1"
                         />
                         <text
                           x={scaleX(v)}
-                          y={DVH_CHART_HEIGHT - DVH_PADDING.bottom + 14}
+                          y={chartDimensions.height - DVH_PADDING.bottom + 14}
                           fill="#9ca3af"
                           fontSize="10"
                           textAnchor="middle"
@@ -645,8 +726,8 @@ export default function DVHViewerPage() {
                       </g>
                     ))}
                     <text
-                      x={DVH_CHART_WIDTH / 2}
-                      y={DVH_CHART_HEIGHT - 5}
+                      x={chartDimensions.width / 2}
+                      y={chartDimensions.height - 5}
                       fill="#9ca3af"
                       fontSize="11"
                       textAnchor="middle"
@@ -659,7 +740,7 @@ export default function DVHViewerPage() {
                       x1={DVH_PADDING.left}
                       y1={DVH_PADDING.top}
                       x2={DVH_PADDING.left}
-                      y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                      y2={chartDimensions.height - DVH_PADDING.bottom}
                       stroke="#6b7280"
                       strokeWidth="1"
                     />
@@ -686,11 +767,11 @@ export default function DVHViewerPage() {
                     ))}
                     <text
                       x={12}
-                      y={DVH_CHART_HEIGHT / 2}
+                      y={chartDimensions.height / 2}
                       fill="#9ca3af"
                       fontSize="11"
                       textAnchor="middle"
-                      transform={`rotate(-90, 12, ${DVH_CHART_HEIGHT / 2})`}
+                      transform={`rotate(-90, 12, ${chartDimensions.height / 2})`}
                     >
                       Volume ({yAxisUnit === 'percent' ? '%' : 'cc'})
                     </text>
@@ -702,7 +783,7 @@ export default function DVHViewerPage() {
                           x1={cursorPosition.x}
                           y1={DVH_PADDING.top}
                           x2={cursorPosition.x}
-                          y2={DVH_CHART_HEIGHT - DVH_PADDING.bottom}
+                          y2={chartDimensions.height - DVH_PADDING.bottom}
                           stroke="#22d3ee"
                           strokeWidth="1"
                           strokeDasharray="3,2"
@@ -710,7 +791,7 @@ export default function DVHViewerPage() {
                         <line
                           x1={DVH_PADDING.left}
                           y1={cursorPosition.y}
-                          x2={DVH_CHART_WIDTH - DVH_PADDING.right}
+                          x2={chartDimensions.width - DVH_PADDING.right}
                           y2={cursorPosition.y}
                           stroke="#22d3ee"
                           strokeWidth="1"
@@ -746,7 +827,7 @@ export default function DVHViewerPage() {
 
                     {/* Legend */}
                     {showLegend && selectedStructures.length > 0 && (
-                      <g transform={`translate(${DVH_CHART_WIDTH - DVH_PADDING.right - 90}, ${DVH_PADDING.top + 5})`}>
+                      <g transform={`translate(${chartDimensions.width - DVH_PADDING.right - 90}, ${DVH_PADDING.top + 5})`}>
                         <rect
                           x="0"
                           y="0"
@@ -781,59 +862,65 @@ export default function DVHViewerPage() {
                     )}
                   </svg>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Statistics Table */}
-          {selectedStructures.length > 0 && (
-            <div className="border-t border-gray-700/50 pt-4">
-              <div className="text-xs text-gray-400 font-medium mb-2">Statistics</div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-500 border-b border-gray-700/50">
-                      <th className="text-left py-1.5 px-2">Structure</th>
-                      <th className="text-left py-1.5 px-2">Vol (cc)</th>
-                      <th className="text-left py-1.5 px-2">Min</th>
-                      <th className="text-left py-1.5 px-2">Max</th>
-                      <th className="text-left py-1.5 px-2">Mean</th>
-                      <th className="text-left py-1.5 px-2 text-cyan-400">D{dxxQuery}</th>
-                      <th className="text-left py-1.5 px-2">D50</th>
-                      <th className="text-left py-1.5 px-2 text-purple-400">V{vxxQuery}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedStructures.map((struct) => {
-                      const dxx = getDxxValue(struct, parseFloat(dxxQuery));
-                      const vxx = getVxxValue(struct, parseFloat(vxxQuery));
-                      return (
-                        <tr key={struct.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                          <td className="py-1.5 px-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-2.5 h-2.5 rounded-sm"
-                                style={{ backgroundColor: struct.color }}
-                              />
-                              <span className="text-white">{struct.roiName}</span>
-                            </div>
-                          </td>
-                          <td className="py-1.5 px-2 text-gray-400">{struct.volumeCc.toFixed(1)}</td>
-                          <td className="py-1.5 px-2 text-gray-400">{struct.statistics.min.toFixed(1)}</td>
-                          <td className="py-1.5 px-2 text-gray-400">{struct.statistics.max.toFixed(1)}</td>
-                          <td className="py-1.5 px-2 text-gray-400">{struct.statistics.mean.toFixed(1)}</td>
-                          <td className="py-1.5 px-2 text-cyan-400 font-medium">
-                            {dxx.toFixed(1)} Gy
-                          </td>
-                          <td className="py-1.5 px-2 text-gray-400">{struct.statistics.d50.toFixed(1)}</td>
-                          <td className="py-1.5 px-2 text-purple-400 font-medium">
-                            {vxx.toFixed(1)}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {/* Statistics Table - Below chart, uses remaining vertical space */}
+                {selectedStructures.length > 0 && (
+                  <div className="flex-1 flex flex-col min-h-[150px] border-t border-gray-700/50 pt-2">
+                    <div className="text-xs text-gray-400 font-medium mb-1">
+                      Statistics ({selectedStructures.filter(s => 
+                        !statsSearchQuery || s.roiName.toLowerCase().includes(statsSearchQuery.toLowerCase())
+                      ).length} structures)
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full text-xs">
+                        <thead className="sticky top-0 bg-[#0d1117]">
+                          <tr className="text-gray-500 border-b border-gray-700/50">
+                            <th className="text-left py-1.5 px-2 font-medium">Structure</th>
+                            <th className="text-right py-1.5 px-2 font-medium">Vol (cc)</th>
+                            <th className="text-right py-1.5 px-2 font-medium">Min</th>
+                            <th className="text-right py-1.5 px-2 font-medium">Max</th>
+                            <th className="text-right py-1.5 px-2 font-medium">Mean</th>
+                            <th className="text-right py-1.5 px-2 font-medium text-cyan-400">D{dxxQuery}</th>
+                            <th className="text-right py-1.5 px-2 font-medium">D50</th>
+                            <th className="text-right py-1.5 px-2 font-medium text-purple-400">V{vxxQuery}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedStructures
+                            .filter(struct => !statsSearchQuery || struct.roiName.toLowerCase().includes(statsSearchQuery.toLowerCase()))
+                            .map((struct) => {
+                              const dxx = getDxxValue(struct, parseFloat(dxxQuery));
+                              const vxx = getVxxValue(struct, parseFloat(vxxQuery));
+                              return (
+                                <tr key={struct.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                                  <td className="py-1 px-2">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                        style={{ backgroundColor: struct.color }}
+                                      />
+                                      <span className="text-white truncate">{struct.roiName}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.volumeCc.toFixed(1)}</td>
+                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.min.toFixed(1)}</td>
+                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.max.toFixed(1)}</td>
+                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.mean.toFixed(1)}</td>
+                                  <td className="py-1 px-2 text-right text-cyan-400 font-medium tabular-nums">
+                                    {dxx.toFixed(1)}
+                                  </td>
+                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.d50.toFixed(1)}</td>
+                                  <td className="py-1 px-2 text-right text-purple-400 font-medium tabular-nums">
+                                    {vxx.toFixed(1)}%
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
