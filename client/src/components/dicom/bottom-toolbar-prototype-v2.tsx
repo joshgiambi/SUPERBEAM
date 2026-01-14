@@ -32,7 +32,9 @@ import {
   Undo,
   Redo,
   History,
-  X
+  X,
+  Box,
+  Settings2,
 } from 'lucide-react';
 
 interface BottomToolbarPrototypeV2Props {
@@ -73,6 +75,9 @@ interface BottomToolbarPrototypeV2Props {
   onExitFusionLayout?: () => void;
   // Positioning props - offset to center relative to viewer area (accounting for sidebar)
   viewerOffsetLeft?: number;     // Left offset in pixels (e.g., sidebar width)
+  // FuseBox props - appears when fusion is active
+  hasFusionActive?: boolean;     // Is a fusion secondary currently loaded/displayed?
+  onFuseBoxOpen?: () => void;    // Open the FuseBox popup for fusion editing
 }
 
 export function BottomToolbarPrototypeV2({
@@ -112,6 +117,9 @@ export function BottomToolbarPrototypeV2({
   onExitFusionLayout,
   // Positioning - offset to center relative to viewer (accounts for sidebar)
   viewerOffsetLeft = 0,
+  // FuseBox props
+  hasFusionActive = false,
+  onFuseBoxOpen,
 }: BottomToolbarPrototypeV2Props) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -146,6 +154,11 @@ export function BottomToolbarPrototypeV2({
       viewModeTools.push({ id: 'fusion', icon: Layers, label: 'Fusion Panel', selectable: true, group: 'viewmode' });
     }
     
+    // Show FuseBox button when fusion is actively loaded (secondary is displayed)
+    if (hasFusionActive) {
+      viewModeTools.push({ id: 'fusebox', icon: Box, label: 'FuseBox', group: 'viewmode', highlight: true });
+    }
+    
     
     // Structure tools - only when RT structures are loaded
     const structureTools = [];
@@ -157,7 +170,7 @@ export function BottomToolbarPrototypeV2({
     // Info tools are now in a separate right subpanel, so removed from main array
     
     return [...baseTools, ...viewModeTools, ...structureTools];
-  }, [viewMode, hasSecondaries, hasRTStructures]);
+  }, [viewMode, hasSecondaries, hasRTStructures, hasFusionActive]);
 
   const handleToolClick = (toolId: string) => {
     const tool = tools.find(t => t.id === toolId);
@@ -193,6 +206,9 @@ export function BottomToolbarPrototypeV2({
         break;
       case 'localization':
         onLocalization?.();
+        break;
+      case 'fusebox':
+        onFuseBoxOpen?.();
         break;
     }
   };
@@ -400,6 +416,10 @@ export function BottomToolbarPrototypeV2({
 
                 // Determine active color scheme based on tool type
                 const getActiveStyles = () => {
+                  // FuseBox button - always highlighted when visible (indicates fusion is active)
+                  if (tool.id === 'fusebox') {
+                    return 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-200 ring-1 ring-cyan-500/50 hover:from-cyan-500/40 hover:to-purple-500/40 shadow-lg shadow-cyan-500/20';
+                  }
                   if (tool.id === 'mpr' && isActive) {
                     return 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40';
                   }

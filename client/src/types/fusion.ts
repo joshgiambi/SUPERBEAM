@@ -95,3 +95,19 @@ export interface FusionManifest {
   };
   secondaries: FusionSecondaryDescriptor[];
 }
+
+/**
+ * Registration option for selecting between multiple registrations
+ * for the same secondary series
+ */
+export interface RegistrationOption {
+  id: string | null;
+  label: string;
+  relationship: RegistrationAssociation['relationship'];
+  regFile: string | null;
+  matrix: number[] | null;
+  association: RegistrationAssociation;
+  candidate?: RegistrationTransformCandidate | null;
+  sourceDetail: RegistrationSeriesDetail | null;
+  targetDetail: RegistrationSeriesDetail | null;
+}

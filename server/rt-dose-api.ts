@@ -191,24 +191,33 @@ function extractDoseMetadata(
     if (pixelElement) {
       const { dataOffset, length } = pixelElement;
       const pixelCount = rows * columns * numberOfFrames;
+      const absoluteOffset = byteArray.byteOffset + dataOffset;
       
       if (bitsAllocated === 32) {
-        const pixelData = new Uint32Array(
-          byteArray.buffer,
-          byteArray.byteOffset + dataOffset,
-          length / 4
-        );
+        // Handle alignment - Uint32Array requires 4-byte alignment
+        let pixelData: Uint32Array;
+        if (absoluteOffset % 4 === 0) {
+          pixelData = new Uint32Array(byteArray.buffer, absoluteOffset, length / 4);
+        } else {
+          // Copy to aligned buffer
+          const slice = byteArray.slice(dataOffset, dataOffset + length);
+          pixelData = new Uint32Array(slice.buffer);
+        }
         for (let i = 0; i < pixelData.length && i < pixelCount; i++) {
           const dose = pixelData[i] * doseGridScaling;
           if (dose < minDose) minDose = dose;
           if (dose > maxDose) maxDose = dose;
         }
       } else if (bitsAllocated === 16) {
-        const pixelData = new Uint16Array(
-          byteArray.buffer,
-          byteArray.byteOffset + dataOffset,
-          length / 2
-        );
+        // Handle alignment - Uint16Array requires 2-byte alignment
+        let pixelData: Uint16Array;
+        if (absoluteOffset % 2 === 0) {
+          pixelData = new Uint16Array(byteArray.buffer, absoluteOffset, length / 2);
+        } else {
+          // Copy to aligned buffer
+          const slice = byteArray.slice(dataOffset, dataOffset + length);
+          pixelData = new Uint16Array(slice.buffer);
+        }
         for (let i = 0; i < pixelData.length && i < pixelCount; i++) {
           const dose = pixelData[i] * doseGridScaling;
           if (dose < minDose) minDose = dose;
@@ -291,11 +300,17 @@ function extractDoseFrame(
 
     if (metadata.bitsAllocated === 32) {
       const frameOffset = dataOffset + (frameIndex * frameSize * 4);
-      const pixelData = new Uint32Array(
-        byteArray.buffer,
-        byteArray.byteOffset + frameOffset,
-        frameSize
-      );
+      const absoluteOffset = byteArray.byteOffset + frameOffset;
+      
+      // Handle alignment - Uint32Array requires 4-byte alignment
+      let pixelData: Uint32Array;
+      if (absoluteOffset % 4 === 0) {
+        pixelData = new Uint32Array(byteArray.buffer, absoluteOffset, frameSize);
+      } else {
+        // Copy to aligned buffer
+        const slice = byteArray.slice(frameOffset, frameOffset + frameSize * 4);
+        pixelData = new Uint32Array(slice.buffer);
+      }
       
       for (let i = 0; i < frameSize; i++) {
         const dose = pixelData[i] * metadata.doseGridScaling;
@@ -305,11 +320,17 @@ function extractDoseFrame(
       }
     } else if (metadata.bitsAllocated === 16) {
       const frameOffset = dataOffset + (frameIndex * frameSize * 2);
-      const pixelData = new Uint16Array(
-        byteArray.buffer,
-        byteArray.byteOffset + frameOffset,
-        frameSize
-      );
+      const absoluteOffset = byteArray.byteOffset + frameOffset;
+      
+      // Handle alignment - Uint16Array requires 2-byte alignment
+      let pixelData: Uint16Array;
+      if (absoluteOffset % 2 === 0) {
+        pixelData = new Uint16Array(byteArray.buffer, absoluteOffset, frameSize);
+      } else {
+        // Copy to aligned buffer
+        const slice = byteArray.slice(frameOffset, frameOffset + frameSize * 2);
+        pixelData = new Uint16Array(slice.buffer);
+      }
       
       for (let i = 0; i < frameSize; i++) {
         const dose = pixelData[i] * metadata.doseGridScaling;
@@ -437,24 +458,33 @@ router.get('/:seriesId/summary', async (req: Request, res: Response, next: NextF
     if (pixelElement) {
       const { dataOffset, length } = pixelElement;
       const totalPixels = metadata.rows * metadata.columns * metadata.numberOfFrames;
+      const absoluteOffset = result.byteArray.byteOffset + dataOffset;
       
       if (metadata.bitsAllocated === 32) {
-        const pixelData = new Uint32Array(
-          result.byteArray.buffer,
-          result.byteArray.byteOffset + dataOffset,
-          length / 4
-        );
+        // Handle alignment - Uint32Array requires 4-byte alignment
+        let pixelData: Uint32Array;
+        if (absoluteOffset % 4 === 0) {
+          pixelData = new Uint32Array(result.byteArray.buffer, absoluteOffset, length / 4);
+        } else {
+          // Copy to aligned buffer
+          const slice = result.byteArray.slice(dataOffset, dataOffset + length);
+          pixelData = new Uint32Array(slice.buffer);
+        }
         for (let i = 0; i < pixelData.length && i < totalPixels; i++) {
           const dose = pixelData[i] * metadata.doseGridScaling;
           const bin = Math.min(numBins - 1, Math.floor(dose / binWidth));
           if (bin >= 0) histogram[bin]++;
         }
       } else if (metadata.bitsAllocated === 16) {
-        const pixelData = new Uint16Array(
-          result.byteArray.buffer,
-          result.byteArray.byteOffset + dataOffset,
-          length / 2
-        );
+        // Handle alignment - Uint16Array requires 2-byte alignment
+        let pixelData: Uint16Array;
+        if (absoluteOffset % 2 === 0) {
+          pixelData = new Uint16Array(result.byteArray.buffer, absoluteOffset, length / 2);
+        } else {
+          // Copy to aligned buffer
+          const slice = result.byteArray.slice(dataOffset, dataOffset + length);
+          pixelData = new Uint16Array(slice.buffer);
+        }
         for (let i = 0; i < pixelData.length && i < totalPixels; i++) {
           const dose = pixelData[i] * metadata.doseGridScaling;
           const bin = Math.min(numBins - 1, Math.floor(dose / binWidth));

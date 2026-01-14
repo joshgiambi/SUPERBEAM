@@ -47,3 +47,6 @@ dist/
 
 # OHIF Reference Codebase (for agent reference only - not part of this project)
 ohif-viewer/
+
+# MIM documentation/manuals
+mim_manuals/

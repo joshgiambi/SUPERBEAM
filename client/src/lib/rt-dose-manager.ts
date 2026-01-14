@@ -16,6 +16,9 @@
 // ============================================================================
 
 export type DoseColormap = 'rainbow' | 'hot' | 'jet' | 'cool' | 'dosimetry' | 'grayscale';
+export type DoseUnit = 'Gy' | 'cGy';
+export type DoseDisplayMode = 'lines_only' | 'colorwash_only' | 'lines_and_colorwash' | 'banded_with_lines';
+export type NormalizationSource = 'prescription' | 'max_dose' | 'user_entered' | 'point_dose';
 
 export interface RTDoseConfig {
   doseSeriesId: number;
@@ -31,6 +34,13 @@ export interface RTDoseConfig {
   isodoseLevels: number[];           // Percentage of prescription or absolute Gy
   isodoseLineWidth: number;
   usePercentage: boolean;            // Display as % of prescription vs absolute Gy
+  
+  // NEW: Enhanced dose display options (MIM-inspired)
+  doseUnit: DoseUnit;                // Gy or cGy display
+  displayMode: DoseDisplayMode;      // Lines only, wash only, both, or banded
+  showValuesOnLines: boolean;        // Show dose values directly on isodose lines
+  normalizationSource: NormalizationSource; // Where normalization value comes from
+  clipToStructure?: number;          // Structure ID to clip dose display to (optional)
 }
 
 export interface RTDoseMetadata {
@@ -239,6 +249,11 @@ export class RTDoseManager {
       isodoseLevels: [30, 50, 70, 80, 90, 95, 100, 105],
       isodoseLineWidth: 2,
       usePercentage: true,
+      // NEW: Enhanced options
+      doseUnit: 'Gy',
+      displayMode: 'lines_and_colorwash',
+      showValuesOnLines: false,
+      normalizationSource: 'prescription',
       ...config,
     };
   }
@@ -752,6 +767,47 @@ export function getDefaultDoseConfig(): RTDoseConfig {
     isodoseLevels: [30, 50, 70, 80, 90, 95, 100, 105],
     isodoseLineWidth: 2,
     usePercentage: true,
+    // Enhanced options
+    doseUnit: 'Gy',
+    displayMode: 'lines_and_colorwash',
+    showValuesOnLines: false,
+    normalizationSource: 'prescription',
   };
 }
+
+/**
+ * Format dose value for display with unit conversion
+ */
+export function formatDoseWithUnit(
+  dose: number,
+  unit: DoseUnit = 'Gy',
+  prescription?: number,
+  usePercentage: boolean = false
+): string {
+  if (usePercentage && prescription && prescription > 0) {
+    const percent = (dose / prescription) * 100;
+    return `${percent.toFixed(1)}%`;
+  }
+  
+  if (unit === 'cGy') {
+    return `${(dose * 100).toFixed(1)} cGy`;
+  }
+  return `${dose.toFixed(2)} Gy`;
+}
+
+/**
+ * Snap dose value to nearest isodose band (for banded display mode)
+ */
+export function snapToBand(normalizedValue: number, isodoseLevels: number[]): number {
+  const percentOfRx = normalizedValue * 100;
+  const sortedLevels = [...isodoseLevels].sort((a, b) => b - a);
+  
+  for (let i = 0; i < sortedLevels.length; i++) {
+    if (percentOfRx >= sortedLevels[i]) {
+      return sortedLevels[i] / 100;
+    }
+  }
+  return 0;
+}
+
 

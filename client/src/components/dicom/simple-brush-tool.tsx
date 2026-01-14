@@ -935,7 +935,7 @@ export function SimpleBrushTool({
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [isActive, isDrawing, brushSize, selectedStructure, isAdjustingSize, adjustedBrushSize, onBrushSizeChange, imageMetadata, sizeAdjustStart]);
+  }, [isActive, isDrawing, brushSize, selectedStructure, isAdjustingSize, adjustedBrushSize, onBrushSizeChange, imageMetadata, sizeAdjustStart, smartBrushEnabled, isEraseMode, isTemporaryEraseMode, currentSlicePosition, onContourUpdate, predictionEnabled, activePredictions]);
 
   const addBrushPoint = (x: number, y: number) => {
     if (!selectedStructure || !rtStructures?.structures || !imageMetadata) return;

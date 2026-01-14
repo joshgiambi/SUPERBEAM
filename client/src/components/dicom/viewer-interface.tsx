@@ -2667,6 +2667,13 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       onPanChange={(x, y) => setSyncedPan({ x, y })}
                       hideSidebar
                       hideToolbar
+                      // RT Dose props
+                      doseSeriesId={selectedDoseSeriesId}
+                      doseOpacity={doseOpacity}
+                      doseVisible={doseVisible}
+                      doseColormap={doseColormap}
+                      showIsodose={showIsodose}
+                      prescriptionDose={prescriptionDose}
                     />
                   </div>
                   {/* Right: Secondary scan only - BIDIRECTIONAL sync with primary */}
@@ -2726,6 +2733,13 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       onPanChange={(x, y) => setSyncedPan({ x, y })}
                       hideSidebar
                       hideToolbar
+                      // RT Dose props
+                      doseSeriesId={selectedDoseSeriesId}
+                      doseOpacity={doseOpacity}
+                      doseVisible={doseVisible}
+                      doseColormap={doseColormap}
+                      showIsodose={showIsodose}
+                      prescriptionDose={prescriptionDose}
                     />
                   </div>
                 </div>
@@ -2784,6 +2798,13 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   hideSidebar
                   // Always hide internal toolbar - UnifiedFusionTopbar is now the main topbar
                   hideToolbar
+                  // RT Dose props
+                  doseSeriesId={selectedDoseSeriesId}
+                  doseOpacity={doseOpacity}
+                  doseVisible={doseVisible}
+                  doseColormap={doseColormap}
+                  showIsodose={showIsodose}
+                  prescriptionDose={prescriptionDose}
                 />
               )}
               </ContourEditProvider>
@@ -2900,6 +2921,30 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           onExitFusionLayout={handleExitToOverlay}
           // Offset to center toolbar relative to viewer (sidebar is md:w-96 = 384px)
           viewerOffsetLeft={384}
+          // FuseBox props - show when fusion secondary is active
+          hasFusionActive={secondarySeriesId !== null}
+          onFuseBoxOpen={() => {
+            // Store fusion data in sessionStorage for the new window
+            const selectedSecondary = fusionManifest?.secondaries.find(s => s.secondarySeriesId === secondarySeriesId);
+            const fuseboxData = {
+              primarySeriesId: selectedSeries?.id ?? 0,
+              primaryModality: selectedSeries?.modality || 'CT',
+              primaryDescription: selectedSeries?.seriesDescription || 'Primary Series',
+              primarySliceCount: imageMetadata?.totalSlices ?? 287,
+              secondarySeriesId: secondarySeriesId,
+              secondaryModality: selectedSecondary?.secondaryModality || 'MR',
+              secondaryDescription: selectedSecondary?.secondarySeriesDescription || 'Secondary Series',
+              secondarySliceCount: selectedSecondary?.sliceCount ?? 192,
+              currentOpacity: fusionOpacity,
+              studyId: selectedSeries?.studyId ?? studyData?.studies?.[0]?.id, // Pass study ID for DICOM loading
+              registrationId: null, // TODO: Pass selected registration ID
+            };
+            sessionStorage.setItem('fusebox-data', JSON.stringify(fuseboxData));
+            
+            // Open FuseBox in a new window
+            const windowFeatures = 'width=1400,height=900,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no';
+            window.open('/fusebox', 'FuseBox', windowFeatures);
+          }}
         />
       )}
 

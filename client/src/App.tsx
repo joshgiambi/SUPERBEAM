@@ -10,6 +10,8 @@ import FusionTest from "@/pages/fusion-test";
 import PrototypeModule from "@/pages/prototype-module";
 import SuperStyle from "@/pages/superstyle";
 import SeriesPreview from "@/pages/series-preview";
+import FuseBox from "@/pages/fusebox";
+import DVHViewerPage from "@/pages/dvh-viewer-page";
 
 function Router() {
   return (
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/prototype-module" component={PrototypeModule} />
       <Route path="/prototypes" component={PrototypeModule} />
       <Route path="/superstyle" component={SuperStyle} />
+      <Route path="/fusebox" component={FuseBox} />
+      <Route path="/dvh-viewer" component={DVHViewerPage} />
       <Route component={NotFound} />
     </Switch>
   );

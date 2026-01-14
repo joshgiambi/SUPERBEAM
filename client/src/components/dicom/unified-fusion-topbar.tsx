@@ -40,7 +40,7 @@ import {
   SunMedium,
   Loader2,
 } from 'lucide-react';
-import type { FusionSecondaryDescriptor } from '@/types/fusion';
+import type { FusionSecondaryDescriptor, RegistrationOption } from '@/types/fusion';
 import type { FusionLayoutPreset } from './fusion-control-panel-v2';
 
 // ============================================================================
@@ -98,6 +98,11 @@ interface UnifiedFusionTopbarProps {
   // Panel visibility control
   isExpanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  
+  // Registration options (multiple registrations for same secondary)
+  registrationOptions?: RegistrationOption[];
+  selectedRegistrationId?: string | null;
+  onRegistrationChange?: (id: string | null) => void;
   
   className?: string;
 }
@@ -357,6 +362,10 @@ export interface FusionDropdownProps {
   onLayoutPresetChange: (preset: FusionLayoutPreset) => void;
   fusionWindowLevel?: { window: number; level: number } | null;
   onFusionWindowLevelChange?: (wl: { window: number; level: number } | null) => void;
+  // Registration options for multiple registrations per secondary
+  registrationOptions?: RegistrationOption[];
+  selectedRegistrationId?: string | null;
+  onRegistrationChange?: (id: string | null) => void;
 }
 
 const PANEL_WIDTH = 320;
@@ -376,6 +385,9 @@ export function FusionDropdown({
   onLayoutPresetChange,
   fusionWindowLevel,
   onFusionWindowLevelChange,
+  registrationOptions = [],
+  selectedRegistrationId,
+  onRegistrationChange,
 }: FusionDropdownProps) {
   const fusionColor = selectedSecondary ? getModalityColor(selectedSecondary.secondaryModality) : 'gray';
   const readySecondaries = availableSecondaries.filter(s => {
@@ -725,6 +737,58 @@ export function FusionDropdown({
                 </div>
               </div>
 
+              {/* Registration Selector - shown when multiple registrations exist */}
+              {selectedSecondary && registrationOptions.length > 1 && (
+                <div className="px-4 py-3 border-t border-white/10">
+                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Registration</span>
+                    <span className="text-cyan-400 normal-case font-normal">{registrationOptions.length} available</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {registrationOptions.map((opt, idx) => {
+                      const isActive = (opt.id ?? null) === (selectedRegistrationId ?? null);
+                      return (
+                        <button
+                          key={opt.id ?? idx}
+                          onClick={() => onRegistrationChange?.(opt.id)}
+                          className={cn(
+                            "h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all border",
+                            isActive
+                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/50"
+                              : "text-gray-400 border-gray-700/50 hover:bg-gray-800/50 hover:text-gray-300"
+                          )}
+                          title={opt.label}
+                        >
+                          <span className={cn(
+                            "w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold",
+                            isActive ? "bg-cyan-500/30 text-cyan-200" : "bg-gray-700/50 text-gray-400"
+                          )}>
+                            {idx + 1}
+                          </span>
+                          <span className="truncate max-w-[80px]">
+                            {opt.relationship === 'shared-frame' ? 'Shared' : `Reg ${idx + 1}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Show info about currently selected registration */}
+                  {selectedRegistrationId && (() => {
+                    const opt = registrationOptions.find(o => o.id === selectedRegistrationId);
+                    if (!opt) return null;
+                    return (
+                      <div className="mt-2 text-[10px] text-gray-500">
+                        {opt.relationship === 'shared-frame' 
+                          ? 'Same frame of reference'
+                          : opt.regFile 
+                            ? `File: ${opt.regFile.split('/').pop()?.substring(0, 20)}...`
+                            : 'Registration transform'}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               {/* Window/Level Presets */}
               {selectedSecondary && (
                 <div className="px-4 py-3 border-t border-white/10">
@@ -828,6 +892,11 @@ export function UnifiedFusionTopbar({
   isExpanded = false,
   onExpandedChange,
   
+  // Registration options
+  registrationOptions = [],
+  selectedRegistrationId,
+  onRegistrationChange,
+  
   className,
 }: UnifiedFusionTopbarProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -915,6 +984,9 @@ export function UnifiedFusionTopbar({
               onLayoutPresetChange={onLayoutPresetChange}
               fusionWindowLevel={fusionWindowLevel}
               onFusionWindowLevelChange={onFusionWindowLevelChange}
+              registrationOptions={registrationOptions}
+              selectedRegistrationId={selectedRegistrationId}
+              onRegistrationChange={onRegistrationChange}
             />
           </div>
         )}

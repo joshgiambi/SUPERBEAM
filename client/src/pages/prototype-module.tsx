@@ -29,6 +29,8 @@ import { FusionViewportGrid } from '@/components/dicom/fusion-viewport-grid';
 import { UnifiedFusionToolbarPrototype } from '@/components/dicom/unified-fusion-toolbar-prototype';
 import { PatientManagerV4AuroraPrototype } from '@/components/dicom/patient-manager-v4-aurora-prototype';
 import { SeriesSelectorAuroraPrototype } from '@/components/dicom/series-selector-aurora-prototype';
+import { FusionEditorPopupPrototype } from '@/components/dicom/fusion-editor-popup-prototype';
+import { DoseViewingPrototype } from '@/components/dicom/dose-viewing-prototype';
 import { 
   ArrowLeft, 
   Beaker, 
@@ -45,7 +47,8 @@ import {
   Scissors,
   Filter,
   Search,
-  X
+  X,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,11 +56,12 @@ import { cn } from '@/lib/utils';
 // CATEGORIES
 // ============================================================================
 
-type Category = 'all' | 'fusion' | 'toolbars' | 'boolean' | 'design' | 'contouring' | 'sidebar';
+type Category = 'all' | 'fusion' | 'toolbars' | 'boolean' | 'design' | 'contouring' | 'sidebar' | 'dose';
 
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode; color: string }[] = [
   { id: 'all', label: 'All Prototypes', icon: <Filter className="w-3.5 h-3.5" />, color: 'gray' },
   { id: 'fusion', label: 'Fusion & Layout', icon: <Layers className="w-3.5 h-3.5" />, color: 'amber' },
+  { id: 'dose', label: 'Dose Viewing', icon: <Activity className="w-3.5 h-3.5" />, color: 'orange' },
   { id: 'toolbars', label: 'Toolbars', icon: <LayoutGrid className="w-3.5 h-3.5" />, color: 'cyan' },
   { id: 'boolean', label: 'Boolean Ops', icon: <Scissors className="w-3.5 h-3.5" />, color: 'purple' },
   { id: 'contouring', label: 'Contouring', icon: <Scissors className="w-3.5 h-3.5" />, color: 'green' },
@@ -131,7 +135,29 @@ interface Prototype {
 }
 
 const prototypes: Prototype[] = [
+  // DOSE VIEWING (NEW - MIM Software inspired)
+  {
+    id: 'dose-viewing',
+    name: 'RT Dose Viewing Suite',
+    description: 'Complete dose visualization prototypes based on MIM Software standards: DVH viewer, BED calculator, isodose presets, dose unit toggle, display modes, and dose tools toolbar.',
+    status: 'in-progress',
+    version: 'v1.0',
+    component: DoseViewingPrototype,
+    category: 'dose',
+    tags: ['dose', 'rtdose', 'dvh', 'bed', 'isodose', 'colorwash', 'mim', 'prescription', 'normalization', 'constraints']
+  },
+
   // FUSION & LAYOUT
+  {
+    id: 'fusion-editor-popup',
+    name: 'Fusion Editor Popup',
+    description: 'Professional fusion editing system inspired by MIM/Eclipse with 10 evaluation modes (Swipe, Spyglass, Flicker, etc.), auto registration, landmarks, and quality metrics.',
+    status: 'in-progress',
+    version: 'v2.0',
+    component: FusionEditorPopupPrototype,
+    category: 'fusion',
+    tags: ['fusion', 'registration', 'editor', 'popup', 'swipe', 'spyglass', 'flicker', 'auto-rigid', 'contour-based', 'landmarks', 'MIM', 'Eclipse']
+  },
   {
     id: 'unified-fusion-toolbar',
     name: 'Unified Fusion/Layout Toolbar',
@@ -484,6 +510,7 @@ export default function PrototypeModule() {
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
                   isActive
                     ? cat.color === 'amber' ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    : cat.color === 'orange' ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
                     : cat.color === 'cyan' ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                     : cat.color === 'purple' ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                     : cat.color === 'green' ? "bg-green-500/20 text-green-300 border border-green-500/30"

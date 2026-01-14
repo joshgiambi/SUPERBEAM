@@ -1186,7 +1186,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
   }, [secondarySeriesId, clearFusionOverlayCanvas]);
 
-  // Fetch dose metadata and frames when doseSeriesId changes
+  // Fetch dose metadata when doseSeriesId changes
   useEffect(() => {
     if (!doseSeriesId) {
       setDoseMetadata(null);
@@ -1201,7 +1201,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     }
 
     // Fetch metadata first
-    const fetchDoseData = async () => {
+    const fetchDoseMetadata = async () => {
       try {
         const metaRes = await fetch(`/api/rt-dose/${doseSeriesId}/metadata`);
         if (!metaRes.ok) {
@@ -1209,31 +1209,159 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           return;
         }
         const meta = await metaRes.json();
+        // Calculate dose Z range from gridFrameOffsetVector
+        const doseOriginZ = meta.imagePositionPatient?.[2] || 0;
+        const offsets = meta.gridFrameOffsetVector || [];
+        const doseZRange = offsets.length > 0 
+          ? { min: doseOriginZ + Math.min(...offsets), max: doseOriginZ + Math.max(...offsets) }
+          : { min: doseOriginZ, max: doseOriginZ };
+        console.log('[Dose] Loaded metadata:', {
+          rows: meta.rows,
+          columns: meta.columns,
+          frames: meta.numberOfFrames,
+          origin: meta.imagePositionPatient,
+          spacing: meta.pixelSpacing,
+          maxDose: meta.maxDose,
+          doseZRange,
+          gridFrameOffsets: offsets.length > 0 ? `${offsets[0]} to ${offsets[offsets.length-1]}` : 'none'
+        });
         setDoseMetadata(meta);
-
-        // Prefetch first frame
-        const frameRes = await fetch(`/api/rt-dose/${doseSeriesId}/frame/0`);
-        if (frameRes.ok) {
-          const arrayBuffer = await frameRes.arrayBuffer();
-          const frameData = new Float32Array(arrayBuffer);
-          setDoseFrames(new Map([[0, frameData]]));
-        }
+        // Clear frames cache when metadata changes
+        setDoseFrames(new Map());
       } catch (err) {
-        console.error('Error fetching dose data:', err);
+        console.error('Error fetching dose metadata:', err);
       }
     };
 
-    fetchDoseData();
+    fetchDoseMetadata();
   }, [doseSeriesId]);
+
+  // Helper to find the correct dose frame index for a given CT slice Z position
+  const findDoseFrameForSlice = useCallback((ctSliceZ: number): number | null => {
+    const meta = doseMetadataRef.current;
+    if (!meta || !meta.gridFrameOffsetVector || meta.gridFrameOffsetVector.length === 0) {
+      return null;
+    }
+
+    const doseOriginZ = meta.imagePositionPatient[2];
+    
+    // Find the closest dose frame to the CT slice position
+    let bestFrameIndex = -1;
+    let bestDistance = Infinity;
+    
+    for (let i = 0; i < meta.gridFrameOffsetVector.length; i++) {
+      const doseFrameZ = doseOriginZ + meta.gridFrameOffsetVector[i];
+      const distance = Math.abs(doseFrameZ - ctSliceZ);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestFrameIndex = i;
+      }
+    }
+    
+    // Only return if within reasonable tolerance (half the dose slice spacing)
+    const doseSliceSpacing = meta.gridFrameOffsetVector.length > 1 
+      ? Math.abs(meta.gridFrameOffsetVector[1] - meta.gridFrameOffsetVector[0])
+      : 2.5;
+    
+    if (bestDistance <= doseSliceSpacing) {
+      return bestFrameIndex;
+    }
+    
+    return null; // CT slice is outside dose grid coverage
+  }, []);
+
+  // Prefetch ALL dose frames when metadata loads
+  // RT Dose typically has 50-150 frames, so prefetching all is feasible
+  // This ensures smooth scrolling without waiting for frame fetches
+  useEffect(() => {
+    if (!doseSeriesId || !doseMetadata) {
+      return;
+    }
+
+    const meta = doseMetadata;
+    if (!meta.gridFrameOffsetVector || meta.gridFrameOffsetVector.length === 0) {
+      console.log('[Dose] No gridFrameOffsetVector in metadata');
+      return;
+    }
+
+    const totalFrames = meta.gridFrameOffsetVector.length;
+    console.log('[Dose] Prefetching all dose frames:', { totalFrames, doseSeriesId });
+
+    let cancelled = false;
+
+    // Fetch all frames in parallel batches
+    const fetchAllFrames = async () => {
+      const BATCH_SIZE = 8; // Fetch 8 frames at a time
+      const newFrames = new Map<number, Float32Array>();
+
+      for (let batchStart = 0; batchStart < totalFrames && !cancelled; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, totalFrames);
+        const batchPromises: Promise<void>[] = [];
+
+        for (let frameIndex = batchStart; frameIndex < batchEnd; frameIndex++) {
+          // Skip if already cached
+          if (doseFramesRef.current.has(frameIndex)) {
+            continue;
+          }
+
+          batchPromises.push(
+            (async () => {
+              try {
+                const frameRes = await fetch(`/api/rt-dose/${doseSeriesId}/frame/${frameIndex}`);
+                if (frameRes.ok && !cancelled) {
+                  const frameJson = await frameRes.json();
+                  if (frameJson.doseData && Array.isArray(frameJson.doseData)) {
+                    const frameData = new Float32Array(frameJson.doseData);
+                    newFrames.set(frameIndex, frameData);
+                  }
+                }
+              } catch (err) {
+                console.warn(`[Dose] Failed to fetch frame ${frameIndex}:`, err);
+              }
+            })()
+          );
+        }
+
+        await Promise.all(batchPromises);
+
+        // Update state after each batch to enable progressive rendering
+        if (!cancelled && newFrames.size > 0) {
+          setDoseFrames(prev => {
+            const updated = new Map(prev);
+            newFrames.forEach((data, idx) => updated.set(idx, data));
+            return updated;
+          });
+          console.log('[Dose] Loaded frames batch:', { batchStart, batchEnd, totalLoaded: newFrames.size });
+        }
+      }
+
+      if (!cancelled) {
+        console.log('[Dose] All dose frames prefetched:', { totalFrames, cached: doseFramesRef.current.size });
+      }
+    };
+
+    fetchAllFrames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [doseSeriesId, doseMetadata]);
 
   // Draw dose overlay when frame data, slice position, or settings change
   const drawDoseOverlay = useCallback(() => {
+    console.log('[Dose] drawDoseOverlay called');
     const doseCanvas = doseOverlayCanvasRef.current;
     const baseCanvas = canvasRef.current;
-    if (!doseCanvas || !baseCanvas || !doseMetadataRef.current || !doseVisible) return;
+    if (!doseCanvas || !baseCanvas || !doseMetadataRef.current || !doseVisible) {
+      console.log('[Dose] Early return:', { doseCanvas: !!doseCanvas, baseCanvas: !!baseCanvas, metadata: !!doseMetadataRef.current, doseVisible });
+      return;
+    }
 
     const ctx = doseCanvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('[Dose] No 2d context');
+      return;
+    }
 
     // Match canvas dimensions
     if (doseCanvas.width !== baseCanvas.width || doseCanvas.height !== baseCanvas.height) {
@@ -1241,30 +1369,130 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       doseCanvas.height = baseCanvas.height;
     }
 
-    ctx.clearRect(0, 0, doseCanvas.width, doseCanvas.height);
-
     const meta = doseMetadataRef.current;
     const frames = doseFramesRef.current;
 
-    // Find the closest dose frame to current slice
-    // For now, use frame 0 as a simple overlay
-    const frameData = frames.get(0);
-    if (!frameData || !meta.rows || !meta.columns) return;
+    // Get current CT image for spatial alignment
+    // CRITICAL: Use currentIndexRef.current, not currentIndex state, 
+    // because during scrolling only the ref is updated (OHIF pattern)
+    const activeIndex = currentIndexRef.current;
+    const currentImage = images[activeIndex];
+    if (!currentImage) {
+      console.log('[Dose] No current image for index', activeIndex);
+      return;
+    }
 
-    const maxDose = meta.maxDose || prescriptionDose;
-    const { rows, columns } = meta;
+    const ctSliceZ = currentImage.sliceZ ?? currentImage.parsedSliceLocation ?? currentImage.parsedZPosition;
+    if (ctSliceZ == null) {
+      console.log('[Dose] No CT slice Z position');
+      return;
+    }
 
-    // Create ImageData for the dose overlay
-    const imageData = ctx.createImageData(columns, rows);
+    // Find the correct dose frame for this CT slice
+    const frameIndex = findDoseFrameForSlice(ctSliceZ);
+    console.log('[Dose] Frame lookup:', { ctSliceZ, frameIndex, activeIndex, availableFrames: Array.from(frames.keys()) });
+    if (frameIndex === null) {
+      console.log('[Dose] No dose frame for CT slice:', ctSliceZ);
+      return;
+    }
+
+    const frameData = frames.get(frameIndex);
+    if (!frameData || !meta.rows || !meta.columns) {
+      console.log('[Dose] Missing frame data:', { frameIndex, hasFrameData: !!frameData, rows: meta.rows, cols: meta.columns, framesSize: frames.size, availableFrames: Array.from(frames.keys()) });
+      return;
+    }
+    
+    // IMPORTANT: Clear canvas AFTER all validation checks pass
+    // This prevents erasing a valid overlay when a second call returns early
+    ctx.clearRect(0, 0, doseCanvas.width, doseCanvas.height);
+    
+    // Find actual max dose in this frame for intelligent normalization
+    let frameMaxDose = 0;
+    for (let i = 0; i < frameData.length; i++) {
+      if (frameData[i] > frameMaxDose) frameMaxDose = frameData[i];
+    }
+    
+    console.log('[Dose] Drawing frame:', { 
+      frameIndex, ctSliceZ, activeIndex, frameDataLength: frameData.length, 
+      rows: meta.rows, cols: meta.columns,
+      frameMaxDose, metaMaxDose: meta.maxDose, prescriptionDose
+    });
+
+    // Smart normalization: use prescription dose if close to data range, otherwise use actual data max
+    // This ensures the colormap spans the actual dose range for visibility
+    let maxDose: number;
+    if (prescriptionDose > 0 && frameMaxDose > 0) {
+      // If prescription dose is within 2x of actual max, use it (clinical relevance)
+      // Otherwise, use actual max to ensure full colormap utilization
+      const ratio = frameMaxDose / prescriptionDose;
+      if (ratio >= 0.3 && ratio <= 2.0) {
+        maxDose = prescriptionDose;
+      } else {
+        maxDose = frameMaxDose;
+        console.log('[Dose] Using frame max dose for normalization (prescription dose too different):', { frameMaxDose, prescriptionDose, ratio });
+      }
+    } else {
+      maxDose = frameMaxDose > 0 ? frameMaxDose : (meta.maxDose || 60);
+    }
+    const { rows: doseRows, columns: doseCols } = meta;
+
+    // Get CT image geometry
+    const ctImagePosition = parseImagePosition(currentImage) || [0, 0, 0];
+    // Parse CT pixel spacing - can be string "row\\col" or array [row, col]
+    // DICOM pixel spacing is [row spacing, column spacing] = [Y, X]
+    let ctPixelSpacingY = 1, ctPixelSpacingX = 1;
+    const rawCtSpacing = currentImage.pixelSpacing || currentImage.metadata?.pixelSpacing;
+    if (typeof rawCtSpacing === 'string') {
+      const parts = rawCtSpacing.split('\\').map(parseFloat);
+      ctPixelSpacingY = parts[0] || 1;
+      ctPixelSpacingX = parts[1] || parts[0] || 1;
+    } else if (Array.isArray(rawCtSpacing)) {
+      ctPixelSpacingY = rawCtSpacing[0] || 1;
+      ctPixelSpacingX = rawCtSpacing[1] || rawCtSpacing[0] || 1;
+    }
+    const ctRows = currentImage.rows || currentImage.metadata?.rows || 512;
+    const ctCols = currentImage.columns || currentImage.metadata?.columns || 512;
+
+    // Get dose grid geometry
+    const doseOrigin = meta.imagePositionPatient;
+    const dosePixelSpacing = meta.pixelSpacing; // [row, col] = [Y, X]
+    const dosePixelSpacingY = dosePixelSpacing[0] || 1;
+    const dosePixelSpacingX = dosePixelSpacing[1] || dosePixelSpacing[0] || 1;
+
+    // Get the current CT transform (scale, offset) from the rendering system
+    // This ensures perfect alignment with the CT image
+    const transform = ctTransform.current;
+    if (!transform) {
+      console.warn('[Dose] No CT transform available - skipping overlay');
+      return;
+    }
+
+    // Calculate spatial alignment: where does the dose grid fall on the CT image?
+    // CT image covers: [ctImagePosition[0], ctImagePosition[0] + ctCols * ctPixelSpacingX] in X
+    //                  [ctImagePosition[1], ctImagePosition[1] + ctRows * ctPixelSpacingY] in Y
+    // Dose grid covers: [doseOrigin[0], doseOrigin[0] + doseCols * dosePixelSpacingX] in X
+    //                   [doseOrigin[1], doseOrigin[1] + doseRows * dosePixelSpacingY] in Y
+
+    // Convert dose grid position to CT pixel coordinates
+    const doseStartXInCT = (doseOrigin[0] - ctImagePosition[0]) / ctPixelSpacingX;
+    const doseStartYInCT = (doseOrigin[1] - ctImagePosition[1]) / ctPixelSpacingY;
+    const doseWidthInCT = (doseCols * dosePixelSpacingX) / ctPixelSpacingX;
+    const doseHeightInCT = (doseRows * dosePixelSpacingY) / ctPixelSpacingY;
+
+    // Create ImageData for the dose overlay at dose resolution
+    const imageData = ctx.createImageData(doseCols, doseRows);
     const data = imageData.data;
+
+    let nonZeroPixels = 0;
 
     // Apply colormap
     for (let i = 0; i < frameData.length; i++) {
       const doseValue = frameData[i];
       const normalizedDose = Math.min(1, doseValue / maxDose);
 
-      // Skip very low doses (threshold at 10%)
-      if (normalizedDose < 0.1) {
+      // Skip only true zero doses - show all non-zero for debugging
+      // OHIF colormap starts at 0, we need to show everything for proper rendering
+      if (doseValue <= 0) {
         data[i * 4] = 0;
         data[i * 4 + 1] = 0;
         data[i * 4 + 2] = 0;
@@ -1272,25 +1500,54 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         continue;
       }
 
-      // Apply colormap (rainbow)
+      nonZeroPixels++;
+
+      // Apply colormap - clinical isodose style: Green(low) → Yellow → Orange → Red(prescription dose)
+      // Scaled to full range (0-100% of prescription dose) for clinical relevance
       let r = 0, g = 0, b = 0;
       if (doseColormap === 'rainbow' || doseColormap === 'dosimetry') {
-        // Rainbow: blue -> cyan -> green -> yellow -> red
-        if (normalizedDose < 0.25) {
-          const t = normalizedDose / 0.25;
-          r = 0; g = Math.floor(255 * t); b = 255;
-        } else if (normalizedDose < 0.5) {
-          const t = (normalizedDose - 0.25) / 0.25;
-          r = 0; g = 255; b = Math.floor(255 * (1 - t));
-        } else if (normalizedDose < 0.75) {
-          const t = (normalizedDose - 0.5) / 0.25;
-          r = Math.floor(255 * t); g = 255; b = 0;
+        // Clinical isodose colormap scaled to 0-100% of Rx dose:
+        // 0-20%: Green → Yellow-Green
+        // 20-40%: Yellow-Green → Yellow  
+        // 40-60%: Yellow → Orange
+        // 60-80%: Orange → Red-Orange
+        // 80-100%+: Red-Orange → Red (prescription dose is pure red)
+        if (normalizedDose < 0.2) {
+          // 0% → 20%: Green to Yellow-Green
+          const t = normalizedDose / 0.2;
+          r = Math.floor(255 * 0.5 * t); // 0 → 127
+          g = 255;
+          b = 0;
+        } else if (normalizedDose < 0.4) {
+          // 20% → 40%: Yellow-Green to Yellow
+          const t = (normalizedDose - 0.2) / 0.2;
+          r = Math.floor(255 * (0.5 + 0.5 * t)); // 127 → 255
+          g = 255;
+          b = 0;
+        } else if (normalizedDose < 0.6) {
+          // 40% → 60%: Yellow to Orange
+          const t = (normalizedDose - 0.4) / 0.2;
+          r = 255;
+          g = Math.floor(255 * (1 - 0.34 * t)); // 255 → 168
+          b = 0;
+        } else if (normalizedDose < 0.8) {
+          // 60% → 80%: Orange to Red-Orange
+          const t = (normalizedDose - 0.6) / 0.2;
+          r = 255;
+          g = Math.floor(255 * (0.66 - 0.33 * t)); // 168 → 84
+          b = 0;
+        } else if (normalizedDose < 1.0) {
+          // 80% → 100%: Red-Orange to Red (prescription dose)
+          const t = (normalizedDose - 0.8) / 0.2;
+          r = 255;
+          g = Math.floor(255 * (0.33 - 0.33 * t)); // 84 → 0
+          b = 0;
         } else {
-          const t = (normalizedDose - 0.75) / 0.25;
-          r = 255; g = Math.floor(255 * (1 - t)); b = 0;
+          // 100%+ (above prescription): Pure Red for hotspots
+          r = 255; g = 0; b = 0;
         }
       } else if (doseColormap === 'hot') {
-        // Hot: black -> red -> yellow -> white
+        // Hot: black -> red -> orange -> yellow -> white
         if (normalizedDose < 0.33) {
           r = Math.floor(255 * normalizedDose / 0.33); g = 0; b = 0;
         } else if (normalizedDose < 0.67) {
@@ -1298,25 +1555,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         } else {
           r = 255; g = 255; b = Math.floor(255 * (normalizedDose - 0.67) / 0.33);
         }
-      } else if (doseColormap === 'jet') {
-        // Jet: blue -> cyan -> green -> yellow -> red
-        if (normalizedDose < 0.125) {
-          r = 0; g = 0; b = Math.floor(128 + 127 * normalizedDose / 0.125);
-        } else if (normalizedDose < 0.375) {
-          const t = (normalizedDose - 0.125) / 0.25;
-          r = 0; g = Math.floor(255 * t); b = 255;
-        } else if (normalizedDose < 0.625) {
-          const t = (normalizedDose - 0.375) / 0.25;
-          r = Math.floor(255 * t); g = 255; b = Math.floor(255 * (1 - t));
-        } else if (normalizedDose < 0.875) {
-          const t = (normalizedDose - 0.625) / 0.25;
-          r = 255; g = Math.floor(255 * (1 - t)); b = 0;
-        } else {
-          const t = (normalizedDose - 0.875) / 0.125;
-          r = Math.floor(255 - 127 * t); g = 0; b = 0;
-        }
       } else {
-        // Grayscale fallback
+        // Grayscale/Mono
         const gray = Math.floor(255 * normalizedDose);
         r = gray; g = gray; b = gray;
       }
@@ -1324,32 +1564,164 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       data[i * 4] = r;
       data[i * 4 + 1] = g;
       data[i * 4 + 2] = b;
-      data[i * 4 + 3] = Math.floor(200 * normalizedDose); // Alpha based on dose
+      // OHIF-style opacity ramp with minimum visibility for low doses
+      // Use sqrt for better visibility at low doses
+      const alpha = Math.floor(220 * Math.sqrt(normalizedDose));
+      // Ensure minimum alpha of 30 for any non-zero dose
+      data[i * 4 + 3] = Math.max(30, Math.min(200, alpha));
     }
 
-    // Draw to offscreen canvas first, then scale to viewport
+    if (nonZeroPixels === 0) {
+      console.log('[Dose] No non-zero pixels, frameIndex:', frameIndex, 'maxDose:', maxDose, 'frameDataLength:', frameData?.length);
+      return; // No dose data to display
+    }
+
+    // Sample dose values to understand the distribution
+    const sampleDoseValues = Array.from(frameData.slice(0, 20));
+    const maxFrameDose = Math.max(...frameData);
+    const minFrameDose = Math.min(...frameData.filter(v => v > 0) || [0]);
+    console.log('[Dose] Drawing overlay:', { 
+      frameIndex,
+      nonZeroPixels,
+      totalPixels: frameData.length,
+      doseOrigin,
+      ctOrigin: ctImagePosition,
+      doseStartInCT: [doseStartXInCT, doseStartYInCT],
+      doseSizeInCT: [doseWidthInCT, doseHeightInCT],
+      transform: { scale: transform.scale, offsetX: transform.offsetX, offsetY: transform.offsetY },
+      maxDoseUsed: maxDose,
+      maxFrameDose,
+      minFrameDose,
+      doseGridSize: { rows: doseRows, cols: doseCols },
+      ctGridSize: { rows: ctRows, cols: ctCols },
+      pixelSpacing: { ctX: ctPixelSpacingX, ctY: ctPixelSpacingY, doseX: dosePixelSpacingX, doseY: dosePixelSpacingY },
+      sampleDoseValues: sampleDoseValues.slice(0, 5)
+    });
+
+    // Draw to offscreen canvas first, then scale to viewport with proper alignment
     const offscreen = document.createElement('canvas');
-    offscreen.width = columns;
-    offscreen.height = rows;
+    offscreen.width = doseCols;
+    offscreen.height = doseRows;
     const offCtx = offscreen.getContext('2d');
     if (offCtx) {
       offCtx.putImageData(imageData, 0, 0);
 
-      // Scale to fit viewport (matching the base canvas transform)
-      const scaleX = doseCanvas.width / columns;
-      const scaleY = doseCanvas.height / rows;
-      const scale = Math.min(scaleX, scaleY);
-      const offsetX = (doseCanvas.width - columns * scale) / 2;
-      const offsetY = (doseCanvas.height - rows * scale) / 2;
+      // Use the SAME transform as the CT image (from ctTransform.current)
+      // This ensures pixel-perfect alignment with the underlying CT
+      const { scale, offsetX, offsetY } = transform;
+      
+      // Calculate where dose grid should be drawn relative to CT image
+      // transform.offsetX/Y is where the CT image origin (0,0 pixel) is on the canvas
+      // doseStartXInCT/YInCT is where dose grid starts in CT pixel coordinates
+      const doseDrawX = offsetX + (doseStartXInCT * scale);
+      const doseDrawY = offsetY + (doseStartYInCT * scale);
+      const doseDrawWidth = doseWidthInCT * scale;
+      const doseDrawHeight = doseHeightInCT * scale;
 
+      // Enable high-quality smoothing to reduce pixelation
+      // RT Dose grids are typically lower resolution than CT (e.g., 128x128 vs 512x512)
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(offscreen, offsetX, offsetY, columns * scale, rows * scale);
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(offscreen, doseDrawX, doseDrawY, doseDrawWidth, doseDrawHeight);
+      
+      // === ISODOSE LINE RENDERING ===
+      // Draw isodose contour lines at standard clinical levels (% of prescription dose)
+      if (showIsodose) {
+        // Standard clinical isodose levels with MIM-style colors
+        const isodoseLevels = [
+          { percent: 107, color: '#ff0080', lineWidth: 2 }, // Hot pink - overdose
+          { percent: 105, color: '#ff0000', lineWidth: 2 }, // Red
+          { percent: 100, color: '#ff8800', lineWidth: 2 }, // Orange - prescription
+          { percent: 95, color: '#ffff00', lineWidth: 2 },  // Yellow
+          { percent: 90, color: '#00ff00', lineWidth: 2 },  // Green
+          { percent: 80, color: '#00ffff', lineWidth: 2 },  // Cyan
+          { percent: 70, color: '#0088ff', lineWidth: 2 },  // Light blue
+          { percent: 50, color: '#0000ff', lineWidth: 1 },  // Blue
+          { percent: 30, color: '#8800ff', lineWidth: 1 },  // Purple
+        ];
+        
+        // For each isodose level, find contour pixels using marching squares-like edge detection
+        for (const level of isodoseLevels) {
+          const threshold = (level.percent / 100) * maxDose;
+          
+          ctx.strokeStyle = level.color;
+          ctx.lineWidth = level.lineWidth;
+          ctx.beginPath();
+          
+          // Simple edge detection: find pixels where dose crosses the threshold
+          for (let row = 0; row < doseRows - 1; row++) {
+            for (let col = 0; col < doseCols - 1; col++) {
+              const idx = row * doseCols + col;
+              const v00 = frameData[idx];
+              const v10 = frameData[idx + 1];
+              const v01 = frameData[idx + doseCols];
+              const v11 = frameData[idx + doseCols + 1];
+              
+              // Check if threshold crosses any edge of this cell
+              const above00 = v00 >= threshold;
+              const above10 = v10 >= threshold;
+              const above01 = v01 >= threshold;
+              const above11 = v11 >= threshold;
+              
+              // If all corners are same (all above or all below), no contour in this cell
+              if (above00 === above10 && above10 === above01 && above01 === above11) {
+                continue;
+              }
+              
+              // Calculate pixel position in canvas coordinates
+              const cellX = doseDrawX + (col / doseCols) * doseDrawWidth;
+              const cellY = doseDrawY + (row / doseRows) * doseDrawHeight;
+              const cellW = doseDrawWidth / doseCols;
+              const cellH = doseDrawHeight / doseRows;
+              
+              // Simple approach: draw small line segments where contour crosses edges
+              // Left edge (v00 to v01)
+              if (above00 !== above01) {
+                const t = (threshold - v00) / (v01 - v00);
+                const py = cellY + t * cellH;
+                ctx.moveTo(cellX, py);
+                ctx.lineTo(cellX + cellW * 0.5, cellY + cellH * 0.5);
+              }
+              
+              // Top edge (v00 to v10)
+              if (above00 !== above10) {
+                const t = (threshold - v00) / (v10 - v00);
+                const px = cellX + t * cellW;
+                ctx.moveTo(px, cellY);
+                ctx.lineTo(cellX + cellW * 0.5, cellY + cellH * 0.5);
+              }
+              
+              // Right edge (v10 to v11)
+              if (above10 !== above11) {
+                const t = (threshold - v10) / (v11 - v10);
+                const py = cellY + t * cellH;
+                ctx.moveTo(cellX + cellW, py);
+                ctx.lineTo(cellX + cellW * 0.5, cellY + cellH * 0.5);
+              }
+              
+              // Bottom edge (v01 to v11)
+              if (above01 !== above11) {
+                const t = (threshold - v01) / (v11 - v01);
+                const px = cellX + t * cellW;
+                ctx.moveTo(px, cellY + cellH);
+                ctx.lineTo(cellX + cellW * 0.5, cellY + cellH * 0.5);
+              }
+            }
+          }
+          
+          ctx.stroke();
+        }
+        
+        console.log('[Dose] Drew isodose lines for', isodoseLevels.length, 'levels');
+      }
     }
-  }, [doseVisible, doseColormap, prescriptionDose]);
+  }, [doseVisible, doseColormap, prescriptionDose, images, currentIndex, findDoseFrameForSlice, parseImagePosition, showIsodose]);
 
   // Trigger dose redraw when relevant states change
   useEffect(() => {
-    if (doseSeriesId && doseVisible) {
+    console.log('[Dose] Redraw useEffect triggered:', { doseSeriesId, doseVisible, framesSize: doseFrames.size, currentIndex });
+    if (doseSeriesId && doseVisible && doseFrames.size > 0) {
+      console.log('[Dose] Calling drawDoseOverlay from redraw useEffect');
       drawDoseOverlay();
     }
   }, [doseSeriesId, doseVisible, doseFrames, currentIndex, drawDoseOverlay]);
@@ -6007,6 +6379,16 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
       }
       
+      // Draw dose overlay (OHIF pattern: render all overlays in same render pass)
+      // This ensures dose updates correctly during scrolling since we use currentIndexRef
+      if (doseSeriesId && doseVisible) {
+        try {
+          drawDoseOverlay();
+        } catch (doseError) {
+          console.warn("Error drawing dose overlay:", doseError);
+        }
+      }
+      
       // Render MPR views if canvases are available
       if (orientation === 'axial' && sagittalCanvasRef.current && coronalCanvasRef.current) {
         try {
@@ -8160,6 +8542,22 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                             userSelect: "none",
                           }}
                         />
+                        {/* Dose Overlay Canvas */}
+                        <canvas
+                          ref={doseOverlayCanvasRef}
+                          width={1536}
+                          height={1536}
+                          className="pointer-events-none absolute max-w-full max-h-full object-contain"
+                          style={{
+                            visibility: (!doseVisible || doseOpacity === 0) ? 'hidden' : 'visible',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            zIndex: 3,
+                            opacity: Math.max(0, Math.min(1, doseOpacity)),
+                            mixBlendMode: 'screen',
+                          }}
+                        />
                         <canvas
                           ref={contoursOverlayCanvasRef}
                           width={1536}
@@ -8169,7 +8567,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            zIndex: 2,
+                            zIndex: 4,
                           }}
                         />
                       </div>
@@ -8221,18 +8619,6 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                         }}
                       />
                       <canvas
-                        ref={contoursOverlayCanvasRef}
-                        width={1536}
-                        height={1536}
-                        className="pointer-events-none absolute max-w-full max-h-full object-contain"
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          zIndex: 2,
-                        }}
-                      />
-                      <canvas
                         ref={fusionOverlayCanvasRef}
                         width={1536}
                         height={1536}
@@ -8242,6 +8628,34 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
                           zIndex: 1,
+                        }}
+                      />
+                      {/* Dose Overlay Canvas */}
+                      <canvas
+                        ref={doseOverlayCanvasRef}
+                        width={1536}
+                        height={1536}
+                        className="pointer-events-none absolute max-w-full max-h-full object-contain"
+                        style={{
+                          visibility: (!doseVisible || doseOpacity === 0) ? 'hidden' : 'visible',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          zIndex: 3,
+                          opacity: Math.max(0, Math.min(1, doseOpacity)),
+                          mixBlendMode: 'screen',
+                        }}
+                      />
+                      <canvas
+                        ref={contoursOverlayCanvasRef}
+                        width={1536}
+                        height={1536}
+                        className="pointer-events-none absolute max-w-full max-h-full object-contain"
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          zIndex: 4,
                         }}
                       />
                     </div>
@@ -8344,6 +8758,22 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                   userSelect: "none",
                 }}
               />
+              {/* Dose Overlay Canvas */}
+              <canvas
+                ref={doseOverlayCanvasRef}
+                width={1536}
+                height={1536}
+                className="pointer-events-none absolute max-w-full max-h-full object-contain"
+                style={{
+                  visibility: (!doseVisible || doseOpacity === 0) ? 'hidden' : 'visible',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 3,
+                  opacity: Math.max(0, Math.min(1, doseOpacity)),
+                  mixBlendMode: 'screen',
+                }}
+              />
               <canvas
                 ref={contoursOverlayCanvasRef}
                 width={1536}
@@ -8353,7 +8783,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  zIndex: 2,
+                  zIndex: 4,
                 }}
               />
               
@@ -8461,6 +8891,22 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               }}
             />
 
+            {/* Dose Overlay Canvas */}
+            <canvas
+              ref={doseOverlayCanvasRef}
+              width={1536}
+              height={1536}
+              className="pointer-events-none absolute max-w-full max-h-full object-contain"
+              style={{
+                visibility: (!doseVisible || doseOpacity === 0) ? 'hidden' : 'visible',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 3,
+                opacity: Math.max(0, Math.min(1, doseOpacity)),
+              }}
+            />
+
             <canvas
               ref={contoursOverlayCanvasRef}
               width={1536}
@@ -8470,7 +8916,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                zIndex: 2,
+                zIndex: 4,
               }}
             />
             
