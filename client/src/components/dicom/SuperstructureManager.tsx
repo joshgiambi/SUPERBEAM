@@ -273,14 +273,38 @@ export function SuperstructureManager({
 /**
  * Hook for managing superstructure operations
  */
-export function useSuperstructures(rtStructureSetId: number | null) {
+export function useSuperstructures(rtStructureSetId: number | null, rtStructures?: { structures?: Array<{ roiNumber: number }> } | null) {
   const [superstructures, setSuperstructures] = useState<Superstructure[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Clean up orphaned superstructures (where the referenced structure no longer exists)
+  const cleanupOrphanedSuperstructures = useCallback(async (existingRoiNumbers: number[]) => {
+    if (!rtStructureSetId) return;
+    
+    try {
+      const response = await fetch(`/api/superstructures/${rtStructureSetId}/cleanup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ existingRoiNumbers })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.cleanedCount > 0) {
+          console.log(`🧹 SUPERSTRUCTURE: Cleaned up ${result.cleanedCount} orphaned record(s)`);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to cleanup orphaned superstructures:', err);
+    }
+  }, [rtStructureSetId]);
+
   // Load superstructures for a structure set
   const loadSuperstructures = useCallback(async () => {
+    console.log('🔶 SUPERSTRUCTURE: loadSuperstructures called, rtStructureSetId:', rtStructureSetId);
     if (!rtStructureSetId) {
+      console.log('🔶 SUPERSTRUCTURE: No rtStructureSetId, clearing superstructures');
       setSuperstructures([]);
       return;
     }
@@ -288,23 +312,45 @@ export function useSuperstructures(rtStructureSetId: number | null) {
     setIsLoading(true);
     setError(null);
     try {
+      // If we have RT structures, clean up orphaned superstructures first
+      if (rtStructures?.structures && rtStructures.structures.length > 0) {
+        const existingRoiNumbers = rtStructures.structures.map(s => s.roiNumber);
+        await cleanupOrphanedSuperstructures(existingRoiNumbers);
+      }
+      
       const response = await fetch(`/api/superstructures/${rtStructureSetId}`);
+      console.log('🔶 SUPERSTRUCTURE: API response status:', response.status);
       if (!response.ok) {
         if (response.status === 404) {
+          console.log('🔶 SUPERSTRUCTURE: 404 - no superstructures found');
           setSuperstructures([]);
           return;
         }
         throw new Error(`Failed to load superstructures: ${response.statusText}`);
       }
       const data = await response.json();
-      setSuperstructures(data);
+      console.log('🔶 SUPERSTRUCTURE: Loaded superstructures:', data);
+      
+      // Filter to only include superstructures whose target structure actually exists
+      // Note: API returns rtStructureRoiNumber (database field name)
+      const existingRoiNumbers = rtStructures?.structures?.map(s => s.roiNumber) || [];
+      const validSuperstructures = data.filter((ss: any) => 
+        existingRoiNumbers.includes(ss.rtStructureRoiNumber)
+      );
+      
+      if (validSuperstructures.length !== data.length) {
+        console.log(`🔶 SUPERSTRUCTURE: Filtered ${data.length - validSuperstructures.length} superstructures with missing structures`);
+      }
+      
+      setSuperstructures(validSuperstructures);
     } catch (err) {
+      console.error('🔶 SUPERSTRUCTURE ERROR:', err);
       setError(err instanceof Error ? err : new Error('Failed to load superstructures'));
       setSuperstructures([]);
     } finally {
       setIsLoading(false);
     }
-  }, [rtStructureSetId]);
+  }, [rtStructureSetId, rtStructures, cleanupOrphanedSuperstructures]);
 
   // Create a new superstructure
   const createSuperstructure = useCallback(async (params: {

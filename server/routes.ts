@@ -5878,6 +5878,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cleanup orphaned superstructures (where target structure no longer exists)
+  app.post("/api/superstructures/:rtSeriesId/cleanup", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const rtSeriesId = parseInt(req.params.rtSeriesId);
+      const { existingRoiNumbers } = req.body;
+
+      if (!Array.isArray(existingRoiNumbers)) {
+        return res.status(400).json({ message: "existingRoiNumbers must be an array" });
+      }
+
+      // Get all superstructures for this series
+      const allSuperstructures = await storage.getSuperstructuresForStructureSet(rtSeriesId);
+      
+      // Find orphaned ones (target structure doesn't exist)
+      const orphaned = allSuperstructures.filter(
+        (ss: any) => !existingRoiNumbers.includes(ss.rtStructureRoiNumber)
+      );
+      
+      // Delete orphaned superstructures
+      for (const ss of orphaned) {
+        await storage.deleteSuperstructure(ss.id);
+        console.log(`🧹 Deleted orphaned superstructure ${ss.id} (ROI ${ss.rtStructureRoiNumber} no longer exists)`);
+      }
+      
+      res.json({ 
+        success: true, 
+        cleanedCount: orphaned.length,
+        cleanedIds: orphaned.map((ss: any) => ss.id)
+      });
+    } catch (error) {
+      console.error('Error cleaning up orphaned superstructures:', error);
+      next(error);
+    }
+  });
+
   // Check and auto-regenerate superstructures when source structures are modified
   app.post("/api/superstructures/check-auto-update", async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -5900,6 +5935,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error checking auto-update:', error);
+      next(error);
+    }
+  });
+
+  // Clean up orphaned superstructures (where the referenced structure no longer exists)
+  app.post("/api/superstructures/:rtSeriesId/cleanup", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const rtSeriesId = parseInt(req.params.rtSeriesId);
+      const { existingRoiNumbers } = req.body;
+
+      if (!Array.isArray(existingRoiNumbers)) {
+        return res.status(400).json({ message: "existingRoiNumbers must be an array" });
+      }
+
+      // Get all superstructures for this RT series
+      const allSuperstructures = await storage.getSuperstructuresForStructureSet(rtSeriesId);
+      
+      // Find orphaned superstructures (where rtStructureRoiNumber doesn't exist in current structures)
+      const orphanedIds: number[] = [];
+      for (const ss of allSuperstructures) {
+        if (!existingRoiNumbers.includes(ss.rtStructureRoiNumber)) {
+          orphanedIds.push(ss.id);
+        }
+      }
+
+      // Delete orphaned superstructures
+      for (const id of orphanedIds) {
+        await storage.deleteSuperstructure(id);
+      }
+
+      if (orphanedIds.length > 0) {
+        console.log(`🧹 Cleaned up ${orphanedIds.length} orphaned superstructure(s) for rtSeriesId ${rtSeriesId}`);
+      }
+
+      res.json({ 
+        success: true, 
+        cleanedCount: orphanedIds.length,
+        cleanedIds: orphanedIds
+      });
+    } catch (error) {
+      console.error('Error cleaning up superstructures:', error);
       next(error);
     }
   });

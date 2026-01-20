@@ -2245,22 +2245,38 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
   // Handle advanced margin execution operation
   const handleAdvancedMarginExecution = async (payload: any) => {
-    console.log('🔹 🎯 Working Viewer: handleAdvancedMarginExecution called with payload:', payload);
+    console.log('🔶 MARGIN: WorkingViewer received payload:', payload);
     
     // Use local structures or props structures
     const structures = localRTStructures || rtStructures;
     
     if (!structures) {
-      console.error("🔹 ❌ RT structures not available for margin execution");
+      console.error("🔶 MARGIN ERROR: RT structures not available");
       return;
     }
     
+    console.log('🔶 MARGIN: Available structures:', structures.structures?.map((s: any) => ({ 
+      name: s.structureName, 
+      roiNumber: s.roiNumber, 
+      contourCount: s.contours?.length,
+      hasPoints: s.contours?.[0]?.points?.length > 0
+    })));
+    
     const { structureId, targetStructureId, parameters, outputName, outputColor, saveAsSuperstructure, superstructureInfo } = payload;
     
-    console.log(`🔹 📊 Executing margin operation for structure ${structureId} with parameters:`, parameters);
-    console.log(`🔹 Target structure ID: ${targetStructureId || 'same structure'}`);
-    console.log(`🔹 Output name: ${outputName || 'auto-generated'}, Output color:`, outputColor);
-    console.log(`🔹 Save as superstructure: ${saveAsSuperstructure}`);
+    console.log('🔶 MARGIN: Params -', { structureId, targetStructureId, parameters, outputName, saveAsSuperstructure });
+    
+    // Find source structure and log critical info
+    const sourceCheck = structures.structures?.find((s: any) => s.roiNumber === structureId);
+    console.log('🔶 MARGIN: *** SOURCE CHECK ***', {
+      foundSource: !!sourceCheck,
+      sourceName: sourceCheck?.structureName,
+      sourceContourCount: sourceCheck?.contours?.length || 0,
+      sourceHasPoints: sourceCheck?.contours?.[0]?.points?.length > 0
+    });
+    if (!sourceCheck || !sourceCheck.contours?.length) {
+      console.error('🔶 MARGIN ERROR: SOURCE HAS NO CONTOURS!');
+    }
     
     try {
       // Create a deep copy of RT structures
@@ -2318,7 +2334,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           contours: []
         };
         updatedRTStructures.structures.push(targetStructure);
-        console.log(`🔹 Created new structure "${newName}" with roiNumber ${maxRoi + 1} and color [${newColor.join(', ')}]`);
+        console.log(`🔶 MARGIN: Created new structure "${newName}" roiNumber=${maxRoi + 1}`);
       } else if (targetStructureId && targetStructureId !== structureId) {
         targetStructure = updatedRTStructures.structures?.find(
           (s: any) => s.roiNumber === targetStructureId,
@@ -2329,67 +2345,138 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
       }
       
-      console.log(`🔹 Applying margin of ${marginValue}mm to ${sourceStructure.contours?.length || 0} contours`);
-      console.log('🔹 Full parameters received:', JSON.stringify(parameters, null, 2));
+      console.log(`🔶 MARGIN: Applying ${marginValue}mm to ${sourceStructure.contours?.length || 0} contours`);
+      console.log('🔶 MARGIN: Full parameters:', JSON.stringify(parameters, null, 2));
 
       // Uniform margin: use DT-based margin-worker (same as preview) for accurate Eclipse-like results
       if (parameters?.marginType === 'UNIFORM') {
         try {
-          const px = imageMetadata?.pixelSpacing || [1, 1];
-          const th = imageMetadata?.sliceThickness || 2;
-          const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
+          // Parse pixel spacing - may be string "0.976\\0.976" or array [0.976, 0.976]
+          let pxArr: number[];
+          if (typeof imageMetadata?.pixelSpacing === 'string') {
+            pxArr = imageMetadata.pixelSpacing.split('\\').map(Number);
+          } else if (Array.isArray(imageMetadata?.pixelSpacing)) {
+            pxArr = imageMetadata.pixelSpacing;
+          } else {
+            pxArr = [1, 1];
+          }
+          const px: [number, number] = [pxArr[0] || 1, pxArr[1] || pxArr[0] || 1];
+          const th = typeof imageMetadata?.sliceThickness === 'string' 
+            ? parseFloat(imageMetadata.sliceThickness) 
+            : (imageMetadata?.sliceThickness || 2);
+          const spacing: [number, number, number] = [px[1], px[0], th];
+          console.log('🔶 MARGIN: Parsed spacing:', { rawPixelSpacing: imageMetadata?.pixelSpacing, rawThickness: imageMetadata?.sliceThickness, spacing });
           const jobId = `exec-${Date.now()}`;
           const padding = Math.abs(marginValue) + 5;
           const srcContours = sourceStructure.contours || [];
           
-          console.log('🔹 UNIFORM margin execution:', {
+          console.log('🔶 MARGIN: UNIFORM execution:', {
             marginValue,
             spacing,
             padding,
             sourceContourCount: srcContours.length,
-            firstContourPointCount: srcContours[0]?.points?.length
+            firstContourPointCount: srcContours[0]?.points?.length,
+            firstContourSlicePosition: srcContours[0]?.slicePosition,
+            firstContourSample: srcContours[0]?.points?.slice(0, 12), // First 4 points (x,y,z each)
+            uniqueSlicePositions: Array.from(new Set(srcContours.map((c: any) => c.slicePosition as number))).sort((a: number, b: number) => a - b).slice(0, 5),
+            contourStructure: srcContours[0] ? Object.keys(srcContours[0]) : 'empty'
           });
           
           const startTime = performance.now();
-          console.log('🔹 Starting margin worker at', new Date().toISOString());
+          console.log('🔶 MARGIN: Creating worker...');
           
-          const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
+          let worker: Worker;
+          try {
+            worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
+            console.log('🔶 MARGIN: Worker created successfully');
+          } catch (workerCreateErr) {
+            console.error('🔶 MARGIN ERROR: Failed to create worker:', workerCreateErr);
+            throw workerCreateErr;
+          }
           
           const workerPromise: Promise<any> = new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-              console.error('🔹 ❌ MARGIN WORKER TIMEOUT after 30 seconds!');
+              console.error('🔶 MARGIN ERROR: Worker timeout after 30 seconds!');
               try { worker.terminate(); } catch {}
               reject(new Error('Margin worker timeout - operation took too long'));
             }, 30000); // 30 second timeout
             
             worker.onmessage = (ev: MessageEvent<any>) => {
+              console.log('🔶 MARGIN: Worker response received:', { jobId: ev.data?.jobId, ok: ev.data?.ok, hasContours: !!ev.data?.contours, contourCount: ev.data?.contours?.length });
               if (!ev.data || ev.data.jobId !== jobId) return;
               clearTimeout(timeout);
               try { worker.terminate(); } catch {}
               if (ev.data.ok) resolve(ev.data.contours); else reject(ev.data.error);
             };
             worker.onerror = (err) => {
+              console.error('🔶 MARGIN ERROR: Worker error event:', err);
               clearTimeout(timeout);
               try { worker.terminate(); } catch {}
               reject(err);
             };
           });
           
-          worker.postMessage({ jobId, kind: 'UNIFORM', contours: srcContours, spacing, padding, margin: marginValue });
+          const messagePayload = { jobId, kind: 'UNIFORM', contours: srcContours, spacing, padding, margin: marginValue };
+          console.log('🔶 MARGIN: Posting message to worker:', { jobId, kind: 'UNIFORM', margin: marginValue, contourCount: srcContours.length });
+          worker.postMessage(messagePayload);
           const workerContours = await workerPromise;
           
           const endTime = performance.now();
-          console.log(`🔹 ✅ Margin worker completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+          console.log(`🔶 MARGIN: Worker completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+          console.log('🔶 MARGIN: Worker raw result:', { 
+            contourCount: workerContours?.length,
+            isArray: Array.isArray(workerContours),
+            firstContour: workerContours?.[0] ? { 
+              hasPoints: !!workerContours[0].points,
+              pointsLength: workerContours[0].points?.length,
+              slicePosition: workerContours[0].slicePosition 
+            } : 'none'
+          });
           
           const processedContours = (workerContours || []).map((c: any) => ({
             slicePosition: c.slicePosition,
             points: c.points,
             numberOfPoints: c.points.length / 3
           }));
+          
+          // CRITICAL: Warn if worker produced 0 contours from non-zero input
+          if (processedContours.length === 0 && srcContours.length > 0) {
+            console.error('🔶 MARGIN ERROR: Worker returned 0 contours from', srcContours.length, 'input contours!');
+            console.error('🔶 MARGIN ERROR: This indicates an issue with the margin calculation or worker loading');
+            console.error('🔶 MARGIN ERROR: Input data sample:', {
+              firstContour: srcContours[0] ? {
+                pointsLength: srcContours[0].points?.length,
+                slicePosition: srcContours[0].slicePosition,
+                samplePoints: srcContours[0].points?.slice(0, 12)
+              } : 'none'
+            });
+            // Fall back to clipper method
+            console.warn('🔶 MARGIN: Falling back to Clipper offset method...');
+            const { offsetContour } = await import('@/lib/clipper-boolean-operations');
+            for (const contour of srcContours) {
+              if (!contour.points || contour.points.length < 9) continue;
+              try {
+                const outs = await offsetContour(contour.points, marginValue);
+                outs?.forEach(out => {
+                  if (out.length >= 9) {
+                    processedContours.push({
+                      slicePosition: contour.slicePosition,
+                      points: out,
+                      numberOfPoints: out.length / 3
+                    });
+                  }
+                });
+              } catch (err) {
+                console.warn('Clipper offset failed for contour:', err);
+              }
+            }
+            console.log(`🔶 MARGIN: Clipper fallback produced ${processedContours.length} contours`);
+          }
+          
           targetStructure.contours = processedContours;
-          console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours with total ${processedContours.reduce((sum: number, c: any) => sum + (c.points?.length || 0), 0)} points`);
+          console.log(`🔶 MARGIN: Final result: ${processedContours.length} contours, ${processedContours.reduce((sum: number, c: any) => sum + (c.points?.length || 0), 0)} points`);
         } catch (e2) {
-          console.error('🔹 ❌ DT margin worker FAILED, falling back to clipper offset:', e2);
+          console.error('🔶 MARGIN ERROR: Worker failed, falling back to clipper:', e2);
           const { offsetContour } = await import('@/lib/clipper-boolean-operations');
           const processedContours: any[] = [];
           for (const contour of sourceStructure.contours || []) {
@@ -2431,7 +2518,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         setLocalRTStructures(updatedRTStructures);
         saveContourUpdates(updatedRTStructures, 'apply_margin');
         
-        console.log('🔹 📤 Calling onContourUpdate with updated structures:', {
+        console.log('🔶 MARGIN: Calling onContourUpdate with:', {
           structureCount: updatedRTStructures.structures?.length,
           targetStructureId: targetStructure.roiNumber,
           targetContourCount: targetStructure.contours?.length,
@@ -2448,9 +2535,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         });
         
         // Create superstructure if requested (for auto-update functionality)
-        console.log('🔹 Superstructure check:', {
+        console.log('🔶 MARGIN: Superstructure check -', {
           saveAsSuperstructure,
           hasSuperstructureInfo: !!superstructureInfo,
+          superstructureInfo,
           targetStructureId,
           willCreate: saveAsSuperstructure && superstructureInfo && targetStructureId === 'new'
         });
@@ -2467,7 +2555,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               autoUpdate: true
             };
             
-            console.log('🔹 Creating margin superstructure:', superstructurePayload);
+            console.log('🔶 MARGIN: Creating superstructure:', superstructurePayload);
             
             const response = await fetch('/api/superstructures', {
               method: 'POST',
@@ -2476,12 +2564,15 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
             });
             
             if (response.ok) {
-              console.log('✅ Margin superstructure created successfully');
+              const result = await response.json();
+              console.log('🔶 MARGIN: Superstructure created successfully:', result);
+              console.log('🔶 MARGIN: Dispatching superstructures:reload event for rtSeriesId:', superstructureInfo.rtSeriesId);
               window.dispatchEvent(new CustomEvent('superstructures:reload', {
                 detail: { rtSeriesId: superstructureInfo.rtSeriesId }
               }));
             } else {
-              console.error('Failed to create margin superstructure:', await response.text());
+              const errorText = await response.text();
+              console.error('🔶 MARGIN ERROR: Failed to create superstructure:', errorText);
             }
           } catch (err) {
             console.error('Error creating margin superstructure:', err);
@@ -2495,11 +2586,22 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       let processedContours: any[] = [];
       
       try {
-        console.log(`🔹 Using DT-based margin-worker for ${parameters?.marginType || 'directional'} margin`);
+        console.log(`🔶 MARGIN: Using DT worker for ${parameters?.marginType || 'directional'}`);
         const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
-        const px = imageMetadata?.pixelSpacing || [1, 1];
-        const th = imageMetadata?.sliceThickness || 2;
-        const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
+        // Parse pixel spacing - may be string "0.976\\0.976" or array [0.976, 0.976]
+        let pxArr2: number[];
+        if (typeof imageMetadata?.pixelSpacing === 'string') {
+          pxArr2 = imageMetadata.pixelSpacing.split('\\').map(Number);
+        } else if (Array.isArray(imageMetadata?.pixelSpacing)) {
+          pxArr2 = imageMetadata.pixelSpacing;
+        } else {
+          pxArr2 = [1, 1];
+        }
+        const px2: [number, number] = [pxArr2[0] || 1, pxArr2[1] || pxArr2[0] || 1];
+        const th2 = typeof imageMetadata?.sliceThickness === 'string' 
+          ? parseFloat(imageMetadata.sliceThickness) 
+          : (imageMetadata?.sliceThickness || 2);
+        const spacing: [number, number, number] = [px2[1], px2[0], th2];
         const jobId = `exec-dir-${Date.now()}`;
         const padding = Math.abs(marginValue) + 10;
         const srcContours = sourceStructure.contours || [];
@@ -2536,7 +2638,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           numberOfPoints: c.points.length / 3
         }));
         
-        console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours`);
+        console.log(`🔶 MARGIN: DT worker produced ${processedContours.length} contours`);
         
       } catch (error) {
         console.warn('🔹 ⚠️ DT margin worker failed, falling back to clipper offset:', error);
@@ -2567,7 +2669,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       // Apply results to target structure
       targetStructure.contours = processedContours;
       
-      console.log(`🔹 ✅ Applied simple/3D margin, generated ${processedContours.length} contours`);
+      console.log(`🔶 MARGIN: Applied simple/3D margin, ${processedContours.length} contours`);
       
       // Save to undo/redo and persist
       if (seriesId) {
@@ -2603,7 +2705,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
             autoUpdate: true
           };
           
-          console.log('🔹 Creating margin superstructure:', superstructurePayload);
+          console.log('🔶 MARGIN: Creating superstructure:', superstructurePayload);
           
           const response = await fetch('/api/superstructures', {
             method: 'POST',
@@ -2624,7 +2726,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
       }
     } catch (error) {
-      console.error("🔹 ❌ Error applying simple margin operation:", error);
+      console.error("🔶 MARGIN ERROR: Failed to apply margin:", error);
     }
   };
 
@@ -3774,7 +3876,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const handleContourUpdate = async (payload: any) => {
     // Handle margin toolbar operations
     if (payload && payload.type && payload.type.includes('margin')) {
-      console.log("🔹 Margin execution request from toolbar:", payload);
+      console.log("🔶 MARGIN: Execution request from toolbar:", payload);
       await handleAdvancedMarginExecution({
         action: 'execute_margin',
         structureId: payload.structureId,
@@ -3797,7 +3899,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     // Handle advanced margin execution operations
     if (payload && payload.action === "execute_margin") {
-      console.log("🔹 Advanced margin execution request:", payload);
+      console.log("🔶 MARGIN: Advanced execution request:", payload);
       await handleAdvancedMarginExecution(payload);
       return;
     }

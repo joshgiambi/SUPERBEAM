@@ -47,35 +47,72 @@ export function marginSymmetric(structure: Structure, marginMM: number, eclipseF
     return { grid: eg, mask };
   } else {
     // Inner (erosion): shrink the structure by |marginMM|
-    // Need to expand grid enough to properly compute distances at boundaries
+    console.log('🔹 marginSymmetric: EROSION mode, absMargin:', Math.abs(marginMM));
     const absMargin = Math.abs(marginMM);
     const extraX = Math.max(2, Math.ceil(absMargin / g.xRes) + 1);
     const extraY = Math.max(2, Math.ceil(absMargin / g.yRes) + 1);
     const extraZ = Math.max(2, Math.ceil(absMargin / g.zRes) + 1);
     const eg = expandGrid(g, extraX, extraY, extraZ);
     
+    console.log('🔹 Erosion grid expanded:', { 
+      original: `${g.xSize}x${g.ySize}x${g.zSize}`, 
+      expanded: `${eg.xSize}x${eg.ySize}x${eg.zSize}` 
+    });
+    
     // Get inside mask: inside voxels = 0, outside = infinity
     const inside = initializeInfinityMapInside0(structure, eg);
     
-    // For erosion, compute distance from OUTSIDE into the structure
-    // Seeds: outside voxels = 0, inside voxels = infinity
+    // Count inside voxels
+    let insideCount = 0;
+    for (let i = 0; i < inside.values.length; i++) {
+      if (inside.values[i] === 0) insideCount++;
+    }
+    console.log('🔹 Inside voxel count before erosion:', insideCount);
+    
+    // For erosion, we need distance from boundary INTO the structure
+    // Invert: inside voxels become seeds (infinity), boundary/outside become 0
     const dt: Float3D = { values: new Float32Array(eg.xSize * eg.ySize * eg.zSize), grid: eg };
+    
+    // Initialize: outside = 0 (seeds), inside = infinity (to be computed)
     for (let i = 0; i < dt.values.length; i++) {
       dt.values[i] = inside.values[i] === 0 ? InfinityVal : 0;
     }
     
-    // Run DT - computes distance from outside (boundary) into the structure
+    // Run DT - computes distance from outside boundary into the structure
     distanceTransform3D(dt, eg);
+    
+    // Debug: check DT values
+    let minDT = Infinity, maxDT = -Infinity;
+    for (let i = 0; i < dt.values.length; i++) {
+      if (inside.values[i] === 0) { // only inside voxels
+        if (dt.values[i] < minDT) minDT = dt.values[i];
+        if (dt.values[i] > maxDT && dt.values[i] < InfinityVal) maxDT = dt.values[i];
+      }
+    }
+    console.log('🔹 DT range for inside voxels:', { 
+      minDT: Math.sqrt(minDT).toFixed(2), 
+      maxDT: Math.sqrt(maxDT).toFixed(2),
+      thresholdMM: absMargin
+    });
     
     // Threshold: keep only inside voxels where distance from boundary > absMargin
     const thresholdSq = absMargin * absMargin;
     const out = new Uint8Array(eg.xSize * eg.ySize * eg.zSize);
+    let keptCount = 0;
     for (let i = 0; i < dt.values.length; i++) {
       // Only keep inside voxels that are far enough from boundary
       if (inside.values[i] === 0 && dt.values[i] > thresholdSq) {
         out[i] = 1;
+        keptCount++;
       }
     }
+    
+    console.log('🔹 Erosion result:', { 
+      inputVoxels: insideCount, 
+      outputVoxels: keptCount,
+      reduction: ((1 - keptCount/insideCount) * 100).toFixed(1) + '%'
+    });
+    
     return { grid: eg, mask: { values: out, grid: eg } };
   }
 }

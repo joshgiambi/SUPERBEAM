@@ -246,13 +246,17 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   }, [loadedRTSeriesId, onLoadedRTSeriesChange]);
 
   // Automatically enter contour edit mode when a structure is selected for editing
+  // BUT NOT when margin toolbar is open - just update the selected structure for margin tool
   useEffect(() => {
     if (selectedForEdit && rtStructures) {
-      setIsContourEditMode(true);
+      // Only enter contour edit mode if margin toolbar is NOT open
+      if (!showMarginToolbar) {
+        setIsContourEditMode(true);
+      }
     } else {
       setIsContourEditMode(false);
     }
-  }, [selectedForEdit, rtStructures]);
+  }, [selectedForEdit, rtStructures, showMarginToolbar]);
 
   // Fetch series data for all studies
   const DERIVED_DESCRIPTION_KEYWORDS = useMemo(
@@ -3974,13 +3978,26 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           onClose={() => setShowMarginToolbar(false)}
           onExecute={async (operation) => {
             // Handle execute operation
-            console.log('🔹 🎯 Viewer Interface: Handling margin operation:', operation);
+            console.log('🔶 MARGIN: ========== NEW MARGIN OPERATION ==========');
+            console.log('🔶 MARGIN: Viewer Interface received operation:', operation);
+            console.log('🔶 MARGIN: Looking for structure named:', operation.structureName);
+            console.log('🔶 MARGIN: Available structures:', rtStructures.structures?.map((s: any) => ({ 
+              name: s.structureName, 
+              roiNumber: s.roiNumber, 
+              contourCount: s.contours?.length,
+              hasContours: (s.contours?.length || 0) > 0
+            })));
             const sourceStructure = rtStructures.structures?.find((s: any) => s.structureName === operation.structureName);
             const structureId = sourceStructure?.roiNumber;
-            console.log('🔹 Source structure found:', sourceStructure?.structureName, 'roiNumber:', structureId);
+            console.log('🔶 MARGIN: Source structure found?', !!sourceStructure, 'name:', sourceStructure?.structureName, 'roiNumber:', structureId, 'contourCount:', sourceStructure?.contours?.length);
+            
+            if (!sourceStructure) {
+              console.error('🔶 MARGIN ERROR: Source structure NOT FOUND! Name:', operation.structureName);
+              console.error('🔶 MARGIN ERROR: Available names:', rtStructures.structures?.map((s: any) => s.structureName));
+            }
             
             if (workingViewerRef.current && structureId !== undefined && structureId !== null) {
-              console.log('🔹 ✅ Working viewer ref found, calling handleContourUpdate');
+              console.log('🔶 MARGIN: Calling handleContourUpdate');
               // Convert operation parameters to the format expected by working viewer
               const parameters = operation.type === 'uniform' 
                 ? { 
@@ -4031,9 +4048,30 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                 description: `Applying ${marginValue}mm ${operation.direction || 'expansion'} to ${operation.structureName}`,
               });
               
-              setShowMarginToolbar(false);
+              // Keep toolbar open so user can do multiple operations
+              // setShowMarginToolbar(false);
               
               try {
+                // Build superstructure info
+                const willCreateSuperstructure = operation.saveAsSuperstructure && operation.outputMode === 'new';
+                const superstructureInfo = willCreateSuperstructure ? {
+                  rtSeriesId: loadedRTSeriesId || rtStructures?.seriesId,
+                  sourceStructureName: operation.structureName,
+                  sourceStructureRoiNumber: structureId,
+                  operationExpression: marginExpression,
+                  operationType: 'margin',
+                  marginType: operation.type,
+                  marginDirection: operation.direction,
+                  marginParameters: parameters
+                } : undefined;
+                
+                console.log('🔶 MARGIN: Superstructure decision:', {
+                  'operation.saveAsSuperstructure': operation.saveAsSuperstructure,
+                  'operation.outputMode': operation.outputMode,
+                  willCreateSuperstructure,
+                  superstructureInfo
+                });
+                
                 // AWAIT the async margin operation - this is critical!
                 await workingViewerRef.current.handleContourUpdate({
                   action: 'execute_margin',
@@ -4043,17 +4081,8 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   outputName: operation.outputMode === 'same' ? operation.structureName : (operation.outputName || `${operation.structureName}_margin`),
                   outputColor: outputColorRGB,
                   // Superstructure info for margin operations
-                  saveAsSuperstructure: operation.saveAsSuperstructure && operation.outputMode === 'new',
-                  superstructureInfo: operation.saveAsSuperstructure && operation.outputMode === 'new' ? {
-                    rtSeriesId: loadedRTSeriesId || rtStructures?.seriesId,
-                    sourceStructureName: operation.structureName,
-                    sourceStructureRoiNumber: structureId,
-                    operationExpression: marginExpression,
-                    operationType: 'margin',
-                    marginType: operation.type,
-                    marginDirection: operation.direction,
-                    marginParameters: parameters
-                  } : undefined
+                  saveAsSuperstructure: willCreateSuperstructure,
+                  superstructureInfo
                 });
                 
                 // Show success toast AFTER operation completes
@@ -4066,7 +4095,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                     : `Created new structure: ${operation.outputName}`,
                 });
               } catch (error) {
-                console.error('🔹 ❌ Margin operation error:', error);
+                console.error('🔶 MARGIN ERROR:', error);
                 toast({
                   title: "Margin operation failed",
                   description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -4074,7 +4103,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                 });
               }
             } else {
-              console.error('🔹 ❌ Margin operation failed:', {
+              console.error('🔶 MARGIN ERROR: Operation failed:', {
                 hasWorkingViewerRef: !!workingViewerRef.current,
                 structureId,
                 structureName: operation.structureName,

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -200,6 +201,11 @@ export function MarginOperationsPrototype({
     ? { rgb: 'rgb(34, 211, 238)', hue: 187 }   // Cyan
     : { rgb: 'rgb(239, 68, 68)', hue: 0 };     // Red
 
+  // Debug: track state changes
+  useEffect(() => {
+    console.log('🔶 MARGIN: Toolbar state - direction:', direction, 'marginMm:', marginMm);
+  }, [direction, marginMm]);
+
   // Refs for popup positioning
   const libraryButtonRef = useRef<HTMLButtonElement>(null);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
@@ -259,15 +265,19 @@ export function MarginOperationsPrototype({
   }, [templateName, direction, marginMm, templates]);
 
   const loadTemplate = (template: MarginTemplate) => {
-    console.log('🔹 loadTemplate called with:', template);
-    // Update values first
-    setDirection(template.direction);
-    setMarginMm(template.marginMm);
-    // Then close popup after a small delay to ensure state updates are processed
-    setTimeout(() => {
-      setShowLibrary(false);
-      console.log('🔹 loadTemplate complete');
-    }, 50);
+    console.log('🔶 MARGIN: loadTemplate called with:', template);
+    console.log('🔶 MARGIN: Before update - direction:', direction, 'marginMm:', marginMm);
+    
+    // Use flushSync to force immediate synchronous state updates
+    flushSync(() => {
+      setDirection(template.direction);
+      setMarginMm(template.marginMm);
+    });
+    
+    // Close the library popup after state is updated
+    setShowLibrary(false);
+    
+    console.log('🔶 MARGIN: Template loaded - direction:', template.direction, 'margin:', template.marginMm);
   };
 
   const deleteTemplate = useCallback((id: string) => {
@@ -292,7 +302,12 @@ export function MarginOperationsPrototype({
       outputMode
     };
     
-    console.log('🔹 Margin toolbar sending operation:', operationPayload);
+    console.log('🔶 MARGIN: Toolbar sending operation:', operationPayload);
+    console.log('🔶 MARGIN: Superstructure toggle state:', { 
+      saveAsSuperstructure, 
+      outputMode, 
+      willSendAsSuperstructure: outputMode === 'new' ? saveAsSuperstructure : false 
+    });
     onExecute?.(operationPayload);
   };
 
@@ -551,13 +566,16 @@ export function MarginOperationsPrototype({
                     {/* Superstructure Toggle */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setSaveAsSuperstructure(!saveAsSuperstructure)}>
+                        <div className="flex items-center gap-1.5 cursor-pointer">
                           <Switch
                             checked={saveAsSuperstructure}
                             onCheckedChange={setSaveAsSuperstructure}
                             className="scale-75 data-[state=checked]:bg-cyan-500"
                           />
-                          <IterationCw className={cn("w-3.5 h-3.5 transition-colors", saveAsSuperstructure ? "text-cyan-400" : "text-gray-600")} />
+                          <IterationCw 
+                            className={cn("w-3.5 h-3.5 transition-colors", saveAsSuperstructure ? "text-cyan-400" : "text-gray-600")} 
+                            onClick={() => setSaveAsSuperstructure(!saveAsSuperstructure)}
+                          />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs max-w-[200px]">
@@ -570,23 +588,19 @@ export function MarginOperationsPrototype({
 
               <div className="flex-1" />
 
-              {/* Execute Button - styled with direction color */}
+              {/* Execute Button - matches bottom toolbar margin button style */}
               <button
                 onClick={handleExecute}
                 disabled={!canExecute}
                 className={cn(
-                  "h-8 px-4 flex items-center gap-2 rounded-lg text-sm font-semibold transition-all",
+                  "h-8 px-3 flex items-center gap-2 rounded-lg transition-all text-sm font-medium",
                   canExecute
-                    ? "text-white shadow-lg"
+                    ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40 hover:bg-cyan-500/30"
                     : "text-gray-600 cursor-not-allowed bg-white/5"
                 )}
-                style={canExecute ? {
-                  background: `linear-gradient(135deg, ${directionColor.rgb} 0%, ${directionColor.rgb}CC 100%)`,
-                  boxShadow: `0 4px 15px -3px ${directionColor.rgb}50`,
-                } : {}}
               >
-                <Play className="w-3.5 h-3.5" />
-                Apply
+                <Play className="w-4 h-4" />
+                <span>Apply</span>
               </button>
             </div>
           </div>
@@ -645,7 +659,7 @@ export function MarginOperationsPrototype({
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          console.log('🔹 Loading template:', template.name, template);
+                          console.log('🔶 MARGIN: Loading template:', template.name, template);
                           loadTemplate(template);
                         }}
                         className="h-7 px-3 text-xs font-medium rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 ring-1 ring-cyan-500/30 transition-colors"

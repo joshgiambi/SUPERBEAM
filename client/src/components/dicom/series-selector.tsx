@@ -180,7 +180,7 @@ export function SeriesSelector({
     );
   };
   
-  // Superstructure management
+  // Superstructure management - pass rtStructures for cleanup of orphaned records
   const {
     superstructures,
     isLoading: superstructuresLoading,
@@ -189,7 +189,7 @@ export function SeriesSelector({
     toggleAutoUpdate,
     checkAndRegenerateAutoUpdates,
     reload: reloadSuperstructures
-  } = useSuperstructures(rtStructures?.seriesId || null);
+  } = useSuperstructures(rtStructures?.seriesId || null, rtStructures);
   
   // Helper to validate if a superstructure record actually belongs to a structure
   // This prevents stale superstructure records from being incorrectly matched
@@ -220,18 +220,36 @@ export function SeriesSelector({
   };
   
   // Find valid superstructure for a structure (validates the match)
+  // Note: API returns rtStructureRoiNumber (database field name), not rtStructureId (TypeScript type)
   const findValidSuperstructure = (structure: any) => {
     const superstructure = superstructures.find(
       (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
-    );
+    ) as any;
+    
+    // Debug: Log superstructure lookup
+    if (superstructure) {
+      console.log('🔶 SUPERSTRUCTURE MATCH:', {
+        structureName: structure.structureName,
+        structureRoiNumber: structure.roiNumber,
+        ssRoiNumber: superstructure.rtStructureRoiNumber,
+        ssSourceNames: superstructure.sourceStructureNames,
+        ssExpression: superstructure.operationExpression
+      });
+    }
+    
     if (!superstructure) return null;
     
     // Validate that this superstructure actually belongs to this structure
-    if (!isValidSuperstructureForStructure(superstructure, structure.structureName)) {
-      console.warn(`Stale superstructure detected for ${structure.structureName} (roiNumber ${structure.roiNumber})`);
+    const isValid = isValidSuperstructureForStructure(superstructure, structure.structureName);
+    if (!isValid) {
+      console.warn(`🔶 SUPERSTRUCTURE REJECTED: Stale record for ${structure.structureName} (roiNumber ${structure.roiNumber})`, {
+        ssSourceNames: superstructure.sourceStructureNames,
+        ssExpression: superstructure.operationExpression
+      });
       return null;
     }
     
+    console.log('🔶 SUPERSTRUCTURE VALID:', structure.structureName);
     return superstructure;
   };
   
@@ -265,9 +283,9 @@ export function SeriesSelector({
   // Listen for superstructure reload events
   useEffect(() => {
     const handleReload = (event: CustomEvent) => {
-      console.log('🔄 Superstructure reload event received!');
+      console.log('🔶 SUPERSTRUCTURE: Reload event received!', event.detail);
       setTimeout(() => {
-        console.log('🔄 Triggering reload now...');
+        console.log('🔶 SUPERSTRUCTURE: Triggering reload now...');
         reloadSuperstructures();
         // Also refresh the RT series superstructures map
         const loadAllSuperstructures = async () => {
@@ -778,7 +796,16 @@ export function SeriesSelector({
   };
 
   const handleDeleteStructure = async (structureId: number) => {
-    console.log('🗑️ Delete structure:', structureId);
+    console.log('🔶 DELETE: Structure roiNumber:', structureId);
+    const structureToDelete = rtStructures?.structures?.find((s: any) => s.roiNumber === structureId);
+    console.log('🔶 DELETE: Structure name:', structureToDelete?.structureName);
+    console.log('🔶 DELETE: All superstructures:', superstructures.map((ss: any) => ({
+      id: ss.id,
+      rtStructureRoiNumber: ss.rtStructureRoiNumber,
+      sourceStructureRoiNumbers: ss.sourceStructureRoiNumbers,
+      sourceStructureNames: ss.sourceStructureNames,
+      operationExpression: ss.operationExpression
+    })));
 
     if (!rtStructures || !onRTStructureLoad) {
       console.warn('Cannot delete structure: rtStructures or onRTStructureLoad not available');
@@ -789,6 +816,7 @@ export function SeriesSelector({
     const affectedSuperstructures = superstructures.filter((ss: any) => 
       ss.sourceStructureRoiNumbers?.includes(structureId)
     );
+    console.log('🔶 DELETE: Affected superstructures:', affectedSuperstructures);
     
     if (affectedSuperstructures.length > 0) {
       const structureName = rtStructures.structures.find((s: any) => s.roiNumber === structureId)?.structureName;

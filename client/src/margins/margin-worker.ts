@@ -1,6 +1,10 @@
 // Margin worker: runs DT-based margins off the main thread
+console.log('🔶 MARGIN WORKER: Module loading...');
+
 import { contoursToStructure, structureToContours } from './adapters';
 import { marginSymmetric, marginAsymmetric } from './margin';
+
+console.log('🔶 MARGIN WORKER: Imports completed');
 
 type Kind = 'UNIFORM' | 'DIRECTIONAL' | 'ANISOTROPIC';
 
@@ -17,18 +21,23 @@ interface JobPayload {
 }
 
 self.onmessage = (e: MessageEvent<JobPayload>) => {
+  console.log('🔶 MARGIN WORKER: Message received');
   (async () => {
     const data = e.data;
-    console.log('🔹 Margin worker received:', {
+    console.log('🔶 MARGIN WORKER: Processing:', {
+      jobId: data.jobId,
       kind: data.kind,
       margin: data.margin,
       contourCount: data.contours?.length,
       spacing: data.spacing,
-      padding: data.padding
+      padding: data.padding,
+      firstContourPoints: data.contours?.[0]?.points?.length,
+      firstSlicePosition: data.contours?.[0]?.slicePosition,
+      samplePoints: data.contours?.[0]?.points?.slice(0, 9) // First 3 points
     });
     try {
       const structure = contoursToStructure(data.contours, data.spacing, data.padding);
-      console.log('🔹 Structure created:', {
+      console.log('🔶 MARGIN WORKER: Structure created:', {
         gridSize: `${structure.grid.xSize}x${structure.grid.ySize}x${structure.grid.zSize}`,
         maskSize: structure.mask.values.length,
         nonZeroVoxels: Array.from(structure.mask.values).filter(v => v > 0).length
@@ -36,9 +45,9 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
       let out;
       switch (data.kind) {
         case 'UNIFORM':
-          console.log('🔹 Calling marginSymmetric with margin:', data.margin);
+          console.log('🔶 MARGIN WORKER: marginSymmetric margin:', data.margin);
           out = marginSymmetric(structure, data.margin || 0, true);
-          console.log('🔹 marginSymmetric returned:', {
+          console.log('🔶 MARGIN WORKER: marginSymmetric result:', {
             gridSize: `${out.grid.xSize}x${out.grid.ySize}x${out.grid.zSize}`,
             maskSize: out.mask.values.length,
             nonZeroVoxels: Array.from(out.mask.values).filter(v => v > 0).length
@@ -55,7 +64,7 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
       }
       // Get unique input slice positions
       const inputSlicePositions = Array.from(new Set(data.contours.map(c => c.slicePosition))).sort((a, b) => a - b);
-      console.log('🔹 Input slice positions:', {
+      console.log('🔶 MARGIN WORKER: Input slices:', {
         count: inputSlicePositions.length,
         min: inputSlicePositions[0],
         max: inputSlicePositions[inputSlicePositions.length - 1],
@@ -74,7 +83,7 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
       }
       const nonEmptySlices = voxelsPerSlice.filter(c => c > 0).length;
       const emptySlices = voxelsPerSlice.filter(c => c === 0).length;
-      console.log('🔹 Output mask analysis:', {
+      console.log('🔶 MARGIN WORKER: Output mask:', {
         totalSlices: out.grid.zSize,
         nonEmptySlices,
         emptySlices,
@@ -85,7 +94,7 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
       
       // Analyze output contours
       const outputSlicePositions = Array.from(new Set(resultContours.map(c => c.slicePosition))).sort((a, b) => a - b);
-      console.log('🔹 structureToContours returned:', {
+      console.log('🔶 MARGIN WORKER: Output contours:', {
         contourCount: resultContours?.length,
         uniqueSlices: outputSlicePositions.length,
         sliceRange: outputSlicePositions.length > 0 ? `${outputSlicePositions[0]} to ${outputSlicePositions[outputSlicePositions.length - 1]}` : 'none',
@@ -100,7 +109,7 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
         !inputSlicePositions.some(iz => Math.abs(iz - z) < 0.5)
       );
       
-      console.log('🔹 ⚠️ SLICE COMPARISON:', {
+      console.log('🔶 MARGIN WORKER: Slice comparison:', {
         inputSliceCount: inputSlicePositions.length,
         outputSliceCount: outputSlicePositions.length,
         delta: outputSlicePositions.length - inputSlicePositions.length,
@@ -109,13 +118,14 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
       });
       
       if (missingFromOutput.length > 0) {
-        console.warn('🔹 ❌ MISSING SLICES DETECTED! Input slices not in output:', missingFromOutput);
+        console.warn('🔶 MARGIN WORKER WARNING: Missing slices:', missingFromOutput);
       }
       
-      // Post back results
+      console.log('🔶 MARGIN WORKER: Posting result back');
       // @ts-ignore
       self.postMessage({ jobId: data.jobId, ok: true, contours: resultContours });
     } catch (err) {
+      console.error('🔶 MARGIN WORKER ERROR:', err);
       // @ts-ignore
       self.postMessage({ jobId: data.jobId, ok: false, error: String(err) });
     }
@@ -123,5 +133,3 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
 };
 
 export {};
-
-
