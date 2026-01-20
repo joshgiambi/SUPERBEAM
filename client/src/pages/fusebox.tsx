@@ -44,7 +44,7 @@ import {
   Link,
   Link2Off,
   Hand,
-  Box,
+  CircuitBoard,
   Layers3,
   Gauge,
   Undo2,
@@ -60,6 +60,7 @@ import {
   Check,
 } from 'lucide-react';
 import { WorkingViewer } from '@/components/dicom/working-viewer';
+import { MPRFloating } from '@/components/dicom/mpr-floating';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { fetchFusionManifest } from '@/lib/fusion-utils';
@@ -306,6 +307,55 @@ function FuseBoxContent() {
   
   // Image cache ref for WorkingViewer
   const imageCache = useRef(new Map());
+  
+  // Images loaded from the primary axial viewer (for MPRFloating)
+  const [primaryImages, setPrimaryImages] = useState<any[]>([]);
+  
+  // Cache readiness counter - increments to trigger MPRFloating re-renders when cache populates
+  const [mprCacheVersion, setMprCacheVersion] = useState(0);
+  
+  // Poll for cache readiness when primaryImages are set
+  useEffect(() => {
+    if (primaryImages.length === 0) return;
+    
+    const cache = (window as any).__WV_CACHE__ as Map<string, any> | undefined;
+    if (!cache) return;
+    
+    // Check how many images are cached
+    const checkCacheReady = () => {
+      let cachedCount = 0;
+      for (const img of primaryImages) {
+        if (cache.has(img.sopInstanceUID)) {
+          cachedCount++;
+        }
+      }
+      return cachedCount;
+    };
+    
+    // If already have enough cached, trigger one update
+    const initialCount = checkCacheReady();
+    if (initialCount >= Math.min(10, primaryImages.length)) {
+      console.log(`[FuseBox] MPR cache ready: ${initialCount}/${primaryImages.length} images`);
+      setMprCacheVersion(v => v + 1);
+      return;
+    }
+    
+    // Poll until cache is populated
+    let pollCount = 0;
+    const maxPolls = 30; // 3 seconds max
+    const pollInterval = setInterval(() => {
+      pollCount++;
+      const cachedCount = checkCacheReady();
+      console.log(`[FuseBox] MPR cache poll ${pollCount}: ${cachedCount}/${primaryImages.length} images`);
+      
+      if (cachedCount >= Math.min(10, primaryImages.length) || pollCount >= maxPolls) {
+        clearInterval(pollInterval);
+        setMprCacheVersion(v => v + 1);
+      }
+    }, 100);
+    
+    return () => clearInterval(pollInterval);
+  }, [primaryImages]);
   
   // Fusion manifest loading state
   const [fusionManifestLoading, setFusionManifestLoading] = useState(true);
@@ -590,7 +640,7 @@ function FuseBoxContent() {
         style={{ background: 'linear-gradient(180deg, #0d1117 0%, #0a0e14 100%)' }}
       >
         <div className="text-center p-8 bg-[#0d1117]/80 rounded-2xl border border-white/10 backdrop-blur-xl">
-          <Box className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <CircuitBoard className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-white mb-2">No Fusion Data</h2>
           <p className="text-gray-400 mb-4">
             FuseBox requires fusion data to be passed from the main viewer.
@@ -629,7 +679,7 @@ function FuseBoxContent() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-700/20">
-              <Box className="w-4 h-4 text-cyan-400" />
+              <CircuitBoard className="w-4 h-4 text-cyan-400" />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-gray-100">FuseBox</span>
@@ -861,6 +911,10 @@ function FuseBoxContent() {
                     onPanChange={isLinked ? (x, y) => setSyncedPan({ x, y }) : undefined}
                     externalCrosshair={crosshairPos}
                     onCrosshairChange={setCrosshairPos}
+                    onImagesLoaded={(imgs) => {
+                      console.log('[FuseBox] Primary axial images loaded:', imgs.length);
+                      setPrimaryImages(imgs);
+                    }}
                   />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-0.5 pointer-events-none">
@@ -960,20 +1014,27 @@ function FuseBoxContent() {
                         Coronal
                       </Badge>
                     </div>
-                    <div className="flex-1 min-h-0">
-                      <WorkingViewer
-                        seriesId={fuseboxData.primarySeriesId}
-                        studyId={fuseboxData.studyId}
-                        windowLevel={primaryWindowLevel}
-                        onWindowLevelChange={setPrimaryWindowLevel}
-                        imageCache={imageCache}
-                        orientation="coronal"
-                        hideToolbar
-                        hideSidebar
-                        compactMode
-                        externalSliceIndex={coronalSliceIndex}
-                        onSliceIndexChange={(idx) => setCrosshairPos(prev => ({ ...prev, y: idx }))}
-                      />
+                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                      {primaryImages.length > 0 ? (
+                        <MPRFloating
+                          key={`primary-coronal-${mprCacheVersion}`}
+                          images={primaryImages}
+                          orientation="coronal"
+                          sliceIndex={Math.max(0, Math.min(coronalSliceIndex, (primaryImages[0]?.rows || 512) - 1))}
+                          windowWidth={primaryWindowLevel.window}
+                          windowCenter={primaryWindowLevel.level}
+                          crosshairPos={crosshairPos}
+                          currentZIndex={syncedSliceIndex}
+                          onClick={(e) => {
+                            // Convert click to crosshair update
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = Math.floor((e.clientX - rect.left) / rect.width * (primaryImages[0]?.columns || 512));
+                            setCrosshairPos(prev => ({ ...prev, x }));
+                          }}
+                        />
+                      ) : (
+                        <div className="text-gray-500 text-xs">Loading MPR...</div>
+                      )}
                     </div>
                   </div>
                   
@@ -984,20 +1045,27 @@ function FuseBoxContent() {
                         Sagittal
                       </Badge>
                     </div>
-                    <div className="flex-1 min-h-0">
-                      <WorkingViewer
-                        seriesId={fuseboxData.primarySeriesId}
-                        studyId={fuseboxData.studyId}
-                        windowLevel={primaryWindowLevel}
-                        onWindowLevelChange={setPrimaryWindowLevel}
-                        imageCache={imageCache}
-                        orientation="sagittal"
-                        hideToolbar
-                        hideSidebar
-                        compactMode
-                        externalSliceIndex={sagittalSliceIndex}
-                        onSliceIndexChange={(idx) => setCrosshairPos(prev => ({ ...prev, x: idx }))}
-                      />
+                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                      {primaryImages.length > 0 ? (
+                        <MPRFloating
+                          key={`primary-sagittal-${mprCacheVersion}`}
+                          images={primaryImages}
+                          orientation="sagittal"
+                          sliceIndex={Math.max(0, Math.min(sagittalSliceIndex, (primaryImages[0]?.columns || 512) - 1))}
+                          windowWidth={primaryWindowLevel.window}
+                          windowCenter={primaryWindowLevel.level}
+                          crosshairPos={crosshairPos}
+                          currentZIndex={syncedSliceIndex}
+                          onClick={(e) => {
+                            // Convert click to crosshair update
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const y = Math.floor((e.clientX - rect.left) / rect.width * (primaryImages[0]?.rows || 512));
+                            setCrosshairPos(prev => ({ ...prev, y }));
+                          }}
+                        />
+                      ) : (
+                        <div className="text-gray-500 text-xs">Loading MPR...</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1011,29 +1079,26 @@ function FuseBoxContent() {
                         Coronal
                       </Badge>
                     </div>
-                    <div className="flex-1 min-h-0">
-                      <WorkingViewer
-                        seriesId={fuseboxData.primarySeriesId}
-                        studyId={fuseboxData.studyId}
-                        windowLevel={primaryWindowLevel}
-                        onWindowLevelChange={setPrimaryWindowLevel}
-                        imageCache={imageCache}
-                        orientation="coronal"
-                        hideToolbar
-                        hideSidebar
-                        compactMode
-                        secondarySeriesId={showFusion && !fusionManifestLoading && !fusionManifestError ? fuseboxData.secondarySeriesId : null}
-                        fusionOpacity={fusionOpacity}
-                        fusionDisplayMode="overlay"
-                        hasSecondarySeriesForFusion={showFusion && !fusionManifestLoading && !fusionManifestError}
-                        fusionWindowLevel={secondaryWindowLevel}
-                        fusionSecondaryStatuses={fusionSecondaryStatuses}
-                        fusionManifestLoading={fusionManifestLoading}
-                        fusionManifestPrimarySeriesId={fuseboxData.primarySeriesId}
-                        fusionTranslation={currentTransform.translation}
-                        externalSliceIndex={coronalSliceIndex}
-                        onSliceIndexChange={(idx) => setCrosshairPos(prev => ({ ...prev, y: idx }))}
-                      />
+                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                      {primaryImages.length > 0 ? (
+                        <MPRFloating
+                          key={`fusion-coronal-${mprCacheVersion}`}
+                          images={primaryImages}
+                          orientation="coronal"
+                          sliceIndex={Math.max(0, Math.min(coronalSliceIndex, (primaryImages[0]?.rows || 512) - 1))}
+                          windowWidth={primaryWindowLevel.window}
+                          windowCenter={primaryWindowLevel.level}
+                          crosshairPos={crosshairPos}
+                          currentZIndex={syncedSliceIndex}
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = Math.floor((e.clientX - rect.left) / rect.width * (primaryImages[0]?.columns || 512));
+                            setCrosshairPos(prev => ({ ...prev, x }));
+                          }}
+                        />
+                      ) : (
+                        <div className="text-gray-500 text-xs">Loading MPR...</div>
+                      )}
                     </div>
                   </div>
                   
@@ -1044,29 +1109,26 @@ function FuseBoxContent() {
                         Sagittal
                       </Badge>
                     </div>
-                    <div className="flex-1 min-h-0">
-                      <WorkingViewer
-                        seriesId={fuseboxData.primarySeriesId}
-                        studyId={fuseboxData.studyId}
-                        windowLevel={primaryWindowLevel}
-                        onWindowLevelChange={setPrimaryWindowLevel}
-                        imageCache={imageCache}
-                        orientation="sagittal"
-                        hideToolbar
-                        hideSidebar
-                        compactMode
-                        secondarySeriesId={showFusion && !fusionManifestLoading && !fusionManifestError ? fuseboxData.secondarySeriesId : null}
-                        fusionOpacity={fusionOpacity}
-                        fusionDisplayMode="overlay"
-                        hasSecondarySeriesForFusion={showFusion && !fusionManifestLoading && !fusionManifestError}
-                        fusionWindowLevel={secondaryWindowLevel}
-                        fusionSecondaryStatuses={fusionSecondaryStatuses}
-                        fusionManifestLoading={fusionManifestLoading}
-                        fusionManifestPrimarySeriesId={fuseboxData.primarySeriesId}
-                        fusionTranslation={currentTransform.translation}
-                        externalSliceIndex={sagittalSliceIndex}
-                        onSliceIndexChange={(idx) => setCrosshairPos(prev => ({ ...prev, x: idx }))}
-                      />
+                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                      {primaryImages.length > 0 ? (
+                        <MPRFloating
+                          key={`fusion-sagittal-${mprCacheVersion}`}
+                          images={primaryImages}
+                          orientation="sagittal"
+                          sliceIndex={Math.max(0, Math.min(sagittalSliceIndex, (primaryImages[0]?.columns || 512) - 1))}
+                          windowWidth={primaryWindowLevel.window}
+                          windowCenter={primaryWindowLevel.level}
+                          crosshairPos={crosshairPos}
+                          currentZIndex={syncedSliceIndex}
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const y = Math.floor((e.clientX - rect.left) / rect.width * (primaryImages[0]?.rows || 512));
+                            setCrosshairPos(prev => ({ ...prev, y }));
+                          }}
+                        />
+                      ) : (
+                        <div className="text-gray-500 text-xs">Loading MPR...</div>
+                      )}
                     </div>
                   </div>
                 </div>

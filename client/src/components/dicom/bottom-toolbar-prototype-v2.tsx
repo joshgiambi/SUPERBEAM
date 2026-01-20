@@ -22,7 +22,7 @@ import {
   Crosshair,
   Ruler,
   Grid3x3,
-  Layers,
+  Zap,
   Target,
   Info,
   HelpCircle,
@@ -33,7 +33,7 @@ import {
   Redo,
   History,
   X,
-  Box,
+  CircuitBoard,
   Settings2,
 } from 'lucide-react';
 
@@ -151,12 +151,12 @@ export function BottomToolbarPrototypeV2({
     
     // Show fusion toggle in standard mode (split view has CompactToolbar with integrated controls)
     if (hasSecondaries && viewMode === 'standard') {
-      viewModeTools.push({ id: 'fusion', icon: Layers, label: 'Fusion Panel', selectable: true, group: 'viewmode' });
+      viewModeTools.push({ id: 'fusion', icon: Zap, label: 'Fusion Panel', selectable: true, group: 'viewmode' });
     }
     
     // Show FuseBox button when fusion is actively loaded (secondary is displayed)
     if (hasFusionActive) {
-      viewModeTools.push({ id: 'fusebox', icon: Box, label: 'FuseBox', group: 'viewmode', highlight: true });
+      viewModeTools.push({ id: 'fusebox', icon: CircuitBoard, label: 'FuseBox', group: 'viewmode', highlight: true });
     }
     
     
@@ -403,7 +403,7 @@ export function BottomToolbarPrototypeV2({
             }}
           >
             {/* Main Tool Buttons */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               {tools.map((tool, index) => {
                 if (tool.id === 'separator') {
                   return (
@@ -418,7 +418,7 @@ export function BottomToolbarPrototypeV2({
                 const getActiveStyles = () => {
                   // FuseBox button - always highlighted when visible (indicates fusion is active)
                   if (tool.id === 'fusebox') {
-                    return 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-200 ring-1 ring-cyan-500/50 hover:from-cyan-500/40 hover:to-purple-500/40 shadow-lg shadow-cyan-500/20';
+                    return 'bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40 hover:bg-rose-500/30';
                   }
                   if (tool.id === 'mpr' && isActive) {
                     return 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40';

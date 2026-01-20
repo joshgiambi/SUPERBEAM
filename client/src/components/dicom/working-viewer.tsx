@@ -227,6 +227,9 @@ interface WorkingViewerProps {
   // FuseBox translation offset for manual registration adjustment
   // Applied as additional offset to the fusion overlay rendering
   fusionTranslation?: { x: number; y: number; z: number };
+  
+  // Callback fired when images are loaded (for MPR views in parent components)
+  onImagesLoaded?: (images: any[]) => void;
 }
 
 // Expose sidebar ref globally for fusion panel placement
@@ -296,6 +299,7 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
     showIsodose = false,
     prescriptionDose = 60,
     fusionTranslation,
+    onImagesLoaded,
   } = props;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -2110,7 +2114,16 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       
       // Determine target structure
       let targetStructure = sourceStructure;
-      const marginValue = parameters.marginValues?.uniform || parameters.margin || 5;
+      // Extract margin value - for uniform it's in `margin`, for anisotropic we take the max of all sides
+      const marginValue = parameters.margin || 
+        (parameters.marginValues ? Math.max(
+          parameters.marginValues.left || 0,
+          parameters.marginValues.right || 0,
+          parameters.marginValues.ant || 0,
+          parameters.marginValues.post || 0,
+          parameters.marginValues.sup || 0,
+          parameters.marginValues.inf || 0
+        ) : 5);
       
       if (targetStructureId === 'new') {
         // Create a new structure for the margin result
@@ -5444,6 +5457,11 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       });
 
       setImages(sortedImages);
+      
+      // Notify parent that images are loaded (for MPR views in parent components)
+      if (onImagesLoaded) {
+        onImagesLoaded(sortedImages);
+      }
       
       // Start at midpoint of scan (more clinically relevant)
       const midpointIndex = Math.floor(sortedImages.length / 2);
