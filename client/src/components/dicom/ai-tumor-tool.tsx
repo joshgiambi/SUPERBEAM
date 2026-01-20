@@ -382,6 +382,21 @@ export function AITumorTool({
   } | null>(null);
   const { toast } = useToast();
   
+  // Multi-point mode state (activated by holding Shift)
+  const [isShiftHeld, setIsShiftHeld] = useState(false);
+  const [multiPoints, setMultiPoints] = useState<Array<{
+    canvasX: number;
+    canvasY: number;
+    pixelX: number;
+    pixelY: number;
+    worldX: number;
+    worldY: number;
+    label: number; // 1 = foreground (left click), 0 = background (right click)
+  }>>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPath, setDragPath] = useState<Array<{ canvasX: number; canvasY: number }>>([]);
+  const multiPointOverlayRef = useRef<HTMLCanvasElement | null>(null);
+  
   // Store handlers in refs so they can be accessed in event listeners
   const handleSegmentRef = useRef<(() => Promise<void>) | null>(null);
   const handleSegment3DRef = useRef<(() => Promise<void>) | null>(null);
@@ -427,9 +442,272 @@ export function AITumorTool({
     }
   }, [clickPoint, isProcessing, onClickPointChange]);
 
+  // ============================================================================
+  // Multi-point mode (Shift key held) - collect multiple positive/negative points
+  // ============================================================================
+  
+  // Handle shift key press/release for multi-point mode
+  useEffect(() => {
+    if (!isActive) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift' && !isShiftHeld && !isProcessing) {
+        console.log('🎯 Multi-point mode ACTIVATED (Shift held)');
+        setIsShiftHeld(true);
+        setMultiPoints([]);
+        setDragPath([]);
+      }
+    };
+    
+    const handleKeyUp = async (e: KeyboardEvent) => {
+      if (e.key === 'Shift' && isShiftHeld) {
+        console.log('🎯 Multi-point mode DEACTIVATED (Shift released)');
+        setIsShiftHeld(false);
+        setIsDragging(false);
+        
+        // Execute multi-point SAM if we have points
+        if (multiPoints.length > 0) {
+          console.log(`🎯 Executing multi-point SAM with ${multiPoints.length} points`);
+          await executeMultiPointSAM();
+        }
+        
+        // Clear the collected points
+        setMultiPoints([]);
+        setDragPath([]);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isActive, isShiftHeld, isProcessing, multiPoints]);
+  
+  // Draw multi-point overlay
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Only draw when in multi-point mode
+    if (!isShiftHeld && multiPoints.length === 0 && dragPath.length === 0) return;
+    
+    // We need to draw on the canvas - save and restore to not disturb the image
+    ctx.save();
+    
+    // Draw drag path (chunky preview line)
+    if (dragPath.length > 1) {
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([10, 5]);
+      ctx.beginPath();
+      ctx.moveTo(dragPath[0].canvasX, dragPath[0].canvasY);
+      for (let i = 1; i < dragPath.length; i++) {
+        ctx.lineTo(dragPath[i].canvasX, dragPath[i].canvasY);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    // Draw collected points
+    for (const point of multiPoints) {
+      const isPositive = point.label === 1;
+      const color = isPositive ? '#00ff00' : '#ff0000';
+      const symbol = isPositive ? '+' : '−';
+      
+      // Draw circle
+      ctx.beginPath();
+      ctx.arc(point.canvasX, point.canvasY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = color + '40'; // Semi-transparent fill
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      
+      // Draw + or - symbol
+      ctx.fillStyle = color;
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(symbol, point.canvasX, point.canvasY);
+    }
+    
+    ctx.restore();
+  }, [isShiftHeld, multiPoints, dragPath, canvasRef]);
+  
+  // Execute multi-point SAM segmentation
+  const executeMultiPointSAM = async () => {
+    if (multiPoints.length === 0 || !canvasRef.current) return;
+    
+    const currentImage = dicomImages[currentIndex];
+    if (!currentImage) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Get image data
+      const cacheKey = currentImage.sopInstanceUID || currentImage.SOPInstanceUID || currentImage.id;
+      const cachedData = imageCacheRef.current?.get(cacheKey);
+      
+      if (!cachedData?.data) {
+        throw new Error('No cached image data available');
+      }
+      
+      const width = currentImage.columns || currentImage.width || 512;
+      const height = currentImage.rows || currentImage.height || 512;
+      
+      // Convert to 2D array
+      const image2D: number[][] = [];
+      for (let y = 0; y < height; y++) {
+        const row: number[] = [];
+        for (let x = 0; x < width; x++) {
+          row.push(cachedData.data[y * width + x]);
+        }
+        image2D.push(row);
+      }
+      
+      // Extract points and labels
+      const clickPoints: [number, number][] = multiPoints.map(p => [p.pixelY, p.pixelX]);
+      const pointLabels: number[] = multiPoints.map(p => p.label);
+      
+      console.log('🎯 Multi-point SAM request:', {
+        numPoints: clickPoints.length,
+        labels: pointLabels,
+        firstPoint: clickPoints[0]
+      });
+      
+      // Call SAM with multiple points
+      const result = await samServerClient.segment2D({
+        image: image2D,
+        click_points: clickPoints,
+        point_labels: pointLabels,
+        window_center: windowLevel?.center ?? currentImage.windowCenter,
+        window_width: windowLevel?.width ?? currentImage.windowWidth,
+      });
+      
+      if (!result.contour || result.contour.length < 3) {
+        throw new Error('SAM returned no valid contour');
+      }
+      
+      console.log(`🎯 Multi-point SAM success: ${result.contour.length} contour points`);
+      
+      // Convert pixel contour to world coordinates (FLAT array format: [x1, y1, z1, x2, y2, z2, ...])
+      const slicePosition = getSlicePositionFromImage(currentImage) ?? currentIndex;
+      const worldContour: number[] = [];
+      
+      // Get DICOM metadata for proper coordinate transform
+      const imagePosition = getImagePosition(currentImage);
+      const spacing = getPixelSpacingFromImage(currentImage);
+      const orientation = getOrientationVectors(currentImage);
+      
+      for (const [pixelX, pixelY] of result.contour) {
+        if (imagePosition && spacing && orientation) {
+          // DICOM pixel-to-world transform
+          const worldX = imagePosition[0] 
+            + orientation.rowDir[0] * spacing[1] * pixelX
+            + orientation.colDir[0] * spacing[0] * pixelY;
+          const worldY = imagePosition[1]
+            + orientation.rowDir[1] * spacing[1] * pixelX
+            + orientation.colDir[1] * spacing[0] * pixelY;
+          worldContour.push(worldX, worldY, slicePosition);
+        } else {
+          // Fallback - use pixelToWorldPoint helper
+          const worldPoint = pixelToWorldPoint({ column: pixelX, row: pixelY }, currentImage);
+          if (worldPoint) {
+            worldContour.push(worldPoint[0], worldPoint[1], slicePosition);
+          }
+        }
+      }
+      
+      console.log(`🎯 Multi-point SAM: Generated ${worldContour.length / 3} world points`);
+      
+      // Send contour update (same format as single-click SAM)
+      if (onContourUpdate && worldContour.length >= 9) {
+        const contourPayload = {
+          roiNumber: selectedStructure.roiNumber,
+          structureName: selectedStructure.structureName,
+          color: selectedStructure.color,
+          contour: {
+            slicePosition: slicePosition,
+            points: worldContour,
+          },
+        };
+        
+        console.log('🎯 Multi-point SAM: Sending contour update:', {
+          roiNumber: contourPayload.roiNumber,
+          numPoints: worldContour.length / 3,
+        });
+        
+        onContourUpdate(contourPayload);
+      }
+      
+      toast({
+        title: 'Multi-point SAM Complete',
+        description: `Generated contour from ${multiPoints.length} input points`,
+      });
+      
+    } catch (error: any) {
+      console.error('🎯 Multi-point SAM error:', error);
+      toast({
+        title: 'Multi-point SAM Failed',
+        description: error.message || 'Unknown error',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  // Add point in multi-point mode (called from click handlers)
+  const addMultiPoint = useCallback((
+    canvasX: number, 
+    canvasY: number, 
+    label: number // 1 = positive, 0 = negative
+  ) => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Convert canvas coords to world coords
+    const [worldX, worldY] = canvasToWorld(canvasX, canvasY);
+    
+    // Convert to pixel coords
+    const currentImage = dicomImages[currentIndex];
+    if (!currentImage) return;
+    
+    const pixelCoords = projectWorldToPixelNaive({ x: worldX, y: worldY, z: 0 }, currentImage);
+    if (!pixelCoords) return;
+    
+    const width = currentImage.columns || currentImage.width || 512;
+    const height = currentImage.rows || currentImage.height || 512;
+    const pixelX = Math.max(0, Math.min(width - 1, Math.round(pixelCoords.column)));
+    const pixelY = Math.max(0, Math.min(height - 1, Math.round(pixelCoords.row)));
+    
+    const newPoint = {
+      canvasX,
+      canvasY,
+      pixelX,
+      pixelY,
+      worldX,
+      worldY,
+      label
+    };
+    
+    console.log(`🎯 Added ${label === 1 ? 'positive' : 'negative'} point at pixel (${pixelX}, ${pixelY})`);
+    setMultiPoints(prev => [...prev, newPoint]);
+  }, [canvasRef, canvasToWorld, dicomImages, currentIndex]);
+
   // Handle canvas click
   const handleCanvasClick = useCallback((event: MouseEvent) => {
-    console.log('🧠 AITumorTool: handleCanvasClick fired!', { isActive, hasCanvas: !!canvasRef.current, isProcessing });
+    console.log('🧠 AITumorTool: handleCanvasClick fired!', { isActive, hasCanvas: !!canvasRef.current, isProcessing, isShiftHeld });
     if (!isActive || !canvasRef.current || isProcessing) {
       console.log('🧠 AITumorTool: Click ignored - isActive:', isActive, 'hasCanvas:', !!canvasRef.current, 'isProcessing:', isProcessing);
       return;
@@ -448,6 +726,13 @@ export function AITumorTool({
     const scaleY = canvas.height / rect.height;
     const canvasX = cssX * scaleX;
     const canvasY = cssY * scaleY;
+    
+    // If shift is held, add point in multi-point mode instead of immediate SAM
+    if (isShiftHeld) {
+      console.log('🎯 Multi-point mode: Adding positive point');
+      addMultiPoint(canvasX, canvasY, 1); // 1 = positive/foreground
+      return;
+    }
     
     log.info(`[ai-tumor] CSS coords: (${cssX.toFixed(1)}, ${cssY.toFixed(1)}) -> Canvas coords: (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)}) [scale: ${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}]`);
 
@@ -489,7 +774,7 @@ export function AITumorTool({
     // Visual feedback - draw click marker
     drawClickMarker(canvasX, canvasY);
 
-  }, [isActive, canvasRef, isProcessing, canvasToWorld, currentSlicePosition, currentIndex, imageMetadata, toast]);
+  }, [isActive, canvasRef, isProcessing, canvasToWorld, currentSlicePosition, currentIndex, imageMetadata, toast, isShiftHeld, addMultiPoint]);
 
   // AUTO-SEGMENT: When a click point is registered, automatically run SAM (OHIF-style single-click)
   // Use a ref to track if we've already triggered segmentation for this click
@@ -593,8 +878,88 @@ export function AITumorTool({
         handleClearRef.current();
       }
     };
+    
+    // Right-click handler for negative points in multi-point mode
+    const handleContextMenu = (e: MouseEvent) => {
+      if (!isShiftHeld) return; // Only handle in multi-point mode
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const rect = canvas.getBoundingClientRect();
+      const cssX = e.clientX - rect.left;
+      const cssY = e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const canvasX = cssX * scaleX;
+      const canvasY = cssY * scaleY;
+      
+      console.log('🎯 Multi-point mode: Adding NEGATIVE point (right-click)');
+      addMultiPoint(canvasX, canvasY, 0); // 0 = negative/background
+    };
+    
+    // Drag handlers for multi-point mode
+    let isDraggingLocal = false;
+    let lastDragPoint: { x: number; y: number } | null = null;
+    const DRAG_POINT_SPACING = 30; // Minimum pixels between drag points
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!isShiftHeld || e.button !== 0) return; // Only left-drag in shift mode
+      
+      isDraggingLocal = true;
+      setIsDragging(true);
+      
+      const rect = canvas.getBoundingClientRect();
+      const cssX = e.clientX - rect.left;
+      const cssY = e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const canvasX = cssX * scaleX;
+      const canvasY = cssY * scaleY;
+      
+      lastDragPoint = { x: canvasX, y: canvasY };
+      setDragPath([{ canvasX, canvasY }]);
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingLocal || !isShiftHeld) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const cssX = e.clientX - rect.left;
+      const cssY = e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const canvasX = cssX * scaleX;
+      const canvasY = cssY * scaleY;
+      
+      // Only add point if we've moved far enough
+      if (lastDragPoint) {
+        const dist = Math.hypot(canvasX - lastDragPoint.x, canvasY - lastDragPoint.y);
+        if (dist >= DRAG_POINT_SPACING) {
+          lastDragPoint = { x: canvasX, y: canvasY };
+          addMultiPoint(canvasX, canvasY, 1); // 1 = positive/foreground
+        }
+      }
+      
+      // Update drag path for visual preview
+      setDragPath(prev => [...prev, { canvasX, canvasY }]);
+    };
+    
+    const handleMouseUp = () => {
+      if (isDraggingLocal) {
+        isDraggingLocal = false;
+        setIsDragging(false);
+        setDragPath([]);
+        lastDragPoint = null;
+      }
+    };
 
     canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('contextmenu', handleContextMenu);
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mouseleave', handleMouseUp);
     canvas.addEventListener('ai-tumor-segment', handleSegmentEvent);
     canvas.addEventListener('ai-tumor-segment-3d', handleSegment3DEvent);
     canvas.addEventListener('ai-tumor-clear', handleClearEvent);
@@ -604,11 +969,16 @@ export function AITumorTool({
     return () => {
       console.log('🧠 AITumorTool: Removing event listeners');
       canvas.removeEventListener('click', handleCanvasClick);
+      canvas.removeEventListener('contextmenu', handleContextMenu);
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+      canvas.removeEventListener('mouseleave', handleMouseUp);
       canvas.removeEventListener('ai-tumor-segment', handleSegmentEvent);
       canvas.removeEventListener('ai-tumor-segment-3d', handleSegment3DEvent);
       canvas.removeEventListener('ai-tumor-clear', handleClearEvent);
     };
-  }, [isActive, canvasRef, handleCanvasClick]);
+  }, [isActive, canvasRef, handleCanvasClick, isShiftHeld, addMultiPoint]);
 
   // SAM-based 2D single-slice segmentation (SERVER-SIDE)
   const handleSAMSegment = async () => {

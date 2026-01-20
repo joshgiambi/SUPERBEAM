@@ -2430,6 +2430,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         }
         setLocalRTStructures(updatedRTStructures);
         saveContourUpdates(updatedRTStructures, 'apply_margin');
+        
+        console.log('🔹 📤 Calling onContourUpdate with updated structures:', {
+          structureCount: updatedRTStructures.structures?.length,
+          targetStructureId: targetStructure.roiNumber,
+          targetContourCount: targetStructure.contours?.length,
+          hasOnContourUpdate: !!onContourUpdate
+        });
+        
         if (onContourUpdate) {
           onContourUpdate(updatedRTStructures);
         }
@@ -2440,6 +2448,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         });
         
         // Create superstructure if requested (for auto-update functionality)
+        console.log('🔹 Superstructure check:', {
+          saveAsSuperstructure,
+          hasSuperstructureInfo: !!superstructureInfo,
+          targetStructureId,
+          willCreate: saveAsSuperstructure && superstructureInfo && targetStructureId === 'new'
+        });
+        
         if (saveAsSuperstructure && superstructureInfo && targetStructureId === 'new') {
           try {
             const superstructurePayload = {
@@ -3096,36 +3111,87 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           imageKeys: Object.keys(targetImage).slice(0, 10)
         });
         
-        // Convert world centroid to pixel coordinates using proper DICOM transform
-        const pixelCoords = worldToPixelForSAM(centroidWorldX, centroidWorldY, slicePosition, targetImage);
-        
-        let clickCol: number, clickRow: number;
-        if (pixelCoords) {
-          clickCol = Math.round(pixelCoords.column);
-          clickRow = Math.round(pixelCoords.row);
-          console.log('🤖 SAM: World to pixel conversion (DICOM):', { 
-            worldX: centroidWorldX.toFixed(2), 
-            worldY: centroidWorldY.toFixed(2),
-            pixelCol: clickCol, 
-            pixelRow: clickRow 
-          });
-        } else {
-          // Fallback to simple conversion if DICOM metadata not available
-          const ps = getPixelSpacingForSAM(targetImage) || [1, 1];
-          const ipp = getImagePositionForSAM(targetImage) || [0, 0, 0];
-          clickCol = Math.round((centroidWorldX - ipp[0]) / ps[1]);
-          clickRow = Math.round((centroidWorldY - ipp[1]) / ps[0]);
-          console.log('🤖 SAM: World to pixel conversion (fallback):', { 
-            pixelCol: clickCol, 
-            pixelRow: clickRow 
-          });
+        // Convert reference contour points to pixel coordinates for multi-point prompts
+        // This gives SAM more context about the expected shape
+        const refPixelPoints: { col: number; row: number }[] = [];
+        for (let i = 0; i < nearest.points.length; i += 3) {
+          const worldX = nearest.points[i];
+          const worldY = nearest.points[i + 1];
+          const pixelCoords = worldToPixelForSAM(worldX, worldY, slicePosition, targetImage);
+          if (pixelCoords) {
+            refPixelPoints.push({ col: pixelCoords.column, row: pixelCoords.row });
+          }
         }
         
-        // Clamp to image bounds
-        const clampedCol = Math.max(0, Math.min(width - 1, clickCol));
-        const clampedRow = Math.max(0, Math.min(height - 1, clickRow));
+        // Calculate centroid in pixel space
+        const centroidPixel = worldToPixelForSAM(centroidWorldX, centroidWorldY, slicePosition, targetImage);
+        let centroidCol = centroidPixel ? centroidPixel.column : width / 2;
+        let centroidRow = centroidPixel ? centroidPixel.row : height / 2;
         
-        console.log('🤖 SAM: Click point (clamped):', { col: clampedCol, row: clampedRow, width, height });
+        // Build multi-point prompts: positive points inside, negative points outside
+        const clickPoints: [number, number][] = [];  // [row, col] format for SAM
+        const pointLabels: number[] = [];
+        
+        // 1. Add centroid as primary positive point
+        const clampedCentroidCol = Math.max(0, Math.min(width - 1, Math.round(centroidCol)));
+        const clampedCentroidRow = Math.max(0, Math.min(height - 1, Math.round(centroidRow)));
+        clickPoints.push([clampedCentroidRow, clampedCentroidCol]);
+        pointLabels.push(1); // positive
+        
+        // 2. Add ~4 positive points sampled from inside the contour (boundary points pushed inward)
+        if (refPixelPoints.length >= 8) {
+          const sampleIndices = [
+            0,
+            Math.floor(refPixelPoints.length * 0.25),
+            Math.floor(refPixelPoints.length * 0.5),
+            Math.floor(refPixelPoints.length * 0.75)
+          ];
+          
+          for (const idx of sampleIndices) {
+            const pt = refPixelPoints[idx];
+            // Push point inward toward centroid by 20%
+            const inwardCol = pt.col + (centroidCol - pt.col) * 0.2;
+            const inwardRow = pt.row + (centroidRow - pt.row) * 0.2;
+            const clampedCol = Math.max(0, Math.min(width - 1, Math.round(inwardCol)));
+            const clampedRow = Math.max(0, Math.min(height - 1, Math.round(inwardRow)));
+            clickPoints.push([clampedRow, clampedCol]);
+            pointLabels.push(1); // positive
+          }
+        }
+        
+        // 3. Add ~4 negative points outside the contour (boundary points pushed outward)
+        const NEGATIVE_OFFSET_PIXELS = 15; // How far outside to place negative points
+        if (refPixelPoints.length >= 8) {
+          const sampleIndices = [
+            Math.floor(refPixelPoints.length * 0.125),
+            Math.floor(refPixelPoints.length * 0.375),
+            Math.floor(refPixelPoints.length * 0.625),
+            Math.floor(refPixelPoints.length * 0.875)
+          ];
+          
+          for (const idx of sampleIndices) {
+            const pt = refPixelPoints[idx];
+            // Push point outward away from centroid
+            const dx = pt.col - centroidCol;
+            const dy = pt.row - centroidRow;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0) {
+              const outwardCol = pt.col + (dx / dist) * NEGATIVE_OFFSET_PIXELS;
+              const outwardRow = pt.row + (dy / dist) * NEGATIVE_OFFSET_PIXELS;
+              const clampedCol = Math.max(0, Math.min(width - 1, Math.round(outwardCol)));
+              const clampedRow = Math.max(0, Math.min(height - 1, Math.round(outwardRow)));
+              clickPoints.push([clampedRow, clampedCol]);
+              pointLabels.push(0); // negative
+            }
+          }
+        }
+        
+        console.log('🤖 SAM: Multi-point prompts:', {
+          totalPoints: clickPoints.length,
+          positive: pointLabels.filter(l => l === 1).length,
+          negative: pointLabels.filter(l => l === 0).length,
+          centroid: [clampedCentroidRow, clampedCentroidCol]
+        });
         
         // Convert 1D pixel data to 2D array for SAM server
         const image2D: number[][] = [];
@@ -3137,22 +3203,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           image2D.push(row);
         }
         
-        // Call server-side SAM with centroid as click point
-        // SAM expects click_point as [y, x] (row, col)
+        // Call server-side SAM with multiple points
         // IMPORTANT: Use the user's current window/level so SAM sees the same image as the user
-        console.log('🤖 SAM: Window/Level settings:', {
-          userWindow: currentWindowLevel.width,
-          userCenter: currentWindowLevel.center,
-          dicomWindow: targetSliceData.windowWidth,
-          dicomCenter: targetSliceData.windowCenter,
-          usingUserSettings: true
-        });
-        
         const samResult = await samServerClient.segment2D({
           image: image2D,
-          click_point: [clampedRow, clampedCol],
-          window_center: currentWindowLevel.center,  // Use user's current window level
-          window_width: currentWindowLevel.width,    // Use user's current window width
+          click_points: clickPoints,
+          point_labels: pointLabels,
+          window_center: currentWindowLevel.center,
+          window_width: currentWindowLevel.width,
         });
         
         if (requestId !== predictionRequestIdRef.current) return;
@@ -9007,6 +9065,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                           className={`max-w-full max-h-full object-contain rounded ${
                             brushToolState?.isActive && brushToolState?.tool === "brush"
                               ? "cursor-none"
+                              : brushToolState?.isActive && brushToolState?.tool === "interactive-tumor"
+                              ? "" // Custom cursor set via style
                               : brushToolState?.isActive && (brushToolState?.tool === "pen" || brushToolState?.tool === "pen-original")
                               ? ""
                               : "cursor-move"
@@ -9015,6 +9075,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                             backgroundColor: "black",
                             imageRendering: "auto",
                             userSelect: "none",
+                            // Custom MousePointerClick cursor for SAM click mode
+                            ...(brushToolState?.isActive && brushToolState?.tool === "interactive-tumor" && {
+                              cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2300ff00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 9 5 12 1.8-5.2L21 14Z'/%3E%3Cpath d='M7.2 2.2 8 5.1'/%3E%3Cpath d='m5.1 8-2.9-.8'/%3E%3Cpath d='M14 4.1 12 6'/%3E%3Cpath d='m6 12-1.9 2'/%3E%3C/svg%3E") 9 9, crosshair`
+                            }),
                           }}
                         />
                         {/* Dose Overlay Canvas */}

@@ -45,12 +45,14 @@ router.get('/health', async (req: Request, res: Response) => {
  */
 router.post('/start', async (req: Request, res: Response) => {
   // First check if already running
+  // Note: SAM service can return 'ready' or 'healthy' status
   try {
     const healthCheck = await axios.get(`${SAM_SERVICE_URL}/health`, { timeout: 2000 });
-    if (healthCheck.data?.status === 'healthy') {
+    if (healthCheck.data?.status === 'healthy' || healthCheck.data?.status === 'ready') {
       return res.json({ 
         status: 'already_running', 
-        message: 'SAM service is already running' 
+        message: 'SAM service is already running',
+        device: healthCheck.data.device,
       });
     }
   } catch {
@@ -72,10 +74,10 @@ router.post('/start', async (req: Request, res: Response) => {
     const projectRoot = path.resolve(__dirname, '..');
     const startScript = path.join(projectRoot, 'start-superseg.sh');
 
-    logger.info(`🔬 Running: ${startScript}`);
+    logger.info(`🔬 Running: ${startScript} --force`);
 
-    // Spawn the start script in background
-    const child = spawn('bash', [startScript], {
+    // Spawn the start script in background with --force flag for non-interactive mode
+    const child = spawn('bash', [startScript, '--force'], {
       cwd: projectRoot,
       detached: true,
       stdio: 'ignore',
@@ -87,13 +89,14 @@ router.post('/start', async (req: Request, res: Response) => {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Poll for health up to 60 seconds
+    // Note: SAM service can return 'ready' or 'healthy' status
     let attempts = 0;
     const maxAttempts = 20;
     
     while (attempts < maxAttempts) {
       try {
         const healthCheck = await axios.get(`${SAM_SERVICE_URL}/health`, { timeout: 2000 });
-        if (healthCheck.data?.status === 'healthy') {
+        if (healthCheck.data?.status === 'healthy' || healthCheck.data?.status === 'ready') {
           samStarting = false;
           logger.info('🔬 ✅ SAM service started successfully');
           return res.json({ 
@@ -148,41 +151,39 @@ router.post('/start', async (req: Request, res: Response) => {
  */
 router.post('/segment_2d', async (req: Request, res: Response) => {
   try {
-    const { image, click_point, window_center, window_width } = req.body;
+    const { image, click_point, click_points, point_labels, window_center, window_width } = req.body;
 
-    if (!image || !click_point) {
+    // Support both single-point and multi-point modes
+    const hasClickPoint = click_point && Array.isArray(click_point);
+    const hasClickPoints = click_points && Array.isArray(click_points) && click_points.length > 0;
+    
+    if (!image || (!hasClickPoint && !hasClickPoints)) {
       return res.status(400).json({
-        error: 'Missing required fields: image, click_point',
+        error: 'Missing required fields: image, and either click_point or click_points',
       });
     }
 
-    logger.info('🔬 SAM 2D segment request received');
-    logger.info(`  Click point: [${click_point.join(', ')}]`);
-    logger.info(`  Image shape: ${image.length}x${image[0]?.length}`);
-
-    const startTime = Date.now();
-
-    // Forward to Python SAM service
+    // Forward to Python SAM service - only include fields that exist
+    const requestBody: any = { image };
+    if (window_center !== undefined) requestBody.window_center = window_center;
+    if (window_width !== undefined) requestBody.window_width = window_width;
+    
+    if (hasClickPoints) {
+      requestBody.click_points = click_points;
+      if (point_labels) requestBody.point_labels = point_labels;
+    } else if (hasClickPoint) {
+      requestBody.click_point = click_point;
+    }
+    
     const response = await axios.post(
       `${SAM_SERVICE_URL}/segment_2d`,
-      {
-        image,
-        click_point,
-        window_center,
-        window_width,
-      },
+      requestBody,
       {
         timeout: 30000, // 30 second timeout for 2D segmentation
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       }
     );
-
-    const duration = Date.now() - startTime;
-    logger.info(`🔬 ✅ SAM 2D segmentation completed in ${duration}ms`);
-    logger.info(`  Contour points: ${response.data.contour?.length || 0}`);
-    logger.info(`  Pixels: ${response.data.num_pixels || 0}`);
-    logger.info(`  Confidence: ${(response.data.confidence * 100).toFixed(1)}%`);
 
     res.json(response.data);
   } catch (error: any) {
@@ -233,12 +234,6 @@ router.post('/segment', async (req: Request, res: Response) => {
       });
     }
 
-    logger.info('🔬 SAM 3D segment request received');
-    logger.info(`  Click point: ${JSON.stringify(click_point)}`);
-    logger.info(`  Volume shape: ${volume.length}x${volume[0]?.length}x${volume[0]?.[0]?.length}`);
-
-    const startTime = Date.now();
-
     // Forward to Python SAM service
     const response = await axios.post(
       `${SAM_SERVICE_URL}/segment`,
@@ -257,11 +252,6 @@ router.post('/segment', async (req: Request, res: Response) => {
         maxBodyLength: Infinity,
       }
     );
-
-    const duration = Date.now() - startTime;
-    logger.info(`🔬 ✅ SAM 3D segmentation completed in ${duration}ms`);
-    logger.info(`  Total voxels: ${response.data.total_voxels}`);
-    logger.info(`  Slices: ${response.data.slices_with_tumor?.length || 0}`);
 
     res.json(response.data);
   } catch (error: any) {

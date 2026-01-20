@@ -72,7 +72,6 @@ class SAMController {
     this.loadingCallback?.('Checking SAM service...', 10);
 
     try {
-      console.log('🤖 SAM: Checking server-side SAM service...');
       
       // Check if SAM service is running
       const response = await fetch(`${SAM_SERVICE_URL}/health`);
@@ -82,7 +81,6 @@ class SAMController {
       }
 
       const health = await response.json();
-      console.log('🤖 SAM: Service health:', health);
 
       // The proxy returns { status, mem3d_service: { model_loaded, ... } }
       const modelLoaded = health.model_loaded || health.mem3d_service?.model_loaded;
@@ -93,7 +91,6 @@ class SAMController {
       this.serviceAvailable = true;
       this.initialized = true;
       this.loadingCallback?.('SAM ready', 100);
-      console.log('✅ SAM: Server-side service ready');
       
     } catch (error) {
       console.error('❌ SAM: Service check failed:', error);
@@ -243,7 +240,6 @@ class SAMController {
       result = subsampled;
     }
     
-    console.log(`🤖 SAM: Contour: ${contour.length} raw → ${smoothed.length} smoothed → ${result.length} final`);
     return result;
   }
   
@@ -291,10 +287,6 @@ class SAMController {
       throw new Error('SAM service not available');
     }
 
-    console.log('🤖 SAM: Predicting next slice via server...', {
-      contourPoints: referenceContour.length,
-      imageSize: `${targetImage.width}x${targetImage.height}`,
-    });
 
     // Convert reference contour to mask
     const referenceMask = this.contourToMask(
@@ -308,11 +300,6 @@ class SAMController {
     for (let i = 0; i < referenceMask.length; i++) {
       refMaskSum += referenceMask[i];
     }
-    console.log('🤖 SAM: Reference mask:', {
-      contourPoints: referenceContour.length,
-      maskPixels: refMaskSum,
-      imageSize: `${referenceImage.width}x${referenceImage.height}`,
-    });
 
     // Prepare request data
     const requestData = {
@@ -326,7 +313,6 @@ class SAMController {
       image_shape: [targetImage.height, targetImage.width],
     };
 
-    console.log('🤖 SAM: Sending request to server...');
 
     const response = await fetch(`${SAM_SERVICE_URL}/predict`, {
       method: 'POST',
@@ -355,16 +341,6 @@ class SAMController {
     }
     if (maskArray.length === 0) { maskMin = 0; maskMax = 0; }
     
-    console.log('🤖 SAM: Server response:', {
-      maskLength: maskArray.length,
-      maskSum,
-      maskMin,
-      maskMax,
-      nonZeroPixels: nonZeroCount,
-      expectedSize: targetImage.width * targetImage.height,
-      confidence: result.confidence,
-      method: result.method,
-    });
 
     // Convert mask array to Uint8Array
     const maskData = new Uint8Array(result.predicted_mask);
@@ -396,10 +372,6 @@ class SAMController {
       throw new Error('SAM service not available');
     }
 
-    console.log('🤖 SAM: Point-to-contour via server...', {
-      point: clickPoint,
-      imageSize: `${imageData.width}x${imageData.height}`,
-    });
 
     // Create a small reference mask around the click point
     const referenceMask = new Uint8Array(imageData.width * imageData.height);
@@ -464,7 +436,6 @@ class SAMController {
   reset(): void {
     this.initialized = false;
     this.serviceAvailable = false;
-    console.log('🤖 SAM: Controller reset');
   }
 
   /**

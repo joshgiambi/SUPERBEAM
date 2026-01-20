@@ -3,6 +3,14 @@
 # Convenience script to start SAM (Segment Anything Model) service
 # SAM replaces SuperSeg - works on ALL image types, not just brain MRI FLAIR
 # This script is in the project root for easy access
+#
+# Usage: ./start-superseg.sh [--force]
+#   --force: Non-interactive mode, auto-kills existing process on port 5003
+
+FORCE_MODE=false
+if [[ "$1" == "--force" ]]; then
+    FORCE_MODE=true
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -23,26 +31,32 @@ CHECKPOINT="sam_${MODEL_TYPE}.pth"
 if [ ! -f "$CHECKPOINT" ]; then
     echo "⚠️  SAM checkpoint not found at server/sam/$CHECKPOINT"
     echo ""
-    echo "Please download the SAM checkpoint:"
-    echo ""
-    echo "  For vit_b (fastest, ~375MB):"
-    echo "    cd server/sam && curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"
-    echo ""
-    echo "  For vit_l (larger, ~1.2GB):"
-    echo "    cd server/sam && curl -L -o sam_vit_l.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth"
-    echo ""
-    echo "  For vit_h (highest quality, ~2.4GB):"
-    echo "    cd server/sam && curl -L -o sam_vit_h.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
-    echo ""
-    read -p "Download vit_b now? (y/n) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Downloading SAM vit_b checkpoint (~375MB)..."
+    if [[ "$FORCE_MODE" == true ]]; then
+        echo "Force mode: Downloading SAM vit_b checkpoint (~375MB)..."
         curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
         CHECKPOINT="sam_vit_b.pth"
     else
-        echo "Please download the checkpoint and run again."
-        exit 1
+        echo "Please download the SAM checkpoint:"
+        echo ""
+        echo "  For vit_b (fastest, ~375MB):"
+        echo "    cd server/sam && curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"
+        echo ""
+        echo "  For vit_l (larger, ~1.2GB):"
+        echo "    cd server/sam && curl -L -o sam_vit_l.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth"
+        echo ""
+        echo "  For vit_h (highest quality, ~2.4GB):"
+        echo "    cd server/sam && curl -L -o sam_vit_h.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+        echo ""
+        read -p "Download vit_b now? (y/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Downloading SAM vit_b checkpoint (~375MB)..."
+            curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
+            CHECKPOINT="sam_vit_b.pth"
+        else
+            echo "Please download the checkpoint and run again."
+            exit 1
+        fi
     fi
 fi
 
@@ -62,15 +76,21 @@ echo ""
 if lsof -Pi :5003 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "⚠️  Warning: Port 5003 is already in use"
     echo ""
-    read -p "Kill existing process and restart? (y/n) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Killing existing process..."
+    if [[ "$FORCE_MODE" == true ]]; then
+        echo "Force mode: Killing existing process..."
         lsof -ti:5003 | xargs kill -9
         sleep 1
     else
-        echo "Exiting..."
-        exit 1
+        read -p "Kill existing process and restart? (y/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Killing existing process..."
+            lsof -ti:5003 | xargs kill -9
+            sleep 1
+        else
+            echo "Exiting..."
+            exit 1
+        fi
     fi
 fi
 

@@ -17,7 +17,7 @@ from scipy.ndimage import label as scipy_label
 
 # Setup logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout)
@@ -123,18 +123,21 @@ def normalize_medical_image(image_slice, window_center=None, window_width=None):
     return img.astype(np.uint8)
 
 
-def segment_with_sam(image_slice, click_point, window_center=None, window_width=None):
+def segment_with_sam(image_slice, click_point=None, window_center=None, window_width=None,
+                     click_points=None, point_labels=None):
     """
-    Segment a 2D slice using SAM given a click point.
+    Segment a 2D slice using SAM given click point(s).
     
     Args:
         image_slice: 2D numpy array (H, W)
-        click_point: Tuple (y, x) - click coordinates
+        click_point: Single point as Tuple (y, x) - for backwards compatibility
         window_center: Optional window center for normalization
         window_width: Optional window width for normalization
+        click_points: List of points [[y1, x1], [y2, x2], ...] - for multi-point mode
+        point_labels: List of labels [1, 1, 0, ...] - 1=foreground, 0=background
     
     Returns:
-        Binary mask (H, W) as numpy array
+        Binary mask (H, W) as numpy array, confidence score
     """
     global sam_predictor
     
@@ -142,9 +145,30 @@ def segment_with_sam(image_slice, click_point, window_center=None, window_width=
         raise RuntimeError("SAM model not loaded")
     
     H, W = image_slice.shape
-    y, x = click_point
     
-    logger.debug(f"🔬 Segmenting slice ({H}x{W}) with click at (y={y}, x={x})")
+    # Handle multi-point vs single-point input
+    if click_points is not None and len(click_points) > 0:
+        # Multi-point mode
+        # Convert from [y, x] to SAM's expected [x, y] format
+        input_points = np.array([[p[1], p[0]] for p in click_points])
+        input_labels = np.array(point_labels if point_labels else [1] * len(click_points))
+        
+        # Use the first foreground point as reference for component selection
+        first_fg_idx = np.where(input_labels == 1)[0]
+        if len(first_fg_idx) > 0:
+            ref_point = click_points[first_fg_idx[0]]
+            y, x = ref_point
+        else:
+            # No foreground points? Use first point
+            y, x = click_points[0]
+    elif click_point is not None:
+        # Single point mode (backwards compatible)
+        y, x = click_point
+        input_points = np.array([[x, y]])  # SAM expects (x, y)
+        input_labels = np.array([1])
+    else:
+        raise ValueError("Either click_point or click_points must be provided")
+    
     
     # Normalize to 0-255 for SAM
     img_normalized = normalize_medical_image(image_slice, window_center, window_width)
@@ -155,14 +179,10 @@ def segment_with_sam(image_slice, click_point, window_center=None, window_width=
     # Set image
     sam_predictor.set_image(img_rgb)
     
-    # SAM expects points as (x, y), not (y, x)
-    input_point = np.array([[x, y]])
-    input_label = np.array([1])  # 1 = foreground
-    
-    # Run prediction
+    # Run prediction with all points
     masks, scores, logits = sam_predictor.predict(
-        point_coords=input_point,
-        point_labels=input_label,
+        point_coords=input_points,
+        point_labels=input_labels,
         multimask_output=True,  # Get multiple masks
     )
     
@@ -170,8 +190,6 @@ def segment_with_sam(image_slice, click_point, window_center=None, window_width=
     best_idx = np.argmax(scores)
     best_mask = masks[best_idx]
     best_score = scores[best_idx]
-    
-    logger.debug(f"🔬 SAM produced mask with score {best_score:.3f}, {best_mask.sum()} pixels")
     
     # Post-process: keep only component containing click point
     if best_mask.sum() > 0:
@@ -183,7 +201,6 @@ def segment_with_sam(image_slice, click_point, window_center=None, window_width=
         if click_component > 0:
             # Keep only the clicked component
             best_mask = (labeled_mask == click_component).astype(np.uint8)
-            logger.debug(f"🔬 Kept component {click_component} at click point, {best_mask.sum()} pixels")
         else:
             # Click point wasn't in any component, find nearest
             min_dist = float('inf')
@@ -201,7 +218,6 @@ def segment_with_sam(image_slice, click_point, window_center=None, window_width=
             
             if nearest_component > 0:
                 best_mask = (labeled_mask == nearest_component).astype(np.uint8)
-                logger.debug(f"🔬 Click wasn't in mask, using nearest component {nearest_component} (dist={min_dist:.1f})")
     
     return best_mask.astype(np.uint8), float(best_score)
 
@@ -225,7 +241,6 @@ def segment_3d_with_propagation(volume, start_slice, start_point, window_center=
     segmentations = {}
     confidences = {}
     
-    logger.info(f"🔬 Starting 3D SAM segmentation from slice {start_slice}, point {start_point}")
     
     # Segment starting slice
     start_mask, start_conf = segment_with_sam(
@@ -241,7 +256,6 @@ def segment_3d_with_propagation(volume, start_slice, start_point, window_center=
     
     segmentations[start_slice] = start_mask
     confidences[start_slice] = start_conf
-    logger.info(f"🔬 ✓ Slice {start_slice}: {start_mask.sum()} pixels (conf={start_conf:.3f})")
     
     def get_centroid(mask):
         coords = np.argwhere(mask > 0)
@@ -269,17 +283,14 @@ def segment_3d_with_propagation(volume, start_slice, start_point, window_center=
         )
         
         if not check_near_centroid(mask, prev_centroid, max_dist):
-            logger.info(f"🔬 ↑ Stopped at slice {current_slice} (prediction too far)")
             break
         
         if mask.sum() > 0:
             segmentations[current_slice] = mask
             confidences[current_slice] = conf
-            logger.info(f"🔬 ✓ Slice {current_slice}: {mask.sum()} pixels (conf={conf:.3f})")
             prev_centroid = get_centroid(mask)
             current_slice += 1
         else:
-            logger.info(f"🔬 ↑ Stopped at slice {current_slice} (empty mask)")
             break
     
     # Propagate downward
@@ -295,23 +306,19 @@ def segment_3d_with_propagation(volume, start_slice, start_point, window_center=
         )
         
         if not check_near_centroid(mask, prev_centroid, max_dist):
-            logger.info(f"🔬 ↓ Stopped at slice {current_slice} (prediction too far)")
             break
         
         if mask.sum() > 0:
             segmentations[current_slice] = mask
             confidences[current_slice] = conf
-            logger.info(f"🔬 ✓ Slice {current_slice}: {mask.sum()} pixels (conf={conf:.3f})")
             prev_centroid = get_centroid(mask)
             current_slice -= 1
         else:
-            logger.info(f"🔬 ↓ Stopped at slice {current_slice} (empty mask)")
             break
     
     # Calculate average confidence
     avg_confidence = np.mean(list(confidences.values())) if confidences else 0.0
     
-    logger.info(f"🔬 ✅ Segmentation complete: {len(segmentations)} slices, avg confidence={avg_confidence:.3f}")
     
     return segmentations, avg_confidence
 
@@ -376,10 +383,6 @@ def segment():
         window_width = data.get('window_width')
         mode = data.get('mode', '3d')
         
-        logger.info(f"🔬 Received SAM segmentation request")
-        logger.info(f"🔬 Volume shape: {volume.shape}")
-        logger.info(f"🔬 Click point: {click_point}")
-        logger.info(f"🔬 Mode: {mode}")
         
         # Rearrange to (H, W, D) if needed
         if slice_axis == 'first':  # (D, H, W) -> (H, W, D)
@@ -434,7 +437,6 @@ def segment():
             'confidence': float(confidence)
         }
         
-        logger.info(f"🔬 ✅ SAM segmentation complete: {total_voxels} voxels across {len(slices_with_tumor)} slices")
         
         return jsonify(result)
     
@@ -451,7 +453,9 @@ def segment_2d():
     Request JSON:
     {
         "image": [[...]]  # 2D array (H, W)
-        "click_point": [y, x]  # Click coordinates
+        "click_point": [y, x]  # Single click coordinates (optional if click_points provided)
+        "click_points": [[y1, x1], [y2, x2], ...]  # Multiple click points (optional)
+        "point_labels": [1, 1, 0, ...]  # Labels: 1=foreground, 0=background (optional, defaults to all 1s)
         "window_center": Optional[float],
         "window_width": Optional[float]
     }
@@ -470,18 +474,33 @@ def segment_2d():
         data = request.json
         
         image = np.array(data['image'], dtype=np.float32)
-        click_point = tuple(data['click_point'])  # [y, x]
         window_center = data.get('window_center')
         window_width = data.get('window_width')
         
-        logger.info(f"🔬 2D SAM segment request: image {image.shape}, click {click_point}")
+        # Support both single point and multi-point modes
+        click_points = data.get('click_points')  # New multi-point format
+        point_labels = data.get('point_labels')  # Labels for each point
+        click_point = data.get('click_point')  # Legacy single point
         
-        mask, confidence = segment_with_sam(
-            image,
-            click_point,
-            window_center,
-            window_width
-        )
+        if click_points and len(click_points) > 0:
+            mask, confidence = segment_with_sam(
+                image,
+                click_point=None,
+                window_center=window_center,
+                window_width=window_width,
+                click_points=click_points,
+                point_labels=point_labels
+            )
+        elif click_point:
+            logger.info(f"🔬 2D SAM single-point request: image {image.shape}, click {click_point}")
+            mask, confidence = segment_with_sam(
+                image,
+                click_point=tuple(click_point),
+                window_center=window_center,
+                window_width=window_width
+            )
+        else:
+            return jsonify({'error': 'Either click_point or click_points must be provided'}), 400
         
         # Extract contour
         contour_points = []
@@ -504,7 +523,6 @@ def segment_2d():
             'num_pixels': int(mask.sum())
         }
         
-        logger.info(f"🔬 ✅ 2D segment complete: {mask.sum()} pixels, {len(contour_points)} contour points")
         
         return jsonify(result)
     

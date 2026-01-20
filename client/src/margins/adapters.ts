@@ -24,7 +24,32 @@ export function contoursToStructure(
   paddingMm: number
 ): Structure {
   const { minX, maxX, minY, maxY, minZ, maxZ } = computeBounds(contours);
-  const [xRes, yRes, zRes] = pixelSpacing;
+  const [xRes, yRes, metadataZRes] = pixelSpacing;
+  
+  // CRITICAL: Compute actual slice spacing from input contours instead of using metadata
+  // The slice thickness from DICOM metadata often doesn't match actual inter-slice spacing
+  const uniqueSlicePositions = Array.from(new Set(contours.map(c => c.slicePosition))).sort((a, b) => a - b);
+  let actualZRes = metadataZRes;
+  if (uniqueSlicePositions.length >= 2) {
+    // Find the most common slice spacing (mode of spacings)
+    const spacings: number[] = [];
+    for (let i = 1; i < uniqueSlicePositions.length; i++) {
+      spacings.push(Math.abs(uniqueSlicePositions[i] - uniqueSlicePositions[i - 1]));
+    }
+    // Use the minimum spacing to ensure we don't miss any slices
+    actualZRes = Math.min(...spacings);
+    // Sanity check: don't use spacing smaller than 0.5mm or larger than metadata * 2
+    actualZRes = Math.max(0.5, Math.min(actualZRes, metadataZRes * 2));
+  }
+  
+  const zRes = actualZRes;
+  console.log('🔹 Z-spacing analysis:', {
+    metadataZRes,
+    actualZRes,
+    usingActual: actualZRes !== metadataZRes,
+    sliceCount: uniqueSlicePositions.length
+  });
+  
   const padX = Math.ceil(paddingMm / xRes);
   const padY = Math.ceil(paddingMm / yRes);
   const padZ = Math.ceil(paddingMm / zRes);
@@ -38,11 +63,30 @@ export function contoursToStructure(
   };
   const grid: Grid = { xSize, ySize, zSize, xRes, yRes, zRes, origin };
   const mask = new Uint8Array(xSize * ySize * zSize);
+  
+  // Diagnostic: log input slice positions
+  console.log('🔹 contoursToStructure diagnostic:', {
+    inputContourCount: contours.length,
+    uniqueSlicePositions: uniqueSlicePositions.length,
+    sliceRange: uniqueSlicePositions.length > 0 
+      ? `${uniqueSlicePositions[0].toFixed(2)} to ${uniqueSlicePositions[uniqueSlicePositions.length-1].toFixed(2)}`
+      : 'none',
+    spacing: { xRes, yRes, zRes },
+    paddingMm,
+    gridSize: { xSize, ySize, zSize },
+    gridOrigin: { x: origin.x.toFixed(2), y: origin.y.toFixed(2), z: origin.z.toFixed(2) }
+  });
 
   // Rasterize each contour into the grid using scanline fill
+  const rasterizedZIndices = new Set<number>();
+  const skippedContours = { outOfBounds: 0, tooFewPoints: 0 };
+  
   for (const c of contours) {
     const zIndex = Math.round((c.slicePosition - origin.z) / zRes);
-    if (zIndex < 0 || zIndex >= zSize) continue;
+    if (zIndex < 0 || zIndex >= zSize) {
+      skippedContours.outOfBounds++;
+      continue;
+    }
     // Convert to grid coordinates
     const poly: [number, number][] = [];
     const pts = c.points;
@@ -51,7 +95,11 @@ export function contoursToStructure(
       const gy = (pts[i + 1] - origin.y) / yRes;
       poly.push([gx, gy]);
     }
-    if (poly.length < 3) continue;
+    if (poly.length < 3) {
+      skippedContours.tooFewPoints++;
+      continue;
+    }
+    rasterizedZIndices.add(zIndex);
     const minYg = Math.floor(Math.min(...poly.map(p => p[1])));
     const maxYg = Math.ceil(Math.max(...poly.map(p => p[1])));
     for (let gy = minYg; gy <= maxYg; gy++) {
@@ -74,6 +122,16 @@ export function contoursToStructure(
       }
     }
   }
+  
+  // Diagnostic: log rasterization results
+  const sortedZIndices = Array.from(rasterizedZIndices).sort((a, b) => a - b);
+  console.log('🔹 contoursToStructure rasterization:', {
+    rasterizedSliceCount: sortedZIndices.length,
+    rasterizedZIndices: sortedZIndices.length <= 20 ? sortedZIndices : `${sortedZIndices.slice(0, 10)}...${sortedZIndices.slice(-5)}`,
+    skippedContours,
+    totalMaskVoxels: Array.from(mask).filter(v => v > 0).length
+  });
+  
   return { grid, mask: { values: mask, grid } };
 }
 
@@ -307,10 +365,64 @@ export function structureToContours(
 ) : Array<{ points: number[]; slicePosition: number }> {
   const { grid } = mask;
   const contours: Array<{ points: number[]; slicePosition: number }> = [];
-  const eps = typeof toleranceMm === 'number' ? toleranceMm : Math.max(grid.zRes * 0.4, 0.1);
   const sliceSet = Array.from(new Set(originalSlicePositions)).sort((a, b) => a - b);
+  
+  // Calculate tolerance: use provided value, or compute from actual slice spacing
+  // This is critical because sliceThickness metadata may not match actual inter-slice spacing
+  let eps: number;
+  let actualSliceSpacing = grid.zRes;
+  if (sliceSet.length >= 2) {
+    const spacings: number[] = [];
+    for (let i = 1; i < sliceSet.length; i++) {
+      spacings.push(sliceSet[i] - sliceSet[i - 1]);
+    }
+    actualSliceSpacing = Math.min(...spacings);
+  }
+  
+  if (typeof toleranceMm === 'number') {
+    eps = toleranceMm;
+  } else {
+    // Use the smaller of grid.zRes or actual spacing, with 50% tolerance
+    eps = Math.max(Math.min(grid.zRes, actualSliceSpacing) * 0.5, 0.1);
+  }
+  
+  // Check for potential mismatch between grid resolution and actual slice spacing
+  const spacingMismatch = Math.abs(grid.zRes - actualSliceSpacing) > 0.1;
+  if (spacingMismatch) {
+    console.warn('🔹 ⚠️ SPACING MISMATCH DETECTED:', {
+      gridZRes: grid.zRes.toFixed(2),
+      actualSliceSpacing: actualSliceSpacing.toFixed(2),
+      delta: Math.abs(grid.zRes - actualSliceSpacing).toFixed(2),
+      toleranceUsed: eps.toFixed(2)
+    });
+  }
   const used = new Set<number>();
   const xy = grid.xSize * grid.ySize;
+  
+  // Diagnostic: log slice matching setup
+  console.log('🔹 structureToContours diagnostic:', {
+    gridZSize: grid.zSize,
+    gridZRes: grid.zRes.toFixed(2),
+    actualSliceSpacing: actualSliceSpacing.toFixed(2),
+    spacingMismatch,
+    gridOriginZ: grid.origin.z.toFixed(2),
+    tolerance: eps.toFixed(2),
+    originalSliceCount: sliceSet.length,
+    originalSliceRange: sliceSet.length > 0 ? `${sliceSet[0].toFixed(2)} to ${sliceSet[sliceSet.length-1].toFixed(2)}` : 'none',
+    gridZRange: `${grid.origin.z.toFixed(2)} to ${(grid.origin.z + (grid.zSize - 1) * grid.zRes).toFixed(2)}`,
+    includeNewSlices
+  });
+  
+  // Track slice processing stats
+  const sliceStats = {
+    totalGridSlices: grid.zSize,
+    slicesWithMaskData: 0,
+    slicesWithContours: 0,
+    matchedToOriginal: 0,
+    newSlices: 0,
+    emptySlices: 0,
+    failedExtraction: 0
+  };
   
   for (let zi = 0; zi < grid.zSize; zi++) {
     const zWorld = grid.origin.z + zi * grid.zRes;
@@ -325,19 +437,37 @@ export function structureToContours(
     }
     if (matchedZ === undefined && !includeNewSlices) continue;
     const targetZ = matchedZ !== undefined ? matchedZ : zWorld;
-    if (matchedZ !== undefined) used.add(matchedZ);
+    if (matchedZ !== undefined) {
+      used.add(matchedZ);
+      sliceStats.matchedToOriginal++;
+    } else {
+      sliceStats.newSlices++;
+    }
     
     const slice = mask.values.subarray(zi * xy, zi * xy + xy);
+    
+    // Check if slice has any mask data
+    let hasMaskData = false;
+    for (let i = 0; i < slice.length; i++) {
+      if (slice[i] > 0) { hasMaskData = true; break; }
+    }
+    
+    if (!hasMaskData) {
+      sliceStats.emptySlices++;
+      continue;
+    }
+    sliceStats.slicesWithMaskData++;
     
     // Extract boundary contours
     const gridContours = extractBoundaryContours(slice, grid.xSize, grid.ySize);
     
-    if (gridContours.length === 0) continue;
+    if (gridContours.length === 0) {
+      sliceStats.failedExtraction++;
+      continue;
+    }
+    sliceStats.slicesWithContours++;
     
-    // Convert to world coordinates and find largest
-    let bestContour: number[] = [];
-    let bestArea = -Infinity;
-    
+    // Convert ALL contours to world coordinates (not just the largest - supports multi-blob structures)
     for (const gc of gridContours) {
       const worldPts: number[] = [];
       for (let i = 0; i < gc.length; i += 2) {
@@ -346,7 +476,7 @@ export function structureToContours(
         worldPts.push(wx, wy, targetZ);
       }
       
-      // Calculate area using shoelace
+      // Skip very small contours (noise) - require at least ~1mm² area
       let area = 0;
       const n = worldPts.length / 3;
       for (let i = 0; i < n; i++) {
@@ -355,24 +485,30 @@ export function structureToContours(
       }
       area = Math.abs(area) * 0.5;
       
-      if (area > bestArea) {
-        bestArea = area;
-        bestContour = worldPts;
-      }
-    }
-    
-    if (bestContour.length >= 9) {
-      // Simplify to reduce redundant points while preserving shape
-      const simplifyEpsilon = Math.min(grid.xRes, grid.yRes) * 0.25;
-      const simplified = simplifyContour(bestContour, simplifyEpsilon);
+      // Only skip very small noise contours (less than 1mm²)
+      if (area < 1.0) continue;
       
-      if (simplified.length >= 9) {
-        contours.push({ points: simplified, slicePosition: targetZ });
-      } else {
-        contours.push({ points: bestContour, slicePosition: targetZ });
+      if (worldPts.length >= 9) {
+        // Simplify to reduce redundant points while preserving shape
+        const simplifyEpsilon = Math.min(grid.xRes, grid.yRes) * 0.25;
+        const simplified = simplifyContour(worldPts, simplifyEpsilon);
+        
+        if (simplified.length >= 9) {
+          contours.push({ points: simplified, slicePosition: targetZ });
+        } else {
+          contours.push({ points: worldPts, slicePosition: targetZ });
+        }
       }
     }
   }
+  
+  // Log summary of slice processing
+  console.log('🔹 structureToContours summary:', {
+    ...sliceStats,
+    outputContourCount: contours.length,
+    unmatchedOriginalSlices: sliceSet.length - sliceStats.matchedToOriginal,
+    unmatchedOriginalPositions: sliceSet.filter(z => !used.has(z)).map(z => z.toFixed(2))
+  });
   
   return contours;
 }

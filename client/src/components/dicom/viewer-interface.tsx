@@ -2092,7 +2092,15 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     
     // This is the full updated RT structures from WorkingViewer after processing
     if (payload && payload.structures) {
+      console.log('📥 Updating rtStructures state with:', {
+        structureCount: payload.structures?.length,
+        structureNames: payload.structures?.map((s: any) => s.structureName),
+        timestamp: new Date().toISOString()
+      });
       setRTStructures(payload);
+      console.log('✅ setRTStructures called - sidebar should update now');
+    } else {
+      console.warn('⚠️ Payload has no structures field, not updating state:', payload);
     }
   };
 
@@ -3961,8 +3969,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       {showMarginToolbar && rtStructures && !showBooleanOperations && !isContourEditMode && (
         <MarginOperationsPrototype
           availableStructures={rtStructures.structures?.map((s: any) => s.structureName) || []}
+          selectedForEdit={selectedForEdit}
+          structures={rtStructures.structures}
           onClose={() => setShowMarginToolbar(false)}
-          onExecute={(operation) => {
+          onExecute={async (operation) => {
             // Handle execute operation
             console.log('🔹 🎯 Viewer Interface: Handling margin operation:', operation);
             const sourceStructure = rtStructures.structures?.find((s: any) => s.structureName === operation.structureName);
@@ -4015,36 +4025,54 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                 ? `${operation.structureName} ${operation.direction === 'expand' ? '+' : '-'}${marginValue}mm`
                 : `${operation.structureName} ${operation.direction === 'expand' ? '+' : '-'}${marginValue}mm (anisotropic)`;
               
-              workingViewerRef.current.handleContourUpdate({
-                action: 'execute_margin',
-                structureId: structureId,
-                targetStructureId: targetStructureId,
-                parameters: parameters,
-                outputName: operation.outputMode === 'same' ? operation.structureName : (operation.outputName || `${operation.structureName}_margin`),
-                outputColor: outputColorRGB,
-                // Superstructure info for margin operations
-                saveAsSuperstructure: operation.saveAsSuperstructure && operation.outputMode === 'new',
-                superstructureInfo: operation.saveAsSuperstructure && operation.outputMode === 'new' ? {
-                  rtSeriesId: loadedRTSeriesId || rtStructures?.seriesId,
-                  sourceStructureName: operation.structureName,
-                  sourceStructureRoiNumber: structureId,
-                  operationExpression: marginExpression,
-                  operationType: 'margin',
-                  marginType: operation.type,
-                  marginDirection: operation.direction,
-                  marginParameters: parameters
-                } : undefined
+              // Show processing toast BEFORE starting the operation
+              toast({
+                title: "Processing margin operation...",
+                description: `Applying ${marginValue}mm ${operation.direction || 'expansion'} to ${operation.structureName}`,
               });
+              
               setShowMarginToolbar(false);
               
-              toast({
-                title: "Margin operation complete",
-                description: operation.outputMode === 'same' 
-                  ? `Updated structure: ${operation.structureName}` 
-                  : operation.saveAsSuperstructure
-                  ? `Created auto-updating structure: ${operation.outputName}`
-                  : `Created new structure: ${operation.outputName}`,
-              });
+              try {
+                // AWAIT the async margin operation - this is critical!
+                await workingViewerRef.current.handleContourUpdate({
+                  action: 'execute_margin',
+                  structureId: structureId,
+                  targetStructureId: targetStructureId,
+                  parameters: parameters,
+                  outputName: operation.outputMode === 'same' ? operation.structureName : (operation.outputName || `${operation.structureName}_margin`),
+                  outputColor: outputColorRGB,
+                  // Superstructure info for margin operations
+                  saveAsSuperstructure: operation.saveAsSuperstructure && operation.outputMode === 'new',
+                  superstructureInfo: operation.saveAsSuperstructure && operation.outputMode === 'new' ? {
+                    rtSeriesId: loadedRTSeriesId || rtStructures?.seriesId,
+                    sourceStructureName: operation.structureName,
+                    sourceStructureRoiNumber: structureId,
+                    operationExpression: marginExpression,
+                    operationType: 'margin',
+                    marginType: operation.type,
+                    marginDirection: operation.direction,
+                    marginParameters: parameters
+                  } : undefined
+                });
+                
+                // Show success toast AFTER operation completes
+                toast({
+                  title: "Margin operation complete",
+                  description: operation.outputMode === 'same' 
+                    ? `Updated structure: ${operation.structureName}` 
+                    : operation.saveAsSuperstructure
+                    ? `Created auto-updating structure: ${operation.outputName}`
+                    : `Created new structure: ${operation.outputName}`,
+                });
+              } catch (error) {
+                console.error('🔹 ❌ Margin operation error:', error);
+                toast({
+                  title: "Margin operation failed",
+                  description: error instanceof Error ? error.message : "Unknown error occurred",
+                  variant: "destructive"
+                });
+              }
             } else {
               console.error('🔹 ❌ Margin operation failed:', {
                 hasWorkingViewerRef: !!workingViewerRef.current,

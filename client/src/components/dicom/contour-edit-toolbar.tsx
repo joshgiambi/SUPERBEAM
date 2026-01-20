@@ -281,6 +281,26 @@ export function ContourEditToolbar({
     }
   }, [activeTool]);
 
+  // Track shift key for multi-point SAM mode hint
+  const [isShiftHeld, setIsShiftHeld] = useState(false);
+  useEffect(() => {
+    if (activeTool !== 'interactive-tumor') return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftHeld(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftHeld(false);
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [activeTool]);
+
   const handleStartSamServer = async () => {
     setSamServerStatus('starting');
     toast({
@@ -1023,6 +1043,35 @@ export function ContourEditToolbar({
               Re-run {aiTumor3DMode ? '3D propagation' : '2D segmentation'} on current click point
             </TooltipContent>
           </Tooltip>
+          
+          {/* Multi-point mode hint - compact */}
+          <AnimatePresence mode="wait">
+            {isShiftHeld ? (
+              <motion.div
+                key="shift-active"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -2 }}
+                transition={{ duration: 0.1 }}
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/20 text-[10px]"
+              >
+                <span className="text-purple-300">⇧</span>
+                <span className="text-green-400">L+</span>
+                <span className="text-red-400">R−</span>
+                <span className="text-gray-400">drag</span>
+              </motion.div>
+            ) : (
+              <motion.span
+                key="shift-hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.4 }}
+                exit={{ opacity: 0 }}
+                className="text-[9px] text-gray-500"
+              >
+                ⇧ multi
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.div>
       );
     }

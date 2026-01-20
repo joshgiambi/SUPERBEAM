@@ -5,11 +5,11 @@
  * interactive 2D segmentation using click points.
  */
 
-import { log } from './log';
-
 export interface SAMSegment2DRequest {
   image: number[][];                      // 2D image (H, W)
-  click_point: [number, number];          // [y, x] coordinates
+  click_point?: [number, number];         // [y, x] coordinates (single point mode)
+  click_points?: [number, number][];      // [[y1, x1], [y2, x2], ...] (multi-point mode)
+  point_labels?: number[];                // Labels: 1=foreground, 0=background
   window_center?: number;
   window_width?: number;
 }
@@ -65,14 +65,11 @@ class SAMServerClient {
 
       // Accept both 'ready' and 'healthy' status
       if (response.ok && (data.status === 'ready' || data.status === 'healthy')) {
-        log.info('🔬 SAM server is ready', 'sam');
         return data;
       } else {
-        log.warn(`🔬 SAM health check failed: ${JSON.stringify(data)}`, 'sam');
         throw new Error(data.message || 'Service unavailable');
       }
     } catch (error: any) {
-      log.error(`🔬 SAM health check error: ${error.message}`, 'sam');
       throw error;
     }
   }
@@ -82,8 +79,6 @@ class SAMServerClient {
    */
   async startServer(): Promise<SAMStartResponse> {
     try {
-      log.info('🔬 Requesting SAM server start...', 'sam');
-
       const response = await fetch(`${this.baseUrl}/start`, {
         method: 'POST',
         headers: {
@@ -97,10 +92,8 @@ class SAMServerClient {
         throw new Error(data.message || 'Failed to start server');
       }
 
-      log.info(`🔬 SAM server start response: ${data.status} - ${data.message}`, 'sam');
       return data;
     } catch (error: any) {
-      log.error(`🔬 Failed to start SAM server: ${error.message}`, 'sam');
       throw error;
     }
   }
@@ -110,10 +103,6 @@ class SAMServerClient {
    */
   async segment2D(request: SAMSegment2DRequest): Promise<SAMSegment2DResponse> {
     try {
-      log.info('🔬 Calling SAM 2D segment endpoint', 'sam');
-      log.info(`🔬 Click point: [${request.click_point.join(', ')}]`, 'sam');
-      log.info(`🔬 Image shape: ${request.image.length}x${request.image[0]?.length}`, 'sam');
-
       const response = await fetch(`${this.baseUrl}/segment_2d`, {
         method: 'POST',
         headers: {
@@ -128,13 +117,8 @@ class SAMServerClient {
         throw new Error(data.error || 'Segmentation failed');
       }
 
-      log.info(`🔬 ✅ SAM 2D segmentation successful`, 'sam');
-      log.info(`🔬 Contour: ${data.contour?.length ?? 0} points, ${data.num_pixels ?? 0} pixels`, 'sam');
-      log.info(`🔬 Confidence: ${(data.confidence * 100).toFixed(1)}%`, 'sam');
-
       return data;
     } catch (error: any) {
-      log.error(`🔬 SAM 2D segmentation failed: ${error.message}`, 'sam');
       throw error;
     }
   }
@@ -144,10 +128,6 @@ class SAMServerClient {
    */
   async segment3D(request: SAMSegment3DRequest): Promise<SAMSegment3DResponse> {
     try {
-      log.info('🔬 Calling SAM 3D segment endpoint', 'sam');
-      log.info(`🔬 Click point: [${request.click_point.join(', ')}]`, 'sam');
-      log.info(`🔬 Volume shape: ${request.volume.length}x${request.volume[0]?.length}x${request.volume[0]?.[0]?.length}`, 'sam');
-
       const response = await fetch(`${this.baseUrl}/segment`, {
         method: 'POST',
         headers: {
@@ -162,14 +142,8 @@ class SAMServerClient {
         throw new Error(data.error || 'Segmentation failed');
       }
 
-      log.info(`🔬 ✅ SAM 3D segmentation successful`, 'sam');
-      log.info(`🔬 Total voxels: ${data.total_voxels ?? 0}`, 'sam');
-      log.info(`🔬 Slices with tumor: ${data.slices_with_tumor?.length ?? 0}`, 'sam');
-      log.info(`🔬 Confidence: ${(data.confidence * 100).toFixed(1)}%`, 'sam');
-
       return data;
     } catch (error: any) {
-      log.error(`🔬 SAM 3D segmentation failed: ${error.message}`, 'sam');
       throw error;
     }
   }

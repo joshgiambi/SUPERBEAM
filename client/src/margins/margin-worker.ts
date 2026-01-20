@@ -53,11 +53,65 @@ self.onmessage = (e: MessageEvent<JobPayload>) => {
           out = marginAsymmetric(structure, true, m, true);
           break;
       }
+      // Get unique input slice positions
+      const inputSlicePositions = Array.from(new Set(data.contours.map(c => c.slicePosition))).sort((a, b) => a - b);
+      console.log('🔹 Input slice positions:', {
+        count: inputSlicePositions.length,
+        min: inputSlicePositions[0],
+        max: inputSlicePositions[inputSlicePositions.length - 1],
+        spacing: inputSlicePositions.length > 1 ? inputSlicePositions[1] - inputSlicePositions[0] : 0
+      });
+      
+      // Count voxels per z-slice in output to diagnose gaps
+      const voxelsPerSlice: number[] = [];
+      const xy = out.grid.xSize * out.grid.ySize;
+      for (let zi = 0; zi < out.grid.zSize; zi++) {
+        let count = 0;
+        for (let i = zi * xy; i < (zi + 1) * xy; i++) {
+          if (out.mask.values[i]) count++;
+        }
+        voxelsPerSlice.push(count);
+      }
+      const nonEmptySlices = voxelsPerSlice.filter(c => c > 0).length;
+      const emptySlices = voxelsPerSlice.filter(c => c === 0).length;
+      console.log('🔹 Output mask analysis:', {
+        totalSlices: out.grid.zSize,
+        nonEmptySlices,
+        emptySlices,
+        voxelsPerSlice: voxelsPerSlice.slice(0, 20).map((v, i) => `z${i}:${v}`).join(', ') + (voxelsPerSlice.length > 20 ? '...' : '')
+      });
+      
       const resultContours = structureToContours(out.mask, data.contours.map(c => c.slicePosition), undefined, true);
+      
+      // Analyze output contours
+      const outputSlicePositions = Array.from(new Set(resultContours.map(c => c.slicePosition))).sort((a, b) => a - b);
       console.log('🔹 structureToContours returned:', {
         contourCount: resultContours?.length,
+        uniqueSlices: outputSlicePositions.length,
+        sliceRange: outputSlicePositions.length > 0 ? `${outputSlicePositions[0]} to ${outputSlicePositions[outputSlicePositions.length - 1]}` : 'none',
         firstContourPoints: resultContours?.[0]?.points?.length
       });
+      
+      // ===== CRITICAL: Compare input vs output slice counts =====
+      const missingFromOutput = inputSlicePositions.filter(z => 
+        !outputSlicePositions.some(oz => Math.abs(oz - z) < 0.5)
+      );
+      const newInOutput = outputSlicePositions.filter(z =>
+        !inputSlicePositions.some(iz => Math.abs(iz - z) < 0.5)
+      );
+      
+      console.log('🔹 ⚠️ SLICE COMPARISON:', {
+        inputSliceCount: inputSlicePositions.length,
+        outputSliceCount: outputSlicePositions.length,
+        delta: outputSlicePositions.length - inputSlicePositions.length,
+        missingFromOutput: missingFromOutput.length > 0 ? missingFromOutput.map(z => z.toFixed(2)) : 'none',
+        newSlicesInOutput: newInOutput.length > 0 ? newInOutput.map(z => z.toFixed(2)) : 'none'
+      });
+      
+      if (missingFromOutput.length > 0) {
+        console.warn('🔹 ❌ MISSING SLICES DETECTED! Input slices not in output:', missingFromOutput);
+      }
+      
       // Post back results
       // @ts-ignore
       self.postMessage({ jobId: data.jobId, ok: true, contours: resultContours });

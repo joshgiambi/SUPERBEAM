@@ -191,6 +191,50 @@ export function SeriesSelector({
     reload: reloadSuperstructures
   } = useSuperstructures(rtStructures?.seriesId || null);
   
+  // Helper to validate if a superstructure record actually belongs to a structure
+  // This prevents stale superstructure records from being incorrectly matched
+  const isValidSuperstructureForStructure = (superstructure: any, structureName: string): boolean => {
+    if (!superstructure || !structureName) return false;
+    
+    const structureNameLower = structureName.toLowerCase();
+    const sourceNames = superstructure.sourceStructureNames || [];
+    const operationExpression = (superstructure.operationExpression || '').toLowerCase();
+    
+    // For margin operations: structure name should reference the source
+    // e.g., "AORTA_+10mm" should have source "AORTA"
+    if (superstructure.operationType === 'margin') {
+      return sourceNames.some((name: string) => 
+        structureNameLower.includes(name.toLowerCase())
+      );
+    }
+    
+    // For boolean operations: check if any source is referenced in name or expression matches
+    // Also accept if the operation expression contains the structure name
+    const hasSourceInName = sourceNames.some((name: string) => 
+      structureNameLower.includes(name.toLowerCase())
+    );
+    const expressionMatchesStructure = operationExpression.includes(structureNameLower) ||
+      structureNameLower.includes(operationExpression.split(/[∪∩−⊕→]/)[0]?.trim() || '');
+    
+    return hasSourceInName || expressionMatchesStructure;
+  };
+  
+  // Find valid superstructure for a structure (validates the match)
+  const findValidSuperstructure = (structure: any) => {
+    const superstructure = superstructures.find(
+      (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
+    );
+    if (!superstructure) return null;
+    
+    // Validate that this superstructure actually belongs to this structure
+    if (!isValidSuperstructureForStructure(superstructure, structure.structureName)) {
+      console.warn(`Stale superstructure detected for ${structure.structureName} (roiNumber ${structure.roiNumber})`);
+      return null;
+    }
+    
+    return superstructure;
+  };
+  
   // Load superstructures for all RT series to determine which have superstructures
   useEffect(() => {
     const loadAllSuperstructures = async () => {
@@ -3171,9 +3215,7 @@ export function SeriesSelector({
                               
                               {/* Superstructure indicator */}
                               {(() => {
-                                const superstructure = superstructures.find(
-                                  (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
-                                );
+                                const superstructure = findValidSuperstructure(structure);
                                 if (!superstructure) return null;
                                 
                                 const isExpanded = expandedSuperstructures.has(structure.roiNumber);
@@ -3219,9 +3261,7 @@ export function SeriesSelector({
                             
                             {/* Superstructure dependencies - shown when expanded */}
                             {(() => {
-                              const superstructure = superstructures.find(
-                                (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
-                              );
+                              const superstructure = findValidSuperstructure(structure);
                               if (!superstructure || !expandedSuperstructures.has(structure.roiNumber)) return null;
                               
                               // Get step color function (matching boolean pipeline)
@@ -3558,9 +3598,7 @@ export function SeriesSelector({
                                           
                                           {/* Superstructure indicator (mutually exclusive with blob mode) */}
                                           {(() => {
-                                            const superstructure = superstructures.find(
-                                              (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
-                                            );
+                                            const superstructure = findValidSuperstructure(structure);
                                             
                                     // If superstructure, show GitMerge icon in a collapsible dropdown style
                                     if (superstructure) {
@@ -3666,7 +3704,7 @@ export function SeriesSelector({
                                         })()}
                                         
                                         {/* Expandable blob list - only show if NOT a superstructure */}
-                                        {!superstructures.find((ss: any) => ss.rtStructureRoiNumber === structure.roiNumber) && 
+                                        {!findValidSuperstructure(structure) && 
                                          expandedBlobStructures.has(structure.roiNumber) && 
                                          structureBlobsMap.has(structure.roiNumber) && (
                                           <StructureBlobList
@@ -3742,9 +3780,7 @@ export function SeriesSelector({
                                   
                                   {/* Superstructure indicator (mutually exclusive with blob mode) */}
                                   {(() => {
-                                    const superstructure = superstructures.find(
-                                      (ss: any) => ss.rtStructureRoiNumber === structure.roiNumber
-                                    );
+                                    const superstructure = findValidSuperstructure(structure);
                                     
                                     // If superstructure, show IterationCw icon instead of blob icon
                                     if (superstructure) {
@@ -3887,7 +3923,7 @@ export function SeriesSelector({
                                 })()}
                                 
                                 {/* Expandable blob list - only show if NOT a superstructure */}
-                                {!superstructures.find((ss: any) => ss.rtStructureRoiNumber === structure.roiNumber) && 
+                                {!findValidSuperstructure(structure) && 
                                  expandedBlobStructures.has(structure.roiNumber) && 
                                  structureBlobsMap.has(structure.roiNumber) && (
                                   <div className="mt-1">

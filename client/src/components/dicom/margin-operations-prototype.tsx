@@ -1,47 +1,55 @@
 /**
- * Margin Operations Toolbar - Aurora Edition
+ * Margin Operations Toolbar - Aurora Edition V2
  * 
- * Matching the ContourEditToolbar Aurora design:
- * - Draggable with position memory
- * - Aurora glass effect styling
- * - Compact two-row layout
- * - Intuitive margin controls
+ * Matches the bottom toolbar margin button styling with:
+ * - Cyan accent color throughout
+ * - Compact, professional design
+ * - Template library with popups
  */
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { 
-  Play,
-  X,
+import {
   Expand,
-  Maximize2,
-  Minimize2,
-  Save,
-  Library,
-  Trash2,
+  Shrink,
+  X,
+  Play,
   GripVertical,
   RotateCcw,
-  ChevronDown,
   IterationCw,
-  Layers
+  Plus,
+  Library,
+  Save,
+  Trash2,
+  FolderOpen,
 } from 'lucide-react';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
+interface MarginTemplate {
+  id: string;
+  name: string;
+  direction: 'expand' | 'shrink';
+  marginMm: number;
+  createdAt: number;
+}
+
 interface MarginOperationsPrototypeProps {
   availableStructures?: string[];
+  selectedForEdit?: number | null;
+  structures?: Array<{ roiNumber: number; structureName: string; color: number[] }>;
   onExecute?: (operation: {
     type: 'uniform' | 'anisotropic';
     structureName: string;
@@ -51,30 +59,9 @@ interface MarginOperationsPrototypeProps {
     direction?: 'expand' | 'shrink';
     saveAsSuperstructure?: boolean;
     outputMode: 'new' | 'same';
-  }) => void;
+  }) => void | Promise<void>;
   onClose?: () => void;
   viewerOffsetLeft?: number;
-}
-
-interface MarginTemplate {
-  id: string;
-  name: string;
-  selectedStructure: string;
-  operationType: 'uniform' | 'anisotropic';
-  marginDirection: 'expand' | 'shrink';
-  uniformMargin?: number;
-  anisotropicMargins?: {
-    left: number;
-    right: number;
-    anterior: number;
-    posterior: number;
-    superior: number;
-    inferior: number;
-  };
-  outputName: string;
-  outputColor: string;
-  saveAsSuperstructure: boolean;
-  createdAt: number;
 }
 
 interface Position { x: number; y: number; }
@@ -83,7 +70,8 @@ interface Position { x: number; y: number; }
 // HELPERS
 // ============================================================================
 
-const STORAGE_KEY = 'margin-toolbar-aurora-position';
+const STORAGE_KEY = 'margin-toolbar-aurora-v2-position';
+const TEMPLATE_STORAGE_KEY = 'v4-aurora-margin-templates';
 
 const getStoredPosition = (): Position | null => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
@@ -91,6 +79,17 @@ const getStoredPosition = (): Position | null => {
 
 const savePosition = (pos: Position) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pos)); } catch {}
+};
+
+const loadMarginTemplates = (): MarginTemplate[] => {
+  try {
+    const stored = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
+
+const saveMarginTemplates = (templates: MarginTemplate[]) => {
+  try { localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates)); } catch {}
 };
 
 // ============================================================================
@@ -104,13 +103,8 @@ function useDraggable(initialPosition: Position, onPositionChange?: (pos: Positi
   const dragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   const positionRef = useRef(position);
   
-  useEffect(() => {
-    positionRef.current = position;
-  }, [position]);
-  
-  useEffect(() => {
-    isDraggingRef.current = isDragging;
-  }, [isDragging]);
+  useEffect(() => { positionRef.current = position; }, [position]);
+  useEffect(() => { isDraggingRef.current = isDragging; }, [isDragging]);
 
   const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
     if (!isDraggingRef.current || !dragStart.current) return;
@@ -135,13 +129,12 @@ function useDraggable(initialPosition: Position, onPositionChange?: (pos: Positi
   }, [onPositionChange]);
 
   useEffect(() => {
-    document.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
+    document.addEventListener('mousemove', handleGlobalMouseMove, { capture: true });
     document.addEventListener('mouseup', handleGlobalMouseUp, { capture: true });
     document.addEventListener('pointerup', handleGlobalMouseUp, { capture: true });
     window.addEventListener('blur', handleGlobalMouseUp);
-    
     return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mousemove', handleGlobalMouseMove, { capture: true });
       document.removeEventListener('mouseup', handleGlobalMouseUp, { capture: true });
       document.removeEventListener('pointerup', handleGlobalMouseUp, { capture: true });
       window.removeEventListener('blur', handleGlobalMouseUp);
@@ -169,11 +162,13 @@ function useDraggable(initialPosition: Position, onPositionChange?: (pos: Positi
 }
 
 // ============================================================================
-// COMPONENT
+// MAIN COMPONENT
 // ============================================================================
 
 export function MarginOperationsPrototype({ 
-  availableStructures = ['CTV', 'GTV', 'BODY', 'SpinalCord', 'Parotid_L', 'Parotid_R', 'Mandible'],
+  availableStructures = [],
+  selectedForEdit,
+  structures = [],
   onExecute,
   onClose,
   viewerOffsetLeft = 0
@@ -187,55 +182,45 @@ export function MarginOperationsPrototype({
 
   // Core state
   const [selectedStructure, setSelectedStructure] = useState<string>('');
-  const [operationType, setOperationType] = useState<'uniform' | 'anisotropic'>('uniform');
-  const [marginDirection, setMarginDirection] = useState<'expand' | 'shrink'>('expand');
-  
-  // Uniform margin
-  const [uniformMargin, setUniformMargin] = useState(5);
-  
-  // Anisotropic margins
-  const [anisotropicMargins, setAnisotropicMargins] = useState({
-    left: 5, right: 5,
-    anterior: 5, posterior: 5,
-    superior: 5, inferior: 5
-  });
-  
-  // Output configuration
+  const [direction, setDirection] = useState<'expand' | 'shrink'>('expand');
+  const [marginMm, setMarginMm] = useState(10); // Default 10mm
   const [outputMode, setOutputMode] = useState<'new' | 'same'>('new');
-  const [outputName, setOutputName] = useState('PTV');
-  const [outputColor, setOutputColor] = useState('#FF6B6B');
+  const [outputName, setOutputName] = useState('');
+  const [outputColor, setOutputColor] = useState('#22C55E'); // Green default
   const [saveAsSuperstructure, setSaveAsSuperstructure] = useState(false);
-  
+
   // Template management
-  const [templates, setTemplates] = useState<MarginTemplate[]>([]);
-  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
-  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [templates, setTemplates] = useState<MarginTemplate[]>(() => loadMarginTemplates());
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
 
-  // Aurora accent color - use a teal/cyan theme for margin operations
-  const accentHue = 175; // Teal
-  const accentRgb = 'rgb(20, 184, 166)'; // teal-500
+  // Direction-based accent color - cyan for expand, red for shrink
+  const directionColor = direction === 'expand' 
+    ? { rgb: 'rgb(34, 211, 238)', hue: 187 }   // Cyan
+    : { rgb: 'rgb(239, 68, 68)', hue: 0 };     // Red
 
-  // Load templates
+  // Refs for popup positioning
+  const libraryButtonRef = useRef<HTMLButtonElement>(null);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-select structure when selectedForEdit changes
   useEffect(() => {
-    const savedTemplates = localStorage.getItem('marginOperationsTemplates');
-    if (savedTemplates) {
-      try {
-        setTemplates(JSON.parse(savedTemplates));
-      } catch (e) {
-        console.error('Failed to load margin templates:', e);
+    if (selectedForEdit && structures.length > 0) {
+      const struct = structures.find(s => s.roiNumber === selectedForEdit);
+      if (struct) {
+        setSelectedStructure(struct.structureName);
       }
     }
-  }, []);
-  
-  // Save templates
+  }, [selectedForEdit, structures]);
+
+  // Auto-generate output name
   useEffect(() => {
-    if (templates.length > 0) {
-      localStorage.setItem('marginOperationsTemplates', JSON.stringify(templates));
-    } else {
-      localStorage.removeItem('marginOperationsTemplates');
+    if (outputMode === 'new' && selectedStructure) {
+      const suffix = direction === 'expand' ? `+${marginMm}mm` : `-${marginMm}mm`;
+      setOutputName(`${selectedStructure}_${suffix}`);
     }
-  }, [templates]);
+  }, [selectedStructure, direction, marginMm, outputMode]);
 
   // Keyboard shortcut: Escape to close
   useEffect(() => {
@@ -247,108 +232,73 @@ export function MarginOperationsPrototype({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-  
-  const handleExecute = () => {
-    if (!selectedStructure) return;
-    if (outputMode === 'new' && !outputName) return;
-    
-    const parameters = operationType === 'uniform' 
-      ? { margin: marginDirection === 'expand' ? uniformMargin : -uniformMargin }
-      : { 
-          left: marginDirection === 'expand' ? anisotropicMargins.left : -anisotropicMargins.left,
-          right: marginDirection === 'expand' ? anisotropicMargins.right : -anisotropicMargins.right,
-          anterior: marginDirection === 'expand' ? anisotropicMargins.anterior : -anisotropicMargins.anterior,
-          posterior: marginDirection === 'expand' ? anisotropicMargins.posterior : -anisotropicMargins.posterior,
-          superior: marginDirection === 'expand' ? anisotropicMargins.superior : -anisotropicMargins.superior,
-          inferior: marginDirection === 'expand' ? anisotropicMargins.inferior : -anisotropicMargins.inferior
-        };
-    
-    onExecute?.({
-      type: operationType,
-      structureName: selectedStructure,
-      parameters,
-      outputName: outputMode === 'same' ? selectedStructure : outputName,
-      outputColor,
-      direction: marginDirection,
-      saveAsSuperstructure: outputMode === 'new' ? saveAsSuperstructure : false,
-      outputMode
-    });
+
+  // Get structure color for display
+  const getStructureColor = (name: string) => {
+    const struct = structures.find(s => s.structureName === name);
+    return struct ? `rgb(${struct.color.join(',')})` : 'rgb(128,128,128)';
   };
 
-  const isValid = selectedStructure && 
-    (outputMode === 'same' || outputName) && 
-    (operationType === 'uniform' ? uniformMargin > 0 : 
-     anisotropicMargins.left > 0 || anisotropicMargins.right > 0 || 
-     anisotropicMargins.anterior > 0 || anisotropicMargins.posterior > 0 ||
-     anisotropicMargins.superior > 0 || anisotropicMargins.inferior > 0);
+  const canExecute = selectedStructure && (outputMode === 'same' || outputName);
 
-  const saveTemplate = () => {
+  // Template management functions
+  const saveTemplate = useCallback(() => {
     if (!templateName.trim()) return;
-    
-    const template: MarginTemplate = {
+    const newTemplate: MarginTemplate = {
       id: Date.now().toString(),
       name: templateName.trim(),
-      selectedStructure,
-      operationType,
-      marginDirection,
-      uniformMargin: operationType === 'uniform' ? uniformMargin : undefined,
-      anisotropicMargins: operationType === 'anisotropic' ? { ...anisotropicMargins } : undefined,
-      outputName,
-      outputColor,
-      saveAsSuperstructure,
-      createdAt: Date.now()
+      direction,
+      marginMm,
+      createdAt: Date.now(),
     };
-    
-    setTemplates([...templates, template]);
+    const updated = [...templates, newTemplate];
+    setTemplates(updated);
+    saveMarginTemplates(updated);
     setTemplateName('');
-    setShowSaveTemplateDialog(false);
-  };
+    setShowSaveDialog(false);
+  }, [templateName, direction, marginMm, templates]);
 
   const loadTemplate = (template: MarginTemplate) => {
-    setSelectedStructure(template.selectedStructure);
-    setOperationType(template.operationType);
-    setMarginDirection(template.marginDirection);
-    if (template.uniformMargin !== undefined) {
-      setUniformMargin(template.uniformMargin);
-    }
-    if (template.anisotropicMargins) {
-      setAnisotropicMargins(template.anisotropicMargins);
-    }
-    setOutputName(template.outputName);
-    setOutputColor(template.outputColor);
-    setSaveAsSuperstructure(template.saveAsSuperstructure);
-    setShowTemplateLibrary(false);
+    console.log('🔹 loadTemplate called with:', template);
+    // Update values first
+    setDirection(template.direction);
+    setMarginMm(template.marginMm);
+    // Then close popup after a small delay to ensure state updates are processed
+    setTimeout(() => {
+      setShowLibrary(false);
+      console.log('🔹 loadTemplate complete');
+    }, 50);
   };
 
-  const deleteTemplate = (id: string) => {
-    setTemplates(templates.filter(t => t.id !== id));
-  };
+  const deleteTemplate = useCallback((id: string) => {
+    const updated = templates.filter(t => t.id !== id);
+    setTemplates(updated);
+    saveMarginTemplates(updated);
+  }, [templates]);
 
-  // Render anisotropic margin input
-  const renderAnisotropicInput = (
-    key: keyof typeof anisotropicMargins, 
-    label: string, 
-    colors: { bg: string; border: string; text: string; focus: string }
-  ) => (
-    <div className="flex items-center gap-1">
-      <input
-        type="number"
-        value={anisotropicMargins[key]}
-        onChange={(e) => setAnisotropicMargins({ ...anisotropicMargins, [key]: parseFloat(e.target.value) || 0 })}
-        min="0"
-        step="0.5"
-        className={cn(
-          "w-11 text-[11px] h-6 px-1.5 rounded text-center font-medium tabular-nums",
-          "focus:outline-none focus:ring-1 transition-all",
-          colors.bg, colors.border, colors.text, colors.focus
-        )}
-      />
-      <span className={cn("text-[10px] font-bold w-3", colors.text)}>{label}</span>
-    </div>
-  );
+  const handleExecute = () => {
+    if (!selectedStructure || !canExecute) return;
+    
+    const actualMargin = direction === 'expand' ? marginMm : -marginMm;
+    
+    const operationPayload = {
+      type: 'uniform' as const,
+      structureName: selectedStructure,
+      parameters: { margin: actualMargin },
+      outputName: outputMode === 'same' ? selectedStructure : outputName,
+      outputColor,
+      direction,
+      saveAsSuperstructure: outputMode === 'new' ? saveAsSuperstructure : false,
+      outputMode
+    };
+    
+    console.log('🔹 Margin toolbar sending operation:', operationPayload);
+    onExecute?.(operationPayload);
+  };
 
   return (
     <TooltipProvider delayDuration={200}>
+      {/* Main toolbar container */}
       <div
         className={cn("fixed z-50 select-none", isDragging && "cursor-grabbing")}
         style={{
@@ -372,268 +322,233 @@ export function MarginOperationsPrototype({
         >
           <div 
             className={cn(
-              "rounded-2xl backdrop-blur-xl transition-all",
-              isDragging && "ring-2 ring-teal-500/40"
+              "rounded-2xl backdrop-blur-xl shadow-2xl min-w-[600px]",
+              isDragging && "ring-2"
             )}
             style={{
-              background: `linear-gradient(180deg, hsla(${accentHue}, 25%, 12%, 0.97) 0%, hsla(${accentHue}, 20%, 8%, 0.99) 100%)`,
-              boxShadow: `
-                0 8px 24px -4px rgba(0, 0, 0, 0.6),
-                0 16px 48px -8px rgba(0, 0, 0, 0.4),
-                0 0 0 1px ${accentRgb}15,
-                0 0 40px -10px ${accentRgb}15
-              `,
+              background: `linear-gradient(180deg, hsla(${directionColor.hue}, 15%, 14%, 0.97) 0%, hsla(${directionColor.hue}, 10%, 10%, 0.99) 100%)`,
+              boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px ${directionColor.rgb}20, 0 0 60px -15px ${directionColor.rgb}15`,
+              ...(isDragging ? { ringColor: `${directionColor.rgb}40` } : {}),
             }}
           >
-            {/* ===== ROW 1: Source + Operation Type + Direction + Margins ===== */}
-            <div className="flex items-center gap-2.5 px-3 py-2">
+            {/* ===== ROW 1: Header ===== */}
+            <div className="flex items-center gap-3 px-3 py-2">
               {/* Drag Handle */}
               <div 
                 data-drag-handle
-                className="flex items-center justify-center w-5 h-7 cursor-grab active:cursor-grabbing rounded transition-all hover:bg-white/5"
-                style={{ color: `${accentRgb}50` }}
+                className="flex items-center justify-center w-6 h-7 cursor-grab active:cursor-grabbing rounded transition-all hover:bg-white/5"
+                style={{ color: `${directionColor.rgb}50` }}
               >
-                <GripVertical className="w-3.5 h-3.5" />
+                <GripVertical className="w-4 h-4" />
               </div>
 
               <div className="w-px h-6 bg-white/10" />
 
-              {/* Icon + Title */}
-              <div className="flex items-center gap-1.5">
-                <Expand className="w-3.5 h-3.5 text-teal-400" />
-                <span className="text-[11px] font-semibold text-teal-300">Margin</span>
-              </div>
+              <Expand className="w-4 h-4" style={{ color: directionColor.rgb }} />
+              <span className="text-sm font-semibold text-white">Margin Tool</span>
 
               <div className="w-px h-6 bg-white/10" />
 
-              {/* Structure Selection */}
-              <select
-                value={selectedStructure}
-                onChange={(e) => setSelectedStructure(e.target.value)}
-                className="bg-black/30 border border-white/10 text-white text-[11px] h-6 px-2 rounded focus:outline-none focus:border-teal-500/60 min-w-[100px]"
-              >
-                <option value="" className="bg-gray-900">Source...</option>
-                {availableStructures.map(name => (
-                  <option key={name} value={name} className="bg-gray-900">{name}</option>
-                ))}
-              </select>
-
-              <div className="w-px h-6 bg-white/10" />
-
-              {/* Operation Type: Uniform / Anisotropic */}
-              <div className="flex items-center gap-0.5 bg-black/20 rounded-md p-0.5">
-                <button
-                  onClick={() => setOperationType('uniform')}
-                  className={cn(
-                    'h-5 px-2 rounded text-[10px] font-medium transition-all',
-                    operationType === 'uniform'
-                      ? 'bg-teal-500/30 text-teal-300'
-                      : 'text-gray-500 hover:text-gray-300'
-                  )}
+              {/* Source Structure Selector */}
+              <div className="flex items-center gap-2 bg-black/20 rounded-lg px-2 py-1 border border-white/[0.06]">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full border border-white/30"
+                  style={{ backgroundColor: selectedStructure ? getStructureColor(selectedStructure) : 'transparent' }}
+                />
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Source</span>
+                <select
+                  value={selectedStructure}
+                  onChange={(e) => setSelectedStructure(e.target.value)}
+                  className="h-7 bg-transparent border-0 text-white text-xs rounded-md px-1 min-w-[120px] focus:outline-none cursor-pointer"
                 >
-                  Uniform
-                </button>
-                <button
-                  onClick={() => setOperationType('anisotropic')}
-                  className={cn(
-                    'h-5 px-2 rounded text-[10px] font-medium transition-all',
-                    operationType === 'anisotropic'
-                      ? 'bg-teal-500/30 text-teal-300'
-                      : 'text-gray-500 hover:text-gray-300'
-                  )}
-                >
-                  Aniso
-                </button>
+                  <option value="" className="bg-gray-900">Select structure...</option>
+                  {availableStructures.map(name => (
+                    <option key={name} value={name} className="bg-gray-900">{name}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Direction: Expand / Shrink */}
-              <div className="flex items-center gap-0.5 bg-black/20 rounded-md p-0.5">
+              <div className="w-px h-6 bg-white/10" />
+
+              {/* Direction Toggle */}
+              <div className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => setMarginDirection('expand')}
+                      onClick={() => setDirection('expand')}
                       className={cn(
-                        'h-5 px-1.5 rounded text-[10px] font-medium transition-all flex items-center gap-1',
-                        marginDirection === 'expand'
-                          ? 'bg-emerald-500/30 text-emerald-300'
-                          : 'text-gray-500 hover:text-gray-300'
+                        'h-7 px-3 flex items-center gap-1.5 rounded-md transition-all text-xs font-medium',
+                        direction === 'expand' 
+                          ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40' 
+                          : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                       )}
                     >
-                      <Maximize2 className="w-3 h-3" />
+                      <Expand className="w-3.5 h-3.5" />
+                      Expand
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Expand outward</TooltipContent>
+                  <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Add margin (grow)</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => setMarginDirection('shrink')}
+                      onClick={() => setDirection('shrink')}
                       className={cn(
-                        'h-5 px-1.5 rounded text-[10px] font-medium transition-all flex items-center gap-1',
-                        marginDirection === 'shrink'
-                          ? 'bg-orange-500/30 text-orange-300'
-                          : 'text-gray-500 hover:text-gray-300'
+                        'h-7 px-3 flex items-center gap-1.5 rounded-md transition-all text-xs font-medium',
+                        direction === 'shrink' 
+                          ? 'bg-red-500/20 text-red-300 ring-1 ring-red-500/40' 
+                          : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                       )}
                     >
-                      <Minimize2 className="w-3 h-3" />
+                      <Shrink className="w-3.5 h-3.5" />
+                      Shrink
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Shrink inward</TooltipContent>
+                  <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Subtract margin (contract)</TooltipContent>
                 </Tooltip>
               </div>
-
-              <div className="w-px h-6 bg-white/10" />
-
-              {/* Margin Values */}
-              <AnimatePresence mode="wait">
-                {operationType === 'uniform' ? (
-                  <motion.div
-                    key="uniform"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-1.5"
-                  >
-                    <input
-                      type="number"
-                      value={uniformMargin}
-                      onChange={(e) => setUniformMargin(parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.5"
-                      className="w-14 bg-black/30 border border-white/10 text-white text-[11px] h-6 px-2 rounded focus:outline-none focus:border-teal-500/60 tabular-nums text-center font-medium"
-                    />
-                    <span className="text-[10px] text-gray-500 font-medium">mm</span>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="anisotropic"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-1.5"
-                  >
-                    {renderAnisotropicInput('left', 'L', { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-300', focus: 'focus:ring-blue-500/50' })}
-                    {renderAnisotropicInput('right', 'R', { bg: 'bg-orange-500/20', border: 'border-orange-500/30', text: 'text-orange-300', focus: 'focus:ring-orange-500/50' })}
-                    {renderAnisotropicInput('anterior', 'A', { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300', focus: 'focus:ring-green-500/50' })}
-                    {renderAnisotropicInput('posterior', 'P', { bg: 'bg-purple-500/20', border: 'border-purple-500/30', text: 'text-purple-300', focus: 'focus:ring-purple-500/50' })}
-                    {renderAnisotropicInput('superior', 'S', { bg: 'bg-cyan-500/20', border: 'border-cyan-500/30', text: 'text-cyan-300', focus: 'focus:ring-cyan-500/50' })}
-                    {renderAnisotropicInput('inferior', 'I', { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300', focus: 'focus:ring-yellow-500/50' })}
-                    <span className="text-[10px] text-gray-500 font-medium ml-0.5">mm</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <div className="flex-1" />
 
-              {/* Utilities */}
-              <div className="flex items-center gap-0.5">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button 
-                      onClick={resetPosition} 
-                      className="h-6 w-6 flex items-center justify-center rounded text-gray-600 hover:text-gray-400 hover:bg-white/5 transition-all"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Reset position</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button 
-                      onClick={onClose} 
-                      className="h-6 w-6 flex items-center justify-center rounded text-gray-500 hover:text-white hover:bg-red-500/20 transition-all"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Close (Esc)</TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-
-            {/* ===== ROW 2: Output Configuration + Actions ===== */}
-            <div className="flex items-center gap-2.5 px-3 py-2 border-t border-white/5">
-              {/* Output Mode: New / Same */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-500 font-medium">Output:</span>
-                <div className="flex items-center gap-0.5 bg-black/20 rounded-md p-0.5">
+              {/* Library Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <button
-                    onClick={() => setOutputMode('new')}
+                    ref={libraryButtonRef}
+                    onClick={() => { setShowLibrary(!showLibrary); setShowSaveDialog(false); }}
                     className={cn(
-                      'h-5 px-2 rounded text-[10px] font-medium transition-all',
-                      outputMode === 'new'
-                        ? 'bg-blue-500/30 text-blue-300'
-                        : 'text-gray-500 hover:text-gray-300'
+                      "h-7 w-7 flex items-center justify-center rounded-lg transition-all",
+                      showLibrary 
+                        ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40" 
+                        : "text-white/70 hover:text-white hover:bg-white/10"
                     )}
                   >
-                    New
+                    <Library className="w-3.5 h-3.5" />
                   </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
+                  Template library ({templates.length})
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Save Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    ref={saveButtonRef}
+                    onClick={() => { setShowSaveDialog(!showSaveDialog); setShowLibrary(false); }}
+                    className={cn(
+                      "h-7 w-7 flex items-center justify-center rounded-lg transition-all",
+                      showSaveDialog 
+                        ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40" 
+                        : "text-white/70 hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
+                  Save as template
+                </TooltipContent>
+              </Tooltip>
+
+              <button onClick={resetPosition} className="h-7 w-7 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-red-500/20 transition-all">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* ===== ROW 2: Settings ===== */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-t border-white/5" style={{ background: `hsla(${directionColor.hue}, 8%, 8%, 0.8)` }}>
+              {/* Margin Distance */}
+              <div className="flex items-center gap-3 bg-black/20 rounded-lg px-3 py-1.5 border border-white/[0.06]">
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Distance</span>
+                <Slider
+                  value={[marginMm]}
+                  onValueChange={([val]) => setMarginMm(val)}
+                  max={30}
+                  min={1}
+                  step={0.5}
+                  className="w-24 [&>span:first-child]:h-1.5 [&>span:first-child]:bg-white/10 [&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-0 [&_[role=slider]]:shadow-md"
+                  style={{ '--slider-thumb-color': directionColor.rgb } as any}
+                />
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={marginMm}
+                    onChange={(e) => setMarginMm(parseFloat(e.target.value) || 0)}
+                    className="h-7 w-16 px-2 text-xs text-center bg-black/30 border-white/10 text-white rounded-md font-mono"
+                    step="0.5"
+                    min="0"
+                    max="50"
+                  />
+                  <span className="text-xs text-gray-500">mm</span>
+                </div>
+              </div>
+
+              <div className="w-px h-8 bg-white/10" />
+
+              {/* Output Mode Toggle */}
+              <div className="flex items-center gap-2 bg-black/20 rounded-lg px-2 py-1 border border-white/[0.06]">
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Target</span>
+                <div className="flex items-center bg-black/30 rounded-md overflow-hidden border border-white/[0.06]">
                   <button
                     onClick={() => setOutputMode('same')}
                     className={cn(
-                      'h-5 px-2 rounded text-[10px] font-medium transition-all',
-                      outputMode === 'same'
-                        ? 'bg-amber-500/30 text-amber-300'
+                      'px-2.5 h-7 text-[11px] font-medium transition-all',
+                      outputMode === 'same' 
+                        ? 'bg-white/15 text-white' 
                         : 'text-gray-500 hover:text-gray-300'
                     )}
                   >
                     Same
                   </button>
+                  <button
+                    onClick={() => setOutputMode('new')}
+                    className={cn(
+                      'px-2.5 h-7 text-[11px] font-medium transition-all flex items-center gap-1',
+                      outputMode === 'new' 
+                        ? 'bg-white/15 text-white' 
+                        : 'text-gray-500 hover:text-gray-300'
+                    )}
+                  >
+                    <Plus className="w-3 h-3" />
+                    New
+                  </button>
                 </div>
               </div>
 
-              {/* Output Name (only for new) */}
+              {/* Output Selection based on mode */}
               <AnimatePresence mode="wait">
                 {outputMode === 'new' && (
                   <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-1.5"
+                    key="new"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="flex items-center gap-2"
                   >
+                    <button
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'color';
+                        input.value = outputColor;
+                        input.onchange = (e) => setOutputColor((e.target as HTMLInputElement).value);
+                        input.click();
+                      }}
+                      className="w-6 h-6 rounded-md cursor-pointer transition-transform hover:scale-110 border border-white/20"
+                      style={{ backgroundColor: outputColor }}
+                    />
                     <Input
-                      type="text"
                       value={outputName}
                       onChange={(e) => setOutputName(e.target.value)}
-                      placeholder="Name"
-                      className="w-28 h-6 px-2 text-[11px] bg-black/30 border-white/10 text-white rounded focus:border-teal-500/60"
+                      placeholder="New structure name"
+                      className="h-7 w-36 px-2 text-xs bg-black/20 border-white/10 text-white rounded-lg placeholder:text-gray-600"
                     />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Color Picker */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'color';
-                    input.value = outputColor;
-                    input.onchange = (e) => setOutputColor((e.target as HTMLInputElement).value);
-                    input.click();
-                  }}
-                  className="w-5 h-5 rounded cursor-pointer transition-transform hover:scale-110 border border-white/20"
-                  style={{ 
-                    backgroundColor: outputColor,
-                    boxShadow: `0 0 8px -2px ${outputColor}60`,
-                  }}
-                />
-              </div>
-
-              {/* Auto-update (superstructure) - only for new */}
-              <AnimatePresence mode="wait">
-                {outputMode === 'new' && (
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-1.5"
-                  >
+                    
+                    {/* Superstructure Toggle */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setSaveAsSuperstructure(!saveAsSuperstructure)}>
@@ -642,11 +557,11 @@ export function MarginOperationsPrototype({
                             onCheckedChange={setSaveAsSuperstructure}
                             className="scale-75 data-[state=checked]:bg-cyan-500"
                           />
-                          <IterationCw className={cn("w-3 h-3 transition-colors", saveAsSuperstructure ? "text-cyan-400" : "text-gray-600")} />
+                          <IterationCw className={cn("w-3.5 h-3.5 transition-colors", saveAsSuperstructure ? "text-cyan-400" : "text-gray-600")} />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs max-w-[200px]">
-                        Auto-update: Re-apply margin when source structure changes
+                      <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs max-w-[200px]">
+                        Auto-update: Re-apply margin when source changes
                       </TooltipContent>
                     </Tooltip>
                   </motion.div>
@@ -655,212 +570,164 @@ export function MarginOperationsPrototype({
 
               <div className="flex-1" />
 
-              {/* Template buttons */}
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setShowSaveTemplateDialog(true)}
-                      disabled={!isValid}
-                      className={cn(
-                        "h-6 px-2 flex items-center gap-1 rounded text-[10px] font-medium transition-all border",
-                        isValid
-                          ? "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
-                          : "bg-transparent text-gray-600 border-white/10 cursor-not-allowed"
-                      )}
-                    >
-                      <Save className="w-3 h-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Save as template</TooltipContent>
-                </Tooltip>
-
-                <div className="relative">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => setShowTemplateLibrary(!showTemplateLibrary)}
-                        className={cn(
-                          "h-6 px-2 flex items-center gap-1 rounded text-[10px] font-medium transition-all border",
-                          showTemplateLibrary
-                            ? "bg-purple-500/30 text-purple-300 border-purple-500/40"
-                            : "bg-purple-500/20 text-purple-300 border-purple-500/30 hover:bg-purple-500/30"
-                        )}
-                      >
-                        <Library className="w-3 h-3" />
-                        {templates.length > 0 && (
-                          <span className="text-[9px] bg-purple-500/40 px-1 rounded">{templates.length}</span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">Template library</TooltipContent>
-                  </Tooltip>
-
-                  {/* Template Library Dropdown - Opens upward */}
-                  <AnimatePresence>
-                    {showTemplateLibrary && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute bottom-full right-0 mb-2 w-80 max-h-80 overflow-y-auto overflow-x-hidden rounded-xl border border-purple-500/30 shadow-2xl"
-                        style={{
-                          background: `linear-gradient(180deg, hsla(270, 25%, 12%, 0.98) 0%, hsla(270, 20%, 8%, 0.99) 100%)`,
-                          zIndex: 9999,
-                        }}
-                      >
-                        <div className="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-purple-500/20 backdrop-blur-xl">
-                          <div className="flex items-center gap-1.5">
-                            <Library className="w-3.5 h-3.5 text-purple-400" />
-                            <span className="text-[11px] text-purple-300 font-semibold">Templates</span>
-                          </div>
-                          <button
-                            onClick={() => setShowTemplateLibrary(false)}
-                            className="text-gray-500 hover:text-white transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <div className="p-2">
-                          {templates.length === 0 ? (
-                            <div className="text-center py-6 text-gray-500">
-                              <Library className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                              <p className="text-[11px]">No saved templates</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-1">
-                              {templates.map((template) => (
-                                <div
-                                  key={template.id}
-                                  className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all group"
-                                >
-                                  <div className="flex-1 min-w-0 mr-2">
-                                    <div className="text-[11px] text-white font-medium truncate">
-                                      {template.name}
-                                    </div>
-                                    <div className="text-[9px] text-gray-500">
-                                      {template.operationType === 'uniform' ? 'Uni' : 'Aniso'} • {template.marginDirection}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => loadTemplate(template)}
-                                      className="h-5 px-2 rounded text-[10px] font-medium bg-purple-500/30 text-purple-300 hover:bg-purple-500/40 transition-all"
-                                    >
-                                      Load
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        if (window.confirm(`Delete "${template.name}"?`)) {
-                                          deleteTemplate(template.id);
-                                        }
-                                      }}
-                                      className="h-5 w-5 flex items-center justify-center rounded text-red-400 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Apply button */}
+              {/* Execute Button - styled with direction color */}
               <button
                 onClick={handleExecute}
-                disabled={!isValid}
+                disabled={!canExecute}
                 className={cn(
-                  "h-6 px-3 flex items-center gap-1.5 rounded-md text-[11px] font-semibold transition-all",
-                  isValid 
-                    ? "text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 hover:text-emerald-200" 
-                    : "text-gray-500 bg-gray-700/30 cursor-not-allowed"
+                  "h-8 px-4 flex items-center gap-2 rounded-lg text-sm font-semibold transition-all",
+                  canExecute
+                    ? "text-white shadow-lg"
+                    : "text-gray-600 cursor-not-allowed bg-white/5"
                 )}
+                style={canExecute ? {
+                  background: `linear-gradient(135deg, ${directionColor.rgb} 0%, ${directionColor.rgb}CC 100%)`,
+                  boxShadow: `0 4px 15px -3px ${directionColor.rgb}50`,
+                } : {}}
               >
-                <Play className="w-3 h-3" />
+                <Play className="w-3.5 h-3.5" />
                 Apply
               </button>
             </div>
           </div>
         </motion.div>
-
-        {/* Save Template Dialog */}
-        <AnimatePresence>
-          {showSaveTemplateDialog && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-              onClick={() => {
-                setShowSaveTemplateDialog(false);
-                setTemplateName('');
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-xl border border-teal-500/30 p-4 w-80 shadow-2xl"
-                style={{
-                  background: `linear-gradient(180deg, hsla(${accentHue}, 25%, 12%, 0.98) 0%, hsla(${accentHue}, 20%, 8%, 0.99) 100%)`,
-                }}
-              >
-                <h3 className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Save className="w-4 h-4 text-teal-400" />
-                  Save Template
-                </h3>
-                <input
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="Template name..."
-                  className="w-full bg-black/30 border border-white/10 text-white text-sm h-8 px-3 rounded-lg focus:outline-none focus:border-teal-500/60 mb-3"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && templateName.trim()) {
-                      saveTemplate();
-                    } else if (e.key === 'Escape') {
-                      setShowSaveTemplateDialog(false);
-                      setTemplateName('');
-                    }
-                  }}
-                  autoFocus
-                />
-                <div className="flex items-center gap-2 justify-end">
-                  <button
-                    onClick={() => {
-                      setShowSaveTemplateDialog(false);
-                      setTemplateName('');
-                    }}
-                    className="h-7 px-3 rounded text-[11px] font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveTemplate}
-                    disabled={!templateName.trim()}
-                    className={cn(
-                      "h-7 px-3 rounded text-[11px] font-medium transition-all",
-                      templateName.trim()
-                        ? "bg-teal-500/30 text-teal-300 hover:bg-teal-500/40"
-                        : "bg-gray-700/30 text-gray-500 cursor-not-allowed"
-                    )}
-                  >
-                    Save
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* Library Popup - rendered outside toolbar to avoid overflow issues */}
+      <AnimatePresence>
+        {showLibrary && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            className="fixed z-[60] w-72 max-h-80 overflow-hidden rounded-xl border border-cyan-500/30 shadow-2xl"
+            style={{ 
+              background: 'linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(12,20,24,0.99) 100%)',
+              bottom: `calc(96px - ${position.y}px + 56px)`,
+              left: `calc(${viewerOffsetLeft}px + 16px + ${position.x}px + 420px)`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 px-3 py-2 border-b border-white/10 backdrop-blur-sm flex items-center justify-between bg-cyan-950/30">
+              <div className="flex items-center gap-2">
+                <Library className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-medium text-white">Margin Templates</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">{templates.length}</span>
+              </div>
+              <button onClick={() => setShowLibrary(false)} className="text-gray-500 hover:text-white transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-2 max-h-64 overflow-y-auto">
+              {templates.length === 0 ? (
+                <div className="py-8 text-center">
+                  <FolderOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No saved templates</p>
+                  <p className="text-xs text-gray-600 mt-1">Save margin settings to reuse them</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {templates.map(template => (
+                    <div
+                      key={template.id}
+                      className="flex items-center gap-2 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">{template.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {template.direction === 'expand' ? 'Expand' : 'Shrink'} {template.marginMm}mm
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          console.log('🔹 Loading template:', template.name, template);
+                          loadTemplate(template);
+                        }}
+                        className="h-7 px-3 text-xs font-medium rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 ring-1 ring-cyan-500/30 transition-colors"
+                      >
+                        Load
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          deleteTemplate(template.id);
+                        }}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Save Dialog Popup - rendered outside toolbar to avoid overflow issues */}
+      <AnimatePresence>
+        {showSaveDialog && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            className="fixed z-[60] w-64 rounded-xl border border-cyan-500/30 shadow-2xl"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{ 
+              background: 'linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(12,20,24,0.99) 100%)',
+              bottom: `calc(96px - ${position.y}px + 56px)`,
+              left: `calc(${viewerOffsetLeft}px + 16px + ${position.x}px + 455px)`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2 bg-cyan-950/30">
+              <Save className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-medium text-white">Save Template</span>
+            </div>
+            <div className="p-3 space-y-3">
+              <Input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Template name..."
+                className="h-9 bg-black/30 border-white/10 text-white text-sm rounded-lg"
+                onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
+                autoFocus
+              />
+              <div className="text-xs text-gray-500">
+                {direction === 'expand' ? 'Expand' : 'Shrink'} {marginMm}mm
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowSaveDialog(false)}
+                  className="flex-1 h-8 text-sm font-medium rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveTemplate}
+                  disabled={!templateName.trim()}
+                  className={cn(
+                    "flex-1 h-8 text-sm font-medium rounded-lg transition-colors",
+                    templateName.trim()
+                      ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40 hover:bg-cyan-500/30"
+                      : "bg-white/5 text-gray-600 cursor-not-allowed"
+                  )}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </TooltipProvider>
   );
 }
