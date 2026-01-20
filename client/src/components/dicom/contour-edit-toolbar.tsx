@@ -55,14 +55,12 @@ import {
   EyeOff,
   Split,
   Circle,
-  Box,
   Loader2
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { undoRedoManager } from '@/lib/undo-system';
 import { log } from '@/lib/log';
 import { useToast } from '@/hooks/use-toast';
-import { samOhifController } from '@/lib/sam-ohif-controller';
 import { samServerClient } from '@/lib/sam-server-client';
 import { SmartNthSettingsDialog } from './smart-nth-settings-dialog';
 // Prediction tuning panel removed: GEO prediction is now deterministic world-space propagation.
@@ -265,7 +263,7 @@ export function ContourEditToolbar({
   const [brushThickness, setBrushThickness] = useState([9]);
   const [smartBrush, setSmartBrush] = useState(false);
   const [isPredictionEnabled, setIsPredictionEnabled] = useState(false);
-  const [predictionMode, setPredictionMode] = useState<'geometric' | 'nitro' | 'sam'>('geometric');
+  const [predictionMode, setPredictionMode] = useState<'geometric' | 'nitro' | 'sam'>('sam'); // Always SAM
   const [samLoading, setSamLoading] = useState(false);
   const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
   const [aiTumor3DMode, setAiTumor3DMode] = useState(false);
@@ -756,159 +754,74 @@ export function ContourEditToolbar({
                 Smart
               </button>
 
-              <button
-                onClick={() => {
-                  const enabled = !isPredictionEnabled;
-                  setIsPredictionEnabled(enabled);
-                  if (onToolChange) {
-                    onToolChange({
-                      tool: 'brush',
-                      brushSize: brushThickness[0],
-                      isActive: true,
-                      smartBrushEnabled: smartBrush,
-                      predictionEnabled: enabled,
-                      predictionMode: predictionMode,
-                    });
-                  }
-                }}
-                className={cn(
-                  'h-7 px-2.5 flex items-center gap-1.5 rounded text-xs font-medium transition-all border',
-                  isPredictionEnabled
-                    ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
-                    : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10'
-                )}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Predict
-              </button>
-
-              {/* Prediction Mode Toggle - Segmented control style */}
-              {isPredictionEnabled && (
-                <div className="flex items-center gap-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          setPredictionMode('geometric');
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={async () => {
+                      const willEnable = !isPredictionEnabled;
+                      if (willEnable) {
+                        // Check SAM server health before enabling
+                        setSamLoading(true);
+                        try {
+                          await samServerClient.checkHealth();
+                          setIsPredictionEnabled(true);
+                          setPredictionMode('sam'); // Always SAM
                           if (onToolChange) {
                             onToolChange({
                               tool: 'brush',
                               brushSize: brushThickness[0],
                               isActive: true,
                               smartBrushEnabled: smartBrush,
-                              predictionEnabled: isPredictionEnabled,
-                              predictionMode: 'geometric',
+                              predictionEnabled: true,
+                              predictionMode: 'sam',
                             });
                           }
-                        }}
-                        className={cn(
-                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
-                          predictionMode === 'geometric'
-                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
-                        )}
-                      >
-                        <Box className="w-3.5 h-3.5" />
-                        Geo
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      Geometric prediction - Fast, simple copy
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          setPredictionMode('nitro');
-                          if (onToolChange) {
-                            onToolChange({
-                              tool: 'brush',
-                              brushSize: brushThickness[0],
-                              isActive: true,
-                              smartBrushEnabled: smartBrush,
-                              predictionEnabled: isPredictionEnabled,
-                              predictionMode: 'nitro',
-                            });
-                          }
-                        }}
-                        className={cn(
-                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
-                          predictionMode === 'nitro'
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
-                        )}
-                      >
-                        <Zap className="w-3.5 h-3.5" />
-                        Nitro
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      Smart prediction - Uses trends from multiple slices
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={async () => {
-                          if (predictionMode !== 'sam') {
-                            // Initialize SAM if needed
-                            if (!samOhifController.isReady()) {
-                              setSamLoading(true);
-                              toast({ 
-                                title: "Loading SAM Model", 
-                                description: "Downloading ~200MB model (first time only)..." 
-                              });
-                              try {
-                                await samOhifController.initialize();
-                                toast({ 
-                                  title: "SAM Ready", 
-                                  description: "AI prediction model loaded successfully" 
-                                });
-                              } catch (err) {
-                                console.error('Failed to load SAM:', err);
-                                toast({ 
-                                  title: "SAM Failed to Load", 
-                                  description: String(err),
-                                  variant: "destructive" 
-                                });
-                                setSamLoading(false);
-                                return;
-                              }
-                              setSamLoading(false);
-                            }
-                            setPredictionMode('sam');
-                            if (onToolChange) {
-                              onToolChange({
-                                tool: 'brush',
-                                brushSize: brushThickness[0],
-                                isActive: true,
-                                smartBrushEnabled: smartBrush,
-                                predictionEnabled: isPredictionEnabled,
-                                predictionMode: 'sam',
-                              });
-                            }
-                          }
-                        }}
-                        disabled={samLoading}
-                        className={cn(
-                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
-                          predictionMode === 'sam'
-                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10',
-                          samLoading && 'opacity-50 cursor-wait'
-                        )}
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        {samLoading ? '...' : 'SAM'}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      SAM AI prediction - More accurate, ~200MB download on first use
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              )}
+                          toast({
+                            title: 'SAM Prediction Enabled',
+                            description: 'Navigate to a slice without contour to see prediction',
+                          });
+                        } catch (err) {
+                          console.error('SAM server not available:', err);
+                          toast({ 
+                            title: "SAM Server Offline", 
+                            description: "Start the SAM server from AI Status Panel",
+                            variant: "destructive" 
+                          });
+                        } finally {
+                          setSamLoading(false);
+                        }
+                      } else {
+                        setIsPredictionEnabled(false);
+                        if (onToolChange) {
+                          onToolChange({
+                            tool: 'brush',
+                            brushSize: brushThickness[0],
+                            isActive: true,
+                            smartBrushEnabled: smartBrush,
+                            predictionEnabled: false,
+                            predictionMode: 'sam',
+                          });
+                        }
+                      }
+                    }}
+                    disabled={samLoading}
+                    className={cn(
+                      'h-7 px-2.5 flex items-center gap-1.5 rounded text-xs font-medium transition-all border',
+                      isPredictionEnabled
+                        ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
+                        : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10',
+                      samLoading && 'opacity-50 cursor-wait'
+                    )}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {samLoading ? 'Checking...' : 'Predict'}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                  <p className="font-medium">SAM Next-Slice Prediction</p>
+                  <p className="mt-1 text-gray-400">Uses centroid of previous contour as click point for AI segmentation</p>
+                </TooltipContent>
+              </Tooltip>
 
               {/* Accept/Reject buttons - always visible when prediction enabled, greyed out when no prediction */}
               {isPredictionEnabled && (

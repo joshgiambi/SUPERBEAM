@@ -336,6 +336,9 @@ interface AITumorToolProps {
   
   // 3D mode - when true, click will propagate through all slices using centroid tracking
   use3DMode?: boolean;
+  
+  // Window/Level settings - SAM should see the same image as the user
+  windowLevel?: { width: number; center: number };
 }
 
 export function AITumorTool({
@@ -359,6 +362,7 @@ export function AITumorTool({
   onClickPointChange,
   useSAM = true, // Always default to SAM (browser-based, universal)
   use3DMode = false, // When true, auto-propagate through all slices
+  windowLevel, // User's current window/level settings
 }: AITumorToolProps) {
   
   // Always use SAM - SuperSeg 3D has been removed (only worked on brain MRI FLAIR)
@@ -683,8 +687,9 @@ export function AITumorTool({
       const result = await samServerClient.segment2D({
         image: image2D,
         click_point: [pixelY, pixelX],  // Server expects [y, x]
-        window_center: currentImage.windowCenter,
-        window_width: currentImage.windowWidth,
+        // Use user's window/level so SAM sees the same image as the user
+        window_center: windowLevel?.center ?? currentImage.windowCenter,
+        window_width: windowLevel?.width ?? currentImage.windowWidth,
       });
 
       console.log('🔬 SAM: Server returned:', result ? `contour with ${result.contour?.length} points` : 'null');
@@ -918,8 +923,9 @@ export function AITumorTool({
           const result = await samServerClient.segment2D({
             image: image2D,
             click_point: [Math.round(clickY), Math.round(clickX)],
-            window_center: img.windowCenter,
-            window_width: img.windowWidth,
+            // Use user's window/level so SAM sees the same image as the user
+            window_center: windowLevel?.center ?? img.windowCenter,
+            window_width: windowLevel?.width ?? img.windowWidth,
           });
           
           if (!result.contour || result.contour.length < 3) {

@@ -61,6 +61,7 @@ import { getImageLoadPoolManager, createStackContextPrefetch, RequestPriority } 
 import { globalSeriesCache, type CachedImage } from '@/lib/global-series-cache';
 import { globalFusionCache } from '@/lib/global-fusion-cache';
 import { viewportScrollSync } from '@/lib/viewport-scroll-sync';
+import { samServerClient } from '@/lib/sam-server-client';
 
 const PREDICTION_DEBUG = false;
 
@@ -77,6 +78,152 @@ const createDirectCopyContour = (sourceContour: number[], targetSlice: number): 
   }
   return copied;
 };
+
+// ============================================================================
+// DICOM Coordinate Conversion Helpers (for SAM prediction)
+// ============================================================================
+const parseDICOMVectorForSAM = (value: unknown, expectedLength?: number): number[] | null => {
+  if (Array.isArray(value)) {
+    const parsed = value
+      .map((component) => Number(component))
+      .filter((component) => Number.isFinite(component));
+    if (parsed.length === 0) return null;
+    if (expectedLength && parsed.length < expectedLength) return null;
+    return parsed;
+  }
+  if (typeof value === 'string') {
+    const parsed = value
+      .split('\\')
+      .map((component) => Number(component.trim()))
+      .filter((component) => Number.isFinite(component));
+    if (parsed.length === 0) return null;
+    if (expectedLength && parsed.length < expectedLength) return null;
+    return parsed;
+  }
+  return null;
+};
+
+const getPixelSpacingForSAM = (image: any): [number, number] | null => {
+  const spacingVector =
+    parseDICOMVectorForSAM(image?.pixelSpacing, 2)
+    || parseDICOMVectorForSAM(image?.metadata?.pixelSpacing, 2);
+  if (spacingVector && spacingVector.length >= 2) {
+    const rowSpacing = Number(spacingVector[0]);
+    const columnSpacing = Number(spacingVector[1]);
+    if (Number.isFinite(rowSpacing) && Number.isFinite(columnSpacing)) {
+      return [rowSpacing, columnSpacing];
+    }
+  }
+  return null;
+};
+
+const dotProductForSAM = (a: number[], b: number[]): number => {
+  return (a[0] || 0) * (b[0] || 0) + (a[1] || 0) * (b[1] || 0) + (a[2] || 0) * (b[2] || 0);
+};
+
+const crossProductForSAM = (a: number[], b: number[]): number[] => [
+  (a[1] || 0) * (b[2] || 0) - (a[2] || 0) * (b[1] || 0),
+  (a[2] || 0) * (b[0] || 0) - (a[0] || 0) * (b[2] || 0),
+  (a[0] || 0) * (b[1] || 0) - (a[1] || 0) * (b[0] || 0),
+];
+
+const normalizeVectorForSAM = (vec: number[]): number[] | null => {
+  const length = Math.hypot(vec[0] || 0, vec[1] || 0, vec[2] || 0);
+  if (!Number.isFinite(length) || length === 0) return null;
+  return vec.map((component) => component / length);
+};
+
+const getOrientationVectorsForSAM = (
+  image: any,
+): { rowDir: number[]; colDir: number[]; normal: number[] } | null => {
+  const orientation =
+    parseDICOMVectorForSAM(image?.imageOrientationPatient, 6)
+    || parseDICOMVectorForSAM(image?.imageOrientation, 6)
+    || parseDICOMVectorForSAM(image?.metadata?.imageOrientationPatient, 6)
+    || parseDICOMVectorForSAM(image?.metadata?.imageOrientation, 6);
+
+  if (!orientation || orientation.length < 6) {
+    return null;
+  }
+
+  const rowDir = normalizeVectorForSAM(orientation.slice(0, 3));
+  const colDir = normalizeVectorForSAM(orientation.slice(3, 6));
+  if (!rowDir || !colDir) {
+    return null;
+  }
+
+  const normalRaw = crossProductForSAM(rowDir, colDir);
+  const normal = normalizeVectorForSAM(normalRaw) ?? normalRaw;
+
+  return { rowDir, colDir, normal };
+};
+
+const getImagePositionForSAM = (image: any): number[] | null => (
+  parseDICOMVectorForSAM(image?.imagePosition, 3)
+  || parseDICOMVectorForSAM(image?.imagePositionPatient, 3)
+  || parseDICOMVectorForSAM(image?.metadata?.imagePositionPatient, 3)
+  || parseDICOMVectorForSAM(image?.metadata?.imagePosition, 3)
+);
+
+const worldToPixelForSAM = (
+  worldX: number, worldY: number, worldZ: number,
+  image: any,
+): { column: number; row: number } | null => {
+  const imagePosition = getImagePositionForSAM(image);
+  const spacing = getPixelSpacingForSAM(image);
+  const orientation = getOrientationVectorsForSAM(image);
+
+  if (!imagePosition || !spacing || !orientation) {
+    return null;
+  }
+
+  const diff = [worldX - imagePosition[0], worldY - imagePosition[1], worldZ - imagePosition[2]];
+  const [rowSpacing, columnSpacing] = spacing;
+  
+  // DICOM: rowDir is X axis (direction along which columns increase)
+  //        colDir is Y axis (direction along which rows increase)
+  const column = dotProductForSAM(diff, orientation.rowDir) / columnSpacing;
+  const row = dotProductForSAM(diff, orientation.colDir) / rowSpacing;
+
+  if (!Number.isFinite(column) || !Number.isFinite(row)) {
+    return null;
+  }
+
+  return { column, row };
+};
+
+const pixelToWorldForSAM = (
+  column: number, row: number, slicePosition: number,
+  image: any,
+): [number, number, number] | null => {
+  const imagePosition = getImagePositionForSAM(image);
+  const spacing = getPixelSpacingForSAM(image);
+  const orientation = getOrientationVectorsForSAM(image);
+
+  if (!imagePosition || !spacing || !orientation) {
+    return null;
+  }
+
+  const [rowSpacing, columnSpacing] = spacing;
+
+  // DICOM pixel-to-world transform:
+  // world = imagePosition + rowDir * columnSpacing * column + colDir * rowSpacing * row
+  const worldX =
+    imagePosition[0]
+    + orientation.rowDir[0] * columnSpacing * column
+    + orientation.colDir[0] * rowSpacing * row;
+  const worldY =
+    imagePosition[1]
+    + orientation.rowDir[1] * columnSpacing * column
+    + orientation.colDir[1] * rowSpacing * row;
+
+  if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) {
+    return null;
+  }
+
+  return [worldX, worldY, slicePosition];
+};
+// ============================================================================
 
 // Debug flags - more granular control over logging
 const DEBUG = false; // TEMP: disabled permanently - console spam was causing performance issues
@@ -2855,88 +3002,200 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     };
     
     if (predictionMode === 'sam') {
-      // SAM mode - NO FALLBACK. If SAM fails, show nothing.
+      // SAM mode - Use server-side SAM with centroid-based click point
       try {
-        console.log('🤖 Using SAM prediction mode - NO FALLBACK');
+        console.log('🤖 Using SAM prediction mode with centroid tracking');
         
-        // Find reference slice index (where the contour came from)
-        const referenceSliceIdx = images?.findIndex((img: any) => {
-          const imgZ = img.sliceZ ?? img.parsedSliceLocation ?? img.parsedZPosition;
-          return imgZ != null && Math.abs(imgZ - simpleResult.referenceSlice) < 0.5;
-        }) ?? -1;
+        // Find the nearest contour with actual points (non-predicted)
+        const validContours = structure.contours.filter((c: any) => 
+          !c.isPredicted && c.points && c.points.length >= 9
+        );
         
-        // Find target slice index
-        const targetSliceIdx = currentIndex;
+        console.log('🤖 SAM: Structure has', structure.contours?.length, 'total contours,', validContours.length, 'valid non-predicted contours');
         
-        // Extract pixel data for both slices
-        const currentSliceData = referenceSliceIdx >= 0 ? extractImageDataForPrediction(referenceSliceIdx) : null;
-        const targetSliceData = extractImageDataForPrediction(targetSliceIdx);
+        // Find nearest to target slice
+        let nearest = null;
+        let nearestDist = Infinity;
+        for (const contour of validContours) {
+          const dist = Math.abs(contour.slicePosition - slicePosition);
+          if (dist < nearestDist && dist > 0.01) { // Must be a different slice
+            nearestDist = dist;
+            nearest = contour;
+          }
+        }
         
-        console.log('🤖 SAM: Image data check:', {
-          referenceSliceIdx,
-          targetSliceIdx,
-          hasCurrentSlice: !!currentSliceData,
-          hasTargetSlice: !!targetSliceData,
-          currentPixels: currentSliceData?.pixels?.length || 0,
-          targetPixels: targetSliceData?.pixels?.length || 0,
-        });
-        
-        if (!currentSliceData || !targetSliceData) {
-          console.error('🤖 SAM FAILED - NO PIXEL DATA. Reference:', !!currentSliceData, 'Target:', !!targetSliceData);
+        if (!nearest || nearest.points.length < 9) {
+          console.warn('🤖 SAM: No valid reference contour found');
           updateActivePredictions(new Map());
           return;
         }
         
-        // Build coordinate transforms from image metadata
-        const ps = imageMetadata?.pixelSpacing || [1, 1];
-        const ipp = imageMetadata?.imagePosition || [0, 0, 0];
-        const rowSpacing = ps[0] || 1;
-        const colSpacing = ps[1] || 1;
-        const imagePositionX = ipp[0] || 0;
-        const imagePositionY = ipp[1] || 0;
+        referenceSlice = nearest.slicePosition;
         
-        const coordinateTransforms = {
-          worldToPixel: (x: number, y: number): [number, number] => {
-            const px = (x - imagePositionX) / colSpacing;
-            const py = (y - imagePositionY) / rowSpacing;
-            return [px, py];
-          },
-          pixelToWorld: (px: number, py: number): [number, number] => {
-            const x = px * colSpacing + imagePositionX;
-            const y = py * rowSpacing + imagePositionY;
-            return [x, y];
-          },
-        };
+        console.log('🤖 SAM: Found reference contour:', {
+          refSlice: referenceSlice,
+          targetSlice: slicePosition,
+          distance: nearestDist.toFixed(2),
+          numPoints: nearest.points.length / 3
+        });
         
-        const samResult = await predictNextSliceContour({
-          currentContour: simpleResult.contour,
-          currentSlicePosition: simpleResult.referenceSlice,
-          targetSlicePosition: slicePosition,
-          predictionMode: 'sam',
-          confidenceThreshold: 0.2,
-          imageData: {
-            currentSlice: currentSliceData,
-            targetSlice: targetSliceData,
-          },
-          coordinateTransforms,
+        // Calculate centroid of the reference contour (world coordinates)
+        let centroidWorldX = 0, centroidWorldY = 0, centroidWorldZ = 0;
+        const numPoints = nearest.points.length / 3;
+        for (let i = 0; i < nearest.points.length; i += 3) {
+          centroidWorldX += nearest.points[i];
+          centroidWorldY += nearest.points[i + 1];
+          centroidWorldZ += nearest.points[i + 2];
+        }
+        centroidWorldX /= numPoints;
+        centroidWorldY /= numPoints;
+        centroidWorldZ /= numPoints;
+        
+        // Debug: Show sample points from the reference contour
+        console.log('🤖 SAM: Reference contour sample points (world):', {
+          p0: [nearest.points[0]?.toFixed(1), nearest.points[1]?.toFixed(1), nearest.points[2]?.toFixed(1)],
+          p1: [nearest.points[3]?.toFixed(1), nearest.points[4]?.toFixed(1), nearest.points[5]?.toFixed(1)],
+          centroid: [centroidWorldX.toFixed(1), centroidWorldY.toFixed(1), centroidWorldZ.toFixed(1)]
+        });
+        
+        console.log('🤖 SAM: Reference contour centroid (world):', { 
+          x: centroidWorldX.toFixed(2), 
+          y: centroidWorldY.toFixed(2), 
+          z: centroidWorldZ.toFixed(2),
+          refSlice: referenceSlice 
+        });
+        
+        // Get pixel data for the target slice
+        const targetSliceData = extractImageDataForPrediction(currentIndex);
+        if (!targetSliceData || !targetSliceData.pixels) {
+          console.error('🤖 SAM FAILED - No pixel data for target slice');
+          updateActivePredictions(new Map());
+          return;
+        }
+        
+        const width = targetSliceData.width || 512;
+        const height = targetSliceData.height || 512;
+        
+        // Get the target image for coordinate conversion
+        const targetImage = images[currentIndex];
+        if (!targetImage) {
+          console.error('🤖 SAM FAILED - No target image');
+          updateActivePredictions(new Map());
+          return;
+        }
+        
+        // Debug: Show target image metadata
+        const debugIpp = getImagePositionForSAM(targetImage);
+        const debugSpacing = getPixelSpacingForSAM(targetImage);
+        const debugOrientation = getOrientationVectorsForSAM(targetImage);
+        console.log('🤖 SAM: Target image metadata:', {
+          index: currentIndex,
+          ipp: debugIpp ? debugIpp.map(v => v.toFixed(1)) : null,
+          spacing: debugSpacing,
+          hasOrientation: !!debugOrientation,
+          imageKeys: Object.keys(targetImage).slice(0, 10)
+        });
+        
+        // Convert world centroid to pixel coordinates using proper DICOM transform
+        const pixelCoords = worldToPixelForSAM(centroidWorldX, centroidWorldY, slicePosition, targetImage);
+        
+        let clickCol: number, clickRow: number;
+        if (pixelCoords) {
+          clickCol = Math.round(pixelCoords.column);
+          clickRow = Math.round(pixelCoords.row);
+          console.log('🤖 SAM: World to pixel conversion (DICOM):', { 
+            worldX: centroidWorldX.toFixed(2), 
+            worldY: centroidWorldY.toFixed(2),
+            pixelCol: clickCol, 
+            pixelRow: clickRow 
+          });
+        } else {
+          // Fallback to simple conversion if DICOM metadata not available
+          const ps = getPixelSpacingForSAM(targetImage) || [1, 1];
+          const ipp = getImagePositionForSAM(targetImage) || [0, 0, 0];
+          clickCol = Math.round((centroidWorldX - ipp[0]) / ps[1]);
+          clickRow = Math.round((centroidWorldY - ipp[1]) / ps[0]);
+          console.log('🤖 SAM: World to pixel conversion (fallback):', { 
+            pixelCol: clickCol, 
+            pixelRow: clickRow 
+          });
+        }
+        
+        // Clamp to image bounds
+        const clampedCol = Math.max(0, Math.min(width - 1, clickCol));
+        const clampedRow = Math.max(0, Math.min(height - 1, clickRow));
+        
+        console.log('🤖 SAM: Click point (clamped):', { col: clampedCol, row: clampedRow, width, height });
+        
+        // Convert 1D pixel data to 2D array for SAM server
+        const image2D: number[][] = [];
+        for (let y = 0; y < height; y++) {
+          const row: number[] = [];
+          for (let x = 0; x < width; x++) {
+            row.push(targetSliceData.pixels[y * width + x] || 0);
+          }
+          image2D.push(row);
+        }
+        
+        // Call server-side SAM with centroid as click point
+        // SAM expects click_point as [y, x] (row, col)
+        // IMPORTANT: Use the user's current window/level so SAM sees the same image as the user
+        console.log('🤖 SAM: Window/Level settings:', {
+          userWindow: currentWindowLevel.width,
+          userCenter: currentWindowLevel.center,
+          dicomWindow: targetSliceData.windowWidth,
+          dicomCenter: targetSliceData.windowCenter,
+          usingUserSettings: true
+        });
+        
+        const samResult = await samServerClient.segment2D({
+          image: image2D,
+          click_point: [clampedRow, clampedCol],
+          window_center: currentWindowLevel.center,  // Use user's current window level
+          window_width: currentWindowLevel.width,    // Use user's current window width
         });
         
         if (requestId !== predictionRequestIdRef.current) return;
         
-        if (samResult.predictedContour?.length >= 9 && !samResult.metadata?.method?.includes('failed')) {
-          finalContour = samResult.predictedContour;
-          method = samResult.metadata?.method || 'sam';
+        if (samResult.contour && samResult.contour.length >= 3 && samResult.confidence > 0.3) {
+          // Convert pixel contour back to world coordinates using proper DICOM transform
+          // SAM returns contour as [[x, y], [x, y], ...] where x=column, y=row
+          const worldContour: number[] = [];
+          for (const [pixelCol, pixelRow] of samResult.contour) {
+            const worldPoint = pixelToWorldForSAM(pixelCol, pixelRow, slicePosition, targetImage);
+            if (worldPoint) {
+              worldContour.push(worldPoint[0], worldPoint[1], worldPoint[2]);
+            } else {
+              // Fallback
+              const ps = getPixelSpacingForSAM(targetImage) || [1, 1];
+              const ipp = getImagePositionForSAM(targetImage) || [0, 0, 0];
+              const worldX = ipp[0] + pixelCol * ps[1];
+              const worldY = ipp[1] + pixelRow * ps[0];
+              worldContour.push(worldX, worldY, slicePosition);
+            }
+          }
+          
+          finalContour = worldContour;
+          method = 'sam_centroid';
           confidence = samResult.confidence;
-          console.log(`🤖 SAM succeeded: ${finalContour.length / 3} points`);
+          console.log(`🤖 SAM succeeded: ${finalContour.length / 3} points, confidence: ${(confidence * 100).toFixed(1)}%`);
+          
+          // Debug: log first few world points
+          if (finalContour.length >= 6) {
+            console.log('🤖 SAM: Sample world points:', {
+              p0: [finalContour[0].toFixed(1), finalContour[1].toFixed(1), finalContour[2].toFixed(1)],
+              p1: [finalContour[3].toFixed(1), finalContour[4].toFixed(1), finalContour[5].toFixed(1)],
+            });
+          }
         } else {
           // SAM FAILED - NO FALLBACK - show nothing
-          console.error('🤖 SAM FAILED - NO FALLBACK. Method:', samResult.metadata?.method, 'Notes:', samResult.metadata?.notes);
+          console.error('🤖 SAM FAILED - No valid contour returned. Confidence:', samResult.confidence);
           updateActivePredictions(new Map());
           return;
         }
-      } catch (err) {
+      } catch (err: any) {
         // SAM ERROR - NO FALLBACK - show nothing
-        console.error('🤖 SAM ERROR - NO FALLBACK:', err);
+        console.error('🤖 SAM ERROR:', err.message || err);
         updateActivePredictions(new Map());
         return;
       }
@@ -9626,6 +9885,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 smoothOutput={(brushToolState as any)?.aiTumorSmoothOutput ?? false}
                 useSAM={(brushToolState as any)?.aiTumorUseSAM ?? false}
                 use3DMode={(brushToolState as any)?.aiTumor3DMode ?? false}
+                windowLevel={{ width: currentWindowLevel.width, center: currentWindowLevel.center }}
                 onShowPrimarySeries={() => {
                   // Switch back to primary series to show CT contours
                   if (onSecondarySeriesSelect) {

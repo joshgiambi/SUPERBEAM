@@ -12,8 +12,7 @@ import {
   type RegionCharacteristics
 } from './image-aware-prediction';
 import { fastSlicePrediction } from "./fast-slice-prediction";
-// Use OHIF-style SAM with @cornerstonejs/ai
-import { samOhifController, type SAMPredictionResult } from './sam-ohif-controller';
+// SAM prediction mode removed - using server-side SAM for AI tool instead
 
 export type PropagationMode = 'conservative' | 'moderate' | 'aggressive';
 
@@ -588,136 +587,34 @@ function isProjectionSane(
 }
 
 /**
- * SAM-based prediction using OHIF's SAM model (runs in browser via ONNX)
+ * SAM-based prediction - DEPRECATED
+ * SAM prediction mode has been removed. Use the AI Tumor Tool for SAM segmentation instead.
+ * Falls back to geometric prediction.
  */
 async function samPrediction(
   currentContour: number[],
   currentSlicePosition: number,
   targetSlicePosition: number,
-  imageData?: {
+  _imageData?: {
     currentSlice?: ImageData;
     targetSlice?: ImageData;
   },
-  coordinateTransforms?: {
+  _coordinateTransforms?: {
     worldToPixel: (x: number, y: number) => [number, number];
     pixelToWorld: (x: number, y: number) => [number, number];
     worldToPixel3D?: (x: number, y: number, z: number) => [number, number];
     pixelToWorld3D?: (x: number, y: number, z: number) => [number, number, number];
   }
 ): Promise<PredictionResult> {
-  // Detailed logging for SAM requirements
-  console.log('🤖 SAM: Checking prerequisites...', {
-    hasImageData: !!imageData,
-    hasCurrentSlice: !!imageData?.currentSlice,
-    hasTargetSlice: !!imageData?.targetSlice,
-    hasTransforms: !!coordinateTransforms,
-    currentSlicePixels: imageData?.currentSlice?.pixels?.length || 0,
-    targetSlicePixels: imageData?.targetSlice?.pixels?.length || 0,
-    currentSliceSize: imageData?.currentSlice ? `${imageData.currentSlice.width}x${imageData.currentSlice.height}` : 'N/A',
-    targetSliceSize: imageData?.targetSlice ? `${imageData.targetSlice.width}x${imageData.targetSlice.height}` : 'N/A',
-  });
-
-  if (!imageData?.currentSlice || !imageData?.targetSlice || !coordinateTransforms) {
-    const missingParts = [];
-    if (!imageData) missingParts.push('imageData');
-    if (!imageData?.currentSlice) missingParts.push('currentSlice');
-    if (!imageData?.targetSlice) missingParts.push('targetSlice');
-    if (!coordinateTransforms) missingParts.push('coordinateTransforms');
-    
-    console.error('🤖 SAM CANNOT RUN - Missing:', missingParts.join(', '));
-    return {
-      predictedContour: [],
-      confidence: 0,
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: {
-        method: 'sam_missing_data',
-        historySize: 0,
-        notes: `SAM missing: ${missingParts.join(', ')}`,
-      },
-    };
-  }
+  console.warn('🤖 SAM prediction mode is deprecated. Falling back to geometric prediction. Use AI Tumor Tool for SAM segmentation.');
   
-  // Verify pixel data exists
-  if (!imageData.currentSlice.pixels || !imageData.targetSlice.pixels) {
-    console.error('🤖 SAM CANNOT RUN - Missing pixel arrays');
-    return {
-      predictedContour: [],
-      confidence: 0,
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: {
-        method: 'sam_missing_pixels',
-        historySize: 0,
-        notes: 'Pixel arrays not loaded',
-      },
-    };
-  }
-
-  try {
-    // Convert contour to pixel coordinates
-    const pixelContour: { x: number; y: number }[] = [];
-    for (let i = 0; i < currentContour.length; i += 3) {
-      const x = currentContour[i];
-      const y = currentContour[i + 1];
-      const z = currentContour[i + 2];
-      const [px, py] = coordinateTransforms.worldToPixel3D
-        ? coordinateTransforms.worldToPixel3D(x, y, z)
-        : coordinateTransforms.worldToPixel(x, y);
-      pixelContour.push({ x: px, y: py });
-    }
-
-    // Prepare image data for SAM
-    const refImage = {
-      pixels: imageData.currentSlice.pixels,
-      width: imageData.currentSlice.width || 512,
-      height: imageData.currentSlice.height || 512,
-    };
-    
-    const targetImage = {
-      pixels: imageData.targetSlice.pixels,
-      width: imageData.targetSlice.width || 512,
-      height: imageData.targetSlice.height || 512,
-    };
-
-    // Run SAM prediction
-    const result = await samOhifController.predictNextSlice(pixelContour, refImage, targetImage);
-
-    // Convert predicted contour back to world coordinates
-    const predictedContour: number[] = [];
-    for (const point of result.contour) {
-      if (coordinateTransforms.pixelToWorld3D) {
-        const [wx, wy, wz] = coordinateTransforms.pixelToWorld3D(point.x, point.y, targetSlicePosition);
-        predictedContour.push(wx, wy, wz);
-      } else {
-        const [wx, wy] = coordinateTransforms.pixelToWorld(point.x, point.y);
-        predictedContour.push(wx, wy, targetSlicePosition);
-      }
-    }
-
-    return {
-      predictedContour,
-      confidence: result.confidence,
-      adjustments: {
-        scale: 1,
-        centerShift: { x: 0, y: 0 },
-        deformation: 0,
-      },
-      metadata: {
-        method: 'sam',
-        historySize: 0,
-        notes: `SAM prediction with ${result.contour.length} points`,
-      },
-    };
-  } catch (error: any) {
-    console.error('SAM prediction failed:', error);
-    return {
-      predictedContour: [],
-      confidence: 0,
-      adjustments: { scale: 1, centerShift: { x: 0, y: 0 }, deformation: 0 },
-      metadata: {
-        method: 'sam_failed',
-        historySize: 0,
-        notes: error.message,
-      },
+  // Fall back to geometric prediction
+  return geometricBasedPrediction(
+    currentContour,
+    currentSlicePosition,
+    targetSlicePosition,
+    'moderate'
+  );
     };
   }
 }
