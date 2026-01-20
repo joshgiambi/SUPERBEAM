@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -340,94 +339,121 @@ export default function DVHViewerPage() {
   }, [doseSeriesId]);
 
   return (
-    <div className="h-screen w-screen bg-[#0a0e14] p-3 flex flex-col overflow-hidden">
-      <Card className="flex-1 flex flex-col bg-[#0d1117]/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
-        <CardHeader className="pb-2 flex-shrink-0">
-          <div className="flex items-center justify-between flex-wrap gap-2">
+    <div 
+      className="h-screen w-screen p-3 flex flex-col overflow-hidden bg-black"
+    >
+      <div 
+        className="flex-1 flex flex-col rounded-2xl border border-white/10 shadow-2xl shadow-black/40 overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, rgba(13, 17, 23, 0.98) 0%, rgba(10, 14, 20, 0.99) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-700/20">
+              <BarChart3 className="h-4 w-4 text-cyan-400" />
+            </div>
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-green-400" />
-              <CardTitle className="text-base font-semibold text-white">Dose Volume Histogram</CardTitle>
-              <Badge variant="outline" className="text-[9px] text-green-400 border-green-500/30">
+              <span className="text-sm font-semibold text-gray-100">Dose Volume Histogram</span>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-[9px] px-1.5 py-0 h-4",
+                  viewMode === 'cumulative' 
+                    ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" 
+                    : "text-cyan-400 border-cyan-500/30 bg-cyan-500/10"
+                )}
+              >
                 {viewMode === 'cumulative' ? 'Cumulative' : 'Differential'}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={fetchDVH}
-                disabled={loading}
-                className="h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
-              >
-                <RefreshCw className={cn("w-3 h-3 mr-1", loading && "animate-spin")} />
-                Refresh
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={exportCSV}
-                disabled={selectedStructures.length === 0}
-                className="h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Export
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={copyStats}
-                disabled={selectedStructures.length === 0}
-                className="h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
-              >
-                <Copy className="w-3 h-3 mr-1" />
-                Copy
-              </Button>
-            </div>
           </div>
-        </CardHeader>
+          <div className="flex items-center gap-1.5">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={fetchDVH}
+              disabled={loading}
+              className="h-7 px-2.5 text-xs text-gray-300 hover:bg-white/10 hover:text-gray-100 rounded-lg"
+            >
+              <RefreshCw className={cn("w-3 h-3 mr-1.5", loading && "animate-spin")} />
+              Refresh
+            </Button>
+            <div className="h-4 w-px bg-white/10" />
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={exportCSV}
+              disabled={selectedStructures.length === 0}
+              className="h-7 px-2.5 text-xs text-gray-300 hover:bg-white/10 hover:text-gray-100 rounded-lg disabled:opacity-40"
+            >
+              <Download className="w-3 h-3 mr-1.5" />
+              Export
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={copyStats}
+              disabled={selectedStructures.length === 0}
+              className="h-7 px-2.5 text-xs text-gray-300 hover:bg-white/10 hover:text-gray-100 rounded-lg disabled:opacity-40"
+            >
+              <Copy className="w-3 h-3 mr-1.5" />
+              Copy
+            </Button>
+          </div>
+        </div>
 
-        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden p-3 pt-0">
+        {/* Content */}
+        <div className="flex-1 flex flex-col gap-3 overflow-hidden p-4 pt-3">
           {loading && (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
-              <span className="ml-2 text-gray-400">Loading DVH data...</span>
+              <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+              <span className="ml-2 text-gray-400 text-sm">Loading DVH data...</span>
             </div>
           )}
 
           {error && (
-            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {error}
             </div>
           )}
 
           {!loading && !error && (
-            <div className="flex-1 flex gap-3 min-h-0">
+            <div className="flex-1 flex gap-4 min-h-0">
               {/* LEFT SIDEBAR - Structure List (spans full height) */}
-              <div className="w-[200px] flex-shrink-0 flex flex-col border-r border-gray-700/30 pr-3">
+              <div className="w-[210px] flex-shrink-0 flex flex-col border-r border-white/5 pr-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs text-gray-400 font-medium">
-                    Structures ({selectedStructures.length}/{structures.length})
+                  <span className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Structures
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 tabular-nums">
+                      {selectedStructures.length}/{structures.length}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const allSelected = structures.every(s => s.selected);
+                        setStructures(structures.map(s => ({ ...s, selected: !allSelected })));
+                      }}
+                      className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
+                    >
+                      {structures.every(s => s.selected) ? 'None' : 'All'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      const allSelected = structures.every(s => s.selected);
-                      setStructures(structures.map(s => ({ ...s, selected: !allSelected })));
-                    }}
-                    className="text-[10px] text-green-400 hover:text-green-300"
-                  >
-                    {structures.every(s => s.selected) ? 'None' : 'All'}
-                  </button>
                 </div>
                 
                 {/* Structure Search */}
                 <div className="relative mb-2">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
                   <Input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Filter..."
                     value={statsSearchQuery}
                     onChange={(e) => setStatsSearchQuery(e.target.value)}
-                    className="h-7 pl-7 text-xs bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
+                    className="h-7 pl-8 text-xs bg-[#0d1117]/80 border-white/10 text-gray-100 placeholder:text-gray-600 rounded-lg focus:border-white/20 focus:ring-1 focus:ring-white/10"
                   />
                 </div>
                 
@@ -440,7 +466,7 @@ export default function DVHViewerPage() {
                         key={struct.roiNumber}
                         onClick={() => toggleStructure(struct.roiNumber)}
                         className={cn(
-                          "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left transition-all group",
+                          "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-all group",
                           struct.selected
                             ? "bg-white/5"
                             : "hover:bg-white/[0.03]"
@@ -451,56 +477,56 @@ export default function DVHViewerPage() {
                           className={cn(
                             "w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all",
                             struct.selected
-                              ? "border-green-500 bg-green-500/20"
+                              ? "border-emerald-500 bg-emerald-500/20"
                               : "border-gray-600 group-hover:border-gray-500"
                           )}
                         >
-                          {struct.selected && <Check className="w-2.5 h-2.5 text-green-400" />}
+                          {struct.selected && <Check className="w-2.5 h-2.5 text-emerald-400" />}
                         </div>
                         {/* Color swatch */}
                         <div
-                          className="w-3 h-3 rounded-sm flex-shrink-0 ring-1 ring-white/10"
+                          className="w-3 h-3 rounded-sm flex-shrink-0 ring-1 ring-white/20"
                           style={{ backgroundColor: struct.color }}
                         />
                         {/* Name */}
                         <span className={cn(
                           "text-[11px] truncate flex-1 transition-colors",
-                          struct.selected ? "text-white" : "text-gray-400 group-hover:text-gray-300"
+                          struct.selected ? "text-gray-100" : "text-gray-400 group-hover:text-gray-300"
                         )}>
                           {struct.roiName}
                         </span>
                       </button>
                     ))}
                   {structures.length === 0 && !loading && (
-                    <div className="text-xs text-gray-500 py-4 text-center">
+                    <div className="text-xs text-gray-600 py-4 text-center">
                       No structures found
                     </div>
                   )}
                 </div>
                 
                 {/* Query Values */}
-                <div className="pt-3 mt-2 border-t border-gray-700/50 space-y-2 flex-shrink-0">
-                  <div className="text-[10px] text-gray-500 font-medium">DVH Query Values</div>
+                <div className="pt-3 mt-2 border-t border-white/5 space-y-2.5 flex-shrink-0">
+                  <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Query Values</span>
                   <div className="flex gap-3">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-cyan-400 font-medium">D</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-cyan-400 font-semibold">D</span>
                       <Input
                         type="number"
                         value={dxxQuery}
                         onChange={(e) => setDxxQuery(e.target.value)}
-                        className="h-6 w-12 text-xs bg-gray-800/50 border-gray-700 px-1 text-white text-center"
+                        className="h-6 w-12 text-xs bg-[#0d1117]/80 border-white/10 px-1 text-gray-100 text-center rounded-md"
                         min={0}
                         max={100}
                       />
                       <span className="text-[10px] text-gray-500">%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-purple-400 font-medium">V</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-purple-400 font-semibold">V</span>
                       <Input
                         type="number"
                         value={vxxQuery}
                         onChange={(e) => setVxxQuery(e.target.value)}
-                        className="h-6 w-12 text-xs bg-gray-800/50 border-gray-700 px-1 text-white text-center"
+                        className="h-6 w-12 text-xs bg-[#0d1117]/80 border-white/10 px-1 text-gray-100 text-center rounded-md"
                         min={0}
                         max={200}
                       />
@@ -515,13 +541,14 @@ export default function DVHViewerPage() {
                 {/* Chart Controls */}
                 <div className="flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1 p-0.5 bg-gray-800/50 rounded-lg">
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-0.5 p-0.5 bg-[#0d1117]/80 rounded-lg border border-white/5">
                       <button
                         onClick={() => setViewMode('cumulative')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           viewMode === 'cumulative'
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                             : "text-gray-400 hover:text-gray-300"
                         )}
                       >
@@ -530,22 +557,23 @@ export default function DVHViewerPage() {
                       <button
                         onClick={() => setViewMode('differential')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           viewMode === 'differential'
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                             : "text-gray-400 hover:text-gray-300"
                         )}
                       >
                         Differential
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 p-0.5 bg-gray-800/50 rounded-lg">
+                    {/* X-Axis Unit Toggle */}
+                    <div className="flex items-center gap-0.5 p-0.5 bg-[#0d1117]/80 rounded-lg border border-white/5">
                       <button
                         onClick={() => setXAxisUnit('Gy')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           xAxisUnit === 'Gy'
-                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
                             : "text-gray-400 hover:text-gray-300"
                         )}
                       >
@@ -554,20 +582,21 @@ export default function DVHViewerPage() {
                       <button
                         onClick={() => setXAxisUnit('percent')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           xAxisUnit === 'percent'
-                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
                             : "text-gray-400 hover:text-gray-300"
                         )}
                       >
                         % Rx
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 p-0.5 bg-gray-800/50 rounded-lg">
+                    {/* Y-Axis Unit Toggle */}
+                    <div className="flex items-center gap-0.5 p-0.5 bg-[#0d1117]/80 rounded-lg border border-white/5">
                       <button
                         onClick={() => setYAxisUnit('percent')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           yAxisUnit === 'percent'
                             ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
                             : "text-gray-400 hover:text-gray-300"
@@ -578,7 +607,7 @@ export default function DVHViewerPage() {
                       <button
                         onClick={() => setYAxisUnit('cc')}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-all",
+                          "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
                           yAxisUnit === 'cc'
                             ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
                             : "text-gray-400 hover:text-gray-300"
@@ -588,22 +617,22 @@ export default function DVHViewerPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
                       <input
                         type="checkbox"
                         checked={showGrid}
                         onChange={(e) => setShowGrid(e.target.checked)}
-                        className="rounded border-gray-600 bg-gray-800"
+                        className="rounded border-gray-600 bg-[#0d1117]/80 text-emerald-500 focus:ring-emerald-500/30 focus:ring-offset-0"
                       />
                       Grid
                     </label>
-                    <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
                       <input
                         type="checkbox"
                         checked={showLegend}
                         onChange={(e) => setShowLegend(e.target.checked)}
-                        className="rounded border-gray-600 bg-gray-800"
+                        className="rounded border-gray-600 bg-[#0d1117]/80 text-emerald-500 focus:ring-emerald-500/30 focus:ring-offset-0"
                       />
                       Legend
                     </label>
@@ -613,7 +642,7 @@ export default function DVHViewerPage() {
                 {/* SVG Chart */}
                 <div 
                   ref={chartContainerRef}
-                  className="relative flex-1 bg-gray-900/50 rounded-lg border border-gray-700/50 overflow-hidden min-h-[300px]"
+                  className="relative flex-1 bg-[#0d1117]/80 rounded-xl border border-white/10 overflow-hidden min-h-[300px]"
                 >
                   <svg 
                     width={chartDimensions.width} 
@@ -628,7 +657,7 @@ export default function DVHViewerPage() {
                       y={DVH_PADDING.top}
                       width={plotWidth}
                       height={plotHeight}
-                      fill="#111827"
+                      fill="#0a0e14"
                     />
                     
                     {/* Grid Lines */}
@@ -642,9 +671,10 @@ export default function DVHViewerPage() {
                             y1={scaleY(v)}
                             x2={chartDimensions.width - DVH_PADDING.right}
                             y2={scaleY(v)}
-                            stroke="#374151"
+                            stroke="#3f3f46"
                             strokeWidth="1"
                             strokeDasharray="3,3"
+                            strokeOpacity="0.5"
                           />
                         ))}
                         {/* Vertical grid lines */}
@@ -655,9 +685,10 @@ export default function DVHViewerPage() {
                             y1={DVH_PADDING.top}
                             x2={scaleX(v)}
                             y2={chartDimensions.height - DVH_PADDING.bottom}
-                            stroke="#374151"
+                            stroke="#3f3f46"
                             strokeWidth="1"
                             strokeDasharray="3,3"
+                            strokeOpacity="0.5"
                           />
                         ))}
                       </g>
@@ -865,24 +896,24 @@ export default function DVHViewerPage() {
 
                 {/* Statistics Table - Below chart, uses remaining vertical space */}
                 {selectedStructures.length > 0 && (
-                  <div className="flex-1 flex flex-col min-h-[150px] border-t border-gray-700/50 pt-2">
-                    <div className="text-xs text-gray-400 font-medium mb-1">
+                  <div className="flex-1 flex flex-col min-h-[150px] border-t border-white/5 pt-3">
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-500 mb-2">
                       Statistics ({selectedStructures.filter(s => 
                         !statsSearchQuery || s.roiName.toLowerCase().includes(statsSearchQuery.toLowerCase())
                       ).length} structures)
-                    </div>
-                    <div className="flex-1 overflow-auto">
+                    </span>
+                    <div className="flex-1 overflow-auto rounded-lg bg-[#0d1117]/50">
                       <table className="w-full text-xs">
-                        <thead className="sticky top-0 bg-[#0d1117]">
-                          <tr className="text-gray-500 border-b border-gray-700/50">
-                            <th className="text-left py-1.5 px-2 font-medium">Structure</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Vol (cc)</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Min</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Max</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Mean</th>
-                            <th className="text-right py-1.5 px-2 font-medium text-cyan-400">D{dxxQuery}</th>
-                            <th className="text-right py-1.5 px-2 font-medium">D50</th>
-                            <th className="text-right py-1.5 px-2 font-medium text-purple-400">V{vxxQuery}</th>
+                        <thead className="sticky top-0 bg-[#0d1117]/98 backdrop-blur-sm">
+                          <tr className="border-b border-white/10">
+                            <th className="text-left py-2 px-3 font-medium text-gray-400">Structure</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-400">Vol (cc)</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-400">Min</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-400">Max</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-400">Mean</th>
+                            <th className="text-right py-2 px-3 font-medium text-cyan-400">D{dxxQuery}</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-400">D50</th>
+                            <th className="text-right py-2 px-3 font-medium text-purple-400">V{vxxQuery}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -892,25 +923,25 @@ export default function DVHViewerPage() {
                               const dxx = getDxxValue(struct, parseFloat(dxxQuery));
                               const vxx = getVxxValue(struct, parseFloat(vxxQuery));
                               return (
-                                <tr key={struct.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                                  <td className="py-1 px-2">
+                                <tr key={struct.roiNumber} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                  <td className="py-1.5 px-3">
                                     <div className="flex items-center gap-2">
                                       <div
-                                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0 ring-1 ring-white/20"
                                         style={{ backgroundColor: struct.color }}
                                       />
-                                      <span className="text-white truncate">{struct.roiName}</span>
+                                      <span className="text-gray-100 truncate">{struct.roiName}</span>
                                     </div>
                                   </td>
-                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.volumeCc.toFixed(1)}</td>
-                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.min.toFixed(1)}</td>
-                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.max.toFixed(1)}</td>
-                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.mean.toFixed(1)}</td>
-                                  <td className="py-1 px-2 text-right text-cyan-400 font-medium tabular-nums">
+                                  <td className="py-1.5 px-3 text-right text-gray-400 tabular-nums">{struct.volumeCc.toFixed(1)}</td>
+                                  <td className="py-1.5 px-3 text-right text-gray-400 tabular-nums">{struct.statistics.min.toFixed(1)}</td>
+                                  <td className="py-1.5 px-3 text-right text-gray-400 tabular-nums">{struct.statistics.max.toFixed(1)}</td>
+                                  <td className="py-1.5 px-3 text-right text-gray-400 tabular-nums">{struct.statistics.mean.toFixed(1)}</td>
+                                  <td className="py-1.5 px-3 text-right text-cyan-400 font-semibold tabular-nums">
                                     {dxx.toFixed(1)}
                                   </td>
-                                  <td className="py-1 px-2 text-right text-gray-400 tabular-nums">{struct.statistics.d50.toFixed(1)}</td>
-                                  <td className="py-1 px-2 text-right text-purple-400 font-medium tabular-nums">
+                                  <td className="py-1.5 px-3 text-right text-gray-400 tabular-nums">{struct.statistics.d50.toFixed(1)}</td>
+                                  <td className="py-1.5 px-3 text-right text-purple-400 font-semibold tabular-nums">
                                     {vxx.toFixed(1)}%
                                   </td>
                                 </tr>
@@ -924,8 +955,8 @@ export default function DVHViewerPage() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

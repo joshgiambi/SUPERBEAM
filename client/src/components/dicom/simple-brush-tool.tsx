@@ -821,14 +821,15 @@ export function SimpleBrushTool({
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = async (e: MouseEvent) => {
       if (isDrawingRef.current) {
         log.debug(`🛑 Mouse up - finalizing stroke. Smart brush enabled: ${smartBrushEnabled}, Adaptive shapes collected: ${adaptiveShapesRef.current.length}`,'brush');
-        finalizeBrushStroke();
-        setIsDrawing(false);
-        isDrawingRef.current = false; // Clear the ref too
         
-        // Clear adaptive preview points and preview after finalizing smart brush
+        // Set drawing state to false first to stop preview updates
+        setIsDrawing(false);
+        isDrawingRef.current = false;
+        
+        // Clear adaptive preview points and preview callback
         if (smartBrushEnabled) {
           setAdaptivePreviewPoints(null);
           if (onPreviewUpdate) {
@@ -836,20 +837,21 @@ export function SimpleBrushTool({
           }
         }
         
-        // FIX: Clear overlay canvas immediately for all brush modes (not just smart brush)
-        // This ensures the preview disappears and the updated contour is visible
-        if (overlayCanvasRef.current) {
-          const ctx = overlayCanvasRef.current.getContext("2d");
-          if (ctx) {
-            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-          }
-        }
+        // CRITICAL FIX: Await the finalization before clearing the overlay
+        // This ensures the contour update has been sent before we clear the preview
+        await finalizeBrushStroke();
         
-        // Force a redraw to show cursor only (no stroke preview)
+        // Now clear overlay canvas after finalization is complete
+        // Use a small delay to ensure React has processed the state update
         requestAnimationFrame(() => {
-          // CRITICAL FIX: Update cursor position to current mouse location to prevent snapping
-          // When mouseup happens, the cursor position state might still be at the last drag point
-          // This ensures the "hover" cursor is immediately at the release point
+          if (overlayCanvasRef.current) {
+            const ctx = overlayCanvasRef.current.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+            }
+          }
+          
+          // Update cursor position to current mouse location to prevent snapping
           const canvas = canvasRef.current;
           if (canvas) {
             const rect = canvas.getBoundingClientRect();
@@ -878,7 +880,7 @@ export function SimpleBrushTool({
       }
     };
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = async () => {
       setCursorPosition(null);
       setAdaptivePreviewPoints(null);
       // Clear preview when mouse leaves
@@ -886,15 +888,23 @@ export function SimpleBrushTool({
         onPreviewUpdate(null);
       }
       if (isDrawingRef.current) {
-        finalizeBrushStroke();
+        // Set state first to stop any new updates
+        setIsDrawing(false);
+        isDrawingRef.current = false;
         
-        // FIX: Clear overlay canvas immediately when stroke is finalized on mouse leave
-        if (overlayCanvasRef.current) {
-          const ctx = overlayCanvasRef.current.getContext("2d");
-          if (ctx) {
-            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+        // CRITICAL FIX: Await finalization before clearing overlay
+        await finalizeBrushStroke();
+        
+        // Clear overlay canvas after finalization is complete
+        requestAnimationFrame(() => {
+          if (overlayCanvasRef.current) {
+            const ctx = overlayCanvasRef.current.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+            }
           }
-        }
+        });
+        return; // Already set isDrawing to false above
       }
       setIsDrawing(false);
       isDrawingRef.current = false;

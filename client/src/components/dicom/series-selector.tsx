@@ -3144,7 +3144,7 @@ export function SeriesSelector({
                               <Checkbox
                                 checked={selectedStructures.has(structure.roiNumber)}
                                 onCheckedChange={(checked) => handleStructureSelection(structure.roiNumber, !!checked)}
-                                className="h-3 w-3 border-yellow-500/60 data-[state=checked]:bg-yellow-500"
+                                className="h-3.5 w-3.5 rounded border-zinc-600 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500/20 data-[state=checked]:text-emerald-400"
                               />
                               <Button
                                 variant="ghost"
@@ -3373,7 +3373,7 @@ export function SeriesSelector({
                                           <Checkbox
                                             checked={selectedStructures.has(structure.roiNumber)}
                                             onCheckedChange={(checked) => handleStructureSelection(structure.roiNumber, !!checked)}
-                                            className="h-3 w-3 border-yellow-500/60 data-[state=checked]:bg-yellow-500"
+                                            className="h-3.5 w-3.5 rounded border-zinc-600 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500/20 data-[state=checked]:text-emerald-400"
                                           />
                                           <Button
                                             variant="ghost"
@@ -3531,7 +3531,7 @@ export function SeriesSelector({
                                           <Checkbox
                                             checked={selectedStructures.has(structure.roiNumber)}
                                             onCheckedChange={(checked) => handleStructureSelection(structure.roiNumber, !!checked)}
-                                            className="h-3 w-3 border-yellow-500/60 data-[state=checked]:bg-yellow-500"
+                                            className="h-3.5 w-3.5 rounded border-zinc-600 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500/20 data-[state=checked]:text-emerald-400"
                                           />
                                           <Button
                                             variant="ghost"
@@ -3715,7 +3715,7 @@ export function SeriesSelector({
                                   <Checkbox
                                     checked={selectedStructures.has(structure.roiNumber)}
                                     onCheckedChange={(checked) => handleStructureSelection(structure.roiNumber, !!checked)}
-                                    className="h-3 w-3 border-yellow-500/60 data-[state=checked]:bg-yellow-500"
+                                    className="h-3.5 w-3.5 rounded border-zinc-600 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500/20 data-[state=checked]:text-emerald-400"
                                   />
                                   <Button
                                     variant="ghost"

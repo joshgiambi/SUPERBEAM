@@ -88,41 +88,64 @@ function useDraggable(initialPosition: Position, onPositionChange?: (pos: Positi
   const [position, setPosition] = useState<Position>(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
+  const positionRef = useRef(position);
+  
+  // Keep ref in sync with state to avoid stale closures
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(true);
-      dragStart.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+      dragStart.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
     }
-  }, [position]);
+  }, []);
 
   useEffect(() => {
     if (!isDragging) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragStart.current) return;
-      setPosition({
+      const newPos = {
         x: dragStart.current.posX + (e.clientX - dragStart.current.x),
         y: dragStart.current.posY + (e.clientY - dragStart.current.y),
-      });
+      };
+      positionRef.current = newPos;
+      setPosition(newPos);
     };
+    
     const handleMouseUp = () => {
       setIsDragging(false);
+      if (dragStart.current) {
+        savePosition(positionRef.current);
+        onPositionChange?.(positionRef.current);
+      }
       dragStart.current = null;
-      savePosition(position);
-      onPositionChange?.(position);
     };
-    document.addEventListener('mousemove', handleMouseMove);
+    
+    // CRITICAL FIX: Add multiple event listeners to catch all cases where drag should end
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointerup', handleMouseUp);  // Better cross-browser support
+    document.addEventListener('pointercancel', handleMouseUp);  // Handle touch cancellation
+    window.addEventListener('blur', handleMouseUp);  // Handle window losing focus
+    
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointerup', handleMouseUp);
+      document.removeEventListener('pointercancel', handleMouseUp);
+      window.removeEventListener('blur', handleMouseUp);
     };
-  }, [isDragging, position, onPositionChange]);
+  }, [isDragging, onPositionChange]);
 
   const resetPosition = useCallback(() => {
     const newPos = { x: 0, y: 0 };
     setPosition(newPos);
+    positionRef.current = newPos;
     savePosition(newPos);
   }, []);
 

@@ -809,6 +809,17 @@ export default function PenToolV2({
     setHasCrossedBoundary(false);
     setMousePosition(null);
     
+    // CRITICAL FIX: Clear overlay canvas immediately after completing polygon
+    // This ensures the preview disappears and the final contour is visible
+    requestAnimationFrame(() => {
+      if (overlayCanvasRef.current) {
+        const ctx = overlayCanvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+        }
+      }
+    });
+    
     console.log('🔷 PenToolV2: Direct update completed');
   }, [vertices, selectedStructure, currentSlicePosition, canvasToWorld, 
       rtStructures, onContourUpdate, determineFinalOperation]);
@@ -821,6 +832,13 @@ export default function PenToolV2({
     setHasCrossedBoundary(false);
     setMousePosition(null);
     setShouldComplete(false);
+    // Clear overlay canvas when slice changes
+    if (overlayCanvasRef.current) {
+      const ctx = overlayCanvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+      }
+    }
   }, [currentSlicePosition]);
 
   // Execute completion when shouldComplete is set
@@ -926,6 +944,13 @@ export default function PenToolV2({
       setFirstPointMode(null);
       setHasCrossedBoundary(false);
       setMousePosition(null);
+      // Clear overlay canvas when becoming inactive
+      if (overlayCanvasRef.current) {
+        const ctx = overlayCanvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+        }
+      }
     }
   }, [isActive, selectedStructure]);
 

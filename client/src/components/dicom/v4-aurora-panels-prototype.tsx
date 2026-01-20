@@ -266,40 +266,64 @@ function useDraggable(storageKey: string, initialPosition: Position = { x: 0, y:
   });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
+  const positionRef = useRef(position);
+  
+  // Keep ref in sync with state to avoid stale closures
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(true);
-      dragStart.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+      dragStart.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
     }
-  }, [position]);
+  }, []);
 
   useEffect(() => {
     if (!isDragging) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragStart.current) return;
-      setPosition({
+      const newPos = {
         x: dragStart.current.posX + (e.clientX - dragStart.current.x),
         y: dragStart.current.posY + (e.clientY - dragStart.current.y),
-      });
+      };
+      positionRef.current = newPos;
+      setPosition(newPos);
     };
+    
     const handleMouseUp = () => {
       setIsDragging(false);
+      if (dragStart.current) {
+        try { localStorage.setItem(storageKey, JSON.stringify(positionRef.current)); } catch {}
+      }
       dragStart.current = null;
-      try { localStorage.setItem(storageKey, JSON.stringify(position)); } catch {}
     };
-    document.addEventListener('mousemove', handleMouseMove);
+    
+    // CRITICAL FIX: Add multiple event listeners to catch all cases where drag should end
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointerup', handleMouseUp);  // Better cross-browser support
+    document.addEventListener('pointercancel', handleMouseUp);  // Handle touch cancellation
+    window.addEventListener('blur', handleMouseUp);  // Handle window losing focus
+    
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointerup', handleMouseUp);
+      document.removeEventListener('pointercancel', handleMouseUp);
+      window.removeEventListener('blur', handleMouseUp);
     };
-  }, [isDragging, position, storageKey]);
+  }, [isDragging, storageKey]);
 
   const resetPosition = useCallback(() => {
-    setPosition({ x: 0, y: 0 });
-    try { localStorage.setItem(storageKey, JSON.stringify({ x: 0, y: 0 })); } catch {}
+    const newPos = { x: 0, y: 0 };
+    setPosition(newPos);
+    positionRef.current = newPos;
+    try { localStorage.setItem(storageKey, JSON.stringify(newPos)); } catch {}
   }, [storageKey]);
 
   return { position, isDragging, handleMouseDown, resetPosition };

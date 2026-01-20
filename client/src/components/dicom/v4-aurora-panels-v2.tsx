@@ -113,51 +113,66 @@ function useDraggable(storageKey: string, initialPosition: Position = { x: 0, y:
     } catch { return initialPosition; }
   });
   const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);  // Ref for immediate access
   const dragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   const positionRef = useRef(position);
   
-  // Keep ref in sync
+  // Keep refs in sync with state
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
+  
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
+  // Global mousemove handler
+  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current || !dragStart.current) return;
+    const newPos = {
+      x: dragStart.current.posX + (e.clientX - dragStart.current.x),
+      y: dragStart.current.posY + (e.clientY - dragStart.current.y),
+    };
+    positionRef.current = newPos;
+    setPosition(newPos);
+  }, []);
+
+  // Global mouseup handler - ALWAYS stops dragging
+  const handleGlobalMouseUp = useCallback(() => {
+    if (isDraggingRef.current) {
+      setIsDragging(false);
+      isDraggingRef.current = false;
+      if (dragStart.current) {
+        try { localStorage.setItem(storageKey, JSON.stringify(positionRef.current)); } catch {}
+      }
+      dragStart.current = null;
+    }
+  }, [storageKey]);
+
+  // Mount global listeners ONCE and keep them active
+  useEffect(() => {
+    document.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
+    document.addEventListener('mouseup', handleGlobalMouseUp, { capture: true });
+    document.addEventListener('pointerup', handleGlobalMouseUp, { capture: true });
+    window.addEventListener('blur', handleGlobalMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp, { capture: true });
+      document.removeEventListener('pointerup', handleGlobalMouseUp, { capture: true });
+      window.removeEventListener('blur', handleGlobalMouseUp);
+    };
+  }, [handleGlobalMouseMove, handleGlobalMouseUp]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
       e.preventDefault();
       e.stopPropagation();
-      setIsDragging(true);
       dragStart.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
+      setIsDragging(true);
+      isDraggingRef.current = true;
     }
   }, []);
-
-  useEffect(() => {
-    if (!isDragging) return;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragStart.current) return;
-      const newPos = {
-        x: dragStart.current.posX + (e.clientX - dragStart.current.x),
-        y: dragStart.current.posY + (e.clientY - dragStart.current.y),
-      };
-      positionRef.current = newPos;
-      setPosition(newPos);
-    };
-    
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      if (dragStart.current) {
-        try { localStorage.setItem(storageKey, JSON.stringify(positionRef.current)); } catch {}
-      }
-      dragStart.current = null;
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, storageKey]);
 
   const resetPosition = useCallback(() => {
     const newPos = { x: 0, y: 0 };
