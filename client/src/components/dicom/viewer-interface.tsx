@@ -3895,6 +3895,35 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           minimized={dosePanelMinimized}
           onToggleMinimized={setDosePanelMinimized}
           fusionPanelVisible={secondarySeriesId !== null}
+          onLocalizeMaxDose={() => {
+            if (doseMetadata?.maxDose) {
+              toast({
+                title: 'Maximum Dose',
+                description: `Max dose: ${doseMetadata.maxDose.toFixed(2)} Gy`,
+              });
+              // TODO: Implement actual localization to max dose position
+              // This requires the server to track and return the max dose position
+            }
+          }}
+          onOpenBEDCalculator={() => {
+            // Open BED calculator in a popup window
+            const params = new URLSearchParams();
+            params.set('prescriptionDose', prescriptionDose.toString());
+            if (doseMetadata?.maxDose) {
+              params.set('maxDose', doseMetadata.maxDose.toString());
+            }
+            
+            const width = 420;
+            const height = 600;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            
+            window.open(
+              `/bed-calculator?${params.toString()}`,
+              'BED Calculator',
+              `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
+          }}
         />
       )}
 

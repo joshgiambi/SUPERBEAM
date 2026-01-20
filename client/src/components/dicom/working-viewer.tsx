@@ -466,6 +466,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const [isMeasurementToolActive, setIsMeasurementToolActive] = useState(false);
   const [isLoadingMPR, setIsLoadingMPR] = useState(false);
   const [viewportLayout, setViewportLayout] = useState<'axial-only' | 'floating' | 'grid'>('axial-only');
+  
+  // AI tumor tool click marker state - rendered as HTML overlay for correct positioning
+  const [aiClickMarker, setAiClickMarker] = useState<{
+    canvasX: number;
+    canvasY: number;
+    sliceIndex: number;
+    isProcessing: boolean;
+  } | null>(null);
   // Use external MPR visibility state or fallback to internal state
   const mprVisible = props.isMPRVisible ?? false;
   
@@ -493,6 +501,15 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   const [showRegDetails, setShowRegDetails] = useState(false);
   const [regDetailsText, setRegDetailsText] = useState('');
   const [lastResolveInfo, setLastResolveInfo] = useState<any>(null);
+  
+  // AI tumor tool click marker state
+  const [aiTumorClickPoint, setAiTumorClickPoint] = useState<{
+    canvasX: number;
+    canvasY: number;
+    sliceIndex: number;
+    isProcessing: boolean;
+  } | null>(null);
+  
   const fusionIssueRef = useRef<string | null>(null);
   const missingMatrixLogRef = useRef(false);
   // ⚠️ FUSION CACHE - See warning block near line ~4500 before modifying cache clearing behavior
@@ -2166,12 +2183,11 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       
       console.log(`🔹 Applying margin of ${marginValue}mm to ${sourceStructure.contours?.length || 0} contours`);
+      console.log('🔹 Full parameters received:', JSON.stringify(parameters, null, 2));
 
       // Uniform margin: use DT-based margin-worker (same as preview) for accurate Eclipse-like results
       if (parameters?.marginType === 'UNIFORM') {
         try {
-          console.log('🔹 Using DT-based margin-worker for accurate margin execution');
-          const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
           const px = imageMetadata?.pixelSpacing || [1, 1];
           const th = imageMetadata?.sliceThickness || 2;
           const spacing: [number, number, number] = [px[1] ?? px[0], px[0], th];
@@ -2179,10 +2195,24 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           const padding = Math.abs(marginValue) + 5;
           const srcContours = sourceStructure.contours || [];
           
+          console.log('🔹 UNIFORM margin execution:', {
+            marginValue,
+            spacing,
+            padding,
+            sourceContourCount: srcContours.length,
+            firstContourPointCount: srcContours[0]?.points?.length
+          });
+          
+          const startTime = performance.now();
+          console.log('🔹 Starting margin worker at', new Date().toISOString());
+          
+          const worker = new Worker(new URL('@/margins/margin-worker.ts', import.meta.url), { type: 'module' });
+          
           const workerPromise: Promise<any> = new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
+              console.error('🔹 ❌ MARGIN WORKER TIMEOUT after 30 seconds!');
               try { worker.terminate(); } catch {}
-              reject(new Error('Margin worker timeout'));
+              reject(new Error('Margin worker timeout - operation took too long'));
             }, 30000); // 30 second timeout
             
             worker.onmessage = (ev: MessageEvent<any>) => {
@@ -2201,15 +2231,18 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           worker.postMessage({ jobId, kind: 'UNIFORM', contours: srcContours, spacing, padding, margin: marginValue });
           const workerContours = await workerPromise;
           
+          const endTime = performance.now();
+          console.log(`🔹 ✅ Margin worker completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+          
           const processedContours = (workerContours || []).map((c: any) => ({
             slicePosition: c.slicePosition,
             points: c.points,
             numberOfPoints: c.points.length / 3
           }));
           targetStructure.contours = processedContours;
-          console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours`);
+          console.log(`🔹 ✅ DT margin worker produced ${processedContours.length} contours with total ${processedContours.reduce((sum: number, c: any) => sum + (c.points?.length || 0), 0)} points`);
         } catch (e2) {
-          console.warn('DT margin worker failed, falling back to clipper offset:', e2);
+          console.error('🔹 ❌ DT margin worker FAILED, falling back to clipper offset:', e2);
           const { offsetContour } = await import('@/lib/clipper-boolean-operations');
           const processedContours: any[] = [];
           for (const contour of sourceStructure.contours || []) {
@@ -2253,7 +2286,11 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
         if (onContourUpdate) {
           onContourUpdate(updatedRTStructures);
         }
-        console.log(`✅ Successfully applied uniform margin to structure ${targetStructure.roiNumber}`);
+        console.log(`✅ Successfully applied uniform margin to structure ${targetStructure.roiNumber}`, {
+          structureName: targetStructure.structureName,
+          contourCount: targetStructure.contours?.length,
+          totalPoints: targetStructure.contours?.reduce((sum: number, c: any) => sum + (c.points?.length || 0), 0)
+        });
         
         // Create superstructure if requested (for auto-update functionality)
         if (saveAsSuperstructure && superstructureInfo && targetStructureId === 'new') {
@@ -3555,6 +3592,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       // Update with the RT structures from the payload
       if (payload.rtStructures) {
         setLocalRTStructures(payload.rtStructures);
+        
+        // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+        rtStructuresRef.current = payload.rtStructures;
+        
         // Force re-render of the canvas
         if (images.length > 0) {
           // Immediate render after polygon union
@@ -3589,6 +3630,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     if (payload.action === "brush_stroke") {
       // Handle brush stroke - add points to contour
+      
       const structure = updatedStructures.structures.find(
         (s: any) => s.roiNumber === payload.structureId,
       );
@@ -3726,6 +3768,12 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       setLocalRTStructures(newStructures);
       
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      // The useEffect that normally updates rtStructuresRef runs AFTER the render cycle,
+      // but scheduleRender(true) calls the render function immediately, before the effect runs.
+      // This was causing new contours (especially separate blobs) to not display immediately.
+      rtStructuresRef.current = newStructures;
+      
       // Pass updated structures to parent (for sidebar updates)
       if (onContourUpdate) {
         onContourUpdate(newStructures);
@@ -3855,6 +3903,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       // Single state update with new object reference for immediate React detection
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
       
       // Pass updated structures to parent (for sidebar updates)
       if (onContourUpdate) {
@@ -3997,6 +4048,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       // Single state update with new object reference for immediate React detection
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
 
       // Pass the updated structures up to parent component
       if (onContourUpdate) {
@@ -4087,6 +4141,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
 
       setLocalRTStructures(updatedStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = updatedStructures;
+      
       // Save state to new undo system
       if (seriesId) {
         undoRedoManager.saveState(
@@ -4255,6 +4313,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
       setLocalRTStructures(updatedStructures);
       
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = updatedStructures;
+      
       // Pass updated structures to parent (for sidebar updates)
       if (onContourUpdate) {
         onContourUpdate(updatedStructures);
@@ -4269,6 +4330,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     } else if (payload.action === "update_rt_structures") {
       // Simple update after pen tool operations - structure already modified directly
       setLocalRTStructures(updatedStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = updatedStructures;
       
       // Pass updated structures to parent (for sidebar updates)
       if (onContourUpdate) {
@@ -4443,6 +4507,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
+      
       // Pass the full updated structures to parent
       if (onContourUpdate) {
         onContourUpdate(newStructures);
@@ -4583,6 +4651,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
+      
       saveContourUpdates(newStructures, 'interpolate', [payload.structureId]);
       
       // Force immediate render
@@ -4744,6 +4816,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
+      
       saveContourUpdates(newStructures, 'clear_below');
       
       // Force immediate render
@@ -4768,6 +4844,10 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       const newStructures = { ...updatedStructures, structures: [...updatedStructures.structures] };
       
       setLocalRTStructures(newStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = newStructures;
+      
       saveContourUpdates(newStructures, 'clear_above');
       
       // Force immediate render
@@ -4811,6 +4891,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       console.log(`Applied smoothing to ${smoothedCount} contours in structure ${payload.structureId} with factor ${smoothingFactor}`);
       
       setLocalRTStructures(updatedStructures);
+      
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = updatedStructures;
       
       // Trigger ripple animation if requested
       if (payload.triggerAnimation) {
@@ -4888,6 +4971,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       
       setLocalRTStructures(updatedStructures);
       
+      // CRITICAL FIX: Update ref SYNCHRONOUSLY before render to avoid stale closure issue
+      rtStructuresRef.current = updatedStructures;
+      
       // Pass updated structures to parent component
       if (onContourUpdate) {
         onContourUpdate(updatedStructures);
@@ -4911,6 +4997,92 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       
       // Show success toast
       toast({ title: "Blobs separated", description: `Created ${blobs.length} new structures from ${baseName}` });
+    } else if (payload.contour && payload.roiNumber) {
+      // Handle simple contour update from AI tumor tool
+      // Payload format: { roiNumber, structureName, color, contour: { slicePosition, points } }
+      console.log('🔬 Handling AI tumor contour update:', payload.structureName, 'roiNumber:', payload.roiNumber);
+      
+      // CRITICAL: Use the ref for the LATEST structures (handles rapid 3D propagation calls)
+      // The ref is updated synchronously after each update, so we always see previous contours
+      const latestStructures = rtStructuresRef.current || localRTStructures || rtStructures || { structures: [] };
+      
+      const structureIndex = latestStructures.structures.findIndex(
+        (s: any) => s.roiNumber === payload.roiNumber,
+      );
+      
+      if (structureIndex === -1) {
+        console.error(`Structure ${payload.roiNumber} not found for AI contour update`);
+        toast({
+          title: 'Structure not found',
+          description: `Could not find structure with roiNumber ${payload.roiNumber}`,
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      const { slicePosition, points } = payload.contour;
+      
+      if (!points || points.length < 9) {
+        console.error('Invalid contour points from AI tool');
+        return;
+      }
+      
+      // Deep clone ONLY the target structure (for performance)
+      const newStructures = {
+        ...latestStructures,
+        structures: latestStructures.structures.map((s: any, idx: number) => 
+          idx === structureIndex ? { ...s, contours: [...s.contours] } : s
+        )
+      };
+      
+      const structure = newStructures.structures[structureIndex];
+      
+      console.log(`🔬 Adding AI contour: ${points.length / 3} points at slice ${slicePosition}`);
+      console.log(`🔬 Structure had ${structure.contours.length} contours before this update`);
+      
+      // Remove existing contour at this slice position (replace mode for same slice)
+      structure.contours = structure.contours.filter(
+        (c: any) => Math.abs(c.slicePosition - slicePosition) > SLICE_TOL_MM
+      );
+      
+      // Add the new contour
+      structure.contours.push({
+        slicePosition: slicePosition,
+        points: points,
+        numberOfPoints: points.length / 3,
+      });
+      
+      console.log(`🔬 Structure ${structure.structureName} now has ${structure.contours.length} contours`);
+      
+      // CRITICAL: Update ref SYNCHRONOUSLY FIRST so next call sees this contour
+      rtStructuresRef.current = newStructures;
+      
+      // Then update state
+      setLocalRTStructures(newStructures);
+      
+      // Pass updated structures to parent
+      if (onContourUpdate) {
+        onContourUpdate(newStructures);
+      }
+      
+      // Save to undo system
+      if (seriesId) {
+        undoRedoManager.saveState(
+          seriesId,
+          'ai_tumor_contour',
+          payload.roiNumber,
+          newStructures,
+          slicePosition,
+          structure.structureName
+        );
+      }
+      saveContourUpdates(newStructures, 'ai_tumor_contour', [payload.roiNumber]);
+      
+      // Force immediate render
+      setForceRenderTrigger(prev => prev + 1);
+      scheduleRender(true);
+      
+      console.log('🔬 AI contour update complete - render triggered');
     }
   };
 
@@ -7806,8 +7978,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       }
       
       if (newIndex !== current) {
-        // Update ref immediately (no React re-render)
+        // Update ref immediately for canvas rendering
         currentIndexRef.current = newIndex;
+        
+        // CRITICAL FIX: Also update React state so child components (brush tool, pen tool, etc.)
+        // receive the correct currentSlicePosition prop. Without this, tools would use stale
+        // slice positions when drawing on different slices.
+        setCurrentIndex(newIndex);
         
         // Schedule canvas redraw using existing throttled system
         scheduleRender();
@@ -8703,13 +8880,20 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               </div>
 
               {/* Right column: Sagittal + Coronal stacked */}
-              <div className="flex-shrink-0 flex flex-col gap-2" style={{ width: '400px' }}>
+              <div className="flex-shrink-0 flex flex-col gap-3 p-2" style={{ width: '420px' }}>
                 {/* Sagittal view */}
-                <div className="flex-1 min-h-0 relative bg-black">
-                  <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs text-white/90 font-bold border border-white/20">
+                <div 
+                  className="flex-1 min-h-0 relative rounded-xl border border-white/20 overflow-hidden shadow-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2 bg-black/30 border-b border-white/10 text-xs text-white/90 font-semibold">
                     Sagittal
                   </div>
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full pt-8 flex items-center justify-center bg-black/40">
                     <MPRFloating
                       images={images}
                       orientation="sagittal"
@@ -8717,25 +8901,32 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                       windowWidth={currentWindowLevel.width}
                       windowCenter={currentWindowLevel.center}
                       crosshairPos={crosshairPos}
-                      rtStructures={rtStructures}
+                      rtStructures={allStructuresVisible ? rtStructures : undefined}
                       structureVisibility={structureVisibility}
                       currentZIndex={currentIndex}
                       onClick={handleSagittalClick}
                     />
                     {isLoadingMPR && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
-                        <div className="w-8 h-8 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/75">
+                        <div className="w-6 h-6 border-2 border-gray-600 border-t-white/80 rounded-full animate-spin" />
                       </div>
                     )}
                   </div>
                 </div>
                 
                 {/* Coronal view */}
-                <div className="flex-1 min-h-0 relative bg-black">
-                  <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs text-white/90 font-bold border border-white/20">
+                <div 
+                  className="flex-1 min-h-0 relative rounded-xl border border-white/20 overflow-hidden shadow-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2 bg-black/30 border-b border-white/10 text-xs text-white/90 font-semibold">
                     Coronal
                   </div>
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full pt-8 flex items-center justify-center bg-black/40">
                     <MPRFloating
                       images={images}
                       orientation="coronal"
@@ -8743,14 +8934,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                       windowWidth={currentWindowLevel.width}
                       windowCenter={currentWindowLevel.center}
                       crosshairPos={crosshairPos}
-                      rtStructures={rtStructures}
+                      rtStructures={allStructuresVisible ? rtStructures : undefined}
                       structureVisibility={structureVisibility}
                       currentZIndex={currentIndex}
                       onClick={handleCoronalClick}
                     />
                     {isLoadingMPR && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
-                        <div className="w-8 h-8 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/75">
+                        <div className="w-6 h-6 border-2 border-gray-600 border-t-white/80 rounded-full animate-spin" />
                       </div>
                     )}
                   </div>
@@ -8999,13 +9190,20 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           
           {/* Compact MPR Overlay - shown when sidebar is hidden but MPR is enabled */}
           {hideSidebar && mprVisible && orientation === 'axial' && images.length > 0 && (
-            <div className="absolute bottom-2 right-2 flex gap-2 z-30">
+            <div className="absolute bottom-3 right-3 flex flex-col gap-2 z-30">
               {/* Sagittal mini view */}
-              <div className="w-32 h-32 bg-black/90 rounded-lg border border-cyan-500/50 overflow-hidden shadow-lg">
-                <div className="text-[10px] text-cyan-400 font-semibold px-1.5 py-0.5 bg-black/80 border-b border-cyan-500/30">
+              <div 
+                className="w-56 h-56 rounded-xl border border-white/20 overflow-hidden shadow-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
+              >
+                <div className="text-[10px] text-white/90 font-semibold px-3 py-2 bg-black/30 border-b border-white/10">
                   Sagittal
                 </div>
-                <div className="w-full h-[calc(100%-20px)]">
+                <div className="w-full h-[calc(100%-28px)] flex items-center justify-center bg-black/40">
                   <MPRFloating
                     images={images}
                     orientation="sagittal"
@@ -9013,7 +9211,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                     windowWidth={currentWindowLevel.width}
                     windowCenter={currentWindowLevel.center}
                     crosshairPos={crosshairPos}
-                    rtStructures={rtStructures}
+                    rtStructures={allStructuresVisible ? rtStructures : undefined}
+                    structureVisibility={structureVisibility}
                     currentZIndex={currentIndex}
                     onClick={handleSagittalClick}
                   />
@@ -9021,11 +9220,18 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
               </div>
               
               {/* Coronal mini view */}
-              <div className="w-32 h-32 bg-black/90 rounded-lg border border-purple-500/50 overflow-hidden shadow-lg">
-                <div className="text-[10px] text-purple-400 font-semibold px-1.5 py-0.5 bg-black/80 border-b border-purple-500/30">
+              <div 
+                className="w-56 h-56 rounded-xl border border-white/20 overflow-hidden shadow-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
+              >
+                <div className="text-[10px] text-white/90 font-semibold px-3 py-2 bg-black/30 border-b border-white/10">
                   Coronal
                 </div>
-                <div className="w-full h-[calc(100%-20px)]">
+                <div className="w-full h-[calc(100%-28px)] flex items-center justify-center bg-black/40">
                   <MPRFloating
                     images={images}
                     orientation="coronal"
@@ -9033,7 +9239,8 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                     windowWidth={currentWindowLevel.width}
                     windowCenter={currentWindowLevel.center}
                     crosshairPos={crosshairPos}
-                    rtStructures={rtStructures}
+                    rtStructures={allStructuresVisible ? rtStructures : undefined}
+                    structureVisibility={structureVisibility}
                     currentZIndex={currentIndex}
                     onClick={handleCoronalClick}
                   />
@@ -9044,7 +9251,7 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
           </div>
           )}
 
-          {/* Invisible Right Sidebar - 24rem width for MPR windows and Fusion panel - hidden in compact mode */}
+          {/* Right Sidebar - MPR windows and Fusion panel - wider when MPR is visible */}
           {!hideSidebar && (
           <div 
             ref={(el) => {
@@ -9053,20 +9260,29 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 (window as any).__workingViewerSidebarRef.current = el;
               }
             }}
-            className="w-96 flex-shrink-0 flex flex-col gap-3 relative overflow-y-auto" 
-            style={{ minHeight: 0 }}
+            className={`flex-shrink-0 flex flex-col gap-2 relative ${
+              mprVisible && viewportLayout === 'floating' ? 'w-[420px]' : 'w-96'
+            }`}
+            style={{ minHeight: 0, height: '100%' }}
           >
             {/* Fusion panel will be rendered here via portal */}
 
-            {/* MPR windows will be rendered here - only in floating layout mode */}
+            {/* MPR windows - stacked vertically taking full height */}
             {orientation === 'axial' && images.length > 0 && mprVisible && viewportLayout === 'floating' && (
-              <>
+              <div className="flex flex-col gap-3 flex-1 min-h-0 p-3">
                 {/* Sagittal view */}
-                <div className="mpr-window">
-                  <div className="mpr-window-header flex justify-between items-center">
-                    <span className="font-bold">Sagittal</span>
+                <div 
+                  className="flex-1 min-h-0 relative rounded-xl border border-white/20 overflow-hidden shadow-lg flex flex-col"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <div className="px-3 py-2 bg-black/30 border-b border-white/10 text-xs text-white/90 font-semibold flex justify-between items-center">
+                    <span>Sagittal</span>
                   </div>
-                  <div className="mpr-canvas-container">
+                  <div className="flex-1 min-h-0 relative bg-black/40 flex items-center justify-center">
                     <MPRFloating
                       images={images}
                       orientation="sagittal"
@@ -9074,24 +9290,32 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                       windowWidth={currentWindowLevel.width}
                       windowCenter={currentWindowLevel.center}
                       crosshairPos={crosshairPos}
-                      rtStructures={rtStructures}
+                      rtStructures={allStructuresVisible ? rtStructures : undefined}
+                      structureVisibility={structureVisibility}
                       currentZIndex={currentIndex}
                       onClick={handleSagittalClick}
                     />
                     {isLoadingMPR && (
-                      <div className="mpr-loading">
-                        <div className="mpr-loading-spinner" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/75">
+                        <div className="w-6 h-6 border-2 border-gray-600 border-t-white/80 rounded-full animate-spin" />
                       </div>
                     )}
                   </div>
                 </div>
                 
                 {/* Coronal view */}
-                <div className="mpr-window">
-                  <div className="mpr-window-header flex justify-between items-center">
-                    <span className="font-bold">Coronal</span>
+                <div 
+                  className="flex-1 min-h-0 relative rounded-xl border border-white/20 overflow-hidden shadow-lg flex flex-col"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <div className="px-3 py-2 bg-black/30 border-b border-white/10 text-xs text-white/90 font-semibold flex justify-between items-center">
+                    <span>Coronal</span>
                   </div>
-                  <div className="mpr-canvas-container">
+                  <div className="flex-1 min-h-0 relative bg-black/40 flex items-center justify-center">
                     <MPRFloating
                       images={images}
                       orientation="coronal"
@@ -9099,18 +9323,19 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                       windowWidth={currentWindowLevel.width}
                       windowCenter={currentWindowLevel.center}
                       crosshairPos={crosshairPos}
-                      rtStructures={rtStructures}
+                      rtStructures={allStructuresVisible ? rtStructures : undefined}
+                      structureVisibility={structureVisibility}
                       currentZIndex={currentIndex}
                       onClick={handleCoronalClick}
                     />
                     {isLoadingMPR && (
-                      <div className="mpr-loading">
-                        <div className="mpr-loading-spinner" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/75">
+                        <div className="w-6 h-6 border-2 border-gray-600 border-t-white/80 rounded-full animate-spin" />
                       </div>
                     )}
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
           )}
@@ -9400,12 +9625,14 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
                 registrationMatrix={registrationMatrix}
                 smoothOutput={(brushToolState as any)?.aiTumorSmoothOutput ?? false}
                 useSAM={(brushToolState as any)?.aiTumorUseSAM ?? false}
+                use3DMode={(brushToolState as any)?.aiTumor3DMode ?? false}
                 onShowPrimarySeries={() => {
                   // Switch back to primary series to show CT contours
                   if (onSecondarySeriesSelect) {
                     onSecondarySeriesSelect(null);
                   }
                 }}
+                onClickPointChange={setAiClickMarker}
               />
             )}
 

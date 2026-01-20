@@ -19,7 +19,9 @@ function thresholdToMask(dt: Float3D, grid: Grid, thresholdSq: number): Mask3D {
 }
 
 export function marginSymmetric(structure: Structure, marginMM: number, eclipseFudge: boolean = true): Structure {
+  console.log('🔹 marginSymmetric called:', { marginMM, eclipseFudge, hasMask: !!structure?.mask?.values?.length });
   if (!structure?.mask?.values?.length || marginMM === 0) {
+    console.log('🔹 marginSymmetric: returning unchanged (no mask or margin=0)');
     return cloneStructure(structure);
   }
 

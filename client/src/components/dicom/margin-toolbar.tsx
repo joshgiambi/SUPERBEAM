@@ -184,7 +184,7 @@ export function MarginToolbar({
   const renderUniformSettings = () => (
     <div className="space-y-3 p-3">
       <div className="flex items-center justify-between">
-        <Label className="text-xs text-white/70">Margin Distance</Label>
+        <Label className="text-sm text-white/70">Margin Distance</Label>
         <div className="flex items-center space-x-2">
           <Slider
             value={[uniformMargin]}
@@ -198,10 +198,10 @@ export function MarginToolbar({
             type="number"
             value={uniformMargin}
             onChange={(e) => setUniformMargin(parseFloat(e.target.value) || 0)}
-            className="w-16 h-6 bg-white/10 border-white/30 text-white text-xs"
+            className="w-18 h-7 bg-white/10 border-white/30 text-white text-sm"
             step="0.5"
           />
-          <span className="text-white/50 text-xs">mm</span>
+          <span className="text-white/50 text-sm">mm</span>
         </div>
       </div>
     </div>
@@ -209,12 +209,12 @@ export function MarginToolbar({
 
   const renderAnisotropicSettings = () => (
     <div className="space-y-3 p-3">
-      <div className="text-xs text-white/60 mb-2">
+      <div className="text-sm text-white/60 mb-2">
         Set same values for uniform expansion or different for directional
       </div>
       {Object.entries({ x: 'X (L/R)', y: 'Y (A/P)', z: 'Z (S/I)' }).map(([axis, label]) => (
         <div key={axis} className="flex items-center justify-between">
-          <Label className="text-xs text-white/70 w-16">{label}</Label>
+          <Label className="text-sm text-white/70 w-16">{label}</Label>
           <div className="flex items-center space-x-2">
             <Slider
               value={[anisotropicMargins[axis as keyof typeof anisotropicMargins]]}
@@ -232,10 +232,10 @@ export function MarginToolbar({
               onChange={(e) => 
                 setAnisotropicMargins(prev => ({ ...prev, [axis]: parseFloat(e.target.value) || 0 }))
               }
-              className="w-16 h-6 bg-white/10 border-white/30 text-white text-xs"
+              className="w-18 h-7 bg-white/10 border-white/30 text-white text-sm"
               step="0.5"
             />
-            <span className="text-white/50 text-xs">mm</span>
+            <span className="text-white/50 text-sm">mm</span>
           </div>
         </div>
       ))}
@@ -254,17 +254,17 @@ export function MarginToolbar({
           right: 'Right (-X)'
         }).map(([dir, label]) => (
           <div key={dir} className="flex items-center space-x-2">
-            <Label className="text-xs text-white/70 w-20">{label}</Label>
+            <Label className="text-sm text-white/70 w-24">{label}</Label>
             <Input
               type="number"
               value={directionalMargins[dir as keyof typeof directionalMargins]}
               onChange={(e) => 
                 setDirectionalMargins(prev => ({ ...prev, [dir]: parseFloat(e.target.value) || 0 }))
               }
-              className="w-14 h-6 bg-white/10 border-white/30 text-white text-xs"
+              className="w-16 h-7 bg-white/10 border-white/30 text-white text-sm"
               step="0.5"
             />
-            <span className="text-white/50 text-xs">mm</span>
+            <span className="text-white/50 text-sm">mm</span>
           </div>
         ))}
       </div>
@@ -286,11 +286,11 @@ export function MarginToolbar({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-3">
               <div 
-                className="w-4 h-4 rounded border-2 border-white/60 shadow-sm"
+                className="w-5 h-5 rounded border-2 border-white/60 shadow-sm"
                 style={{ backgroundColor: structureColor }}
               />
-              <span className="text-white text-sm font-medium">Margin:</span>
-              <span className="text-white/70 text-sm">{selectedStructure.structureName}</span>
+              <span className="text-white text-base font-medium">Margin:</span>
+              <span className="text-white/70 text-base">{selectedStructure.structureName}</span>
               
               {/* Separator */}
               <div className="w-px h-6 bg-white/30 mx-2" />
@@ -300,15 +300,15 @@ export function MarginToolbar({
                 variant="outline"
                 size="sm"
                 onClick={() => handleModeChange('uniform')}
-                className={`h-7 px-3 border-2 text-white rounded-lg backdrop-blur-sm shadow-sm ${
+                className={`h-8 px-4 border-2 text-white rounded-lg backdrop-blur-sm shadow-sm ${
                   activeMode === 'uniform' 
                     ? 'bg-cyan-500/30 border-cyan-400/60 hover:bg-cyan-500/40' 
                     : 'bg-white/10 border-white/30 hover:bg-white/20'
                 }`}
                 title="Uniform margin"
               >
-                <Expand className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Uniform</span>
+                <Expand className="w-4 h-4 mr-1.5" />
+                <span className="text-sm font-medium">Uniform</span>
               </Button>
               
               {/* Separator */}
@@ -320,10 +320,10 @@ export function MarginToolbar({
                 size="sm"
                 onClick={handlePreview}
                 disabled={!selectedStructure}
-                className="h-7 px-3 bg-yellow-900/30 border-2 border-yellow-600/50 text-yellow-400 hover:bg-yellow-900/40 rounded-lg backdrop-blur-sm shadow-sm"
+                className="h-8 px-4 bg-yellow-900/30 border-2 border-yellow-600/50 text-yellow-400 hover:bg-yellow-900/40 rounded-lg backdrop-blur-sm shadow-sm"
               >
-                <Eye className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Preview</span>
+                <Eye className="w-4 h-4 mr-1.5" />
+                <span className="text-sm font-medium">Preview</span>
               </Button>
               
               {isPreviewActive && (
@@ -331,9 +331,9 @@ export function MarginToolbar({
                   variant="outline"
                   size="sm"
                   onClick={handleClearPreview}
-                  className="h-7 w-7 p-0 bg-gray-900/30 border-2 border-gray-600/50 text-gray-400 hover:bg-gray-900/40 rounded-lg backdrop-blur-sm shadow-sm"
+                  className="h-8 w-8 p-0 bg-gray-900/30 border-2 border-gray-600/50 text-gray-400 hover:bg-gray-900/40 rounded-lg backdrop-blur-sm shadow-sm"
                 >
-                  <EyeOff className="w-3 h-3" />
+                  <EyeOff className="w-4 h-4" />
                 </Button>
               )}
               
@@ -342,10 +342,10 @@ export function MarginToolbar({
                 size="sm"
                 onClick={handleExecute}
                 disabled={!selectedStructure}
-                className="h-7 px-3 bg-cyan-500/30 border-2 border-cyan-500/60 text-cyan-300 hover:bg-cyan-500/40 rounded-lg backdrop-blur-sm shadow-sm"
+                className="h-8 px-4 bg-cyan-500/30 border-2 border-cyan-500/60 text-cyan-300 hover:bg-cyan-500/40 rounded-lg backdrop-blur-sm shadow-sm"
               >
-                <Play className="w-3 h-3 mr-1" />
-                <span className="text-xs font-medium">Execute</span>
+                <Play className="w-4 h-4 mr-1.5" />
+                <span className="text-sm font-medium">Execute</span>
               </Button>
             </div>
             
@@ -354,9 +354,9 @@ export function MarginToolbar({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-6 w-6 p-0 text-white/60 hover:text-white hover:bg-white/20 rounded-lg ml-3"
+              className="h-7 w-7 p-0 text-white/60 hover:text-white hover:bg-white/20 rounded-lg ml-3"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
           
@@ -365,21 +365,21 @@ export function MarginToolbar({
             <div className="flex items-center justify-between p-3 space-x-4">
               {/* Target Structure Selector */}
               <div className="flex items-center space-x-3">
-                <Label className="text-xs text-white/70">Target:</Label>
+                <Label className="text-sm text-white/70">Target:</Label>
                 <Select value={targetStructure} onValueChange={(value: 'same' | 'different' | 'new') => setTargetStructure(value)}>
-                  <SelectTrigger className="w-44 h-7 bg-white/10 border-white/30 text-white text-xs">
+                  <SelectTrigger className="w-44 h-8 bg-white/10 border-white/30 text-white text-sm">
                     <SelectValue placeholder="Select target" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="same" className="text-white text-xs hover:bg-gray-800">
+                    <SelectItem value="same" className="text-white text-sm hover:bg-gray-800">
                       Same (Modify)
                     </SelectItem>
-                    <SelectItem value="different" className="text-white text-xs hover:bg-gray-800">
+                    <SelectItem value="different" className="text-white text-sm hover:bg-gray-800">
                       Different Structure
                     </SelectItem>
-                    <SelectItem value="new" className="text-white text-xs hover:bg-gray-800">
+                    <SelectItem value="new" className="text-white text-sm hover:bg-gray-800">
                       <div className="flex items-center">
-                        <Plus className="w-3 h-3 mr-1" />
+                        <Plus className="w-4 h-4 mr-1" />
                         New Structure
                       </div>
                     </SelectItem>
@@ -387,14 +387,14 @@ export function MarginToolbar({
                 </Select>
                 {targetStructure === 'different' && (
                   <Select value={selectedTargetId?.toString()} onValueChange={(value) => setSelectedTargetId(parseInt(value))}>
-                    <SelectTrigger className="w-40 h-7 bg-white/10 border-white/30 text-white text-xs">
+                    <SelectTrigger className="w-40 h-8 bg-white/10 border-white/30 text-white text-sm">
                       <SelectValue placeholder="Select structure" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-900 border-gray-700">
                       {availableStructures
                         .filter(s => s.id !== selectedStructure.id)
                         .map(structure => (
-                          <SelectItem key={structure.id} value={structure.id.toString()} className="text-white text-xs hover:bg-gray-800">
+                          <SelectItem key={structure.id} value={structure.id.toString()} className="text-white text-sm hover:bg-gray-800">
                             {structure.name}
                           </SelectItem>
                         ))
@@ -406,7 +406,7 @@ export function MarginToolbar({
 
               {/* Inline distance control */}
               <div className="flex items-center space-x-2">
-                <Label className="text-xs text-white/70">Distance</Label>
+                <Label className="text-sm text-white/70">Distance</Label>
                 <Slider
                   value={[uniformMargin]}
                   onValueChange={(value) => setUniformMargin(value[0])}
@@ -419,10 +419,10 @@ export function MarginToolbar({
                   type="number"
                   value={uniformMargin}
                   onChange={(e) => setUniformMargin(parseFloat(e.target.value) || 0)}
-                  className="w-16 h-6 bg-white/10 border-white/30 text-white text-xs"
+                  className="w-18 h-7 bg-white/10 border-white/30 text-white text-sm"
                   step="0.5"
                 />
-                <span className="text-white/50 text-xs">mm</span>
+                <span className="text-white/50 text-sm">mm</span>
               </div>
             </div>
           </div>
@@ -430,8 +430,8 @@ export function MarginToolbar({
           {/* Preview status */}
           {isPreviewActive && (
             <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
-              <div className="flex items-center text-xs text-yellow-400">
-                <Eye className="w-3 h-3 mr-2" />
+              <div className="flex items-center text-sm text-yellow-400">
+                <Eye className="w-4 h-4 mr-2" />
                 <span>Preview active - Animated yellow dashed outline shows margin</span>
               </div>
             </div>

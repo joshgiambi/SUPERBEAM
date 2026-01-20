@@ -99,6 +99,10 @@ interface DoseControlPanelProps {
   
   // NEW: Structure set ID for DVH
   structureSetId?: number;
+  
+  // Quick action callbacks
+  onLocalizeMaxDose?: () => void;
+  onOpenBEDCalculator?: () => void;
 }
 
 const COLORMAP_OPTIONS: { value: DoseColormap; label: string; colors: string[] }[] = [
@@ -161,6 +165,8 @@ export function DoseControlPanel({
   onToggleMinimized,
   fusionPanelVisible = false,
   structureSetId,
+  onLocalizeMaxDose,
+  onOpenBEDCalculator,
 }: DoseControlPanelProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   
@@ -540,11 +546,11 @@ export function DoseControlPanel({
             </div>
           )}
 
-          {/* Quick Actions - DVH, BED, Localize Max */}
+          {/* Quick Actions - DVH, Max, BED */}
           <div className="flex gap-2 pt-3 border-t border-zinc-600/15">
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               onClick={() => {
                 // Open DVH in a new popup window
                 if (selectedDoseSeriesId) {
@@ -568,15 +574,17 @@ export function DoseControlPanel({
                 }
               }}
               disabled={!selectedDoseSeriesId}
-              className="flex-1 h-8 text-xs border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/50"
+              className="flex-1 h-8 text-xs rounded-lg text-zinc-200 hover:bg-zinc-500/20 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
               DVH
             </Button>
             <Button
               size="sm"
-              variant="outline"
-              className="flex-1 h-8 text-xs border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/50"
+              variant="ghost"
+              onClick={onLocalizeMaxDose}
+              disabled={!selectedDoseSeriesId || !onLocalizeMaxDose}
+              className="flex-1 h-8 text-xs rounded-lg text-zinc-200 hover:bg-zinc-500/20 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               title="Localize maximum dose point"
             >
               <Target className="w-3.5 h-3.5 mr-1.5" />
@@ -584,9 +592,11 @@ export function DoseControlPanel({
             </Button>
             <Button
               size="sm"
-              variant="outline"
-              className="flex-1 h-8 text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50"
-              title="BED Calculator"
+              variant="ghost"
+              onClick={onOpenBEDCalculator}
+              disabled={!onOpenBEDCalculator}
+              className="flex-1 h-8 text-xs rounded-lg text-zinc-200 hover:bg-zinc-500/20 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title="BED / EQD2 Calculator"
             >
               <Calculator className="w-3.5 h-3.5 mr-1.5" />
               BED

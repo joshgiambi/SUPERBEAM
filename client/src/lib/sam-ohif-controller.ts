@@ -135,11 +135,15 @@ class SAMOhifController {
     imageData: SAMImageData,
     cacheKey?: string
   ): Promise<SAMPredictionResult> {
+    console.log('🔬 SAM Controller: clickToSegment called', { clickPoint, cacheKey, width: imageData.width, height: imageData.height });
+    
     if (!samStandalone.isReady()) {
+      console.log('🔬 SAM Controller: SAM not ready, initializing...');
       await this.initialize();
     }
 
-    console.log('🤖 SAM: Click-to-segment at', clickPoint);
+    console.log('🔬 SAM Controller: Click-to-segment at', clickPoint);
+    console.log('🔬 SAM Controller: Pixel data type:', imageData.pixels?.constructor?.name, 'length:', imageData.pixels?.length);
 
     const standaloneImage: StandaloneSAMImageData = {
       pixels: imageData.pixels,
@@ -151,19 +155,30 @@ class SAMOhifController {
       rescaleIntercept: imageData.rescaleIntercept,
     };
 
-    const result = await samStandalone.clickToSegment(
-      clickPoint,
-      standaloneImage,
-      cacheKey
-    );
+    try {
+      console.log('🔬 SAM Controller: Calling samStandalone.clickToSegment...');
+      const result = await samStandalone.clickToSegment(
+        clickPoint,
+        standaloneImage,
+        cacheKey
+      );
+      console.log('🔬 SAM Controller: clickToSegment returned', { 
+        contourPoints: result.contour?.length, 
+        confidence: result.confidence 
+      });
 
-    return {
-      contour: result.contour,
-      mask: result.mask,
-      confidence: result.confidence,
-      width: result.width,
-      height: result.height,
-    };
+      return {
+        contour: result.contour,
+        mask: result.mask,
+        confidence: result.confidence,
+        width: result.width,
+        height: result.height,
+      };
+    } catch (error: any) {
+      console.error('🔬 SAM Controller: clickToSegment FAILED:', error);
+      console.error('🔬 SAM Controller: Error stack:', error?.stack);
+      throw error;
+    }
   }
 
   /**

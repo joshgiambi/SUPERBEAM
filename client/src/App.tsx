@@ -12,6 +12,7 @@ import SuperStyle from "@/pages/superstyle";
 import SeriesPreview from "@/pages/series-preview";
 import FuseBox from "@/pages/fusebox";
 import DVHViewerPage from "@/pages/dvh-viewer-page";
+import BEDCalculatorPage from "@/pages/bed-calculator-page";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/superstyle" component={SuperStyle} />
       <Route path="/fusebox" component={FuseBox} />
       <Route path="/dvh-viewer" component={DVHViewerPage} />
+      <Route path="/bed-calculator" component={BEDCalculatorPage} />
       <Route component={NotFound} />
     </Switch>
   );

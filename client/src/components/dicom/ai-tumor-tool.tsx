@@ -1,20 +1,20 @@
 /**
- * AI Tumor Tool - Single-Click Brain Metastasis Segmentation
+ * AI Tumor Tool - Single-Click Segmentation using SAM (Segment Anything Model)
  *
- * This tool uses a U-Net model trained on T2 FLAIR MRI for brain metastases.
- * User clicks once on the tumor, and the AI propagates through 3D volume.
+ * This tool uses Meta's SAM model running on the server (Python).
+ * User clicks once on the target structure, and SAM segments it on the current slice.
  * 
  * Workflow:
- * 1. User clicks on fused MRI view
- * 2. Extract MRI volume data
- * 3. Run U-Net segmentation on MRI
- * 4. Transform contours from MRI space to CT space using registration matrix
- * 5. Create contours on the CT series
+ * 1. User clicks on the target structure
+ * 2. Server-side SAM processes the image with the click point
+ * 3. SAM returns contour points for the segmented region
+ * 4. Contour is converted to world coordinates and added to the structure
+ * 
+ * Note: This is 2D single-slice segmentation. For multi-slice, use slice propagation.
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { supersegClient } from '@/lib/superseg-client';
-import { samOhifController } from '@/lib/sam-ohif-controller';
+import { samServerClient } from '@/lib/sam-server-client';
 import { log } from '@/lib/log';
 import { Button } from '@/components/ui/button';
 import { Sparkles, X, Loader2, MousePointer2 } from 'lucide-react';
@@ -328,8 +328,14 @@ interface AITumorToolProps {
   onSegmentTrigger?: () => void; // External trigger for Generate button
   onClearTrigger?: () => void; // External trigger for Clear button
   
-  // SAM mode: use SAM for single-slice 2D segmentation instead of 3D SuperSeg
+  // Callback to report click point for parent to render marker
+  onClickPointChange?: (point: { canvasX: number; canvasY: number; sliceIndex: number; isProcessing: boolean } | null) => void;
+  
+  // Legacy prop - SAM is now always used (SuperSeg 3D removed)
   useSAM?: boolean;
+  
+  // 3D mode - when true, click will propagate through all slices using centroid tracking
+  use3DMode?: boolean;
 }
 
 export function AITumorTool({
@@ -350,14 +356,16 @@ export function AITumorTool({
   smoothOutput = false,
   onSegmentTrigger,
   onClearTrigger,
-  useSAM = false,
+  onClickPointChange,
+  useSAM = true, // Always default to SAM (browser-based, universal)
+  use3DMode = false, // When true, auto-propagate through all slices
 }: AITumorToolProps) {
   
-  // Debug log
-  console.log('🧠 AITumorTool render, useSAM prop:', useSAM);
+  // Always use SAM - SuperSeg 3D has been removed (only worked on brain MRI FLAIR)
+  const effectiveUseSAM = true;
+  console.log('🧠 AITumorTool render, using SAM (browser-based)');
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [serviceAvailable, setServiceAvailable] = useState<boolean | null>(null);
   const [clickPoint, setClickPoint] = useState<{
     x: number;
     y: number;
@@ -370,36 +378,58 @@ export function AITumorTool({
   } | null>(null);
   const { toast } = useToast();
   
-  // Store handleSegment and handleClear in refs so they can be accessed in event listeners
+  // Store handlers in refs so they can be accessed in event listeners
   const handleSegmentRef = useRef<(() => Promise<void>) | null>(null);
+  const handleSegment3DRef = useRef<(() => Promise<void>) | null>(null);
   const handleClearRef = useRef<(() => void) | null>(null);
 
-  // Check service availability when tool is activated
+  // SAM initialization check - SAM runs in browser, no server needed
   useEffect(() => {
-    if (isActive && serviceAvailable === null) {
-      checkServiceHealth();
+    if (isActive) {
+      // Pre-check if SAM can be initialized (optional - it will init on first use)
+      console.log('🧠 AITumorTool activated - SAM will initialize on first segment');
     }
   }, [isActive]);
 
-  const checkServiceHealth = async () => {
-    try {
-      await supersegClient.checkHealth();
-      setServiceAvailable(true);
-      log.info('[ai-tumor] SuperSeg service is available');
-    } catch (error) {
-      setServiceAvailable(false);
-      log.error('[ai-tumor] SuperSeg service is not available', error);
-      toast({
-        title: 'AI Service Unavailable',
-        description: 'SuperSeg service is not running. Please start it first.',
-        variant: 'destructive',
-      });
+  // Report click point changes to parent for rendering the marker
+  useEffect(() => {
+    if (onClickPointChange) {
+      if (clickPoint && clickPoint.canvasX !== undefined && clickPoint.canvasY !== undefined) {
+        onClickPointChange({
+          canvasX: clickPoint.canvasX,
+          canvasY: clickPoint.canvasY,
+          sliceIndex: clickPoint.sliceIndex,
+          isProcessing,
+        });
+      } else {
+        onClickPointChange(null);
+      }
     }
-  };
+  }, [clickPoint, isProcessing, onClickPointChange]);
+  
+  // Report click point changes to parent for rendering the marker
+  useEffect(() => {
+    if (onClickPointChange) {
+      if (clickPoint && clickPoint.canvasX !== undefined && clickPoint.canvasY !== undefined) {
+        onClickPointChange({
+          canvasX: clickPoint.canvasX,
+          canvasY: clickPoint.canvasY,
+          sliceIndex: clickPoint.sliceIndex,
+          isProcessing
+        });
+      } else {
+        onClickPointChange(null);
+      }
+    }
+  }, [clickPoint, isProcessing, onClickPointChange]);
 
   // Handle canvas click
   const handleCanvasClick = useCallback((event: MouseEvent) => {
-    if (!isActive || !canvasRef.current || isProcessing) return;
+    console.log('🧠 AITumorTool: handleCanvasClick fired!', { isActive, hasCanvas: !!canvasRef.current, isProcessing });
+    if (!isActive || !canvasRef.current || isProcessing) {
+      console.log('🧠 AITumorTool: Click ignored - isActive:', isActive, 'hasCanvas:', !!canvasRef.current, 'isProcessing:', isProcessing);
+      return;
+    }
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -455,14 +485,44 @@ export function AITumorTool({
     // Visual feedback - draw click marker
     drawClickMarker(canvasX, canvasY);
 
-    // Show toast confirmation
-    toast({
-      title: 'Click Registered',
-      description: `Point: (${worldX.toFixed(1)}, ${worldY.toFixed(1)}, ${currentSlicePosition.toFixed(1)})`,
-      duration: 2000,
-    });
-
   }, [isActive, canvasRef, isProcessing, canvasToWorld, currentSlicePosition, currentIndex, imageMetadata, toast]);
+
+  // AUTO-SEGMENT: When a click point is registered, automatically run SAM (OHIF-style single-click)
+  // Use a ref to track if we've already triggered segmentation for this click
+  const lastClickIdRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    // Create a unique ID for this click point
+    const clickId = clickPoint ? `${clickPoint.x}-${clickPoint.y}` : null;
+    
+    // Skip if no click, no structure, already processing, or already triggered for this click
+    if (!clickPoint || !selectedStructure || isProcessing || clickId === lastClickIdRef.current) {
+      return;
+    }
+    
+    // Mark this click as being processed
+    lastClickIdRef.current = clickId;
+    
+    const mode = use3DMode ? '3D propagation' : '2D single slice';
+    console.log(`🧠 AITumorTool: Auto-triggering SAM ${mode} after click`);
+    toast({
+      title: use3DMode ? '3D Segmentation Starting...' : 'Segmenting...',
+      description: use3DMode ? 'SAM will propagate through all slices' : 'SAM is analyzing the click point',
+      duration: 3000,
+    });
+    
+    // Call the appropriate handler based on 3D mode
+    // Use a small timeout to ensure all state is settled
+    const timeoutId = setTimeout(() => {
+      if (use3DMode && handleSegment3DRef.current) {
+        handleSegment3DRef.current();
+      } else if (handleSegmentRef.current) {
+        handleSegmentRef.current();
+      }
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [clickPoint, selectedStructure, isProcessing, toast, use3DMode]);
 
   // Draw click marker on canvas
   const drawClickMarker = (canvasX: number, canvasY: number) => {
@@ -515,6 +575,14 @@ export function AITumorTool({
       }
     };
     
+    const handleSegment3DEvent = () => {
+      console.log('🧠 AITumorTool: Received ai-tumor-segment-3d event');
+      if (handleSegment3DRef.current) {
+        console.log('🧠 AITumorTool: Calling handleSAMSegment3D');
+        handleSegment3DRef.current();
+      }
+    };
+    
     const handleClearEvent = () => {
       console.log('🧠 AITumorTool: Received ai-tumor-clear event');
       if (handleClearRef.current) {
@@ -524,6 +592,7 @@ export function AITumorTool({
 
     canvas.addEventListener('click', handleCanvasClick);
     canvas.addEventListener('ai-tumor-segment', handleSegmentEvent);
+    canvas.addEventListener('ai-tumor-segment-3d', handleSegment3DEvent);
     canvas.addEventListener('ai-tumor-clear', handleClearEvent);
     
     console.log('🧠 AITumorTool: Event listeners attached successfully');
@@ -532,13 +601,249 @@ export function AITumorTool({
       console.log('🧠 AITumorTool: Removing event listeners');
       canvas.removeEventListener('click', handleCanvasClick);
       canvas.removeEventListener('ai-tumor-segment', handleSegmentEvent);
+      canvas.removeEventListener('ai-tumor-segment-3d', handleSegment3DEvent);
       canvas.removeEventListener('ai-tumor-clear', handleClearEvent);
     };
   }, [isActive, canvasRef, handleCanvasClick]);
 
-  // SAM-based 2D single-slice segmentation
+  // SAM-based 2D single-slice segmentation (SERVER-SIDE)
   const handleSAMSegment = async () => {
-    if (!clickPoint || !selectedStructure || !imageMetadata) {
+    if (!clickPoint || !selectedStructure) {
+      toast({
+        title: 'Cannot Segment',
+        description: 'Please select a structure and click on the target',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Note: imageMetadata may be null - we'll try to get it from other sources
+
+    setIsProcessing(true);
+
+    try {
+      log.info('[ai-tumor] 🔬 Starting SAM segmentation (server-side)...');
+      
+      // Get current image pixel data
+      const currentImage = dicomImages?.[currentIndex];
+      if (!currentImage) {
+        throw new Error('No current image available');
+      }
+
+      // Get pixel data from cache
+      const cacheKey = currentImage.sopInstanceUID || currentImage.SOPInstanceUID || currentImage.id || `image_${currentIndex}`;
+      const cachedData = imageCacheRef.current?.get(cacheKey);
+      
+      console.log('🔬 SAM: Looking for cached data with key:', cacheKey);
+      console.log('🔬 SAM: Cache has', imageCacheRef.current?.size, 'entries');
+      console.log('🔬 SAM: Cached data found:', !!cachedData, 'has data:', !!(cachedData?.data));
+      
+      if (!cachedData?.data) {
+        throw new Error(`No pixel data available for current slice. Cache key: ${cacheKey}. Make sure the image has loaded.`);
+      }
+
+      const width = currentImage.columns || currentImage.width || 512;
+      const height = currentImage.rows || currentImage.height || 512;
+      console.log('🔬 SAM: Image dimensions:', width, 'x', height);
+
+      // Convert click point to pixel coordinates
+      const pixelX = Math.round(clickPoint.pixelX ?? width / 2);
+      const pixelY = Math.round(clickPoint.pixelY ?? height / 2);
+      console.log('🔬 SAM: Click at pixel coordinates:', pixelX, pixelY);
+
+      // Convert 1D pixel data to 2D array for server
+      const image2D: number[][] = [];
+      for (let y = 0; y < height; y++) {
+        const row: number[] = [];
+        for (let x = 0; x < width; x++) {
+          const idx = y * width + x;
+          row.push(cachedData.data[idx] || 0);
+        }
+        image2D.push(row);
+      }
+      
+      console.log('🔬 SAM: Converted to 2D image, shape:', image2D.length, 'x', image2D[0]?.length);
+      console.log('🔬 SAM: Sample values at click:', image2D[pixelY]?.[pixelX]);
+
+      // Check server health first
+      try {
+        await samServerClient.checkHealth();
+        console.log('🔬 SAM: Server is healthy');
+      } catch (healthError: any) {
+        throw new Error(`SAM server not available. Start it with: ./server/sam/start-service.sh\n\nError: ${healthError.message}`);
+      }
+
+      // Call server-side SAM
+      console.log('🔬 SAM: Calling server segment2D...');
+      toast({
+        title: 'Segmenting...',
+        description: 'SAM is processing the click point',
+      });
+      
+      const result = await samServerClient.segment2D({
+        image: image2D,
+        click_point: [pixelY, pixelX],  // Server expects [y, x]
+        window_center: currentImage.windowCenter,
+        window_width: currentImage.windowWidth,
+      });
+
+      console.log('🔬 SAM: Server returned:', result ? `contour with ${result.contour?.length} points` : 'null');
+      
+      if (!result.contour || result.contour.length < 3) {
+        throw new Error('SAM did not produce a valid contour');
+      }
+
+      log.info(`[ai-tumor] SAM produced ${result.contour.length} points with confidence ${result.confidence.toFixed(3)}`);
+
+      // Convert pixel contour to world coordinates
+      // Server returns contour as [[x, y], [x, y], ...]
+      const worldContour: number[] = [];
+      
+      // Try to get metadata from multiple sources
+      const metadataSources = [
+        imageMetadata,
+        currentImage,
+        currentImage?.metadata,
+        cachedData,
+        cachedData?.metadata,
+      ].filter(Boolean);
+      
+      console.log('🔬 SAM: Looking for image metadata from', metadataSources.length, 'sources');
+      console.log('🔬 SAM: currentImage keys:', currentImage ? Object.keys(currentImage).slice(0, 20) : 'null');
+      console.log('🔬 SAM: cachedData keys:', cachedData ? Object.keys(cachedData).slice(0, 20) : 'null');
+      
+      let imagePosition: number[] | null = null;
+      let orientation: { rowDir: number[]; colDir: number[]; normal: number[] } | null = null;
+      let spacing: [number, number] | null = null;
+      
+      for (const source of metadataSources) {
+        if (!imagePosition) {
+          imagePosition = parseDICOMVector(source.imagePositionPatient, 3) 
+            || parseDICOMVector(source.imagePosition, 3)
+            || parseDICOMVector(source.ImagePositionPatient, 3);
+          if (imagePosition) console.log('🔬 SAM: Found imagePosition from source:', imagePosition);
+        }
+        if (!orientation) {
+          orientation = getOrientationVectors(source);
+          if (orientation) console.log('🔬 SAM: Found orientation from source');
+        }
+        if (!spacing) {
+          spacing = getPixelSpacingFromImage(source);
+          if (spacing) console.log('🔬 SAM: Found spacing from source:', spacing);
+        }
+        if (imagePosition && orientation && spacing) break;
+      }
+      
+      console.log('🔬 SAM: Final metadata - position:', imagePosition, 'orientation:', !!orientation, 'spacing:', spacing);
+
+      if (!imagePosition || !orientation || !spacing) {
+        // Fallback: try to compute position from the click point we already have
+        // The clickPoint has world coordinates (x, y) that we can use as reference
+        console.warn('🔬 SAM: Missing metadata, using click point as reference');
+        
+        // Get estimated pixel spacing - typical CT is ~0.5-1mm per pixel
+        const estimatedSpacing = spacing?.[0] || spacing?.[1] || 1.0;
+        
+        // Use click point world coordinates as anchor, then offset based on pixel distance
+        const clickPixelX = clickPoint.pixelX ?? width / 2;
+        const clickPixelY = clickPoint.pixelY ?? height / 2;
+        const clickWorldX = clickPoint.x;
+        const clickWorldY = clickPoint.y;
+        
+        console.log('🔬 SAM: Using click as anchor - pixel:', clickPixelX, clickPixelY, 'world:', clickWorldX, clickWorldY);
+        
+        for (const [x, y] of result.contour) {
+          // Calculate offset from click point in pixels, then apply spacing
+          const deltaPixelX = x - clickPixelX;
+          const deltaPixelY = y - clickPixelY;
+          
+          // Convert pixel offset to world offset
+          const worldX = clickWorldX + deltaPixelX * estimatedSpacing;
+          const worldY = clickWorldY + deltaPixelY * estimatedSpacing;
+          worldContour.push(worldX, worldY, currentSlicePosition);
+        }
+        
+        console.log('🔬 SAM: Generated', worldContour.length / 3, 'world points using click anchor');
+        console.log('🔬 SAM: First contour point:', worldContour[0], worldContour[1], worldContour[2]);
+      } else {
+        for (const [x, y] of result.contour) {
+          // DICOM pixel-to-world transform
+          const worldX = imagePosition[0] 
+            + orientation.rowDir[0] * spacing[1] * x
+            + orientation.colDir[0] * spacing[0] * y;
+          const worldY = imagePosition[1]
+            + orientation.rowDir[1] * spacing[1] * x
+            + orientation.colDir[1] * spacing[0] * y;
+          worldContour.push(worldX, worldY, currentSlicePosition);
+        }
+        console.log('🔬 SAM: Generated', worldContour.length / 3, 'world points using DICOM transform');
+        console.log('🔬 SAM: First contour point:', worldContour[0], worldContour[1], worldContour[2]);
+      }
+
+      // Optionally smooth the contour
+      let finalContour = worldContour;
+      if (smoothOutput && worldContour.length >= 9) {
+        try {
+          const smoothed = smoothContour(worldContour, 2);
+          if (smoothed && smoothed.length >= 9) {
+            finalContour = smoothed;
+            log.info(`[ai-tumor] Smoothed contour: ${worldContour.length / 3} -> ${smoothed.length / 3} points`);
+          }
+        } catch (e) {
+          log.warn('[ai-tumor] Smoothing failed, using original contour');
+        }
+      }
+
+      // Create contour update
+      if (onContourUpdate && finalContour.length >= 9) {
+        const contourPayload = {
+          roiNumber: selectedStructure.roiNumber,
+          structureName: selectedStructure.structureName,
+          color: selectedStructure.color,
+          contour: {
+            slicePosition: currentSlicePosition,
+            points: finalContour,
+          },
+        };
+        
+        console.log('🔬 SAM: Sending contour update:', {
+          roiNumber: contourPayload.roiNumber,
+          structureName: contourPayload.structureName,
+          slicePosition: contourPayload.contour.slicePosition,
+          numPoints: finalContour.length / 3,
+          firstPoint: [finalContour[0], finalContour[1], finalContour[2]],
+          lastPoint: [finalContour[finalContour.length - 3], finalContour[finalContour.length - 2], finalContour[finalContour.length - 1]],
+        });
+        
+        onContourUpdate(contourPayload);
+
+        toast({
+          title: 'SAM Segmentation Complete',
+          description: `Generated contour with ${result.contour.length} points (${(result.confidence * 100).toFixed(0)}% confidence)`,
+        });
+      } else {
+        toast({
+          title: 'No Contour Generated',
+          description: 'SAM could not find a valid region at that location',
+          variant: 'destructive',
+        });
+      }
+
+    } catch (error: any) {
+      console.error('[ai-tumor] 🔬 SAM segmentation failed:', error);
+      toast({
+        title: 'SAM Segmentation Failed',
+        description: error.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // SAM 3D segmentation with centroid-tracking propagation
+  const handleSAMSegment3D = async () => {
+    if (!clickPoint || !selectedStructure) {
       toast({
         title: 'Cannot Segment',
         description: 'Please select a structure and click on the target',
@@ -550,94 +855,283 @@ export function AITumorTool({
     setIsProcessing(true);
 
     try {
-      log.info('[ai-tumor] 🤖 Starting SAM segmentation (browser-based)...');
+      log.info('[ai-tumor] 🔬 Starting SAM 3D propagation with centroid tracking...');
       
-      // Initialize SAM if needed
-      if (!samOhifController.isReady()) {
-        toast({
-          title: 'Loading SAM Model',
-          description: 'Downloading ~200MB model (first time only)...',
-        });
-        await samOhifController.initialize();
+      // Check server health first
+      try {
+        await samServerClient.checkHealth();
+      } catch (healthError: any) {
+        throw new Error(`SAM server not available. Start with: ./start-superseg.sh`);
       }
       
-      // Get current image pixel data
-      const currentImage = dicomImages?.[currentIndex];
-      if (!currentImage) {
-        throw new Error('No current image available');
-      }
-
-      // Get pixel data from cache
-      const cacheKey = currentImage.id || currentImage.sopInstanceUID || `image_${currentIndex}`;
-      const cachedData = imageCacheRef.current?.get(cacheKey);
+      // Sort images by slice position
+      const sortedImages = [...dicomImages].sort((a, b) => {
+        const posA = getSlicePositionFromImage(a);
+        const posB = getSlicePositionFromImage(b);
+        if (posA != null && posB != null) return posA - posB;
+        return (a.instanceNumber || 0) - (b.instanceNumber || 0);
+      });
       
-      if (!cachedData?.pixelData) {
-        throw new Error('No pixel data available for current slice');
-      }
-
-      const width = currentImage.columns || currentImage.width || 512;
-      const height = currentImage.rows || currentImage.height || 512;
-
-      // Convert click point to pixel coordinates
-      const pixelX = clickPoint.pixelX ?? width / 2;
-      const pixelY = clickPoint.pixelY ?? height / 2;
-
-      log.info(`[ai-tumor] SAM click at pixel (${pixelX}, ${pixelY})`);
-
-      // Call SAM clickToSegment (browser-based via ONNX)
-      const result = await samOhifController.clickToSegment(
-        { x: pixelX, y: pixelY },
-        { pixels: cachedData.pixelData, width, height },
-        `slice_${currentIndex}` // Cache key for this slice
-      );
-
-      if (result.contour.length < 3) {
-        throw new Error('SAM did not produce a valid contour');
-      }
-
-      log.info(`[ai-tumor] SAM produced ${result.contour.length} points with confidence ${result.confidence.toFixed(3)}`);
-
-      // Convert pixel contour to world coordinates
-      const worldContour: number[] = [];
-      for (const point of result.contour) {
-        // Use the pixelToWorld from imageMetadata or calculate from image properties
-        const imagePosition = parseDICOMVector(imageMetadata.imagePositionPatient, 3);
-        const orientation = getOrientationVectors(imageMetadata);
-        const spacing = getPixelSpacingFromImage(imageMetadata);
-
-        if (imagePosition && orientation && spacing) {
-          const worldX = imagePosition[0] 
-            + orientation.rowDir[0] * spacing[1] * point.x
-            + orientation.colDir[0] * spacing[0] * point.y;
-          const worldY = imagePosition[1]
-            + orientation.rowDir[1] * spacing[1] * point.x
-            + orientation.colDir[1] * spacing[0] * point.y;
-          worldContour.push(worldX, worldY, currentSlicePosition);
+      const startSliceIdx = clickPoint.sliceIndex ?? currentIndex;
+      const totalSlices = sortedImages.length;
+      
+      console.log('🔬 SAM 3D: Starting from slice', startSliceIdx, 'of', totalSlices);
+      
+      toast({
+        title: 'SAM 3D Propagation',
+        description: 'Segmenting starting slice...',
+      });
+      
+      // Helper to segment a single slice and return centroid + contour
+      const segmentSlice = async (sliceIdx: number, clickY: number, clickX: number): Promise<{
+        contour: [number, number][];
+        centroidX: number;
+        centroidY: number;
+        area: number;
+        confidence: number;
+      } | null> => {
+        const img = sortedImages[sliceIdx];
+        if (!img) return null;
+        
+        const cacheKey = img.sopInstanceUID || img.SOPInstanceUID || img.id;
+        const cachedData = imageCacheRef.current?.get(cacheKey);
+        
+        if (!cachedData?.data) {
+          console.log('🔬 SAM 3D: No cached data for slice', sliceIdx);
+          return null;
         }
+        
+        const width = img.columns || img.width || 512;
+        const height = img.rows || img.height || 512;
+        
+        // Convert to 2D array
+        const image2D: number[][] = [];
+        for (let y = 0; y < height; y++) {
+          const row: number[] = [];
+          for (let x = 0; x < width; x++) {
+            row.push(cachedData.data[y * width + x] || 0);
+          }
+          image2D.push(row);
+        }
+        
+        try {
+          const result = await samServerClient.segment2D({
+            image: image2D,
+            click_point: [Math.round(clickY), Math.round(clickX)],
+            window_center: img.windowCenter,
+            window_width: img.windowWidth,
+          });
+          
+          if (!result.contour || result.contour.length < 3) {
+            return null;
+          }
+          
+          // Calculate centroid and area from contour
+          let sumX = 0, sumY = 0;
+          for (const [x, y] of result.contour) {
+            sumX += x;
+            sumY += y;
+          }
+          const centroidX = sumX / result.contour.length;
+          const centroidY = sumY / result.contour.length;
+          
+          return {
+            contour: result.contour,
+            centroidX,
+            centroidY,
+            area: result.num_pixels,
+            confidence: result.confidence,
+          };
+        } catch (e) {
+          console.error('🔬 SAM 3D: Segment failed for slice', sliceIdx, e);
+          return null;
+        }
+      };
+      
+      // Convert pixel contour to world coordinates for a specific slice
+      const contourToWorld = (contour: [number, number][], sliceIdx: number): number[] => {
+        const img = sortedImages[sliceIdx];
+        const slicePosition = getSlicePositionFromImage(img) ?? sliceIdx;
+        
+        const imgPosition = parseDICOMVector(img?.imagePositionPatient || img?.imagePosition, 3);
+        const imgOrientation = getOrientationVectors(img);
+        const imgSpacing = getPixelSpacingFromImage(img);
+        
+        const worldContour: number[] = [];
+        
+        if (imgPosition && imgOrientation && imgSpacing) {
+          for (const [x, y] of contour) {
+            const worldX = imgPosition[0] 
+              + imgOrientation.rowDir[0] * imgSpacing[1] * x
+              + imgOrientation.colDir[0] * imgSpacing[0] * y;
+            const worldY = imgPosition[1]
+              + imgOrientation.rowDir[1] * imgSpacing[1] * x
+              + imgOrientation.colDir[1] * imgSpacing[0] * y;
+            worldContour.push(worldX, worldY, slicePosition);
+          }
+        } else {
+          // Fallback
+          const clickPixelX = clickPoint.pixelX ?? 256;
+          const clickPixelY = clickPoint.pixelY ?? 256;
+          for (const [x, y] of contour) {
+            const worldX = clickPoint.x + (x - clickPixelX);
+            const worldY = clickPoint.y + (y - clickPixelY);
+            worldContour.push(worldX, worldY, slicePosition);
+          }
+        }
+        
+        return worldContour;
+      };
+      
+      // Stopping criteria
+      const MIN_CONFIDENCE = 0.5;  // Stop if confidence drops below 50%
+      const MIN_AREA_RATIO = 0.1;  // Stop if area becomes < 10% of initial
+      const MAX_SLICES_PER_DIRECTION = 3;  // Limit to 3 slices up + 3 down = 7 total with start
+      
+      const contoursAdded: { sliceIdx: number; numPoints: number }[] = [];
+      
+      // 1. Segment the starting slice
+      const pixelX = Math.round(clickPoint.pixelX ?? 256);
+      const pixelY = Math.round(clickPoint.pixelY ?? 256);
+      
+      const startResult = await segmentSlice(startSliceIdx, pixelY, pixelX);
+      
+      if (!startResult) {
+        throw new Error('Failed to segment starting slice');
       }
-
-      // Create contour update
-      if (onContourUpdate && worldContour.length >= 9) {
+      
+      const initialArea = startResult.area;
+      console.log('🔬 SAM 3D: Start slice result - area:', initialArea, 'confidence:', startResult.confidence);
+      
+      // Add starting slice contour
+      const startWorldContour = contourToWorld(startResult.contour, startSliceIdx);
+      if (startWorldContour.length >= 9 && onContourUpdate) {
+        const slicePosition = getSlicePositionFromImage(sortedImages[startSliceIdx]) ?? startSliceIdx;
         onContourUpdate({
           roiNumber: selectedStructure.roiNumber,
           structureName: selectedStructure.structureName,
           color: selectedStructure.color,
-          contour: {
-            slicePosition: currentSlicePosition,
-            points: worldContour,
-          },
+          contour: { slicePosition, points: startWorldContour },
         });
-
-        toast({
-          title: 'SAM Segmentation Complete',
-          description: `Generated contour with ${result.contour.length} points (${(result.confidence * 100).toFixed(0)}% confidence)`,
-        });
+        contoursAdded.push({ sliceIdx: startSliceIdx, numPoints: startResult.contour.length });
       }
-
-    } catch (error: any) {
-      console.error('[ai-tumor] SAM segmentation failed:', error);
+      
+      // Function to propagate UPWARD (increasing slice index)
+      const propagateUp = async (): Promise<number> => {
+        let currentCentroidX = startResult.centroidX;
+        let currentCentroidY = startResult.centroidY;
+        let slicesProcessed = 0;
+        
+        console.log('🔬 SAM 3D: Starting upward propagation from slice', startSliceIdx + 1);
+        
+        for (let sliceIdx = startSliceIdx + 1; sliceIdx < totalSlices && slicesProcessed < MAX_SLICES_PER_DIRECTION; sliceIdx++) {
+          const result = await segmentSlice(sliceIdx, currentCentroidY, currentCentroidX);
+          
+          if (!result) {
+            console.log('🔬 SAM 3D: ↑ Stopping - no result at slice', sliceIdx);
+            break;
+          }
+          
+          if (result.confidence < MIN_CONFIDENCE) {
+            console.log('🔬 SAM 3D: ↑ Stopping - low confidence', result.confidence.toFixed(2), 'at slice', sliceIdx);
+            break;
+          }
+          
+          if (result.area < initialArea * MIN_AREA_RATIO) {
+            console.log('🔬 SAM 3D: ↑ Stopping - area too small at slice', sliceIdx);
+            break;
+          }
+          
+          // Add contour
+          const worldContour = contourToWorld(result.contour, sliceIdx);
+          if (worldContour.length >= 9 && onContourUpdate) {
+            const slicePosition = getSlicePositionFromImage(sortedImages[sliceIdx]) ?? sliceIdx;
+            onContourUpdate({
+              roiNumber: selectedStructure.roiNumber,
+              structureName: selectedStructure.structureName,
+              color: selectedStructure.color,
+              contour: { slicePosition, points: worldContour },
+            });
+            contoursAdded.push({ sliceIdx, numPoints: result.contour.length });
+          }
+          
+          currentCentroidX = result.centroidX;
+          currentCentroidY = result.centroidY;
+          slicesProcessed++;
+        }
+        
+        console.log('🔬 SAM 3D: ↑ Completed', slicesProcessed, 'slices upward');
+        return slicesProcessed;
+      };
+      
+      // Function to propagate DOWNWARD (decreasing slice index)
+      const propagateDown = async (): Promise<number> => {
+        let currentCentroidX = startResult.centroidX;
+        let currentCentroidY = startResult.centroidY;
+        let slicesProcessed = 0;
+        
+        console.log('🔬 SAM 3D: Starting downward propagation from slice', startSliceIdx - 1);
+        
+        for (let sliceIdx = startSliceIdx - 1; sliceIdx >= 0 && slicesProcessed < MAX_SLICES_PER_DIRECTION; sliceIdx--) {
+          const result = await segmentSlice(sliceIdx, currentCentroidY, currentCentroidX);
+          
+          if (!result) {
+            console.log('🔬 SAM 3D: ↓ Stopping - no result at slice', sliceIdx);
+            break;
+          }
+          
+          if (result.confidence < MIN_CONFIDENCE) {
+            console.log('🔬 SAM 3D: ↓ Stopping - low confidence', result.confidence.toFixed(2), 'at slice', sliceIdx);
+            break;
+          }
+          
+          if (result.area < initialArea * MIN_AREA_RATIO) {
+            console.log('🔬 SAM 3D: ↓ Stopping - area too small at slice', sliceIdx);
+            break;
+          }
+          
+          // Add contour
+          const worldContour = contourToWorld(result.contour, sliceIdx);
+          if (worldContour.length >= 9 && onContourUpdate) {
+            const slicePosition = getSlicePositionFromImage(sortedImages[sliceIdx]) ?? sliceIdx;
+            onContourUpdate({
+              roiNumber: selectedStructure.roiNumber,
+              structureName: selectedStructure.structureName,
+              color: selectedStructure.color,
+              contour: { slicePosition, points: worldContour },
+            });
+            contoursAdded.push({ sliceIdx, numPoints: result.contour.length });
+          }
+          
+          currentCentroidX = result.centroidX;
+          currentCentroidY = result.centroidY;
+          slicesProcessed++;
+        }
+        
+        console.log('🔬 SAM 3D: ↓ Completed', slicesProcessed, 'slices downward');
+        return slicesProcessed;
+      };
+      
+      // Run BOTH directions in PARALLEL!
+      console.log('🔬 SAM 3D: Starting parallel propagation (up + down simultaneously)');
       toast({
-        title: 'SAM Segmentation Failed',
+        title: 'SAM 3D Propagation',
+        description: 'Processing up and down simultaneously...',
+      });
+      
+      const [upCount, downCount] = await Promise.all([propagateUp(), propagateDown()]);
+      
+      console.log(`🔬 SAM 3D: Completed - ${upCount} up, ${downCount} down, ${contoursAdded.length} total contours`);
+      
+      toast({
+        title: 'SAM 3D Complete',
+        description: `Added contours to ${contoursAdded.length} slices`,
+      });
+      
+    } catch (error: any) {
+      console.error('[ai-tumor] 🔬 SAM 3D propagation failed:', error);
+      toast({
+        title: 'SAM 3D Failed',
         description: error.message || 'Unknown error',
         variant: 'destructive',
       });
@@ -646,324 +1140,19 @@ export function AITumorTool({
     }
   };
 
-  // Run segmentation (SuperSeg 3D or SAM 2D based on mode)
+  // Run segmentation - Uses SAM 2D by default, can be extended to 3D
   const handleSegment = async () => {
-    console.log('🧠 AITumorTool handleSegment called, useSAM:', useSAM);
+    console.log('🧠 AITumorTool handleSegment called - using SAM (server-side)');
     
-    // Use SAM for 2D single-slice segmentation if enabled
-    if (useSAM) {
-      console.log('🧠 Using SAM 2D mode');
-      return handleSAMSegment();
-    }
-
-    console.log('🧠 Using SuperSeg 3D mode');
-
-    if (!clickPoint || !selectedStructure || !imageMetadata) {
-      toast({
-        title: 'Cannot Segment',
-        description: 'Please select a structure and click on the tumor',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (serviceAvailable === false) {
-      toast({
-        title: 'Service Unavailable',
-        description: 'SuperSeg service is not running. Switch to 2D mode for client-side SAM.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      log.info('[ai-tumor] 🧠 Starting tumor segmentation...');
-      
-      // Determine which series to extract volume from
-      const isFusionMode = secondarySeriesId != null;
-      const volumeSeriesImages = isFusionMode 
-        ? await getSecondarySeriesImages(secondarySeriesId!)
-        : dicomImages;
-
-      if (!volumeSeriesImages || volumeSeriesImages.length === 0) {
-        throw new Error('No images available for segmentation');
-      }
-
-      log.info(`[ai-tumor] Extracting volume from ${volumeSeriesImages.length} images (fusion: ${isFusionMode})`);
-      
-      // Check modality - SuperSeg model was trained on T2-FLAIR MRI
-      const firstImage = volumeSeriesImages[0];
-      const modality = firstImage?.modality || firstImage?.metadata?.modality || 'UNKNOWN';
-      const seriesDescription = (firstImage?.seriesDescription || firstImage?.metadata?.seriesDescription || '').toLowerCase();
-      
-      console.log(`🧠 Image modality: ${modality}, series: "${seriesDescription}"`);
-      
-      if (modality !== 'MR') {
-        toast({
-          title: 'Warning: Not MRI',
-          description: `This model is trained on T2-FLAIR MRI. Current modality: ${modality}`,
-          variant: 'destructive',
-        });
-      }
-      
-      if (!seriesDescription.includes('flair') && !seriesDescription.includes('t2')) {
-        console.warn(`⚠️ Series "${seriesDescription}" may not be T2-FLAIR. Model performance may be poor.`);
-        toast({
-          title: 'Warning: May not be T2-FLAIR',
-          description: `Model expects T2-FLAIR MRI. Current series: ${seriesDescription || 'Unknown'}`,
-        });
-      }
-
-      // Extract 3D volume
-      const {
-        volume,
-        spacing,
-        dimensions,
-        sortedImages,
-      } = await extractVolumeData(volumeSeriesImages);
-
-      log.info(`[ai-tumor] Volume extracted: ${dimensions.width}x${dimensions.height}x${dimensions.depth}`);
-      log.info(`[ai-tumor] Spacing: ${spacing.join(', ')}`);
-
-      // Map click point to volume coordinates
-      const currentPrimaryImage = dicomImages?.[currentIndex] ?? null;
-      const currentSecondaryImage = null;
-
-      const volumeClickPoint = isFusionMode
-        ? mapClickToSecondaryVolume(clickPoint, sortedImages, dimensions, currentSecondaryImage)
-        : mapClickToPrimaryVolume(clickPoint, sortedImages, dimensions, currentPrimaryImage);
-
-      log.info(`[ai-tumor] Volume click point: ${volumeClickPoint.join(', ')}`);
-      console.log(`🧠 Sending to AI: click_point=[${volumeClickPoint.join(', ')}], volume_shape=[${dimensions.height}, ${dimensions.width}, ${dimensions.depth}]`);
-
-      // Sample pixel values AROUND the click point to verify data integrity
-      const [clickY, clickX, clickZ] = volumeClickPoint;
-      const sampleRadius = 5;
-      let clickMin = Infinity, clickMax = -Infinity, clickZeros = 0, clickTotal = 0;
-      for (let dy = -sampleRadius; dy <= sampleRadius; dy++) {
-        for (let dx = -sampleRadius; dx <= sampleRadius; dx++) {
-          const y = clickY + dy;
-          const x = clickX + dx;
-          if (y >= 0 && y < dimensions.height && x >= 0 && x < dimensions.width && clickZ >= 0 && clickZ < dimensions.depth) {
-            const val = volume[y]?.[x]?.[clickZ] ?? 0;
-            if (val === 0) clickZeros++;
-            if (val < clickMin) clickMin = val;
-            if (val > clickMax) clickMax = val;
-            clickTotal++;
-          }
-        }
-      }
-      console.log(`🧠 Pixel values at CLICK LOCATION (${clickY},${clickX},${clickZ}) ±${sampleRadius}: min=${clickMin}, max=${clickMax}, zeros=${clickZeros}/${clickTotal}`);
-      
-      // CRITICAL DEBUG: Check if the mapped coordinates actually point to the tumor
-      const clickPixelValue = volume[clickY]?.[clickX]?.[clickZ] ?? -999;
-      console.log(`🧠 ⚠️ COORDINATE VERIFICATION: volume[${clickY}][${clickX}][${clickZ}] = ${clickPixelValue}`);
-      console.log(`🧠   If this value is LOW (near 0) but you clicked on BRIGHT tumor, coordinates are WRONG!`);
-      console.log(`🧠   Tumor pixels should be HIGH values (>300 for MRI)`);
-      
-      if (clickMin === 0 && clickMax === 0) {
-        console.error(`🧠 CRITICAL: All pixels at click location are ZERO - you clicked on black background or data is wrong!`);
-      } else {
-        console.log(`🧠 ✅ Volume data looks valid at click location - sending to AI...`);
-      }
-
-      // Sample a few more locations to verify volume integrity
-      const midY = Math.floor(dimensions.height / 2);
-      const midX = Math.floor(dimensions.width / 2);
-      let centerMin = Infinity, centerMax = -Infinity;
-      for (let dy = -5; dy <= 5; dy++) {
-        for (let dx = -5; dx <= 5; dx++) {
-          const val = volume[midY + dy]?.[midX + dx]?.[clickZ] ?? 0;
-          if (val < centerMin) centerMin = val;
-          if (val > centerMax) centerMax = val;
-        }
-      }
-      console.log(`🧠 Volume at CENTER of slice ${clickZ}: min=${centerMin}, max=${centerMax}`);
-
-      // Call SuperSeg API
-      const result = await supersegClient.segment({
-        volume,
-        click_point: volumeClickPoint as [number, number, number],
-        spacing,
-        slice_axis: 'last', // Volume is (H, W, D)
-      });
-
-      // Validate result
-      if (!result || !result.mask) {
-        throw new Error('Invalid response from SuperSeg service - no mask returned');
-      }
-
-      log.info(`[ai-tumor] Segmentation complete: ${result.total_voxels} voxels, confidence ${result.confidence}`);
-      log.info(`[ai-tumor] Slices with tumor: ${result.slices_with_tumor?.join(', ')}`);
-      log.info(`[ai-tumor] Mask dimensions: ${result.mask?.length}x${result.mask?.[0]?.length}x${result.mask?.[0]?.[0]?.length}`);
-
-      // Find first non-zero voxel in returned mask to verify AI output
-      let firstY = -1, firstX = -1, firstZ = -1;
-      if (result.mask && Array.isArray(result.mask) && result.mask.length > 0) {
-        for (let y = 0; y < result.mask.length && firstY === -1; y++) {
-          if (result.mask[y] && Array.isArray(result.mask[y])) {
-            for (let x = 0; x < result.mask[y].length; x++) {
-              if (result.mask[y][x] && Array.isArray(result.mask[y][x])) {
-                for (let z = 0; z < result.mask[y][x].length; z++) {
-                  if (result.mask[y][x][z] > 0) {
-                    firstY = y; firstX = x; firstZ = z;
-                    break;
-                  }
-                }
-              }
-              if (firstY !== -1) break;
-            }
-          }
-        }
-      }
-      console.log(`🧠 AI returned mask - first non-zero voxel at (Y=${firstY}, X=${firstX}, Z=${firstZ})`);
-      console.log(`🧠 Volume center would be at (Y=${Math.floor(dimensions.height/2)}, X=${Math.floor(dimensions.width/2)}, Z=${Math.floor(dimensions.depth/2)})`);
-      console.log(`🧠 ⚠️ LOCATION CHECK: Click was at [${volumeClickPoint.join(', ')}], AI predicted at [${firstY}, ${firstX}, ${firstZ}]`);
-      
-      const clickDistY = Math.abs(firstY - volumeClickPoint[0]);
-      const clickDistX = Math.abs(firstX - volumeClickPoint[1]);
-      const clickDistZ = Math.abs(firstZ - volumeClickPoint[2]);
-      const totalDist = Math.sqrt(clickDistY*clickDistY + clickDistX*clickDistX + clickDistZ*clickDistZ);
-      
-      if (totalDist > 50) {
-        console.error(`🧠 ❌ MAJOR PROBLEM: Prediction is ${totalDist.toFixed(0)} pixels away from click! Expected near [${volumeClickPoint.join(', ')}]`);
-      } else {
-        console.log(`🧠 ✅ Prediction is ${totalDist.toFixed(0)} pixels from click - reasonable`);
-      }
-
-      if (result.total_voxels > 0) {
-        let minY = dimensions.height;
-        let maxY = 0;
-        let minX = dimensions.width;
-        let maxX = 0;
-        let minZ = dimensions.depth;
-        let maxZ = 0;
-
-        for (let z = 0; z < dimensions.depth; z++) {
-          for (let y = 0; y < dimensions.height; y++) {
-            for (let x = 0; x < dimensions.width; x++) {
-              if (result.mask[y]?.[x]?.[z]) {
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (z < minZ) minZ = z;
-                if (z > maxZ) maxZ = z;
-              }
-            }
-          }
-        }
-
-        log.info(`[ai-tumor] Mask bounding box: Y=[${minY}, ${maxY}], X=[${minX}, ${maxX}], Z=[${minZ}, ${maxZ}]`);
-        console.log(`🧠 Mask bounding box: Y=[${minY}, ${maxY}], X=[${minX}, ${maxX}], Z=[${minZ}, ${maxZ}]`);
-      }
-
-      if (result.total_voxels === 0) {
-        toast({
-          title: 'No Tumor Found',
-          description: 'No tumor detected at the clicked location',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Transpose mask from (H, W, D) to (D, H, W) format that handleApply3DMask expects
-      // IMPORTANT: The server returns mask[y][x][z] where y=row, x=column
-      log.info(`[ai-tumor] Transposing mask from (H=${dimensions.height}, W=${dimensions.width}, D=${dimensions.depth}) to (D, H, W) format...`);
-      const maskDHW: number[][][] = [];
-      for (let z = 0; z < dimensions.depth; z++) {
-        const sliceMask: number[][] = [];
-        for (let y = 0; y < dimensions.height; y++) {
-          const row: number[] = [];
-          for (let x = 0; x < dimensions.width; x++) {
-            // Server mask is [row][column][slice] = [y][x][z]
-            row.push(result.mask[y]?.[x]?.[z] || 0);
-          }
-          sliceMask.push(row);
-        }
-        maskDHW.push(sliceMask);
-      }
-
-      log.info(`[ai-tumor] Transposed mask shape: ${maskDHW.length}x${maskDHW[0]?.length}x${maskDHW[0]?.[0]?.length}`);
-
-      // Verify transpose correctness by checking first non-zero voxel in transposed mask
-      let transposeFirstZ = -1, transposeFirstY = -1, transposeFirstX = -1;
-      for (let z = 0; z < maskDHW.length && transposeFirstZ === -1; z++) {
-        for (let y = 0; y < maskDHW[z].length; y++) {
-          for (let x = 0; x < maskDHW[z][y].length; x++) {
-            if (maskDHW[z][y][x] > 0) {
-              transposeFirstZ = z; transposeFirstY = y; transposeFirstX = x;
-              break;
-            }
-          }
-          if (transposeFirstZ !== -1) break;
-        }
-      }
-      console.log(`🧠 After transpose: first non-zero voxel at slice=${transposeFirstZ}, y=${transposeFirstY}, x=${transposeFirstX}`);
-      console.log(`🧠 This should match viewer slice ${transposeFirstZ} at pixel (${transposeFirstX}, ${transposeFirstY})`);
-      
-      // CRITICAL: Check if there's a coordinate mismatch between model output and display
-      console.log(`🧠 🔍 COORDINATE SYSTEM CHECK:`);
-      console.log(`🧠   User clicked at: [y=${volumeClickPoint[0]}, x=${volumeClickPoint[1]}, z=${volumeClickPoint[2]}]`);
-      console.log(`🧠   Model predicted at: [y=${firstY}, x=${firstX}, z=${firstZ}]`);
-      console.log(`🧠   After transpose shows at: slice=${transposeFirstZ}, pixel=(${transposeFirstX}, ${transposeFirstY})`);
-      console.log(`🧠   If these don't align with your click, there's a COORDINATE TRANSFORM BUG`);
-
-      // Send mask to parent using apply_3d_mask action
-      if (onContourUpdate) {
-        // Include source images so handler can map mask slices to world positions
-        const payload = {
-          action: 'apply_3d_mask',
-          structureId: selectedStructure.roiNumber,
-          mask: maskDHW,
-          confidence: result.confidence,
-          sourceImages: sortedImages, // Images the mask was created from (sorted order)
-          isFusionMode, // Whether mask is from secondary series
-          smoothOutput, // Whether to apply double smoothing
-        };
-
-        log.info(`[ai-tumor] Calling onContourUpdate with payload (${volumeSeriesImages.length} source images, fusion: ${isFusionMode}, smooth: ${smoothOutput})`);
-        log.info(`[ai-tumor] Payload keys: ${Object.keys(payload).join(', ')}`);
-        log.info(`[ai-tumor] Action field: "${payload.action}"`);
-        log.info(`[ai-tumor] Structure ID: ${payload.structureId}`);
-
-        onContourUpdate(payload);
-
-        log.info(`[ai-tumor] onContourUpdate called successfully`);
-
-        toast({
-          title: 'Segmentation Complete',
-          description: `Generated ${result.slices_with_tumor.length} slices with ${result.total_voxels} voxels (${Math.round(result.confidence * 100)}% confidence)`,
-        });
-
-        // If in fusion mode, switch back to primary (CT) view to show results
-        if (isFusionMode && onShowPrimarySeries) {
-          setTimeout(() => {
-            onShowPrimarySeries();
-          }, 500);
-        }
-      } else {
-        log.warn(`[ai-tumor] onContourUpdate not available`);
-      }
-
-      // Clear click point
-      setClickPoint(null);
-
-    } catch (error: any) {
-      log.error('[ai-tumor] Segmentation failed: ' + (error?.message || String(error)));
-      toast({
-        title: 'Segmentation Failed',
-        description: error.message || 'Unknown error',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+    // Use SAM for single-slice segmentation
+    // For 3D propagation, call handleSAMSegment3D() instead
+    return handleSAMSegment();
   };
 
-  // Get secondary series images for fusion mode
+  // Expose 3D segmentation for external triggering
+  // Can be called via: canvasRef.current?.dispatchEvent(new CustomEvent('ai-tumor-segment-3d'))
+
+  // Get secondary series images for fusion mode (kept for potential future use)
   const getSecondarySeriesImages = async (seriesId: number): Promise<any[]> => {
     try {
       const response = await fetch(`/api/series/${seriesId}/images`);
@@ -1670,9 +1859,10 @@ export function AITumorTool({
   
   // Update refs for external access
   handleSegmentRef.current = handleSegment;
+  handleSegment3DRef.current = handleSAMSegment3D;
   handleClearRef.current = handleClear;
 
-  // UI is now rendered inline in the contour toolbar
-  // This component only handles the logic (click handling, segmentation)
+  // UI is rendered by parent via onClickPointChange callback
+  // This component only handles the click logic and segmentation
   return null;
 }

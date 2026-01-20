@@ -372,7 +372,7 @@ export function MarginOperationsPrototype({
         >
           <div 
             className={cn(
-              "rounded-2xl overflow-hidden backdrop-blur-xl transition-all",
+              "rounded-2xl backdrop-blur-xl transition-all",
               isDragging && "ring-2 ring-teal-500/40"
             )}
             style={{
@@ -696,7 +696,7 @@ export function MarginOperationsPrototype({
                     <TooltipContent side="top" className="text-xs">Template library</TooltipContent>
                   </Tooltip>
 
-                  {/* Template Library Dropdown */}
+                  {/* Template Library Dropdown - Opens upward */}
                   <AnimatePresence>
                     {showTemplateLibrary && (
                       <motion.div
@@ -704,9 +704,10 @@ export function MarginOperationsPrototype({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-y-auto rounded-xl border border-purple-500/30 shadow-2xl z-50"
+                        className="absolute bottom-full right-0 mb-2 w-80 max-h-80 overflow-y-auto overflow-x-hidden rounded-xl border border-purple-500/30 shadow-2xl"
                         style={{
                           background: `linear-gradient(180deg, hsla(270, 25%, 12%, 0.98) 0%, hsla(270, 20%, 8%, 0.99) 100%)`,
+                          zIndex: 9999,
                         }}
                       >
                         <div className="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-purple-500/20 backdrop-blur-xl">

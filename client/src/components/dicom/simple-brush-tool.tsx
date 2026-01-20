@@ -121,6 +121,12 @@ export function SimpleBrushTool({
   const brushPointsRef = useRef<Array<{ x: number; y: number }>>([]);
   const animationFrameRef = useRef<number | null>(null);
   
+  // CRITICAL FIX: Track current slice position in a ref to avoid stale closure issues
+  // When user scrolls to a new slice, the prop changes but closures in event handlers
+  // may still capture the old value. Using a ref ensures we always get the latest.
+  const currentSlicePositionRef = useRef(currentSlicePosition);
+  currentSlicePositionRef.current = currentSlicePosition; // Update on every render
+  
   // For smart brush - collect adaptive shapes while drawing
   const adaptiveShapesRef = useRef<Array<{ x: number; y: number }[]>>([]);
   
@@ -997,6 +1003,9 @@ export function SimpleBrushTool({
 
         const transform = ctTransform?.current || { scale: 1, offsetX: 0, offsetY: 0 };
         const isInEraseMode = isEraseMode || isTemporaryEraseMode;
+        
+        // CRITICAL: Use ref to get the LATEST slice position, not the stale closure value
+        const actualSlicePosition = currentSlicePositionRef.current;
 
         if (smartBrushEnabled && adaptiveShapesRef.current.length > 0 && !isInEraseMode) {
             console.log(`🎨 Finalizing smart brush with ${adaptiveShapesRef.current.length} adaptive shapes`);
@@ -1008,7 +1017,7 @@ export function SimpleBrushTool({
                     shape.forEach(p => {
                         const pixelX = (p.x - transform.offsetX) / transform.scale;
                         const pixelY = (p.y - transform.offsetY) / transform.scale;
-                        const worldPoint = pixelToWorld(pixelX, pixelY, imageMetadata, currentSlicePosition);
+                        const worldPoint = pixelToWorld(pixelX, pixelY, imageMetadata, actualSlicePosition);
                         worldPoints.push(worldPoint[0], worldPoint[1], worldPoint[2]);
                     });
                     adaptivePolygons.push(worldPoints);
@@ -1027,7 +1036,7 @@ export function SimpleBrushTool({
                 onContourUpdate({
                     action: "smart_brush_stroke",
                     structureId: selectedStructure,
-                    slicePosition: currentSlicePosition,
+                    slicePosition: actualSlicePosition,
                     points: unifiedPolygon,
                 });
                 
@@ -1036,7 +1045,7 @@ export function SimpleBrushTool({
                     onContourUpdate({
                         action: 'trigger_prediction',
                         structureId: selectedStructure,
-                        slicePosition: currentSlicePosition
+                        slicePosition: actualSlicePosition
                     });
                 }
             }
@@ -1047,7 +1056,7 @@ export function SimpleBrushTool({
             const worldPoints = brushPointsRef.current.map((point) => {
                 const pixelX = (point.x - transform.offsetX) / transform.scale;
                 const pixelY = (point.y - transform.offsetY) / transform.scale;
-                return pixelToWorld(pixelX, pixelY, imageMetadata, currentSlicePosition);
+                return pixelToWorld(pixelX, pixelY, imageMetadata, actualSlicePosition);
             });
             
             // Apply same decimation as standard brush
@@ -1074,7 +1083,7 @@ export function SimpleBrushTool({
                 onContourUpdate({
                     action: "erase_stroke",
                     structureId: selectedStructure,
-                    slicePosition: currentSlicePosition,
+                    slicePosition: actualSlicePosition,
                     pointCount: filteredPoints.length,
                     points: filteredPoints,
                     brushSize: brushSize,
@@ -1088,7 +1097,7 @@ export function SimpleBrushTool({
             const worldPoints = brushPointsRef.current.map((point) => {
                 const pixelX = (point.x - transform.offsetX) / transform.scale;
                 const pixelY = (point.y - transform.offsetY) / transform.scale;
-                return pixelToWorld(pixelX, pixelY, imageMetadata, currentSlicePosition);
+                return pixelToWorld(pixelX, pixelY, imageMetadata, actualSlicePosition);
             });
 
             // Light decimation to prevent lumpy/sawtooth contours on fast strokes
@@ -1118,7 +1127,7 @@ export function SimpleBrushTool({
               onContourUpdate({
                 action: actionType,
                 structureId: selectedStructure,
-                slicePosition: currentSlicePosition,
+                slicePosition: actualSlicePosition,
                 pointCount: filteredPoints.length,
                 points: filteredPoints,
                 brushSize: brushSize,
@@ -1131,7 +1140,7 @@ export function SimpleBrushTool({
                 onContourUpdate({
                   action: 'trigger_prediction',
                   structureId: selectedStructure,
-                  slicePosition: currentSlicePosition
+                  slicePosition: actualSlicePosition
                 });
               }
             }

@@ -563,22 +563,31 @@ export class SAMStandalone {
     imageData: SAMImageData,
     cacheKey?: string
   ): Promise<ort.Tensor> {
+    console.log('🔬 encodeImage: Starting...');
+    
     if (!this.initialized) {
+      console.log('🔬 encodeImage: Not initialized, initializing...');
       await this.initialize();
     }
+    
+    console.log('🔬 encodeImage: Initialized:', this.initialized);
+    console.log('🔬 encodeImage: Encoder session exists:', !!this.encoderSession);
 
     // Check cache first
     if (cacheKey && this.cachedEmbeddings.has(cacheKey)) {
-      console.log('🤖 SAM: Using cached embeddings for', cacheKey);
+      console.log('🔬 encodeImage: Using cached embeddings for', cacheKey);
       return this.cachedEmbeddings.get(cacheKey)!;
     }
 
-    console.log('🤖 SAM: Encoding image...', {
+    console.log('🔬 encodeImage: Processing image...', {
       width: imageData.width,
       height: imageData.height,
+      pixelType: imageData.pixels?.constructor?.name,
+      pixelLength: imageData.pixels?.length,
     });
 
     // Normalize and resize image
+    console.log('🔬 encodeImage: Normalizing pixel data...');
     const normalized = normalizePixelData(
       imageData.pixels,
       imageData.width,
@@ -588,10 +597,12 @@ export class SAMStandalone {
       imageData.rescaleSlope,
       imageData.rescaleIntercept
     );
+    console.log('🔬 encodeImage: Normalized, length:', normalized.length);
 
     // Resize to model input size if needed
     let input = normalized;
     if (imageData.width !== MODEL_SIZE || imageData.height !== MODEL_SIZE) {
+      console.log('🔬 encodeImage: Resizing from', imageData.width, 'x', imageData.height, 'to', MODEL_SIZE, 'x', MODEL_SIZE);
       input = resizeImage(
         normalized,
         imageData.width,
@@ -599,32 +610,65 @@ export class SAMStandalone {
         MODEL_SIZE,
         MODEL_SIZE
       );
+      console.log('🔬 encodeImage: Resized, length:', input.length);
     }
 
     // Create input tensor [1, 3, 1024, 1024]
-    const inputTensor = new ort.Tensor('float32', input, [1, 3, MODEL_SIZE, MODEL_SIZE]);
-
-    // Run encoder - SAM uses 'input_image' as the input name
-    const startTime = performance.now();
-    const results = await this.encoderSession!.run({
-      input_image: inputTensor,
-    });
-    const elapsed = performance.now() - startTime;
-    console.log(`🤖 SAM: Encoder completed in ${elapsed.toFixed(0)}ms`);
-
-    // Get embeddings (different models use different output names)
-    const embeddings = results.image_embeddings || results.embeddings;
+    console.log('🔬 encodeImage: Creating input tensor...');
+    const expectedLength = 1 * 3 * MODEL_SIZE * MODEL_SIZE;
+    console.log('🔬 encodeImage: Input length:', input.length, 'Expected:', expectedLength);
     
-    if (!embeddings) {
-      throw new Error('Encoder did not produce embeddings');
+    if (input.length !== expectedLength) {
+      throw new Error(`Input tensor size mismatch: got ${input.length}, expected ${expectedLength}`);
     }
+    
+    const inputTensor = new ort.Tensor('float32', input, [1, 3, MODEL_SIZE, MODEL_SIZE]);
+    console.log('🔬 encodeImage: Tensor created, dims:', inputTensor.dims);
 
-    // Cache embeddings
-    if (cacheKey) {
-      this.cachedEmbeddings.set(cacheKey, embeddings);
+    // Run encoder - Check what input names the model expects
+    console.log('🔬 encodeImage: Running encoder...');
+    console.log('🔬 encodeImage: Encoder input names:', this.encoderSession!.inputNames);
+    console.log('🔬 encodeImage: Encoder output names:', this.encoderSession!.outputNames);
+    
+    const startTime = performance.now();
+    
+    try {
+      // Use the actual input name from the model
+      const inputName = this.encoderSession!.inputNames[0];
+      console.log('🔬 encodeImage: Using input name:', inputName);
+      
+      const feeds: Record<string, ort.Tensor> = {};
+      feeds[inputName] = inputTensor;
+      
+      const results = await this.encoderSession!.run(feeds);
+      const elapsed = performance.now() - startTime;
+      console.log(`🔬 encodeImage: Encoder completed in ${elapsed.toFixed(0)}ms`);
+
+      // Get embeddings - use the actual output name from the model
+      console.log('🔬 encodeImage: Result keys:', Object.keys(results));
+      const outputName = this.encoderSession!.outputNames[0];
+      console.log('🔬 encodeImage: Using output name:', outputName);
+      const embeddings = results[outputName];
+      console.log('🔬 encodeImage: Got embeddings:', !!embeddings, embeddings?.dims);
+      
+      if (!embeddings) {
+        throw new Error('Encoder did not produce embeddings');
+      }
+
+      // Cache embeddings
+      if (cacheKey) {
+        this.cachedEmbeddings.set(cacheKey, embeddings);
+      }
+
+      return embeddings;
+    } catch (encoderError: any) {
+      console.error('🔬 encodeImage: ENCODER RUN FAILED!');
+      console.error('🔬 encodeImage: Error type:', typeof encoderError);
+      console.error('🔬 encodeImage: Error value:', encoderError);
+      console.error('🔬 encodeImage: Error message:', encoderError?.message);
+      console.error('🔬 encodeImage: Error name:', encoderError?.name);
+      throw encoderError;
     }
-
-    return embeddings;
   }
 
   /**
@@ -786,15 +830,28 @@ export class SAMStandalone {
     imageData: SAMImageData,
     cacheKey?: string
   ): Promise<SAMPredictionResult> {
-    const embeddings = await this.encodeImage(imageData, cacheKey);
+    console.log('🔬 SAM Standalone: clickToSegment called', { clickPoint, cacheKey });
     
-    return this.segmentWithPoints(
-      embeddings,
-      [clickPoint],
-      [],
-      imageData.width,
-      imageData.height
-    );
+    try {
+      console.log('🔬 SAM Standalone: Encoding image...');
+      const embeddings = await this.encodeImage(imageData, cacheKey);
+      console.log('🔬 SAM Standalone: Image encoded, running segmentation...');
+      
+      const result = await this.segmentWithPoints(
+        embeddings,
+        [clickPoint],
+        [],
+        imageData.width,
+        imageData.height
+      );
+      console.log('🔬 SAM Standalone: Segmentation complete', { contourPoints: result.contour?.length });
+      
+      return result;
+    } catch (error: any) {
+      console.error('🔬 SAM Standalone: clickToSegment FAILED:', error);
+      console.error('🔬 SAM Standalone: Error details:', error?.message, error?.stack);
+      throw error;
+    }
   }
 
   /**

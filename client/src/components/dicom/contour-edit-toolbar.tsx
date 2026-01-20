@@ -55,13 +55,15 @@ import {
   EyeOff,
   Split,
   Circle,
-  Box
+  Box,
+  Loader2
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { undoRedoManager } from '@/lib/undo-system';
 import { log } from '@/lib/log';
 import { useToast } from '@/hooks/use-toast';
 import { samOhifController } from '@/lib/sam-ohif-controller';
+import { samServerClient } from '@/lib/sam-server-client';
 import { SmartNthSettingsDialog } from './smart-nth-settings-dialog';
 // Prediction tuning panel removed: GEO prediction is now deterministic world-space propagation.
 
@@ -205,6 +207,7 @@ interface ContourEditToolbarProps {
     predictionMode?: 'geometric' | 'nitro' | 'sam';
     aiTumorSmoothOutput?: boolean;
     aiTumorUseSAM?: boolean;
+    aiTumor3DMode?: boolean;
   }) => void;
   currentSlicePosition?: number;
   onContourUpdate?: (updatedStructures: any) => void;
@@ -265,7 +268,63 @@ export function ContourEditToolbar({
   const [predictionMode, setPredictionMode] = useState<'geometric' | 'nitro' | 'sam'>('geometric');
   const [samLoading, setSamLoading] = useState(false);
   const [aiTumorSmoothOutput, setAiTumorSmoothOutput] = useState(false);
-  const [aiTumorUseSAM, setAiTumorUseSAM] = useState(false); // AI tumor mode: false = SuperSeg, true = SAM
+  const [aiTumor3DMode, setAiTumor3DMode] = useState(false);
+  const [samServerStatus, setSamServerStatus] = useState<'unknown' | 'healthy' | 'unavailable' | 'starting'>('unknown');
+  // Always use SAM (browser-based, universal) - SuperSeg 3D removed as it only works on brain MRI FLAIR
+  const aiTumorUseSAM = true;
+
+  // Check SAM server health when interactive-tumor tool is activated
+  useEffect(() => {
+    if (activeTool === 'interactive-tumor') {
+      setSamServerStatus('unknown');
+      samServerClient.checkHealth()
+        .then(() => setSamServerStatus('healthy'))
+        .catch(() => setSamServerStatus('unavailable'));
+    }
+  }, [activeTool]);
+
+  const handleStartSamServer = async () => {
+    setSamServerStatus('starting');
+    toast({
+      title: 'Starting SAM Server',
+      description: 'This may take up to 60 seconds...',
+    });
+    try {
+      const result = await samServerClient.startServer();
+      if (result.status === 'started' || result.status === 'already_running') {
+        setSamServerStatus('healthy');
+        toast({
+          title: 'SAM Server Ready',
+          description: result.message,
+        });
+      } else if (result.status === 'starting') {
+        // Still starting, keep polling
+        setTimeout(async () => {
+          try {
+            await samServerClient.checkHealth();
+            setSamServerStatus('healthy');
+            toast({ title: 'SAM Server Ready' });
+          } catch {
+            setSamServerStatus('unavailable');
+          }
+        }, 5000);
+      } else {
+        setSamServerStatus('unavailable');
+        toast({
+          title: 'Server Start Failed',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (e: any) {
+      setSamServerStatus('unavailable');
+      toast({
+        title: 'Server Start Failed',
+        description: e.message,
+        variant: 'destructive',
+      });
+    }
+  };
   const [hideOtherContours, setHideOtherContours] = useState(false);
   
   // Dissect tool state
@@ -664,7 +723,7 @@ export function ContourEditToolbar({
               step={1}
               className="w-20 [&>span:first-child]:h-1 [&>span:first-child]:bg-white/10 [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:bg-white [&_[role=slider]]:border-0"
             />
-            <span className="text-xs font-semibold tabular-nums min-w-[38px]" style={{ color: accentRgb }}>
+            <span className="text-sm font-semibold tabular-nums min-w-[42px]" style={{ color: accentRgb }}>
               {brushSizeCm}cm
             </span>
           </div>
@@ -687,13 +746,13 @@ export function ContourEditToolbar({
                   }
                 }}
                 className={cn(
-                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border',
+                  'h-7 px-2.5 flex items-center gap-1.5 rounded text-xs font-medium transition-all border',
                   smartBrush
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                     : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10'
                 )}
               >
-                <Zap className="w-3 h-3" />
+                <Zap className="w-3.5 h-3.5" />
                 Smart
               </button>
 
@@ -713,13 +772,13 @@ export function ContourEditToolbar({
                   }
                 }}
                 className={cn(
-                  'h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border',
+                  'h-7 px-2.5 flex items-center gap-1.5 rounded text-xs font-medium transition-all border',
                   isPredictionEnabled
                     ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
                     : 'text-gray-500 hover:text-gray-400 hover:bg-white/5 border-white/10'
                 )}
               >
-                <Sparkles className="w-3 h-3" />
+                <Sparkles className="w-3.5 h-3.5" />
                 Predict
               </button>
 
@@ -743,13 +802,13 @@ export function ContourEditToolbar({
                           }
                         }}
                         className={cn(
-                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
+                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
                           predictionMode === 'geometric'
                             ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
                             : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
                         )}
                       >
-                        <Box className="w-3 h-3" />
+                        <Box className="w-3.5 h-3.5" />
                         Geo
                       </button>
                     </TooltipTrigger>
@@ -774,13 +833,13 @@ export function ContourEditToolbar({
                           }
                         }}
                         className={cn(
-                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
+                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
                           predictionMode === 'nitro'
                             ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                             : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10'
                         )}
                       >
-                        <Zap className="w-3 h-3" />
+                        <Zap className="w-3.5 h-3.5" />
                         Nitro
                       </button>
                     </TooltipTrigger>
@@ -833,14 +892,14 @@ export function ContourEditToolbar({
                         }}
                         disabled={samLoading}
                         className={cn(
-                          'h-6 px-2 text-[11px] font-medium transition-all flex items-center gap-1.5 rounded border',
+                          'h-7 px-2.5 text-xs font-medium transition-all flex items-center gap-1.5 rounded border',
                           predictionMode === 'sam'
                             ? 'bg-violet-500/20 text-violet-300 border-violet-500/40'
                             : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-white/10',
                           samLoading && 'opacity-50 cursor-wait'
                         )}
                       >
-                        <Sparkles className="w-3 h-3" />
+                        <Sparkles className="w-3.5 h-3.5" />
                         {samLoading ? '...' : 'SAM'}
                       </button>
                     </TooltipTrigger>
@@ -858,25 +917,25 @@ export function ContourEditToolbar({
                     onClick={handleAcceptPrediction}
                     disabled={!hasPredictionForCurrentSlice}
                     className={cn(
-                      "h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border",
+                      "h-7 px-2.5 flex items-center gap-1 rounded text-xs font-medium transition-all border",
                       hasPredictionForCurrentSlice
                         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
                         : "bg-transparent text-gray-600 border-white/10 cursor-not-allowed"
                     )}
                   >
-                    <Check className="w-3 h-3" />
+                    <Check className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={handleRejectPrediction}
                     disabled={!hasPredictionForCurrentSlice}
                     className={cn(
-                      "h-6 px-2 flex items-center gap-1 rounded text-[11px] font-medium transition-all border",
+                      "h-7 px-2.5 flex items-center gap-1 rounded text-xs font-medium transition-all border",
                       hasPredictionForCurrentSlice
                         ? "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30"
                         : "bg-transparent text-gray-600 border-white/10 cursor-not-allowed"
                     )}
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -895,7 +954,7 @@ export function ContourEditToolbar({
           className="flex items-center gap-2 overflow-hidden"
         >
           <div className="w-px h-5 bg-white/10" />
-          <span className="text-[11px] text-gray-500">Click to place • Right-click to close</span>
+          <span className="text-xs text-gray-500">Click to place • Right-click to close</span>
         </motion.div>
       );
     }
@@ -911,73 +970,101 @@ export function ContourEditToolbar({
         >
           <div className="w-px h-5 bg-white/10" />
           
-          <div className="flex items-center gap-1.5">
-            <MousePointer2 className="w-3 h-3" style={{ color: accentRgb }} />
-            <span className="text-[11px] text-gray-400">Click center</span>
-          </div>
-
-          {/* Mode toggle: SuperSeg (3D) vs SAM (2D) */}
-          <div className="flex items-center gap-1 bg-black/20 rounded-md p-0.5">
+          {/* Server Status + Start Button */}
+          {samServerStatus === 'unavailable' ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => {
-                    setAiTumorUseSAM(false);
-                    if (onToolChange) {
-                      onToolChange({
-                        tool: 'interactive-tumor',
-                        brushSize: 0,
-                        isActive: true,
-                        aiTumorSmoothOutput,
-                        aiTumorUseSAM: false
-                      });
-                    }
-                  }}
-                  className={cn(
-                    'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
-                    !aiTumorUseSAM
-                      ? 'bg-blue-500/30 text-blue-300'
-                      : 'text-gray-500 hover:text-gray-400'
-                  )}
+                  onClick={handleStartSamServer}
+                  className="h-7 px-2.5 flex items-center gap-1.5 rounded-md text-xs font-medium text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 transition-all"
                 >
-                  3D
+                  <Zap className="w-3.5 h-3.5" />
+                  Start Server
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                SuperSeg 3D (server-side, brain metastasis)
+              <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                <p className="font-medium text-amber-300">SAM Server Offline</p>
+                <p className="mt-1 text-gray-400">Click to start the SAM server. May take ~60s to load model.</p>
               </TooltipContent>
             </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
+          ) : samServerStatus === 'starting' ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 text-amber-300/70 text-[10px]">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Starting...</span>
+            </div>
+          ) : samServerStatus === 'healthy' ? (
+            <div className="flex items-center gap-1.5">
+              <MousePointer2 className="w-3.5 h-3.5" style={{ color: accentRgb }} />
+              <span className="text-xs text-gray-400">Click to segment</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <MousePointer2 className="w-3.5 h-3.5" style={{ color: accentRgb }} />
+              <span className="text-xs text-gray-500">Checking server...</span>
+            </div>
+          )}
+
+          {/* 2D/3D Mode Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center bg-black/30 rounded-md p-0.5">
                 <button
                   onClick={() => {
-                    setAiTumorUseSAM(true);
+                    setAiTumor3DMode(false);
                     if (onToolChange) {
                       onToolChange({
                         tool: 'interactive-tumor',
                         brushSize: 0,
                         isActive: true,
                         aiTumorSmoothOutput,
-                        aiTumorUseSAM: true
+                        aiTumorUseSAM: true,
+                        aiTumor3DMode: false,
                       });
                     }
                   }}
                   className={cn(
-                    'h-5 px-1.5 rounded text-[10px] font-medium transition-all',
-                    aiTumorUseSAM
-                      ? 'bg-purple-500/30 text-purple-300'
-                      : 'text-gray-500 hover:text-gray-400'
+                    "px-2 py-1 text-xs font-medium rounded transition-all",
+                    !aiTumor3DMode
+                      ? "bg-purple-500/30 text-purple-200"
+                      : "text-gray-500 hover:text-gray-300"
                   )}
                 >
                   2D
                 </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                SAM 2D (client-side, ~200MB download first use)
-              </TooltipContent>
-            </Tooltip>
-          </div>
+                <button
+                  onClick={() => {
+                    setAiTumor3DMode(true);
+                    if (onToolChange) {
+                      onToolChange({
+                        tool: 'interactive-tumor',
+                        brushSize: 0,
+                        isActive: true,
+                        aiTumorSmoothOutput,
+                        aiTumorUseSAM: true,
+                        aiTumor3DMode: true,
+                      });
+                    }
+                  }}
+                  className={cn(
+                    "px-2 py-1 text-xs font-medium rounded transition-all",
+                    aiTumor3DMode
+                      ? "bg-blue-500/30 text-blue-200"
+                      : "text-gray-500 hover:text-gray-300"
+                  )}
+                >
+                  3D
+                </button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs max-w-[220px]">
+              <p className="font-medium">{aiTumor3DMode ? '3D Propagation' : '2D Single Slice'}</p>
+              <p className="mt-1 text-gray-400">
+                {aiTumor3DMode 
+                  ? 'Click to segment and auto-propagate through all slices' 
+                  : 'Click to segment only the current slice'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
 
           <label className="flex items-center gap-1.5 cursor-pointer">
             <Switch
@@ -990,30 +1077,39 @@ export function ContourEditToolbar({
                     brushSize: 0,
                     isActive: true,
                     aiTumorSmoothOutput: checked,
-                    aiTumorUseSAM
+                    aiTumorUseSAM: true,
+                    aiTumor3DMode,
                   });
                 }
               }}
               className="scale-75 data-[state=checked]:bg-emerald-500"
             />
-            <span className="text-[11px] text-gray-500">Smooth</span>
+            <span className="text-xs text-gray-500">Smooth</span>
           </label>
 
-          <button
-            onClick={() => {
-              const canvas = workingViewerRef?.current?.canvasRef?.current;
-              if (canvas) {
-                const event = new Event('ai-tumor-segment');
-                canvas.dispatchEvent(event);
-              } else {
-                toast({ title: 'Canvas Error', description: 'Canvas reference not available.', variant: 'destructive' });
-              }
-            }}
-            className="h-7 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-semibold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 hover:text-emerald-200 transition-all"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Generate
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  const canvas = workingViewerRef?.current?.canvasRef?.current;
+                  if (canvas) {
+                    const eventName = aiTumor3DMode ? 'ai-tumor-segment-3d' : 'ai-tumor-segment';
+                    const event = new Event(eventName);
+                    canvas.dispatchEvent(event);
+                  } else {
+                    toast({ title: 'Canvas Error', description: 'Canvas reference not available.', variant: 'destructive' });
+                  }
+                }}
+                className="h-8 px-3 flex items-center gap-2 rounded-md text-sm font-semibold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 hover:text-emerald-200 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Retry
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Re-run {aiTumor3DMode ? '3D propagation' : '2D segmentation'} on current click point
+            </TooltipContent>
+          </Tooltip>
         </motion.div>
       );
     }
@@ -1035,7 +1131,7 @@ export function ContourEditToolbar({
           
           <div className="flex items-center gap-1.5">
             <Split className="w-4 h-4" style={{ color: accentRgb }} />
-            <span className="text-[13px] text-gray-400 font-medium">Click to place points</span>
+            <span className="text-sm text-gray-400 font-medium">Click to place points</span>
           </div>
 
           {/* Line count selector */}
@@ -1048,7 +1144,7 @@ export function ContourEditToolbar({
                     setDissectPoints([]);
                   }}
                   className={cn(
-                    'h-6 px-2 rounded text-[12px] font-semibold transition-all',
+                    'h-7 px-2.5 rounded text-xs font-semibold transition-all',
                     dissectLineCount === 1
                       ? 'bg-cyan-500/30 text-cyan-300'
                       : 'text-gray-500 hover:text-gray-400'
@@ -1070,7 +1166,7 @@ export function ContourEditToolbar({
                     setDissectPoints([]);
                   }}
                   className={cn(
-                    'h-6 px-2 rounded text-[12px] font-semibold transition-all',
+                    'h-7 px-2.5 rounded text-xs font-semibold transition-all',
                     dissectLineCount === 2
                       ? 'bg-cyan-500/30 text-cyan-300'
                       : 'text-gray-500 hover:text-gray-400'
@@ -1087,8 +1183,8 @@ export function ContourEditToolbar({
 
           {/* Points indicator */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/20">
-            <Circle className="w-3 h-3" style={{ color: accentRgb }} />
-            <span className="text-[12px] font-semibold tabular-nums" style={{ color: pointsPlaced >= pointsNeeded ? accentRgb : 'rgb(156, 163, 175)' }}>
+            <Circle className="w-3.5 h-3.5" style={{ color: accentRgb }} />
+            <span className="text-xs font-semibold tabular-nums" style={{ color: pointsPlaced >= pointsNeeded ? accentRgb : 'rgb(156, 163, 175)' }}>
               {pointsPlaced}/{pointsNeeded}
             </span>
           </div>
@@ -1099,7 +1195,7 @@ export function ContourEditToolbar({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setDissectPoints([])}
-                  className="h-7 px-2 flex items-center gap-1 rounded text-[12px] font-medium text-gray-500 hover:text-gray-400 hover:bg-white/5 transition-all"
+                  className="h-8 px-2.5 flex items-center gap-1.5 rounded text-xs font-medium text-gray-500 hover:text-gray-400 hover:bg-white/5 transition-all"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Clear
@@ -1127,7 +1223,7 @@ export function ContourEditToolbar({
             }}
             disabled={!canGenerate}
             className={cn(
-              "h-7 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-semibold transition-all",
+              "h-8 px-3 flex items-center gap-2 rounded-md text-sm font-semibold transition-all",
               canGenerate 
                 ? "text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30 hover:text-cyan-200" 
                 : "text-gray-500 bg-gray-700/50 cursor-not-allowed"
@@ -1227,12 +1323,12 @@ export function ContourEditToolbar({
                     onBlur={handleNameSubmit}
                     onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
                     autoFocus
-                    className="h-6 w-24 px-1.5 text-xs bg-black/40 border-white/20 text-white rounded"
+                    className="h-7 w-28 px-2 text-sm bg-black/40 border-white/20 text-white rounded"
                   />
                 ) : (
                   <button
                     onClick={() => { setTempName(selectedStructure.structureName); setIsEditingName(true); }}
-                    className="text-xs font-semibold text-white/90 hover:text-white transition-colors max-w-[100px] truncate"
+                    className="text-sm font-semibold text-white/90 hover:text-white transition-colors max-w-[120px] truncate"
                   >
                     {selectedStructure.structureName}
                   </button>
@@ -1252,7 +1348,7 @@ export function ContourEditToolbar({
                         <button
                           onClick={() => handleToolClick(tool.id)}
                           className={cn(
-                            'h-7 px-2.5 flex items-center gap-1.5 rounded-md transition-all text-xs font-medium',
+                            'h-8 px-3 flex items-center gap-2 rounded-md transition-all text-sm font-medium',
                             isActive ? 'text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                           )}
                           style={isActive ? {
@@ -1260,7 +1356,7 @@ export function ContourEditToolbar({
                             boxShadow: `inset 0 0 0 1px ${accentRgb}30`,
                           } : {}}
                         >
-                          <IconComponent className="w-3.5 h-3.5" style={isActive ? { color: accentRgb } : {}} />
+                          <IconComponent className="w-4 h-4" style={isActive ? { color: accentRgb } : {}} />
                           <span>{tool.label}</span>
                         </button>
                       </TooltipTrigger>
@@ -1283,16 +1379,16 @@ export function ContourEditToolbar({
               <div className="flex items-center gap-0.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button onClick={resetPosition} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-400 hover:bg-white/5 transition-all">
-                      <RotateCcw className="w-3.5 h-3.5" />
+                    <button onClick={resetPosition} className="h-8 w-8 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-400 hover:bg-white/5 transition-all">
+                      <RotateCcw className="w-4 h-4" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Reset position</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-red-500/20 transition-all">
-                      <X className="w-3.5 h-3.5" />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-red-500/20 transition-all">
+                      <X className="w-4 h-4" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">Close (Esc)</TooltipContent>
@@ -1313,11 +1409,11 @@ export function ContourEditToolbar({
                     onClick={handleUndo}
                     disabled={!canUndo}
                     className={cn(
-                      'h-8 w-8 flex items-center justify-center rounded-md transition-all',
+                      'h-9 w-9 flex items-center justify-center rounded-md transition-all',
                       canUndo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
                     )}
                   >
-                    <Undo className="w-4 h-4" />
+                    <Undo className="w-[18px] h-[18px]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Undo (Ctrl+Z)</TooltipContent>
@@ -1328,11 +1424,11 @@ export function ContourEditToolbar({
                     onClick={handleRedo}
                     disabled={!canRedo}
                     className={cn(
-                      'h-8 w-8 flex items-center justify-center rounded-md transition-all',
+                      'h-9 w-9 flex items-center justify-center rounded-md transition-all',
                       canRedo ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-700 cursor-not-allowed'
                     )}
                   >
-                    <Redo className="w-4 h-4" />
+                    <Redo className="w-[18px] h-[18px]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900/95 border-gray-700 text-xs">Redo (Ctrl+Y)</TooltipContent>
@@ -1345,11 +1441,11 @@ export function ContourEditToolbar({
             <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                    <button
                     onClick={handleDeleteCurrentSlice}
-                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
+                    className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                     Delete
                   </button>
                 </TooltipTrigger>
@@ -1358,11 +1454,11 @@ export function ContourEditToolbar({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                    <button
                     onClick={handleInterpolate}
-                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
+                    className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
                   >
-                    <GitBranch className="w-3.5 h-3.5" />
+                    <GitBranch className="w-4 h-4" />
                     Interp
                   </button>
                 </TooltipTrigger>
@@ -1372,11 +1468,11 @@ export function ContourEditToolbar({
               {/* Smooth - moved before Nth */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                    <button
                     onClick={handleSmooth}
-                    className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-all"
+                    className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-all"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-4 h-4" />
                     Smooth
                   </button>
                 </TooltipTrigger>
@@ -1386,10 +1482,10 @@ export function ContourEditToolbar({
               {/* Nth Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all">
-                    <Grid3x3 className="w-3.5 h-3.5" />
+                  <button className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all">
+                    <Grid3x3 className="w-4 h-4" />
                     Nth
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -1403,7 +1499,7 @@ export function ContourEditToolbar({
                     <DropdownMenuItem
                       key={n}
                       onSelect={() => handleDeleteEveryNthSlice(n)}
-                      className="text-[13px] text-amber-300/90 hover:text-amber-200 focus:text-amber-200 focus:bg-amber-500/10 font-medium cursor-pointer"
+                      className="text-sm text-amber-300/90 hover:text-amber-200 focus:text-amber-200 focus:bg-amber-500/10 font-medium cursor-pointer"
                     >
                       Every {n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'} slice
                     </DropdownMenuItem>
@@ -1411,7 +1507,7 @@ export function ContourEditToolbar({
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem
                     onSelect={handleOpenSmartNthDialog}
-                    className="text-[13px] text-amber-200 hover:text-amber-100 focus:text-amber-100 focus:bg-amber-500/10 font-semibold cursor-pointer"
+                    className="text-sm text-amber-200 hover:text-amber-100 focus:text-amber-100 focus:bg-amber-500/10 font-semibold cursor-pointer"
                   >
                     SmartNth...
                   </DropdownMenuItem>
@@ -1421,10 +1517,10 @@ export function ContourEditToolbar({
               {/* Blob Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
-                    <SplitSquareHorizontal className="w-3.5 h-3.5" />
+                  <button className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
+                    <SplitSquareHorizontal className="w-4 h-4" />
                     Blob
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -1438,7 +1534,7 @@ export function ContourEditToolbar({
                     onSelect={() => {
                       onContourUpdate?.({ action: 'open_remove_blobs_dialog', structureId: selectedStructure.roiNumber });
                     }}
-                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                    className="flex items-center gap-2 text-sm text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
                   >
                     <MousePointerClick className="w-4 h-4" />
                     Separator Tool
@@ -1447,7 +1543,7 @@ export function ContourEditToolbar({
                     onSelect={() => {
                       onContourUpdate?.({ action: 'separate_blobs', structureId: selectedStructure.roiNumber });
                     }}
-                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                    className="flex items-center gap-2 text-sm text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
                   >
                     <Layers className="w-4 h-4" />
                     Separate All Blobs
@@ -1464,7 +1560,7 @@ export function ContourEditToolbar({
                         hideOthers: newState
                       });
                     }}
-                    className="flex items-center gap-2 text-[13px] text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
+                    className="flex items-center gap-2 text-sm text-violet-300/90 hover:text-violet-200 focus:text-violet-200 focus:bg-violet-500/10 font-medium cursor-pointer"
                   >
                     {hideOtherContours ? (
                       <>
@@ -1484,10 +1580,10 @@ export function ContourEditToolbar({
               {/* Clear Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-8 px-3 flex items-center gap-1.5 rounded-md text-[13px] font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
-                    <Eraser className="w-3.5 h-3.5" />
+                  <button className="h-9 px-3.5 flex items-center gap-2 rounded-md text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
+                    <Eraser className="w-4 h-4" />
                     Clear
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -1499,20 +1595,20 @@ export function ContourEditToolbar({
                 >
                   <DropdownMenuItem
                     onSelect={handleClearAbove}
-                    className="text-[13px] text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
+                    className="text-sm text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
                   >
                     Clear above
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={handleClearBelow}
-                    className="text-[13px] text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
+                    className="text-sm text-rose-300/90 hover:text-rose-200 focus:text-rose-200 focus:bg-rose-500/10 font-medium cursor-pointer"
                   >
                     Clear below
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem
                     onSelect={handleClearAll}
-                    className="text-[13px] text-rose-400 hover:text-rose-300 focus:text-rose-300 focus:bg-rose-500/10 font-semibold cursor-pointer"
+                    className="text-sm text-rose-400 hover:text-rose-300 focus:text-rose-300 focus:bg-rose-500/10 font-semibold cursor-pointer"
                   >
                     Clear all
                   </DropdownMenuItem>
