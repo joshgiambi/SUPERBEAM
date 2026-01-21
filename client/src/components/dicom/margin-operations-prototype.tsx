@@ -238,7 +238,7 @@ export function MarginOperationsPrototype({
 
   const canExecute = selectedStructure && (outputMode === 'same' || outputName);
 
-  // Save template - includes selected structure
+  // Save template - includes structure and color
   const saveTemplate = () => {
     if (!templateName.trim()) return;
     const newTemplate: MarginTemplate = {
@@ -247,6 +247,7 @@ export function MarginOperationsPrototype({
       direction,
       marginMm,
       selectedStructure: selectedStructure || undefined,
+      outputColor,
       createdAt: Date.now(),
     };
     const updated = [...templates, newTemplate];
@@ -256,13 +257,16 @@ export function MarginOperationsPrototype({
     setShowSaveDialog(false);
   };
 
-  // Load template - restores all saved settings including structure
+  // Load template - restores all saved settings
   const loadTemplate = (template: MarginTemplate) => {
     flushSync(() => {
       setDirection(template.direction);
       setMarginMm(template.marginMm);
       if (template.selectedStructure) {
         setSelectedStructure(template.selectedStructure);
+      }
+      if (template.outputColor) {
+        setOutputColor(template.outputColor);
       }
     });
     setShowLibrary(false);
@@ -465,11 +469,19 @@ export function MarginOperationsPrototype({
                               className="flex items-center gap-2 p-2.5 rounded-lg hover:bg-cyan-950/40 transition-colors group"
                               style={{ background: '#131d24' }}
                             >
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-white truncate">{template.name}</div>
-                                <div className="text-xs text-gray-400">
-                                  {template.selectedStructure && <span className="text-cyan-400">{template.selectedStructure} → </span>}
-                                  {template.direction === 'expand' ? 'Expand' : 'Shrink'} {template.marginMm}mm
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {template.outputColor && (
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-white/20 flex-shrink-0"
+                                    style={{ backgroundColor: template.outputColor }}
+                                  />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium text-white truncate">{template.name}</div>
+                                  <div className="text-xs text-gray-400">
+                                    {template.selectedStructure && <span className="text-cyan-400">{template.selectedStructure} → </span>}
+                                    {template.direction === 'expand' ? 'Expand' : 'Shrink'} {template.marginMm}mm
+                                  </div>
                                 </div>
                               </div>
                               <button
