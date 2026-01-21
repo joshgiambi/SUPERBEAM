@@ -302,9 +302,7 @@ export function useSuperstructures(rtStructureSetId: number | null, rtStructures
 
   // Load superstructures for a structure set
   const loadSuperstructures = useCallback(async () => {
-    console.log('🔶 SUPERSTRUCTURE: loadSuperstructures called, rtStructureSetId:', rtStructureSetId);
     if (!rtStructureSetId) {
-      console.log('🔶 SUPERSTRUCTURE: No rtStructureSetId, clearing superstructures');
       setSuperstructures([]);
       return;
     }
@@ -319,17 +317,14 @@ export function useSuperstructures(rtStructureSetId: number | null, rtStructures
       }
       
       const response = await fetch(`/api/superstructures/${rtStructureSetId}`);
-      console.log('🔶 SUPERSTRUCTURE: API response status:', response.status);
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('🔶 SUPERSTRUCTURE: 404 - no superstructures found');
           setSuperstructures([]);
           return;
         }
         throw new Error(`Failed to load superstructures: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('🔶 SUPERSTRUCTURE: Loaded superstructures:', data);
       
       // Filter to only include superstructures whose target structure actually exists
       // Note: API returns rtStructureRoiNumber (database field name)
@@ -338,13 +333,9 @@ export function useSuperstructures(rtStructureSetId: number | null, rtStructures
         existingRoiNumbers.includes(ss.rtStructureRoiNumber)
       );
       
-      if (validSuperstructures.length !== data.length) {
-        console.log(`🔶 SUPERSTRUCTURE: Filtered ${data.length - validSuperstructures.length} superstructures with missing structures`);
-      }
-      
       setSuperstructures(validSuperstructures);
     } catch (err) {
-      console.error('🔶 SUPERSTRUCTURE ERROR:', err);
+      console.error('Failed to load superstructures:', err);
       setError(err instanceof Error ? err : new Error('Failed to load superstructures'));
       setSuperstructures([]);
     } finally {

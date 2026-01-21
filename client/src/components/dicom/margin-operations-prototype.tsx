@@ -44,6 +44,8 @@ interface MarginTemplate {
   name: string;
   direction: 'expand' | 'shrink';
   marginMm: number;
+  selectedStructure?: string;
+  outputColor?: string;
   createdAt: number;
 }
 
@@ -72,7 +74,7 @@ interface Position { x: number; y: number; }
 // ============================================================================
 
 const STORAGE_KEY = 'margin-toolbar-aurora-v2-position';
-const TEMPLATE_STORAGE_KEY = 'v4-aurora-margin-templates';
+const TEMPLATE_KEY = 'margin-templates-simple';
 
 const getStoredPosition = (): Position | null => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
@@ -80,17 +82,6 @@ const getStoredPosition = (): Position | null => {
 
 const savePosition = (pos: Position) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pos)); } catch {}
-};
-
-const loadMarginTemplates = (): MarginTemplate[] => {
-  try {
-    const stored = localStorage.getItem(TEMPLATE_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch { return []; }
-};
-
-const saveMarginTemplates = (templates: MarginTemplate[]) => {
-  try { localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates)); } catch {}
 };
 
 // ============================================================================
@@ -190,8 +181,13 @@ export function MarginOperationsPrototype({
   const [outputColor, setOutputColor] = useState('#22C55E'); // Green default
   const [saveAsSuperstructure, setSaveAsSuperstructure] = useState(false);
 
-  // Template management
-  const [templates, setTemplates] = useState<MarginTemplate[]>(() => loadMarginTemplates());
+  // Template management - simple implementation
+  const [templates, setTemplates] = useState<MarginTemplate[]>(() => {
+    try {
+      const data = localStorage.getItem(TEMPLATE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  });
   const [showLibrary, setShowLibrary] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
@@ -200,11 +196,6 @@ export function MarginOperationsPrototype({
   const directionColor = direction === 'expand' 
     ? { rgb: 'rgb(34, 211, 238)', hue: 187 }   // Cyan
     : { rgb: 'rgb(239, 68, 68)', hue: 0 };     // Red
-
-  // Debug: track state changes
-  useEffect(() => {
-    console.log('🔶 MARGIN: Toolbar state - direction:', direction, 'marginMm:', marginMm);
-  }, [direction, marginMm]);
 
   // Refs for popup positioning
   const libraryButtonRef = useRef<HTMLButtonElement>(null);
@@ -247,44 +238,42 @@ export function MarginOperationsPrototype({
 
   const canExecute = selectedStructure && (outputMode === 'same' || outputName);
 
-  // Template management functions
-  const saveTemplate = useCallback(() => {
+  // Save template - includes selected structure
+  const saveTemplate = () => {
     if (!templateName.trim()) return;
     const newTemplate: MarginTemplate = {
       id: Date.now().toString(),
       name: templateName.trim(),
       direction,
       marginMm,
+      selectedStructure: selectedStructure || undefined,
       createdAt: Date.now(),
     };
     const updated = [...templates, newTemplate];
     setTemplates(updated);
-    saveMarginTemplates(updated);
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(updated));
     setTemplateName('');
     setShowSaveDialog(false);
-  }, [templateName, direction, marginMm, templates]);
+  };
 
+  // Load template - restores all saved settings including structure
   const loadTemplate = (template: MarginTemplate) => {
-    console.log('🔶 MARGIN: loadTemplate called with:', template);
-    console.log('🔶 MARGIN: Before update - direction:', direction, 'marginMm:', marginMm);
-    
-    // Use flushSync to force immediate synchronous state updates
     flushSync(() => {
       setDirection(template.direction);
       setMarginMm(template.marginMm);
+      if (template.selectedStructure) {
+        setSelectedStructure(template.selectedStructure);
+      }
     });
-    
-    // Close the library popup after state is updated
     setShowLibrary(false);
-    
-    console.log('🔶 MARGIN: Template loaded - direction:', template.direction, 'margin:', template.marginMm);
   };
 
-  const deleteTemplate = useCallback((id: string) => {
+  // Delete template
+  const deleteTemplate = (id: string) => {
     const updated = templates.filter(t => t.id !== id);
     setTemplates(updated);
-    saveMarginTemplates(updated);
-  }, [templates]);
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(updated));
+  };
 
   const handleExecute = () => {
     if (!selectedStructure || !canExecute) return;
@@ -302,12 +291,6 @@ export function MarginOperationsPrototype({
       outputMode
     };
     
-    console.log('🔶 MARGIN: Toolbar sending operation:', operationPayload);
-    console.log('🔶 MARGIN: Superstructure toggle state:', { 
-      saveAsSuperstructure, 
-      outputMode, 
-      willSendAsSuperstructure: outputMode === 'new' ? saveAsSuperstructure : false 
-    });
     onExecute?.(operationPayload);
   };
 
@@ -425,26 +408,94 @@ export function MarginOperationsPrototype({
 
               <div className="flex-1" />
 
-              {/* Library Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    ref={libraryButtonRef}
-                    onClick={() => { setShowLibrary(!showLibrary); setShowSaveDialog(false); }}
-                    className={cn(
-                      "h-7 w-7 flex items-center justify-center rounded-lg transition-all",
-                      showLibrary 
-                        ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40" 
-                        : "text-white/70 hover:text-white hover:bg-white/10"
-                    )}
+              {/* Library Button + Popup */}
+              <div className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      ref={libraryButtonRef}
+                      onClick={() => { setShowLibrary(!showLibrary); setShowSaveDialog(false); }}
+                      className={cn(
+                        "h-7 w-7 flex items-center justify-center rounded-lg transition-all",
+                        showLibrary 
+                          ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40" 
+                          : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      <Library className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
+                    Template library ({templates.length})
+                  </TooltipContent>
+                </Tooltip>
+                
+                {/* Library Popup - positioned absolutely relative to button */}
+                {showLibrary && (
+                  <div 
+                    className="absolute bottom-full right-0 mb-2 w-72 rounded-xl border border-cyan-500/40 shadow-2xl z-50"
+                    style={{ background: '#0f1419' }}
                   >
-                    <Library className="w-3.5 h-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
-                  Template library ({templates.length})
-                </TooltipContent>
-              </Tooltip>
+                    <div className="px-3 py-2.5 border-b border-cyan-900/50 flex items-center justify-between" style={{ background: '#0c1a22' }}>
+                      <div className="flex items-center gap-2">
+                        <Library className="w-4 h-4 text-cyan-400" />
+                        <span className="text-sm font-medium text-white">Margin Templates</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/30 text-cyan-300">{templates.length}</span>
+                      </div>
+                      <button 
+                        onClick={() => setShowLibrary(false)} 
+                        className="text-gray-500 hover:text-white transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="p-2 max-h-64 overflow-y-auto">
+                      {templates.length === 0 ? (
+                        <div className="py-8 text-center">
+                          <FolderOpen className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                          <p className="text-sm text-gray-400">No saved templates</p>
+                          <p className="text-xs text-gray-500 mt-1">Save margin settings to reuse them</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {templates.map(template => (
+                            <div
+                              key={template.id}
+                              className="flex items-center gap-2 p-2.5 rounded-lg hover:bg-cyan-950/40 transition-colors group"
+                              style={{ background: '#131d24' }}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-white truncate">{template.name}</div>
+                                <div className="text-xs text-gray-400">
+                                  {template.selectedStructure && <span className="text-cyan-400">{template.selectedStructure} → </span>}
+                                  {template.direction === 'expand' ? 'Expand' : 'Shrink'} {template.marginMm}mm
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  loadTemplate(template);
+                                }}
+                                className="h-7 px-3 text-xs font-medium rounded-lg bg-cyan-600/30 text-cyan-300 hover:bg-cyan-600/50 border border-cyan-500/40 transition-colors"
+                              >
+                                Load
+                              </button>
+                              <button
+                                onClick={() => deleteTemplate(template.id)}
+                                className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Save Button */}
               <Tooltip>
@@ -607,102 +658,24 @@ export function MarginOperationsPrototype({
         </motion.div>
       </div>
 
-      {/* Library Popup - rendered outside toolbar to avoid overflow issues */}
-      <AnimatePresence>
-        {showLibrary && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            className="fixed z-[60] w-72 max-h-80 overflow-hidden rounded-xl border border-cyan-500/30 shadow-2xl"
-            style={{ 
-              background: 'linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(12,20,24,0.99) 100%)',
-              bottom: `calc(96px - ${position.y}px + 56px)`,
-              left: `calc(${viewerOffsetLeft}px + 16px + ${position.x}px + 420px)`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 px-3 py-2 border-b border-white/10 backdrop-blur-sm flex items-center justify-between bg-cyan-950/30">
-              <div className="flex items-center gap-2">
-                <Library className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-medium text-white">Margin Templates</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">{templates.length}</span>
-              </div>
-              <button onClick={() => setShowLibrary(false)} className="text-gray-500 hover:text-white transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="p-2 max-h-64 overflow-y-auto">
-              {templates.length === 0 ? (
-                <div className="py-8 text-center">
-                  <FolderOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No saved templates</p>
-                  <p className="text-xs text-gray-600 mt-1">Save margin settings to reuse them</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {templates.map(template => (
-                    <div
-                      key={template.id}
-                      className="flex items-center gap-2 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">{template.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {template.direction === 'expand' ? 'Expand' : 'Shrink'} {template.marginMm}mm
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          console.log('🔶 MARGIN: Loading template:', template.name, template);
-                          loadTemplate(template);
-                        }}
-                        className="h-7 px-3 text-xs font-medium rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 ring-1 ring-cyan-500/30 transition-colors"
-                      >
-                        Load
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          deleteTemplate(template.id);
-                        }}
-                        className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Save Dialog Popup - rendered outside toolbar to avoid overflow issues */}
+      {/* Save Dialog Popup */}
       <AnimatePresence>
         {showSaveDialog && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            className="fixed z-[60] w-64 rounded-xl border border-cyan-500/30 shadow-2xl"
+            className="fixed z-[60] w-64 rounded-xl border border-cyan-500/40 shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             style={{ 
-              background: 'linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(12,20,24,0.99) 100%)',
+              background: '#0f1419',
               bottom: `calc(96px - ${position.y}px + 56px)`,
               left: `calc(${viewerOffsetLeft}px + 16px + ${position.x}px + 455px)`,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2 bg-cyan-950/30">
+            <div className="px-3 py-2.5 border-b border-cyan-900/50 flex items-center gap-2" style={{ background: '#0c1a22' }}>
               <Save className="w-4 h-4 text-cyan-400" />
               <span className="text-sm font-medium text-white">Save Template</span>
             </div>
@@ -711,17 +684,17 @@ export function MarginOperationsPrototype({
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 placeholder="Template name..."
-                className="h-9 bg-black/30 border-white/10 text-white text-sm rounded-lg"
+                className="h-9 bg-gray-800 border-gray-700 text-white text-sm rounded-lg"
                 onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
                 autoFocus
               />
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-400">
                 {direction === 'expand' ? 'Expand' : 'Shrink'} {marginMm}mm
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowSaveDialog(false)}
-                  className="flex-1 h-8 text-sm font-medium rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                  className="flex-1 h-8 text-sm font-medium rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors border border-gray-700"
                 >
                   Cancel
                 </button>
@@ -731,8 +704,8 @@ export function MarginOperationsPrototype({
                   className={cn(
                     "flex-1 h-8 text-sm font-medium rounded-lg transition-colors",
                     templateName.trim()
-                      ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40 hover:bg-cyan-500/30"
-                      : "bg-white/5 text-gray-600 cursor-not-allowed"
+                      ? "bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-600/50"
+                      : "bg-gray-800 text-gray-600 cursor-not-allowed border border-gray-700"
                   )}
                 >
                   Save

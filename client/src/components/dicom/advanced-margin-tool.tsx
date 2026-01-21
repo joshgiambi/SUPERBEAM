@@ -141,13 +141,9 @@ export function AdvancedMarginTool({
 
   const handlePreview = useCallback(() => {
     if (!selectedStructure) {
-      console.warn('🔹 ❌ No structure selected for preview');
       return;
     }
 
-    console.log('🔹 🎯 Advanced Margin Tool: Starting preview for structure:', selectedStructure.id);
-    console.log('🔹 📊 Preview parameters:', parameters);
-    
     onPreviewOperation({
       type: 'preview_margin',
       parameters,
@@ -155,7 +151,6 @@ export function AdvancedMarginTool({
     });
     
     setIsPreviewActive(true);
-    console.log('🔹 ✅ Preview operation dispatched');
   }, [selectedStructure, parameters, onPreviewOperation]);
 
   const handleClearPreview = useCallback(() => {
@@ -165,7 +160,6 @@ export function AdvancedMarginTool({
 
   const handleExecute = useCallback(() => {
     if (!selectedStructure) {
-      console.warn('🔹 ❌ No structure selected for execution');
       return;
     }
 
@@ -174,9 +168,6 @@ export function AdvancedMarginTool({
       handleClearPreview();
     }
 
-    console.log('🔹 🎯 Advanced Margin Tool: Starting execution for structure:', selectedStructure.id);
-    console.log('🔹 📊 Execution parameters:', parameters);
-    
     onExecuteOperation({
       type: parameters.marginType === 'UNIFORM' ? 'uniform_margin' : 
             parameters.marginType === 'DIRECTIONAL' ? 'directional_margin' : 
@@ -185,8 +176,6 @@ export function AdvancedMarginTool({
       parameters,
       structureId: selectedStructure.id
     });
-    
-    console.log('🔹 ✅ Execute operation dispatched');
   }, [selectedStructure, parameters, isPreviewActive, onExecuteOperation, handleClearPreview]);
 
   const renderUniformMarginControls = () => (
