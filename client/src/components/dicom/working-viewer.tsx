@@ -371,6 +371,13 @@ interface WorkingViewerProps {
   showIsodose?: boolean;
   prescriptionDose?: number;
   
+  // RT Plan / Beam overlay props
+  showBeamOverlay?: boolean;
+  selectedBeamNumber?: number | null;
+  beamOverlayOpacity?: number;
+  beams?: import('@/types/rt-plan').BeamSummary[];
+  bevProjections?: import('@/types/rt-plan').BEVProjection[];
+  
   // FuseBox translation offset for manual registration adjustment
   // Applied as additional offset to the fusion overlay rendering
   fusionTranslation?: { x: number; y: number; z: number };
@@ -445,6 +452,12 @@ const WorkingViewer = forwardRef(function WorkingViewerComponent(props: WorkingV
     doseColormap = 'rainbow',
     showIsodose = false,
     prescriptionDose = 60,
+    // RT Plan / Beam overlay props
+    showBeamOverlay = false,
+    selectedBeamNumber = null,
+    beamOverlayOpacity = 0.7,
+    beams = [],
+    bevProjections = [],
     fusionTranslation,
     onImagesLoaded,
   } = props;
@@ -1914,6 +1927,199 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
       drawDoseOverlay();
     }
   }, [doseSeriesId, doseVisible, doseFrames, currentIndex, drawDoseOverlay]);
+
+  // ============================================================================
+  // RT Plan / Beam Overlay Rendering
+  // ============================================================================
+  
+  // Render beam direction indicators on the viewport
+  const renderBeamOverlay = useCallback((
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+    currentImage: any,
+    currentZoom: number,
+    currentPanX: number,
+    currentPanY: number
+  ) => {
+    if (!showBeamOverlay || !beams || beams.length === 0 || !bevProjections || bevProjections.length === 0) {
+      return;
+    }
+    
+    // Get image dimensions
+    const imageWidth = currentImage?.columns || currentImage?.width || 512;
+    const imageHeight = currentImage?.rows || currentImage?.height || 512;
+    
+    // Get image position and spacing
+    const imagePosition = parseImagePosition(currentImage) || [0, 0, 0];
+    const pixelSpacing = currentImage?.pixelSpacing || [1, 1];
+    const rowSpacing = typeof pixelSpacing === 'string' 
+      ? parseFloat(pixelSpacing.split('\\')[0]) 
+      : (pixelSpacing[0] || 1);
+    const colSpacing = typeof pixelSpacing === 'string'
+      ? parseFloat(pixelSpacing.split('\\')[1])
+      : (pixelSpacing[1] || 1);
+    
+    // Current slice Z position
+    const currentSliceZ = imagePosition[2];
+    
+    // Calculate canvas coordinates
+    const baseScale = Math.min(canvas.width / imageWidth, canvas.height / imageHeight);
+    const totalScale = baseScale * currentZoom;
+    const scaledWidth = imageWidth * totalScale;
+    const scaledHeight = imageHeight * totalScale;
+    const imageX = (canvas.width - scaledWidth) / 2 + currentPanX;
+    const imageY = (canvas.height - scaledHeight) / 2 + currentPanY;
+    
+    // Beam colors
+    const BEAM_COLORS = [
+      '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+      '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'
+    ];
+    
+    ctx.save();
+    ctx.globalAlpha = beamOverlayOpacity;
+    
+    // Draw each beam
+    bevProjections.forEach((bev, index) => {
+      const beam = beams.find(b => b.beamNumber === bev.beamNumber);
+      if (!beam) return;
+      
+      const isSelected = selectedBeamNumber === bev.beamNumber;
+      const color = BEAM_COLORS[index % BEAM_COLORS.length];
+      
+      // Convert isocenter world coordinates to pixel coordinates
+      const isoX = (bev.isocenterPosition[0] - imagePosition[0]) / colSpacing;
+      const isoY = (bev.isocenterPosition[1] - imagePosition[1]) / rowSpacing;
+      
+      // Convert to canvas coordinates
+      const isoCanvasX = imageX + isoX * totalScale;
+      const isoCanvasY = imageY + isoY * totalScale;
+      
+      // Check if isocenter is within reasonable bounds of the image
+      if (isoCanvasX < -100 || isoCanvasX > canvas.width + 100 ||
+          isoCanvasY < -100 || isoCanvasY > canvas.height + 100) {
+        return; // Isocenter is too far from view
+      }
+      
+      // Calculate beam direction in 2D (projected onto axial plane)
+      // Gantry angle determines the beam entry direction
+      const gantryRad = (bev.gantryAngle * Math.PI) / 180;
+      
+      // Arrow length (longer for selected beam)
+      const arrowLength = isSelected ? 120 : 80;
+      
+      // Beam entry direction (from source toward isocenter)
+      // In IEC coordinates: gantry 0° = beam from +Y, 90° = beam from +X
+      const beamDirX = Math.sin(gantryRad);
+      const beamDirY = -Math.cos(gantryRad);
+      
+      // Draw beam entry indicator (arrow pointing toward isocenter)
+      const entryX = isoCanvasX - beamDirX * arrowLength;
+      const entryY = isoCanvasY - beamDirY * arrowLength;
+      
+      // Draw beam line
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isSelected ? 3 : 2;
+      ctx.setLineDash(isSelected ? [] : [8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(entryX, entryY);
+      ctx.lineTo(isoCanvasX, isoCanvasY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw arrowhead at isocenter
+      const headLen = isSelected ? 15 : 10;
+      const angle = Math.atan2(isoCanvasY - entryY, isoCanvasX - entryX);
+      ctx.beginPath();
+      ctx.moveTo(isoCanvasX, isoCanvasY);
+      ctx.lineTo(
+        isoCanvasX - headLen * Math.cos(angle - Math.PI / 6),
+        isoCanvasY - headLen * Math.sin(angle - Math.PI / 6)
+      );
+      ctx.moveTo(isoCanvasX, isoCanvasY);
+      ctx.lineTo(
+        isoCanvasX - headLen * Math.cos(angle + Math.PI / 6),
+        isoCanvasY - headLen * Math.sin(angle + Math.PI / 6)
+      );
+      ctx.stroke();
+      
+      // Draw beam exit indicator (arrow continuing through isocenter)
+      const exitX = isoCanvasX + beamDirX * (arrowLength * 0.6);
+      const exitY = isoCanvasY + beamDirY * (arrowLength * 0.6);
+      ctx.setLineDash([4, 4]);
+      ctx.globalAlpha = beamOverlayOpacity * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(isoCanvasX, isoCanvasY);
+      ctx.lineTo(exitX, exitY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = beamOverlayOpacity;
+      
+      // Draw isocenter marker
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(isoCanvasX, isoCanvasY, isSelected ? 6 : 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw white center dot
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(isoCanvasX, isoCanvasY, isSelected ? 3 : 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw beam label
+      if (isSelected || beams.length <= 4) {
+        ctx.font = isSelected ? 'bold 12px system-ui' : '10px system-ui';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Position label at beam entry point
+        const labelX = entryX;
+        const labelY = entryY - 8;
+        
+        // Background for readability
+        const labelText = `${bev.beamName} (G${bev.gantryAngle.toFixed(0)}°)`;
+        const textMetrics = ctx.measureText(labelText);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(
+          labelX - textMetrics.width / 2 - 4,
+          labelY - 14,
+          textMetrics.width + 8,
+          16
+        );
+        
+        ctx.fillStyle = color;
+        ctx.fillText(labelText, labelX, labelY);
+      }
+      
+      // If selected, draw field size indicator
+      if (isSelected && beam.fieldSizeX && beam.fieldSizeY) {
+        // Draw rough field outline at isocenter plane
+        const halfFieldX = (beam.fieldSizeX / 2) / colSpacing * totalScale;
+        const halfFieldY = (beam.fieldSizeY / 2) / rowSpacing * totalScale;
+        
+        // Rotate field rectangle by collimator angle
+        const collRad = (bev.collimatorAngle * Math.PI) / 180;
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.globalAlpha = beamOverlayOpacity * 0.6;
+        
+        ctx.save();
+        ctx.translate(isoCanvasX, isoCanvasY);
+        ctx.rotate(collRad);
+        ctx.strokeRect(-halfFieldX, -halfFieldY, halfFieldX * 2, halfFieldY * 2);
+        ctx.restore();
+        
+        ctx.setLineDash([]);
+        ctx.globalAlpha = beamOverlayOpacity;
+      }
+    });
+    
+    ctx.restore();
+  }, [showBeamOverlay, beams, bevProjections, selectedBeamNumber, beamOverlayOpacity, parseImagePosition]);
   
   // Abort controller for series changes
   const seriesAbortRef = useRef<AbortController | null>(null);
@@ -7005,6 +7211,15 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
             contoursCtx.fill();
             
             contoursCtx.restore();
+          }
+          
+          // Draw beam overlay on contours canvas (inside contoursCtx scope)
+          if (showBeamOverlay && beams && beams.length > 0) {
+            try {
+              renderBeamOverlay(contoursCtx, contoursCanvas, currentImage, zoom, panX, panY);
+            } catch (beamError) {
+              console.warn("Error drawing beam overlay:", beamError);
+            }
           }
         }
       }

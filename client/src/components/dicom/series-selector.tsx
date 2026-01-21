@@ -3175,10 +3175,10 @@ export function SeriesSelector({
 
                     {/* Structures List - Grouped and Individual - Scrollable */}
                     <div className={`space-y-1 overflow-y-auto flex-1 min-h-0 ${
-                      windowLevelExpanded && accordionValues.includes('series') ? 'max-h-[40vh]' : 
-                      !windowLevelExpanded && accordionValues.includes('series') ? 'max-h-[65vh]' :
-                      windowLevelExpanded && !accordionValues.includes('series') ? 'max-h-[50vh]' : 'max-h-[75vh]'
-                    }`} style={{ paddingBottom: '4rem', scrollPaddingBottom: '2rem' }}>
+                      windowLevelExpanded && accordionValues.includes('series') ? 'max-h-[35vh]' : 
+                      !windowLevelExpanded && accordionValues.includes('series') ? 'max-h-[55vh]' :
+                      windowLevelExpanded && !accordionValues.includes('series') ? 'max-h-[45vh]' : 'max-h-[65vh]'
+                    }`} style={{ paddingBottom: '6rem' }}>
                       {rtStructures?.structures && (() => {
                         // Filter and sort structures
                         const filtered = rtStructures.structures.filter((structure: any) =>

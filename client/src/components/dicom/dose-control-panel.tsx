@@ -396,33 +396,6 @@ export function DoseControlPanel({
             </div>
           )}
 
-          {/* Prescription Dose */}
-          {onPrescriptionDoseChange && (
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Rx Dose</span>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={prescriptionDose}
-                    onChange={(e) => onPrescriptionDoseChange(parseFloat(e.target.value) || 60)}
-                    className="w-14 px-2 py-1 text-xs font-medium bg-black/30 border border-zinc-600/30 rounded-lg text-zinc-100 text-center focus:outline-none focus:ring-1 focus:ring-zinc-400/50"
-                    step={0.5}
-                  />
-                  <span className="text-xs text-zinc-500">Gy</span>
-                </div>
-              </div>
-              <Slider 
-                value={[prescriptionDose]} 
-                min={10} 
-                max={80} 
-                step={1} 
-                onValueChange={(v) => onPrescriptionDoseChange(v[0])}
-                className="[&_[role=slider]]:bg-zinc-300 [&_[role=slider]]:border-zinc-400"
-              />
-            </div>
-          )}
-
           {/* Isodose Lines Toggle */}
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">

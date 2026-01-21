@@ -6,8 +6,9 @@ import { FlexibleFusionLayout } from './flexible-fusion-layout';
 import { BottomToolbarPrototypeV2 } from './bottom-toolbar-prototype-v2';
 import { ContourEditToolbar } from './contour-edit-toolbar';
 import { FusionControlPanelV2, type FusionLayoutPreset } from './fusion-control-panel-v2';
-import { DoseControlPanel } from './dose-control-panel';
+import { RadiationTherapyPanel } from './radiation-therapy-panel';
 import type { DoseColormap, RTDoseMetadata } from '@/lib/rt-dose-manager';
+import type { BeamSummary, BEVProjection } from '@/types/rt-plan';
 import { UnifiedFusionTopbar } from './unified-fusion-topbar';
 import { ErrorModal } from './error-modal';
 import { BooleanPipelinePrototypeCombined } from './boolean-pipeline-prototype-combined';
@@ -100,6 +101,15 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [doseLoading, setDoseLoading] = useState(false);
   const [prescriptionDose, setPrescriptionDose] = useState(60);
   const [dosePanelMinimized, setDosePanelMinimized] = useState(false);
+  
+  // RT Plan / Beam state
+  const [planSeries, setPlanSeries] = useState<any[]>([]);
+  const [selectedPlanSeriesId, setSelectedPlanSeriesId] = useState<number | null>(null);
+  const [showBeamOverlay, setShowBeamOverlay] = useState(false);
+  const [selectedBeamNumber, setSelectedBeamNumber] = useState<number | null>(null);
+  const [beamOverlayOpacity, setBeamOverlayOpacity] = useState(0.7);
+  const [loadedBeams, setLoadedBeams] = useState<BeamSummary[]>([]);
+  const [loadedBEVProjections, setLoadedBEVProjections] = useState<BEVProjection[]>([]);
   // Flexible fusion layout state
   const [fusionLayoutPreset, setFusionLayoutPreset] = useState<FusionLayoutPreset>('overlay');
   const [enableFlexibleLayout, setEnableFlexibleLayout] = useState(true); // Enable by default
@@ -789,15 +799,30 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     }
   }, [seriesData, selectedSeries, shouldHideSeries]);
 
-  // Extract RT Dose series from loaded series
+  // Extract RT Dose and RT Plan series from loaded series
   useEffect(() => {
     if (seriesData && Array.isArray(seriesData)) {
+      // RT Dose series
       const doseSeriesData = seriesData.filter(
         (s: any) => s.modality?.toUpperCase() === 'RTDOSE'
       );
       setDoseSeries(doseSeriesData);
       if (doseSeriesData.length > 0) {
         console.log(`📊 Found ${doseSeriesData.length} RT Dose series`);
+      }
+      
+      // RT Plan series
+      const planSeriesData = seriesData.filter(
+        (s: any) => s.modality?.toUpperCase() === 'RTPLAN'
+      );
+      setPlanSeries(planSeriesData);
+      if (planSeriesData.length > 0) {
+        console.log(`⚡ Found ${planSeriesData.length} RT Plan series`);
+        // Auto-select first plan (regardless of dose)
+        if (planSeriesData.length >= 1 && !selectedPlanSeriesId) {
+          setSelectedPlanSeriesId(planSeriesData[0].id);
+          console.log(`⚡ Auto-selected RT Plan series: ${planSeriesData[0].id}`);
+        }
       }
     }
   }, [seriesData]);
@@ -2686,6 +2711,12 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       doseColormap={doseColormap}
                       showIsodose={showIsodose}
                       prescriptionDose={prescriptionDose}
+                      // RT Plan / Beam overlay props
+                      showBeamOverlay={showBeamOverlay}
+                      selectedBeamNumber={selectedBeamNumber}
+                      beamOverlayOpacity={beamOverlayOpacity}
+                      beams={loadedBeams}
+                      bevProjections={loadedBEVProjections}
                     />
                   </div>
                   {/* Right: Secondary scan only - BIDIRECTIONAL sync with primary */}
@@ -2752,6 +2783,12 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       doseColormap={doseColormap}
                       showIsodose={showIsodose}
                       prescriptionDose={prescriptionDose}
+                      // RT Plan / Beam overlay props
+                      showBeamOverlay={showBeamOverlay}
+                      selectedBeamNumber={selectedBeamNumber}
+                      beamOverlayOpacity={beamOverlayOpacity}
+                      beams={loadedBeams}
+                      bevProjections={loadedBEVProjections}
                     />
                   </div>
                 </div>
@@ -2817,6 +2854,12 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   doseColormap={doseColormap}
                   showIsodose={showIsodose}
                   prescriptionDose={prescriptionDose}
+                  // RT Plan / Beam overlay props
+                  showBeamOverlay={showBeamOverlay}
+                  selectedBeamNumber={selectedBeamNumber}
+                  beamOverlayOpacity={beamOverlayOpacity}
+                  beams={loadedBeams}
+                  bevProjections={loadedBEVProjections}
                 />
               )}
               </ContourEditProvider>
@@ -3878,9 +3921,11 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       )}
 
 
-      {/* RT Dose Control Panel - Shows ONLY when dose series is selected */}
-      {selectedDoseSeriesId && doseSeries.length > 0 && (
-        <DoseControlPanel
+      {/* RT Radiation Therapy Panel - Combined Dose + Plan visualization */}
+      {/* Show when RT data is available (dose or plan series exist) */}
+      {(doseSeries.length > 0 || planSeries.length > 0) && (
+        <RadiationTherapyPanel
+          // Dose props
           doseSeriesOptions={doseSeries.map((d: any) => ({
             id: d.id,
             seriesDescription: d.seriesDescription || 'RT Dose',
@@ -3888,37 +3933,55 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             doseType: doseMetadata?.doseType,
           }))}
           selectedDoseSeriesId={selectedDoseSeriesId}
-          onDoseSeriesSelect={(id) => {
-            setSelectedDoseSeriesId(id);
-          }}
-          opacity={doseOpacity}
-          onOpacityChange={setDoseOpacity}
-          colormap={doseColormap}
+          onDoseSeriesSelect={setSelectedDoseSeriesId}
+          doseOpacity={doseOpacity}
+          onDoseOpacityChange={setDoseOpacity}
+          doseColormap={doseColormap}
           onColormapChange={setDoseColormap}
           showIsodose={showIsodose}
           onShowIsodoseChange={setShowIsodose}
           isodoseLevels={[30, 50, 70, 80, 90, 95, 100, 105]}
           prescriptionDose={prescriptionDose}
-          onPrescriptionDoseChange={setPrescriptionDose}
-          isVisible={doseVisible}
-          onVisibilityChange={setDoseVisible}
-          isLoading={doseLoading}
-          metadata={doseMetadata}
+          doseVisible={doseVisible}
+          onDoseVisibilityChange={setDoseVisible}
+          doseLoading={doseLoading}
+          doseMetadata={doseMetadata}
+          
+          // Plan props
+          planSeriesOptions={planSeries.map((p: any) => ({
+            id: p.id,
+            seriesDescription: p.seriesDescription || 'RT Plan',
+          }))}
+          selectedPlanSeriesId={selectedPlanSeriesId}
+          onPlanSeriesSelect={setSelectedPlanSeriesId}
+          showBeamOverlay={showBeamOverlay}
+          onShowBeamOverlayChange={setShowBeamOverlay}
+          selectedBeamNumber={selectedBeamNumber}
+          onSelectBeam={setSelectedBeamNumber}
+          beamOverlayOpacity={beamOverlayOpacity}
+          onBeamOverlayOpacityChange={setBeamOverlayOpacity}
+          onBeamsLoaded={(beams, bevs) => {
+            setLoadedBeams(beams);
+            setLoadedBEVProjections(bevs);
+            console.log(`⚡ Loaded ${beams.length} beams from RT Plan`);
+          }}
+          
+          // Panel state
           minimized={dosePanelMinimized}
           onToggleMinimized={setDosePanelMinimized}
           fusionPanelVisible={secondarySeriesId !== null}
+          structureSetId={loadedRTSeriesId || undefined}
+          
+          // Actions
           onLocalizeMaxDose={() => {
             if (doseMetadata?.maxDose) {
               toast({
                 title: 'Maximum Dose',
                 description: `Max dose: ${doseMetadata.maxDose.toFixed(2)} Gy`,
               });
-              // TODO: Implement actual localization to max dose position
-              // This requires the server to track and return the max dose position
             }
           }}
           onOpenBEDCalculator={() => {
-            // Open BED calculator in a popup window
             const params = new URLSearchParams();
             params.set('prescriptionDose', prescriptionDose.toString());
             if (doseMetadata?.maxDose) {
