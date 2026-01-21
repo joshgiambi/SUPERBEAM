@@ -17,6 +17,7 @@ import dicomParser from 'dicom-parser';
 import yauzl from 'yauzl';
 import { storage } from './storage';
 import { logger } from './logger';
+import { triggerDvhPrecompute } from './dvh-api';
 
 // Types
 interface ImportSession {
@@ -553,6 +554,28 @@ async function commitSession(sessionId: string): Promise<void> {
 
     session.status = 'complete';
     session.updatedAt = new Date();
+
+    // Trigger DVH pre-computation for any imported RTDOSE series
+    // This runs in the background (non-blocking) to prepare DVH data for instant loading
+    try {
+      for (const [, patientData] of patientMap) {
+        for (const [, studyData] of patientData.studies) {
+          for (const [seriesKey, seriesData] of studyData.series) {
+            if (seriesData.metadata?.modality === 'RTDOSE') {
+              const rtDoseSeries = await storage.getSeriesByUID(seriesKey);
+              if (rtDoseSeries) {
+                logger.info(`Triggering DVH pre-computation for RTDOSE series ${rtDoseSeries.id}`, 'import');
+                // This is async/non-blocking - computation happens in background
+                triggerDvhPrecompute(rtDoseSeries.id);
+              }
+            }
+          }
+        }
+      }
+    } catch (dvhError) {
+      // Don't fail the import if DVH pre-computation fails - it will be computed on-demand
+      logger.warn(`DVH pre-computation trigger failed: ${dvhError}`, 'import');
+    }
 
     // Remove from active sessions after a delay
     setTimeout(() => {

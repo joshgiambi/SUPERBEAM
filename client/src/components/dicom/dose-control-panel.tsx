@@ -17,7 +17,7 @@ import {
   Eye, 
   EyeOff, 
   Layers, 
-  Zap, 
+  Atom, 
   ChevronDown, 
   ChevronUp,
   BarChart3,
@@ -202,7 +202,7 @@ export function DoseControlPanel({
         <div className="flex items-center gap-3 rounded-2xl border border-zinc-500/30 px-4 py-2.5 shadow-xl shadow-black/20">
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Zap className="h-4 w-4 text-zinc-300" />
+              <Atom className="h-4 w-4 text-zinc-300" />
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
             </div>
             <span className="text-sm font-medium text-zinc-100">Dose</span>
@@ -262,7 +262,7 @@ export function DoseControlPanel({
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-600/25">
           <div className="flex items-center gap-2.5">
             <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-zinc-500/30 to-zinc-700/20">
-              <Zap className="h-4 w-4 text-zinc-300" />
+              <Atom className="h-4 w-4 text-zinc-300" />
             </div>
             <div>
               <span className="text-sm font-semibold text-zinc-50">RT Dose</span>

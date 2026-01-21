@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { studies, series, images, patients, pacsConnections, patientTags, registrations, rtStructureSets, rtStructures, rtStructureContours, rtStructureHistory, rtSuperstructures, mediaPreviews, fuseboxRuns, type Study, type Series, type DicomImage, type Patient, type PacsConnection, type PatientTag, type Registration, type InsertStudy, type InsertSeries, type InsertImage, type InsertPatient, type InsertPacsConnection, type InsertPatientTag, type InsertRegistration, type RTStructureSet, type InsertRTStructureSet, type RTStructure, type InsertRTStructure, type RTStructureContour, type InsertRTStructureContour, type RTStructureHistory, type InsertRTStructureHistory, type RTSuperstructure, type InsertRTSuperstructure, type MediaPreview } from "@shared/schema";
+import { studies, series, images, patients, pacsConnections, patientTags, registrations, rtStructureSets, rtStructures, rtStructureContours, rtStructureHistory, rtSuperstructures, mediaPreviews, fuseboxRuns, dvhCache, type Study, type Series, type DicomImage, type Patient, type PacsConnection, type PatientTag, type Registration, type InsertStudy, type InsertSeries, type InsertImage, type InsertPatient, type InsertPacsConnection, type InsertPatientTag, type InsertRegistration, type RTStructureSet, type InsertRTStructureSet, type RTStructure, type InsertRTStructure, type RTStructureContour, type InsertRTStructureContour, type RTStructureHistory, type InsertRTStructureHistory, type RTSuperstructure, type InsertRTSuperstructure, type MediaPreview, type DvhCache, type InsertDvhCache } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, or } from "drizzle-orm";
+import { eq, desc, or, and } from "drizzle-orm";
 
 // In-memory storage for RT structure modifications
 interface RTStructureModification {
@@ -1363,6 +1363,109 @@ export class DatabaseStorage implements IStorage {
     }
 
     return regeneratedIds;
+  }
+
+  // ============================================================================
+  // DVH Cache Operations - Persistent storage for pre-computed DVH data
+  // ============================================================================
+
+  /**
+   * Get cached DVH data by dose series, structure set series, and prescription dose
+   */
+  async getDvhCache(doseSeriesId: number, structureSetSeriesId: number, prescriptionDose: number): Promise<DvhCache | null> {
+    const [cached] = await db
+      .select()
+      .from(dvhCache)
+      .where(
+        and(
+          eq(dvhCache.doseSeriesId, doseSeriesId),
+          eq(dvhCache.structureSetSeriesId, structureSetSeriesId),
+          eq(dvhCache.prescriptionDose, prescriptionDose)
+        )
+      );
+    return cached || null;
+  }
+
+  /**
+   * Get all cached DVH entries for a dose series (any prescription dose)
+   */
+  async getDvhCacheByDoseSeries(doseSeriesId: number): Promise<DvhCache[]> {
+    return db
+      .select()
+      .from(dvhCache)
+      .where(eq(dvhCache.doseSeriesId, doseSeriesId));
+  }
+
+  /**
+   * Store DVH data in the cache (upsert - update if exists)
+   */
+  async saveDvhCache(data: InsertDvhCache): Promise<DvhCache> {
+    // Check if entry already exists
+    const existing = await this.getDvhCache(
+      data.doseSeriesId,
+      data.structureSetSeriesId,
+      data.prescriptionDose
+    );
+
+    if (existing) {
+      // Update existing entry
+      const [updated] = await db
+        .update(dvhCache)
+        .set({
+          dvhData: data.dvhData,
+          computationTimeMs: data.computationTimeMs,
+          structureCount: data.structureCount,
+          updatedAt: new Date(),
+        })
+        .where(eq(dvhCache.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    // Insert new entry
+    const [inserted] = await db
+      .insert(dvhCache)
+      .values({
+        doseSeriesId: data.doseSeriesId,
+        structureSetSeriesId: data.structureSetSeriesId,
+        prescriptionDose: data.prescriptionDose,
+        dvhData: data.dvhData,
+        computationTimeMs: data.computationTimeMs,
+        structureCount: data.structureCount,
+      })
+      .returning();
+    return inserted;
+  }
+
+  /**
+   * Invalidate DVH cache for a structure set (when structures are modified)
+   */
+  async invalidateDvhCacheByStructureSet(structureSetSeriesId: number): Promise<number> {
+    const result = await db
+      .delete(dvhCache)
+      .where(eq(dvhCache.structureSetSeriesId, structureSetSeriesId))
+      .returning();
+    return result.length;
+  }
+
+  /**
+   * Invalidate DVH cache for a dose series (when dose data changes)
+   */
+  async invalidateDvhCacheByDoseSeries(doseSeriesId: number): Promise<number> {
+    const result = await db
+      .delete(dvhCache)
+      .where(eq(dvhCache.doseSeriesId, doseSeriesId))
+      .returning();
+    return result.length;
+  }
+
+  /**
+   * Delete specific DVH cache entry
+   */
+  async deleteDvhCache(id: number): Promise<void> {
+    await db
+      .delete(dvhCache)
+      .where(eq(dvhCache.id, id));
   }
 
   clearAll(): void {

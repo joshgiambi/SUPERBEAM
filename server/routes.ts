@@ -32,7 +32,7 @@ import mem3dRouter from './mem3d-api';
 import nninteractiveRouter from './nninteractive-api';
 import supersegRouter from './superseg-api';
 import rtDoseRouter from './rt-dose-api';
-import dvhRouter from './dvh-api';
+import dvhRouter, { triggerDvhPrecompute } from './dvh-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
 import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
 const isDev = process.env.NODE_ENV !== 'production';

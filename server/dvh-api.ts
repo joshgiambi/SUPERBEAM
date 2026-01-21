@@ -2,10 +2,15 @@
  * DVH (Dose-Volume Histogram) API Routes
  * 
  * Provides endpoints for calculating and serving DVH data:
- * - GET /api/dvh/:doseSeriesId - Calculate DVH for all structures
- * - GET /api/dvh/:doseSeriesId/:roiNumber - Calculate DVH for specific structure
+ * - GET /api/dvh/:doseSeriesId - Get DVH for all structures (instant if pre-computed)
+ * - GET /api/dvh/:doseSeriesId/:roiNumber - Get DVH for specific structure
+ * - POST /api/dvh/:doseSeriesId/precompute - Trigger background DVH pre-computation
+ * - GET /api/dvh/:doseSeriesId/status - Check if DVH is pre-computed
  * 
- * OPTIMIZATION: Results are cached in memory for instant subsequent loads.
+ * OPTIMIZATION: 
+ * - DVH results are stored persistently in the database (survives server restarts)
+ * - In-memory cache for active session performance
+ * - Background pre-computation when dose data is loaded
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -18,7 +23,8 @@ import { logger } from './logger';
 const router = Router();
 
 // ============================================================================
-// CACHE - Store calculated DVH results for instant retrieval
+// IN-MEMORY CACHE - Session-level performance optimization
+// (Database cache is the primary persistent storage)
 // ============================================================================
 
 interface CachedDVH {
@@ -26,33 +32,34 @@ interface CachedDVH {
   timestamp: number;
 }
 
-// Cache DVH results keyed by "doseSeriesId:structureSetId:prescriptionDose"
-const dvhCache = new Map<string, CachedDVH>();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+// In-memory cache keyed by "doseSeriesId:structureSetId:prescriptionDose"
+const memoryCache = new Map<string, CachedDVH>();
+const MEMORY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour for in-memory cache
 
 function getCacheKey(doseSeriesId: number, structureSetId: number, prescriptionDose: number): string {
   return `${doseSeriesId}:${structureSetId}:${prescriptionDose}`;
 }
 
-function getCachedDVH(key: string): DVHResponse | null {
-  const cached = dvhCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    logger.info(`DVH cache hit: ${key}`);
+function getMemoryCachedDVH(key: string): DVHResponse | null {
+  const cached = memoryCache.get(key);
+  if (cached && Date.now() - cached.timestamp < MEMORY_CACHE_TTL_MS) {
     return cached.response;
   }
   if (cached) {
-    dvhCache.delete(key); // Expired
+    memoryCache.delete(key);
   }
   return null;
 }
 
-function setCachedDVH(key: string, response: DVHResponse): void {
-  dvhCache.set(key, { response, timestamp: Date.now() });
-  logger.info(`DVH cached: ${key} (${response.curves.length} structures)`);
+function setMemoryCachedDVH(key: string, response: DVHResponse): void {
+  memoryCache.set(key, { response, timestamp: Date.now() });
 }
 
 // Track in-progress calculations to prevent duplicate work
 const inProgressCalculations = new Map<string, Promise<DVHResponse>>();
+
+// Track background pre-computation jobs
+const precomputeJobs = new Map<string, { status: string; startTime: number; error?: string }>();
 
 // ============================================================================
 // Types
@@ -643,9 +650,195 @@ function calculateDVHForROI(
 // ============================================================================
 
 /**
+ * GET /api/dvh/:doseSeriesId/status
+ * Check if DVH is pre-computed and available for instant loading
+ */
+router.get('/:doseSeriesId/status', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const doseSeriesId = parseInt(req.params.doseSeriesId, 10);
+    const prescriptionDose = parseFloat(req.query.prescriptionDose as string) || 60;
+    
+    if (isNaN(doseSeriesId)) {
+      return res.status(400).json({ error: 'Invalid dose series ID' });
+    }
+
+    // Find structure set
+    const doseSeries = await storage.getSeries(doseSeriesId);
+    if (!doseSeries?.studyId) {
+      return res.json({ precomputed: false, reason: 'Dose series not found' });
+    }
+    
+    const structSetId = await findStructureSetForStudy(doseSeries.studyId);
+    if (!structSetId) {
+      return res.json({ precomputed: false, reason: 'No structure set found' });
+    }
+
+    // Check database cache
+    const dbCached = await storage.getDvhCache(doseSeriesId, structSetId, prescriptionDose);
+    
+    // Check if precompute job is running
+    const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
+    const job = precomputeJobs.get(cacheKey);
+
+    res.json({
+      precomputed: !!dbCached,
+      structureCount: dbCached?.structureCount || 0,
+      computationTimeMs: dbCached?.computationTimeMs || null,
+      cachedAt: dbCached?.updatedAt || null,
+      jobStatus: job?.status || null,
+      jobStartTime: job?.startTime || null,
+      jobError: job?.error || null,
+    });
+  } catch (error) {
+    logger.error(`DVH status check error: ${error}`);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/dvh/:doseSeriesId/precompute
+ * Trigger background DVH pre-computation (non-blocking)
+ * Call this when dose data is loaded to ensure instant DVH availability
+ */
+router.post('/:doseSeriesId/precompute', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const doseSeriesId = parseInt(req.params.doseSeriesId, 10);
+    const prescriptionDose = parseFloat(req.body.prescriptionDose as string) || 60;
+    const force = req.body.force === true;
+    
+    if (isNaN(doseSeriesId)) {
+      return res.status(400).json({ error: 'Invalid dose series ID' });
+    }
+
+    // Find structure set
+    const doseSeries = await storage.getSeries(doseSeriesId);
+    if (!doseSeries?.studyId) {
+      return res.status(404).json({ error: 'Dose series not found' });
+    }
+    
+    const structSetId = await findStructureSetForStudy(doseSeries.studyId);
+    if (!structSetId) {
+      return res.status(404).json({ error: 'No structure set found for this dose series' });
+    }
+
+    const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
+
+    // Check if already pre-computed (unless forced)
+    if (!force) {
+      const dbCached = await storage.getDvhCache(doseSeriesId, structSetId, prescriptionDose);
+      if (dbCached) {
+        return res.json({ 
+          status: 'already_computed',
+          structureCount: dbCached.structureCount,
+          cachedAt: dbCached.updatedAt,
+        });
+      }
+    }
+
+    // Check if job already running
+    const existingJob = precomputeJobs.get(cacheKey);
+    if (existingJob?.status === 'running') {
+      return res.json({ status: 'already_running', startTime: existingJob.startTime });
+    }
+
+    // Start background computation
+    precomputeJobs.set(cacheKey, { status: 'running', startTime: Date.now() });
+    
+    // Return immediately - computation happens in background
+    res.json({ status: 'started', cacheKey });
+
+    // Background computation (don't await)
+    computeAndStoreDVH(doseSeriesId, structSetId, prescriptionDose)
+      .then((result) => {
+        precomputeJobs.set(cacheKey, { 
+          status: 'completed', 
+          startTime: precomputeJobs.get(cacheKey)?.startTime || Date.now() 
+        });
+        logger.info(`DVH pre-computation completed for ${cacheKey}: ${result.curves.length} structures`);
+      })
+      .catch((error) => {
+        precomputeJobs.set(cacheKey, { 
+          status: 'failed', 
+          startTime: precomputeJobs.get(cacheKey)?.startTime || Date.now(),
+          error: error.message,
+        });
+        logger.error(`DVH pre-computation failed for ${cacheKey}: ${error.message}`);
+      });
+  } catch (error) {
+    logger.error(`DVH precompute error: ${error}`);
+    next(error);
+  }
+});
+
+/**
+ * Helper: Compute DVH and store in database
+ */
+async function computeAndStoreDVH(
+  doseSeriesId: number, 
+  structSetId: number, 
+  prescriptionDose: number
+): Promise<DVHResponse> {
+  const startTime = Date.now();
+
+  // Load dose data
+  const doseData = await loadDoseDicom(doseSeriesId);
+  if (!doseData) {
+    throw new Error('RT Dose series not found');
+  }
+
+  // Load structure set
+  const structures = await loadStructureSet(structSetId);
+  if (!structures || structures.length === 0) {
+    throw new Error('No structures found in structure set');
+  }
+
+  // Calculate DVH for each structure
+  const curves: DVHCurve[] = [];
+  for (const roi of structures) {
+    try {
+      const curve = calculateDVHForROI(roi, doseData, prescriptionDose);
+      curves.push(curve);
+    } catch (err) {
+      logger.warn(`Failed to calculate DVH for ROI ${roi.roiNumber}: ${err}`);
+    }
+  }
+
+  const response: DVHResponse = {
+    doseSeriesId,
+    structureSetId: structSetId,
+    prescriptionDose,
+    curves,
+  };
+
+  const elapsed = Date.now() - startTime;
+
+  // Store in database for persistent caching (with error handling)
+  try {
+    await storage.saveDvhCache({
+      doseSeriesId,
+      structureSetSeriesId: structSetId,
+      prescriptionDose,
+      dvhData: response as any, // JSONB
+      computationTimeMs: elapsed,
+      structureCount: curves.length,
+    });
+    logger.info(`DVH computed and stored in ${elapsed}ms (${curves.length} structures)`);
+  } catch (dbError) {
+    // Database save failed but computation succeeded - log and continue
+    logger.warn(`DVH computed in ${elapsed}ms but failed to store: ${dbError}`);
+  }
+
+  // Also cache in memory for session performance
+  const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
+  setMemoryCachedDVH(cacheKey, response);
+
+  return response;
+}
+
+/**
  * GET /api/dvh/:doseSeriesId
- * Calculate DVH for all structures in the associated structure set
- * Results are cached for instant subsequent loads.
+ * Get DVH for all structures in the associated structure set
+ * Returns instantly if pre-computed, otherwise calculates and stores for future use
  */
 router.get('/:doseSeriesId', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -670,14 +863,31 @@ router.get('/:doseSeriesId', async (req: Request, res: Response, next: NextFunct
       return res.status(404).json({ error: 'No structure set found for this dose series' });
     }
 
-    // Check cache first - instant return if cached
     const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
-    const cachedResult = getCachedDVH(cacheKey);
-    if (cachedResult) {
-      return res.json(cachedResult);
+
+    // 1. Check in-memory cache first (fastest)
+    const memCached = getMemoryCachedDVH(cacheKey);
+    if (memCached) {
+      logger.info(`DVH memory cache hit: ${cacheKey}`);
+      return res.json(memCached);
     }
 
-    // Check if calculation is already in progress
+    // 2. Check database cache (persistent, survives restarts)
+    try {
+      const dbCached = await storage.getDvhCache(doseSeriesId, structSetId, prescriptionDose);
+      if (dbCached) {
+        const response = dbCached.dvhData as DVHResponse;
+        // Populate memory cache for session performance
+        setMemoryCachedDVH(cacheKey, response);
+        logger.info(`DVH database cache hit: ${cacheKey}`);
+        return res.json(response);
+      }
+    } catch (dbError) {
+      // Database cache unavailable - continue to compute
+      logger.warn(`DVH database cache error, will compute: ${dbError}`);
+    }
+
+    // 3. Check if calculation is already in progress
     const inProgress = inProgressCalculations.get(cacheKey);
     if (inProgress) {
       logger.info(`DVH calculation already in progress for ${cacheKey}, waiting...`);
@@ -685,67 +895,103 @@ router.get('/:doseSeriesId', async (req: Request, res: Response, next: NextFunct
       return res.json(result);
     }
 
-    // Start calculation
-    logger.info(`Starting DVH calculation for dose=${doseSeriesId}, struct=${structSetId}, rx=${prescriptionDose}`);
-    const startTime = Date.now();
-
-    const calculationPromise = (async (): Promise<DVHResponse> => {
-      // Load dose data
-      const doseData = await loadDoseDicom(doseSeriesId);
-      if (!doseData) {
-        throw new Error('RT Dose series not found');
-      }
-
-      // Load structure set
-      const structures = await loadStructureSet(structSetId!);
-      if (!structures || structures.length === 0) {
-        throw new Error('No structures found in structure set');
-      }
-
-      // Calculate DVH for each structure
-      const curves: DVHCurve[] = [];
-      for (const roi of structures) {
-        try {
-          const curve = calculateDVHForROI(roi, doseData, prescriptionDose);
-          curves.push(curve);
-        } catch (err) {
-          logger.warn(`Failed to calculate DVH for ROI ${roi.roiNumber}: ${err}`);
-        }
-      }
-
-      return {
-        doseSeriesId,
-        structureSetId: structSetId!,
-        prescriptionDose,
-        curves,
-      };
-    })();
-
-    // Track in-progress calculation
+    // 4. Compute DVH (not cached) - this will also store in database
+    logger.info(`DVH not cached, computing: dose=${doseSeriesId}, struct=${structSetId}, rx=${prescriptionDose}`);
+    
+    const calculationPromise = computeAndStoreDVH(doseSeriesId, structSetId, prescriptionDose);
     inProgressCalculations.set(cacheKey, calculationPromise);
 
     try {
       const response = await calculationPromise;
-      
-      // Cache the result
-      setCachedDVH(cacheKey, response);
-      
-      const elapsed = Date.now() - startTime;
-      logger.info(`DVH calculation complete in ${elapsed}ms (${response.curves.length} structures)`);
-      
       res.json(response);
     } finally {
       inProgressCalculations.delete(cacheKey);
     }
   } catch (error) {
-    logger.error(`DVH calculation error: ${error}`);
+    logger.error(`DVH fetch error: ${error}`);
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/dvh/:doseSeriesId/cache
+ * Invalidate DVH cache for a dose series (call when structures are modified)
+ */
+router.delete('/:doseSeriesId/cache', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const doseSeriesId = parseInt(req.params.doseSeriesId, 10);
+    
+    if (isNaN(doseSeriesId)) {
+      return res.status(400).json({ error: 'Invalid dose series ID' });
+    }
+
+    // Clear database cache
+    const deletedCount = await storage.invalidateDvhCacheByDoseSeries(doseSeriesId);
+    
+    // Clear memory cache entries for this dose series
+    const keysToDelete: string[] = [];
+    for (const key of memoryCache.keys()) {
+      if (key.startsWith(`${doseSeriesId}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => memoryCache.delete(key));
+
+    logger.info(`DVH cache invalidated for dose series ${doseSeriesId}: ${deletedCount} database entries, ${keysToDelete.length} memory entries`);
+    
+    res.json({ 
+      success: true, 
+      deletedDatabaseEntries: deletedCount,
+      deletedMemoryEntries: keysToDelete.length,
+    });
+  } catch (error) {
+    logger.error(`DVH cache invalidation error: ${error}`);
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/dvh/cache/structure-set/:structureSetSeriesId
+ * Invalidate DVH cache when a structure set is modified
+ */
+router.delete('/cache/structure-set/:structureSetSeriesId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const structureSetSeriesId = parseInt(req.params.structureSetSeriesId, 10);
+    
+    if (isNaN(structureSetSeriesId)) {
+      return res.status(400).json({ error: 'Invalid structure set series ID' });
+    }
+
+    // Clear database cache
+    const deletedCount = await storage.invalidateDvhCacheByStructureSet(structureSetSeriesId);
+    
+    // Clear memory cache entries for this structure set
+    const keysToDelete: string[] = [];
+    for (const key of memoryCache.keys()) {
+      const parts = key.split(':');
+      if (parts.length >= 2 && parseInt(parts[1]) === structureSetSeriesId) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => memoryCache.delete(key));
+
+    logger.info(`DVH cache invalidated for structure set ${structureSetSeriesId}: ${deletedCount} database entries, ${keysToDelete.length} memory entries`);
+    
+    res.json({ 
+      success: true, 
+      deletedDatabaseEntries: deletedCount,
+      deletedMemoryEntries: keysToDelete.length,
+    });
+  } catch (error) {
+    logger.error(`DVH cache invalidation error: ${error}`);
     next(error);
   }
 });
 
 /**
  * GET /api/dvh/:doseSeriesId/:roiNumber
- * Calculate DVH for a specific structure
+ * Get DVH for a specific structure
+ * First checks if full DVH is cached, then extracts the specific ROI
  */
 router.get('/:doseSeriesId/:roiNumber', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -756,12 +1002,6 @@ router.get('/:doseSeriesId/:roiNumber', async (req: Request, res: Response, next
     
     if (isNaN(doseSeriesId) || isNaN(roiNumber)) {
       return res.status(400).json({ error: 'Invalid parameters' });
-    }
-
-    // Load dose data
-    const doseData = await loadDoseDicom(doseSeriesId);
-    if (!doseData) {
-      return res.status(404).json({ error: 'RT Dose series not found' });
     }
 
     // Find structure set
@@ -777,19 +1017,58 @@ router.get('/:doseSeriesId/:roiNumber', async (req: Request, res: Response, next
       return res.status(404).json({ error: 'No structure set found' });
     }
 
-    // Load structure set
+    const cacheKey = getCacheKey(doseSeriesId, structSetId, prescriptionDose);
+
+    // Check if full DVH is cached - extract single ROI from it
+    const memCached = getMemoryCachedDVH(cacheKey);
+    if (memCached) {
+      const curve = memCached.curves.find(c => c.roiNumber === roiNumber);
+      if (curve) {
+        return res.json({
+          doseSeriesId,
+          structureSetId: structSetId,
+          prescriptionDose,
+          curve,
+        });
+      }
+    }
+
+    // Check database cache (with error handling)
+    try {
+      const dbCached = await storage.getDvhCache(doseSeriesId, structSetId, prescriptionDose);
+      if (dbCached) {
+        const response = dbCached.dvhData as DVHResponse;
+        setMemoryCachedDVH(cacheKey, response);
+        const curve = response.curves.find(c => c.roiNumber === roiNumber);
+        if (curve) {
+          return res.json({
+            doseSeriesId,
+            structureSetId: structSetId,
+            prescriptionDose,
+            curve,
+          });
+        }
+      }
+    } catch (dbError) {
+      logger.warn(`DVH database cache error for single ROI, will compute: ${dbError}`);
+    }
+
+    // No cache - compute just this single ROI
+    const doseData = await loadDoseDicom(doseSeriesId);
+    if (!doseData) {
+      return res.status(404).json({ error: 'RT Dose series not found' });
+    }
+
     const structures = await loadStructureSet(structSetId);
     if (!structures) {
       return res.status(404).json({ error: 'Failed to load structure set' });
     }
 
-    // Find the specific ROI
     const roi = structures.find(s => s.roiNumber === roiNumber);
     if (!roi) {
       return res.status(404).json({ error: `ROI ${roiNumber} not found` });
     }
 
-    // Calculate DVH
     const curve = calculateDVHForROI(roi, doseData, prescriptionDose);
 
     res.json({
@@ -803,5 +1082,43 @@ router.get('/:doseSeriesId/:roiNumber', async (req: Request, res: Response, next
     next(error);
   }
 });
+
+/**
+ * Export helper function for triggering DVH pre-computation from other modules
+ * (e.g., when dose data is imported)
+ */
+export async function triggerDvhPrecompute(
+  doseSeriesId: number, 
+  prescriptionDose: number = 60
+): Promise<void> {
+  try {
+    const doseSeries = await storage.getSeries(doseSeriesId);
+    if (!doseSeries?.studyId) {
+      logger.warn(`Cannot precompute DVH: dose series ${doseSeriesId} not found`);
+      return;
+    }
+    
+    const structSetId = await findStructureSetForStudy(doseSeries.studyId);
+    if (!structSetId) {
+      logger.warn(`Cannot precompute DVH: no structure set found for dose series ${doseSeriesId}`);
+      return;
+    }
+
+    // Check if already cached
+    const existing = await storage.getDvhCache(doseSeriesId, structSetId, prescriptionDose);
+    if (existing) {
+      logger.info(`DVH already pre-computed for dose=${doseSeriesId}, struct=${structSetId}`);
+      return;
+    }
+
+    // Compute in background (fire and forget)
+    logger.info(`Triggering DVH pre-computation for dose=${doseSeriesId}, struct=${structSetId}`);
+    computeAndStoreDVH(doseSeriesId, structSetId, prescriptionDose)
+      .then(() => logger.info(`DVH pre-computation complete for dose=${doseSeriesId}`))
+      .catch(err => logger.error(`DVH pre-computation failed for dose=${doseSeriesId}: ${err.message}`));
+  } catch (error) {
+    logger.error(`Error triggering DVH pre-compute: ${error}`);
+  }
+}
 
 export default router;

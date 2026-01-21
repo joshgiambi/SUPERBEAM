@@ -465,3 +465,39 @@ export const insertPatientTagSchema = createInsertSchema(patientTags).omit({
 
 export type PatientTag = typeof patientTags.$inferSelect;
 export type InsertPatientTag = z.infer<typeof insertPatientTagSchema>;
+
+// DVH Cache - Persistent storage for pre-computed Dose-Volume Histogram data
+export const dvhCache = pgTable("dvh_cache", {
+  id: serial("id").primaryKey(),
+  doseSeriesId: integer("dose_series_id").references(() => series.id).notNull(),
+  structureSetSeriesId: integer("structure_set_series_id").references(() => series.id).notNull(),
+  prescriptionDose: doublePrecision("prescription_dose").notNull(),
+  // Store the complete DVH response as JSON for fast retrieval
+  dvhData: jsonb("dvh_data").notNull(), // Contains curves array with all ROI data
+  computationTimeMs: integer("computation_time_ms"), // Track computation performance
+  structureCount: integer("structure_count"), // Number of structures in the DVH
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Unique constraint on (doseSeriesId, structureSetSeriesId, prescriptionDose)
+// handled programmatically in storage layer
+
+export const dvhCacheRelations = relations(dvhCache, ({ one }) => ({
+  doseSeries: one(series, {
+    fields: [dvhCache.doseSeriesId],
+    references: [series.id],
+  }),
+  structureSetSeries: one(series, {
+    fields: [dvhCache.structureSetSeriesId],
+    references: [series.id],
+  }),
+}));
+
+export const insertDvhCacheSchema = createInsertSchema(dvhCache).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertDvhCache = z.infer<typeof insertDvhCacheSchema>;
+export type DvhCache = typeof dvhCache.$inferSelect;
