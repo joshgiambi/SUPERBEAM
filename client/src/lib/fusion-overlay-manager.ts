@@ -23,7 +23,9 @@ export class FusionOverlayManager {
   private primarySeriesId: number;
   private secondarySeriesId: number | null = null;
   private secondaryModality: string = 'PT';
-  private maxCacheSize = 100;
+  // PERF FIX: Reduced cache size from 100 to 50 to limit canvas memory usage
+  // Each canvas can use several MB depending on image dimensions
+  private maxCacheSize = 50;
 
   constructor(primarySeriesId: number) {
     this.primarySeriesId = primarySeriesId;
@@ -107,6 +109,12 @@ export class FusionOverlayManager {
       // Limit cache size
       if (this.cache.size > this.maxCacheSize) {
         const firstKey = this.cache.keys().next().value;
+        // PERF FIX: Release canvas resources before deleting from cache
+        const evictedEntry = this.cache.get(firstKey);
+        if (evictedEntry?.canvas) {
+          evictedEntry.canvas.width = 0;
+          evictedEntry.canvas.height = 0;
+        }
         this.cache.delete(firstKey);
       }
 
@@ -120,8 +128,17 @@ export class FusionOverlayManager {
 
   /**
    * Clear all cached overlays
+   * PERF FIX: Explicitly release canvas resources to help garbage collection
    */
   clearCache() {
+    // Release canvas resources by setting dimensions to 0
+    // This helps browsers release GPU memory associated with canvases
+    for (const [, entry] of this.cache) {
+      if (entry.canvas) {
+        entry.canvas.width = 0;
+        entry.canvas.height = 0;
+      }
+    }
     this.cache.clear();
   }
 

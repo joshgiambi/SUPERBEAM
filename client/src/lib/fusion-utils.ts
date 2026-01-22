@@ -278,6 +278,9 @@ export async function preloadFusionSecondary(
   primarySeriesId: number,
   secondarySeriesId: number,
   onProgress?: (progress: FusionPreloadProgress) => void,
+  // PERF FIX: Add callback to notify when each slice is loaded
+  // This allows the caller to populate globalFusionCache for instant cross-viewport sharing
+  onSliceLoaded?: (slice: FuseboxSlice, primarySopInstanceUID: string) => void,
 ): Promise<void> {
   const entry = manifestCache.get(primarySeriesId);
   if (!entry) throw new Error('Fusion manifest not loaded');
@@ -304,7 +307,14 @@ export async function preloadFusionSecondary(
       
       // Load batch in parallel
       const results = await Promise.allSettled(
-        batch.map((instance) => loadSlice(cache, instance, primarySeriesId, secondarySeriesId))
+        batch.map(async (instance) => {
+          const slice = await loadSlice(cache, instance, primarySeriesId, secondarySeriesId);
+          // Notify caller of each successfully loaded slice for cross-cache population
+          if (onSliceLoaded && instance.primarySopInstanceUID) {
+            onSliceLoaded(slice, instance.primarySopInstanceUID);
+          }
+          return slice;
+        })
       );
       
       // Count successful loads
@@ -403,6 +413,54 @@ export async function getFusedSliceSmart(
   return loadSlice(cache, target, primarySeriesId, secondarySeriesId);
 }
 
+// PERF FIX: Pre-computed PET colormap lookup table (256 entries)
+// Avoids creating arrays on every pixel during rendering
+const PET_COLORMAP_LUT: Uint8Array = (() => {
+  const lut = new Uint8Array(256 * 4); // 256 entries, 4 bytes each (RGBA)
+  const stops = [
+    { t: 0.05, r: 0, g: 0, b: 0, a: 0 },
+    { t: 0.2, r: 90, g: 25, b: 0, a: 255 },
+    { t: 0.5, r: 220, g: 110, b: 0, a: 255 },
+    { t: 0.8, r: 255, g: 200, b: 0, a: 255 },
+    { t: 1.0, r: 255, g: 255, b: 255, a: 255 },
+  ];
+  
+  for (let i = 0; i < 256; i++) {
+    const n = i / 255;
+    const offset = i * 4;
+    
+    if (n <= stops[0].t) {
+      lut[offset] = 0;
+      lut[offset + 1] = 0;
+      lut[offset + 2] = 0;
+      lut[offset + 3] = 0;
+      continue;
+    }
+    
+    let found = false;
+    for (let j = 0; j < stops.length - 1; j++) {
+      const a = stops[j];
+      const b = stops[j + 1];
+      if (n <= b.t) {
+        const w = (n - a.t) / (b.t - a.t);
+        lut[offset] = Math.round(a.r + w * (b.r - a.r));
+        lut[offset + 1] = Math.round(a.g + w * (b.g - a.g));
+        lut[offset + 2] = Math.round(a.b + w * (b.b - a.b));
+        lut[offset + 3] = Math.round(a.a + w * (b.a - a.a));
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      lut[offset] = 255;
+      lut[offset + 1] = 255;
+      lut[offset + 2] = 255;
+      lut[offset + 3] = 255;
+    }
+  }
+  return lut;
+})();
+
 export function fuseboxSliceToImageData(
   slice: FuseboxSlice,
   modality: string | null,
@@ -425,39 +483,17 @@ export function fuseboxSliceToImageData(
   const isCT = mode === 'CT';
   let hasSignal = false;
 
-  const applyFdg = (n: number) => {
-    const stops = [
-      { t: 0.05, c: [0, 0, 0, 0] },
-      { t: 0.2, c: [90, 25, 0, 255] },
-      { t: 0.5, c: [220, 110, 0, 255] },
-      { t: 0.8, c: [255, 200, 0, 255] },
-      { t: 1.0, c: [255, 255, 255, 255] },
-    ];
-
-    if (n <= stops[0].t) return [0, 0, 0, 0];
-    for (let i = 0; i < stops.length - 1; i++) {
-      const a = stops[i];
-      const b = stops[i + 1];
-      if (n <= b.t) {
-        const w = (n - a.t) / (b.t - a.t);
-        return [
-          Math.round(a.c[0] + w * (b.c[0] - a.c[0])),
-          Math.round(a.c[1] + w * (b.c[1] - a.c[1])),
-          Math.round(a.c[2] + w * (b.c[2] - a.c[2])),
-          Math.round(a.c[3] + w * (b.c[3] - a.c[3])),
-        ];
-      }
-    }
-    return [255, 255, 255, 255];
-  };
+  // PERF FIX: Pre-compute inverse range for faster division
+  const invRange = 1 / range;
+  const len = source.length;
 
   if (isCT) {
     // Make CT overlay transparent where values sit at the minimum (background/no-data),
     // preventing a black sheet from covering the base image when fused slices are empty.
-    for (let i = 0; i < source.length; i++) {
+    for (let i = 0; i < len; i++) {
       const s = source[i];
-      const normalized = Math.max(0, Math.min(1, (s - min) / range));
-      const value = Math.round(normalized * 255);
+      const normalized = Math.max(0, Math.min(1, (s - min) * invRange));
+      const value = (normalized * 255) | 0; // Fast floor via bitwise OR
       const offset = i * 4;
       buffer[offset] = value;
       buffer[offset + 1] = value;
@@ -471,28 +507,44 @@ export function fuseboxSliceToImageData(
     return { imageData, hasSignal };
   }
 
-  for (let i = 0; i < source.length; i++) {
-    let normalized = (source[i] - min) / range;
-    if (!Number.isFinite(normalized)) normalized = 0;
-    normalized = Math.max(0, Math.min(1, normalized));
-    const offset = i * 4;
-
-    if (isPET) {
-      const [r, g, b, a] = applyFdg(normalized);
-      buffer[offset] = r;
-      buffer[offset + 1] = g;
-      buffer[offset + 2] = b;
-      buffer[offset + 3] = a;
-    } else {
-      const value = Math.round(normalized * 255);
+  // PERF FIX: Optimized pixel loop with pre-computed LUT for PET
+  // Avoids function calls and array allocations in inner loop
+  // (invRange and len already declared above for CT path)
+  
+  if (isPET) {
+    // Use pre-computed colormap lookup table
+    for (let i = 0; i < len; i++) {
+      const s = source[i];
+      const normalized = Math.max(0, Math.min(1, (s - min) * invRange));
+      const lutIndex = (normalized * 255) | 0; // Fast floor via bitwise OR
+      const lutOffset = lutIndex * 4;
+      const offset = i * 4;
+      
+      buffer[offset] = PET_COLORMAP_LUT[lutOffset];
+      buffer[offset + 1] = PET_COLORMAP_LUT[lutOffset + 1];
+      buffer[offset + 2] = PET_COLORMAP_LUT[lutOffset + 2];
+      buffer[offset + 3] = PET_COLORMAP_LUT[lutOffset + 3];
+      
+      if (!hasSignal && s > min + 1e-6) {
+        hasSignal = true;
+      }
+    }
+  } else {
+    // MRI/other modalities - grayscale
+    for (let i = 0; i < len; i++) {
+      const s = source[i];
+      const normalized = Math.max(0, Math.min(1, (s - min) * invRange));
+      const value = (normalized * 255) | 0;
+      const offset = i * 4;
+      
       buffer[offset] = value;
       buffer[offset + 1] = value;
       buffer[offset + 2] = value;
       buffer[offset + 3] = 255;
-    }
-
-    if (!hasSignal && Math.abs(source[i] - min) > 1e-6) {
-      hasSignal = true;
+      
+      if (!hasSignal && s > min + 1e-6) {
+        hasSignal = true;
+      }
     }
   }
 

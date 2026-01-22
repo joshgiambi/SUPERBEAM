@@ -73,6 +73,9 @@ class ImageLoadPoolManager {
   private currentSliceIndex: number = 0;
   private totalSlices: number = 0;
   
+  // PERF FIX: Limit completedRequests set size to prevent unbounded memory growth
+  private static readonly MAX_COMPLETED_CACHE = 2000;
+  
   // Statistics
   private stats = {
     totalRequests: 0,
@@ -252,6 +255,17 @@ class ImageLoadPoolManager {
       this.activeRequests.delete(request.id);
       this.completedRequests.add(request.id);
       this.stats.completedRequests++;
+      
+      // PERF FIX: Prune completedRequests set if it grows too large
+      if (this.completedRequests.size > ImageLoadPoolManager.MAX_COMPLETED_CACHE) {
+        // Remove oldest entries (first 20% of the set)
+        const toRemove = Math.floor(ImageLoadPoolManager.MAX_COMPLETED_CACHE * 0.2);
+        const iterator = this.completedRequests.values();
+        for (let i = 0; i < toRemove; i++) {
+          const value = iterator.next().value;
+          if (value) this.completedRequests.delete(value);
+        }
+      }
       
       // Update average load time
       const loadTime = Date.now() - startTime;

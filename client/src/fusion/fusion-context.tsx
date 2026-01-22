@@ -4,6 +4,7 @@ import { FusionOverlayManager, type OverlayCanvas } from '@/lib/fusion-overlay-m
 import { fetchFusionManifest, preloadFusionSecondary } from '@/lib/fusion-utils';
 import type { FusionManifest, FusionSecondaryDescriptor, RegistrationAssociation, RegistrationOption } from '@/types/fusion';
 import { useRegistrationOptions, type RegistrationResolveInfo } from './hooks/useRegistrationOptions';
+import { globalFusionCache } from '@/lib/global-fusion-cache';
 
 export type SecondaryState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
@@ -408,15 +409,32 @@ export function FusionProvider({ primarySeriesId, candidateSecondaryIds, registr
         });
         dispatch({ type: 'setCurrentlyLoadingSecondary', id: secondaryId });
         try {
-          await preloadFusionSecondary(state.primarySeriesId!, secondaryId, ({ completed, total }) => {
-            if (cancelled) return;
-            const progress = total ? (completed / total) * 100 : 0;
-            dispatch({
-              type: 'setSecondaryState',
-              secondaryId,
-              state: { status: 'loading', progress, error: null },
-            });
-          });
+          const primaryId = state.primarySeriesId!;
+          await preloadFusionSecondary(
+            primaryId,
+            secondaryId,
+            ({ completed, total }) => {
+              if (cancelled) return;
+              const progress = total ? (completed / total) * 100 : 0;
+              dispatch({
+                type: 'setSecondaryState',
+                secondaryId,
+                state: { status: 'loading', progress, error: null },
+              });
+            },
+            // PERF FIX: Populate globalFusionCache as slices are loaded
+            // This enables instant cross-viewport sharing and scroll sync
+            (slice, primarySopInstanceUID) => {
+              if (cancelled) return;
+              globalFusionCache.addSlice(
+                primaryId,
+                secondaryId,
+                primarySopInstanceUID,
+                slice,
+                null // Default registration
+              );
+            }
+          );
           if (cancelled) break;
           dispatch({
             type: 'setSecondaryState',
@@ -502,10 +520,9 @@ export function FusionProvider({ primarySeriesId, candidateSecondaryIds, registr
 
   const setSelectedSecondaryId = useCallback((id: number | null) => {
     dispatch({ type: 'setSelectedSecondary', id });
-    const manager = overlayManagerRef.current;
-    if (manager) {
-      manager.clearCache();
-    }
+    // NOTE: Cache clearing removed - the effect that calls manager.setSecondary() 
+    // already handles cache clearing when the secondary actually changes.
+    // Double cache clearing was causing significant performance lag.
   }, []);
 
   const setOpacity = useCallback((value: number) => {

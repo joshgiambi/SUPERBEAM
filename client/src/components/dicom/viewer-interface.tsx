@@ -1808,19 +1808,36 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         if (fusionManifestRequestRef.current !== requestToken) break;
         setCurrentlyLoadingSecondary(secondary.secondarySeriesId);
         try {
-          await preloadFusionSecondary(primarySeriesId, secondary.secondarySeriesId, ({ completed, total }) => {
-            if (fusionManifestRequestRef.current !== requestToken) return;
-            setSecondaryLoadingStates((prev) => {
-              const next = new Map(prev);
-              const fraction = total ? (completed / total) * 100 : 100;
-              next.set(secondary.secondarySeriesId, { isLoading: true, progress: fraction });
-              return next;
-            });
-          });
+          const secondaryId = secondary.secondarySeriesId;
+          await preloadFusionSecondary(
+            primarySeriesId,
+            secondaryId,
+            ({ completed, total }) => {
+              if (fusionManifestRequestRef.current !== requestToken) return;
+              setSecondaryLoadingStates((prev) => {
+                const next = new Map(prev);
+                const fraction = total ? (completed / total) * 100 : 100;
+                next.set(secondaryId, { isLoading: true, progress: fraction });
+                return next;
+              });
+            },
+            // PERF FIX: Populate globalFusionCache as slices are loaded
+            // This enables instant cross-viewport sharing and scroll sync
+            (slice, primarySopInstanceUID) => {
+              if (fusionManifestRequestRef.current !== requestToken) return;
+              globalFusionCache.addSlice(
+                primarySeriesId,
+                secondaryId,
+                primarySopInstanceUID,
+                slice,
+                null // Default registration
+              );
+            }
+          );
           if (fusionManifestRequestRef.current !== requestToken) break;
           setSecondaryLoadingStates((prev) => {
             const next = new Map(prev);
-            next.set(secondary.secondarySeriesId, { isLoading: false, progress: 100 });
+            next.set(secondaryId, { isLoading: false, progress: 100 });
             return next;
           });
         } catch (error: any) {
