@@ -1113,6 +1113,498 @@ router.get('/:seriesId/bev/:beamNumber', async (req: Request, res: Response, nex
   }
 });
 
+// ============================================================================
+// DRR Generation & Structure Projection
+// ============================================================================
+
+interface DRROptions {
+  width: number;
+  height: number;
+  fieldOfView: number; // mm, half-width of BEV at isocenter
+  stepSize: number; // mm, ray marching step
+}
+
+interface ProjectedStructure {
+  roiNumber: number;
+  structureName: string;
+  color: [number, number, number];
+  projectedContours: Array<{ x: number; y: number }[]>; // Multiple closed polygons
+}
+
+/**
+ * Project a 3D point to BEV coordinates
+ * Uses perspective projection from X-ray source through the point
+ */
+function projectPointToBEV(
+  point: [number, number, number],
+  sourcePosition: [number, number, number],
+  isocenter: [number, number, number],
+  gantryAngleRad: number,
+  collimatorAngleRad: number,
+  sad: number
+): { x: number; y: number } | null {
+  // Vector from source to point
+  const toPoint = [
+    point[0] - sourcePosition[0],
+    point[1] - sourcePosition[1],
+    point[2] - sourcePosition[2],
+  ];
+  
+  // Distance from source to point along beam axis
+  // Beam axis direction (from source toward isocenter)
+  const beamDir = [
+    isocenter[0] - sourcePosition[0],
+    isocenter[1] - sourcePosition[1],
+    isocenter[2] - sourcePosition[2],
+  ];
+  const beamLen = Math.sqrt(beamDir[0]**2 + beamDir[1]**2 + beamDir[2]**2);
+  const beamDirNorm = [beamDir[0]/beamLen, beamDir[1]/beamLen, beamDir[2]/beamLen];
+  
+  // Project toPoint onto beam axis
+  const distAlongBeam = toPoint[0]*beamDirNorm[0] + toPoint[1]*beamDirNorm[1] + toPoint[2]*beamDirNorm[2];
+  
+  // Point behind the source (invalid projection)
+  if (distAlongBeam <= 0) return null;
+  
+  // Calculate where ray from source through point intersects the isocenter plane
+  // Scale factor to project to SAD (isocenter plane)
+  const scale = sad / distAlongBeam;
+  
+  // Point in beam coordinate system (perpendicular to beam axis)
+  // First, get the point projected to isocenter plane
+  const projectedWorld = [
+    sourcePosition[0] + toPoint[0] * scale,
+    sourcePosition[1] + toPoint[1] * scale,
+    sourcePosition[2] + toPoint[2] * scale,
+  ];
+  
+  // Convert to BEV coordinates (relative to isocenter, rotated by collimator)
+  const relToIso = [
+    projectedWorld[0] - isocenter[0],
+    projectedWorld[1] - isocenter[1],
+    projectedWorld[2] - isocenter[2],
+  ];
+  
+  // BEV X-axis is perpendicular to beam in the "cross-plane" direction
+  // BEV Y-axis is along patient superior-inferior (for gantry 0)
+  // This depends on gantry angle
+  
+  // For gantry angle, the BEV axes rotate
+  // At gantry 0 (AP): BEV X = patient left-right, BEV Y = patient sup-inf
+  // At gantry 90 (left lat): BEV X = patient AP, BEV Y = patient sup-inf
+  
+  // Simplified: project onto plane perpendicular to beam
+  // BEV X = cross(beamDir, [0,0,1]) normalized (or use gantry rotation)
+  // BEV Y = [0,0,1] projected onto BEV plane
+  
+  // Use rotation matrices for proper BEV coordinate transform
+  const cosG = Math.cos(gantryAngleRad);
+  const sinG = Math.sin(gantryAngleRad);
+  const cosC = Math.cos(collimatorAngleRad);
+  const sinC = Math.sin(collimatorAngleRad);
+  
+  // BEV X axis at isocenter (before collimator rotation): perpendicular to gantry rotation
+  // BEV Y axis at isocenter: along patient Z (superior)
+  
+  // At gantry 0: beam comes from anterior (+Y in DICOM), 
+  //   BEV X = patient left (+X in DICOM)
+  //   BEV Y = patient superior (+Z in DICOM)
+  
+  // Transform relToIso to BEV coordinates
+  // First undo gantry rotation to get BEV-aligned coords
+  let bevX = relToIso[0] * cosG + relToIso[1] * sinG;
+  let bevY = relToIso[2]; // Z stays as BEV Y (superior direction)
+  
+  // Apply collimator rotation
+  const finalX = bevX * cosC - bevY * sinC;
+  const finalY = bevX * sinC + bevY * cosC;
+  
+  return { x: finalX, y: finalY };
+}
+
+/**
+ * Project structure contours to BEV
+ */
+function projectStructuresToBEV(
+  structures: Array<{
+    roiNumber: number;
+    structureName: string;
+    color: [number, number, number];
+    contours: Array<{
+      slicePosition: number;
+      points: number[]; // flat array [x1,y1,z1, x2,y2,z2, ...]
+      numberOfPoints: number;
+    }>;
+  }>,
+  sourcePosition: [number, number, number],
+  isocenter: [number, number, number],
+  gantryAngleRad: number,
+  collimatorAngleRad: number,
+  sad: number
+): ProjectedStructure[] {
+  const projected: ProjectedStructure[] = [];
+  
+  for (const structure of structures) {
+    const projectedContours: Array<{ x: number; y: number }[]> = [];
+    
+    for (const contour of structure.contours) {
+      const projectedPoints: { x: number; y: number }[] = [];
+      
+      for (let i = 0; i < contour.numberOfPoints; i++) {
+        const x = contour.points[i * 3];
+        const y = contour.points[i * 3 + 1];
+        const z = contour.points[i * 3 + 2];
+        
+        const projected = projectPointToBEV(
+          [x, y, z],
+          sourcePosition,
+          isocenter,
+          gantryAngleRad,
+          collimatorAngleRad,
+          sad
+        );
+        
+        if (projected) {
+          projectedPoints.push(projected);
+        }
+      }
+      
+      // Only add contours with enough points
+      if (projectedPoints.length >= 3) {
+        projectedContours.push(projectedPoints);
+      }
+    }
+    
+    if (projectedContours.length > 0) {
+      projected.push({
+        roiNumber: structure.roiNumber,
+        structureName: structure.structureName,
+        color: structure.color,
+        projectedContours,
+      });
+    }
+  }
+  
+  return projected;
+}
+
+/**
+ * Generate DRR (Digitally Reconstructed Radiograph) by ray-casting through CT volume
+ * Returns base64-encoded grayscale PNG
+ */
+async function generateDRR(
+  ctSeriesId: number,
+  sourcePosition: [number, number, number],
+  isocenter: [number, number, number],
+  gantryAngleRad: number,
+  collimatorAngleRad: number,
+  sad: number,
+  options: DRROptions
+): Promise<{ width: number; height: number; data: number[] } | null> {
+  try {
+    // Get CT images
+    const ctImages = await storage.getImagesBySeriesId(ctSeriesId);
+    if (ctImages.length === 0) {
+      logger.warn('No CT images found for DRR generation');
+      return null;
+    }
+    
+    // Sort by slice position
+    const sortedImages = [...ctImages].sort((a, b) => {
+      const posA = parseImagePosition(a.imagePosition);
+      const posB = parseImagePosition(b.imagePosition);
+      return (posA?.[2] || 0) - (posB?.[2] || 0);
+    });
+    
+    // Get volume geometry from first image
+    const firstImg = sortedImages[0];
+    const imgPos = parseImagePosition(firstImg.imagePosition) || [0, 0, 0];
+    const imgOrient = parseImageOrientation(firstImg.imageOrientation) || [1, 0, 0, 0, 1, 0];
+    const pixelSpacing = parsePixelSpacing(firstImg.pixelSpacing) || [1, 1];
+    const rows = firstImg.rows || 512;
+    const columns = firstImg.columns || 512;
+    
+    // Calculate slice spacing
+    let sliceSpacing = 1;
+    if (sortedImages.length > 1) {
+      const pos1 = parseImagePosition(sortedImages[0].imagePosition);
+      const pos2 = parseImagePosition(sortedImages[1].imagePosition);
+      if (pos1 && pos2) {
+        sliceSpacing = Math.abs(pos2[2] - pos1[2]) || 1;
+      }
+    }
+    
+    // Build 3D volume (load pixel data for each slice)
+    // For performance, we'll use a simplified approach: sample every Nth slice
+    const volumeData: Int16Array[] = [];
+    const slicePositions: number[] = [];
+    
+    const sampleStep = Math.max(1, Math.floor(sortedImages.length / 100)); // Max ~100 slices for performance
+    
+    for (let i = 0; i < sortedImages.length; i += sampleStep) {
+      const img = sortedImages[i];
+      if (!img.filePath || !fs.existsSync(img.filePath)) continue;
+      
+      try {
+        const buffer = fs.readFileSync(img.filePath);
+        const dataSet = dicomParser.parseDicom(buffer);
+        const pixelDataElement = dataSet.elements.x7fe00010;
+        
+        if (pixelDataElement) {
+          const pixelData = new Int16Array(
+            buffer.buffer,
+            buffer.byteOffset + pixelDataElement.dataOffset,
+            pixelDataElement.length / 2
+          );
+          volumeData.push(pixelData);
+          
+          const pos = parseImagePosition(img.imagePosition);
+          slicePositions.push(pos?.[2] || i * sliceSpacing);
+        }
+      } catch (e) {
+        // Skip failed slices
+      }
+    }
+    
+    if (volumeData.length < 2) {
+      logger.warn('Not enough CT slices loaded for DRR');
+      return null;
+    }
+    
+    // DRR generation parameters
+    const { width, height, fieldOfView, stepSize } = options;
+    const drrData: number[] = new Array(width * height).fill(0);
+    
+    // Ray-casting through volume
+    const cosG = Math.cos(gantryAngleRad);
+    const sinG = Math.sin(gantryAngleRad);
+    const cosC = Math.cos(collimatorAngleRad);
+    const sinC = Math.sin(collimatorAngleRad);
+    
+    // Volume bounds
+    const volMinZ = slicePositions[0];
+    const volMaxZ = slicePositions[slicePositions.length - 1];
+    const volMinX = imgPos[0];
+    const volMaxX = imgPos[0] + columns * pixelSpacing[0];
+    const volMinY = imgPos[1];
+    const volMaxY = imgPos[1] + rows * pixelSpacing[1];
+    
+    for (let py = 0; py < height; py++) {
+      for (let px = 0; px < width; px++) {
+        // BEV pixel to world coordinate at isocenter plane
+        const bevX = (px - width / 2) * (2 * fieldOfView / width);
+        const bevY = (height / 2 - py) * (2 * fieldOfView / height);
+        
+        // Apply inverse collimator rotation
+        const rotX = bevX * cosC + bevY * sinC;
+        const rotY = -bevX * sinC + bevY * cosC;
+        
+        // Convert to world coordinates at isocenter plane
+        // This is the target point on the isocenter plane
+        const targetX = isocenter[0] + rotX * cosG;
+        const targetY = isocenter[1] - rotX * sinG;
+        const targetZ = isocenter[2] + rotY;
+        
+        // Ray from source toward target
+        const rayDirX = targetX - sourcePosition[0];
+        const rayDirY = targetY - sourcePosition[1];
+        const rayDirZ = targetZ - sourcePosition[2];
+        const rayLen = Math.sqrt(rayDirX**2 + rayDirY**2 + rayDirZ**2);
+        const rayDirNorm = [rayDirX/rayLen, rayDirY/rayLen, rayDirZ/rayLen];
+        
+        // Ray march through volume
+        let accumulator = 0;
+        const maxSteps = Math.ceil(500 / stepSize); // Max 500mm depth
+        
+        for (let step = 0; step < maxSteps; step++) {
+          const t = step * stepSize;
+          const sampleX = sourcePosition[0] + rayDirNorm[0] * t;
+          const sampleY = sourcePosition[1] + rayDirNorm[1] * t;
+          const sampleZ = sourcePosition[2] + rayDirNorm[2] * t;
+          
+          // Check if sample is within volume bounds
+          if (sampleX < volMinX || sampleX > volMaxX ||
+              sampleY < volMinY || sampleY > volMaxY ||
+              sampleZ < volMinZ || sampleZ > volMaxZ) {
+            continue;
+          }
+          
+          // Find slice index
+          let sliceIdx = 0;
+          for (let s = 0; s < slicePositions.length - 1; s++) {
+            if (sampleZ >= slicePositions[s] && sampleZ < slicePositions[s + 1]) {
+              sliceIdx = s;
+              break;
+            }
+          }
+          
+          // Sample from nearest slice (simple nearest-neighbor)
+          const sliceData = volumeData[sliceIdx];
+          if (!sliceData) continue;
+          
+          // Convert world to pixel coordinates in slice
+          const pixX = Math.floor((sampleX - imgPos[0]) / pixelSpacing[0]);
+          const pixY = Math.floor((sampleY - imgPos[1]) / pixelSpacing[1]);
+          
+          if (pixX >= 0 && pixX < columns && pixY >= 0 && pixY < rows) {
+            const hu = sliceData[pixY * columns + pixX];
+            // Accumulate (HU + 1000) to make air = 0, water = 1000
+            accumulator += Math.max(0, hu + 1000) * stepSize * 0.001; // Scale factor
+          }
+        }
+        
+        // Apply exponential attenuation (Beer-Lambert law approximation)
+        const intensity = Math.exp(-accumulator * 0.005) * 255;
+        drrData[py * width + px] = Math.max(0, Math.min(255, 255 - intensity));
+      }
+    }
+    
+    return { width, height, data: drrData };
+  } catch (error) {
+    logger.error('DRR generation error:', error);
+    return null;
+  }
+}
+
+function parseImagePosition(pos: any): [number, number, number] | null {
+  if (!pos) return null;
+  if (Array.isArray(pos)) return [pos[0] || 0, pos[1] || 0, pos[2] || 0];
+  if (typeof pos === 'string') {
+    const parts = pos.split('\\').map(Number);
+    if (parts.length >= 3) return [parts[0], parts[1], parts[2]];
+  }
+  return null;
+}
+
+function parseImageOrientation(orient: any): number[] | null {
+  if (!orient) return null;
+  if (Array.isArray(orient)) return orient;
+  if (typeof orient === 'string') {
+    return orient.split('\\').map(Number);
+  }
+  return null;
+}
+
+function parsePixelSpacing(spacing: any): [number, number] | null {
+  if (!spacing) return null;
+  if (Array.isArray(spacing)) return [spacing[0] || 1, spacing[1] || 1];
+  if (typeof spacing === 'string') {
+    const parts = spacing.split('\\').map(Number);
+    if (parts.length >= 2) return [parts[0], parts[1]];
+  }
+  return null;
+}
+
+/**
+ * GET /api/rt-plan/:seriesId/bev/:beamNumber/enhanced
+ * Returns enhanced BEV with DRR and structure projections
+ */
+router.get('/:seriesId/bev/:beamNumber/enhanced', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const seriesId = parseInt(req.params.seriesId, 10);
+    const beamNumber = parseInt(req.params.beamNumber, 10);
+    const controlPointIndex = parseInt(req.query.controlPoint as string || '0', 10);
+    const includeDRR = req.query.drr !== 'false';
+    const includeStructures = req.query.structures !== 'false';
+    const ctSeriesId = req.query.ctSeriesId ? parseInt(req.query.ctSeriesId as string, 10) : null;
+    const structureSetId = req.query.structureSetId ? parseInt(req.query.structureSetId as string, 10) : null;
+    
+    if (isNaN(seriesId) || isNaN(beamNumber)) {
+      return res.status(400).json({ error: 'Invalid parameters' });
+    }
+
+    const result = await loadPlanDicom(seriesId);
+    if (!result) {
+      return res.status(404).json({ error: 'RT Plan series not found' });
+    }
+
+    const beams = extractBeams(result.dataSet);
+    const beam = beams.find(b => b.beamNumber === beamNumber);
+    
+    if (!beam) {
+      return res.status(404).json({ error: 'Beam not found' });
+    }
+
+    // Get basic BEV projection
+    const bev = calculateBEVProjection(beam, controlPointIndex);
+    
+    // Calculate beam geometry for projections
+    const cp = beam.controlPoints[controlPointIndex] || beam.controlPoints[0];
+    const gantryAngleRad = (cp.gantryAngle * Math.PI) / 180;
+    const collimatorAngleRad = ((cp.beamLimitingDeviceAngle || 0) * Math.PI) / 180;
+    const sad = beam.sourceAxisDistance;
+    const iso = cp.isocenterPosition;
+    
+    // Calculate source position
+    const sourceX = iso[0] + sad * Math.sin(gantryAngleRad);
+    const sourceY = iso[1] - sad * Math.cos(gantryAngleRad);
+    const sourceZ = iso[2];
+    const sourcePosition: [number, number, number] = [sourceX, sourceY, sourceZ];
+    
+    const response: any = { ...bev };
+    
+    // Generate DRR if requested and CT series is available
+    if (includeDRR && ctSeriesId) {
+      const drr = await generateDRR(
+        ctSeriesId,
+        sourcePosition,
+        iso,
+        gantryAngleRad,
+        collimatorAngleRad,
+        sad,
+        { width: 256, height: 256, fieldOfView: 200, stepSize: 3 }
+      );
+      if (drr) {
+        response.drr = drr;
+      }
+    }
+    
+    // Project structures if requested
+    if (includeStructures && structureSetId) {
+      try {
+        const rtStructureSet = await storage.getRTStructureSet(structureSetId);
+        if (rtStructureSet) {
+          const structures = await storage.getRTStructuresBySetId(structureSetId);
+          
+          // Load contours for each structure
+          const structuresWithContours = await Promise.all(
+            structures.map(async (s) => {
+              const contours = await storage.getRTStructureContours(s.id);
+              return {
+                roiNumber: s.roiNumber,
+                structureName: s.structureName,
+                color: (s.color as [number, number, number]) || [255, 255, 0],
+                contours: contours.map(c => ({
+                  slicePosition: c.slicePosition,
+                  points: c.contourData as number[],
+                  numberOfPoints: ((c.contourData as number[])?.length || 0) / 3,
+                })),
+              };
+            })
+          );
+          
+          const projected = projectStructuresToBEV(
+            structuresWithContours,
+            sourcePosition,
+            iso,
+            gantryAngleRad,
+            collimatorAngleRad,
+            sad
+          );
+          
+          response.projectedStructures = projected;
+        }
+      } catch (e) {
+        logger.warn('Failed to project structures:', e);
+      }
+    }
+    
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /**
  * GET /api/rt-plan/:seriesId/bev/:beamNumber/all
  * Returns BEV projections for ALL control points (batch endpoint for animation)

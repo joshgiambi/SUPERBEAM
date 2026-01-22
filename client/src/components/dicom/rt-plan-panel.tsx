@@ -40,6 +40,29 @@ import type {
   RTPlanSummary,
 } from '@/types/rt-plan';
 import { getBeamColor } from '@/types/rt-plan';
+import { 
+  getBEVOrientationLabels, 
+  getBeamDirectionName,
+  type PatientPosition 
+} from '@/lib/geometry/IEC61217';
+
+// Projected structure for BEV display
+interface ProjectedStructure {
+  roiNumber: number;
+  structureName: string;
+  color: [number, number, number];
+  projectedContours: Array<{ x: number; y: number }[]>;
+}
+
+// Enhanced BEV response with DRR and structures
+interface EnhancedBEVResponse extends BEVProjection {
+  drr?: {
+    width: number;
+    height: number;
+    data: number[];
+  };
+  projectedStructures?: ProjectedStructure[];
+}
 
 interface RTPlanPanelProps {
   // Plan series selection
@@ -68,6 +91,12 @@ interface RTPlanPanelProps {
   // Expand/collapse BEV
   expandBEV?: boolean;
   onToggleExpandBEV?: () => void;
+  
+  // For enhanced BEV with DRR and structure projection
+  ctSeriesId?: number | null;
+  structureSetId?: number | null;
+  showDRR?: boolean;
+  showStructuresInBEV?: boolean;
 }
 
 export function RTPlanPanel({
@@ -84,6 +113,10 @@ export function RTPlanPanel({
   isLoading: externalLoading = false,
   expandBEV = false,
   onToggleExpandBEV,
+  ctSeriesId,
+  structureSetId,
+  showDRR = true,
+  showStructuresInBEV = true,
 }: RTPlanPanelProps) {
   const [planData, setPlanData] = useState<RTPlanSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,6 +127,11 @@ export function RTPlanPanel({
   const [animatingArc, setAnimatingArc] = useState(false);
   const bevCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Enhanced BEV data (DRR and projected structures)
+  const [drrImageData, setDrrImageData] = useState<ImageData | null>(null);
+  const [projectedStructures, setProjectedStructures] = useState<ProjectedStructure[]>([]);
+  const [enhancedBevLoading, setEnhancedBevLoading] = useState(false);
   
   // Store refs to callbacks to avoid re-fetching when callbacks change
   const onBeamsLoadedRef = useRef(onBeamsLoaded);
@@ -189,6 +227,8 @@ export function RTPlanPanel({
     setBevCache(new Map());
     setCacheProgress(null);
     setAnimatingArc(false);
+    setDrrImageData(null);
+    setProjectedStructures([]);
     
     // Abort any pending fetch
     if (abortControllerRef.current) {
@@ -196,6 +236,71 @@ export function RTPlanPanel({
       abortControllerRef.current = null;
     }
   }, [selectedBeamNumber]);
+  
+  // Fetch enhanced BEV data (DRR and structure projections) when CT/structures available
+  useEffect(() => {
+    if (!selectedPlanSeriesId || selectedBeamNumber === null) {
+      return;
+    }
+    
+    // Only fetch if we have CT or structure data to enhance with
+    if (!ctSeriesId && !structureSetId) {
+      return;
+    }
+    
+    const fetchEnhancedBEV = async () => {
+      setEnhancedBevLoading(true);
+      
+      try {
+        const params = new URLSearchParams();
+        params.append('controlPoint', controlPointIndex.toString());
+        if (ctSeriesId && showDRR) {
+          params.append('ctSeriesId', ctSeriesId.toString());
+        }
+        if (structureSetId && showStructuresInBEV) {
+          params.append('structureSetId', structureSetId.toString());
+        }
+        
+        const response = await fetch(
+          `/api/rt-plan/${selectedPlanSeriesId}/bev/${selectedBeamNumber}/enhanced?${params}`
+        );
+        
+        if (response.ok) {
+          const data: EnhancedBEVResponse = await response.json();
+          
+          // Convert DRR data to ImageData for canvas rendering
+          if (data.drr) {
+            const imgData = new ImageData(data.drr.width, data.drr.height);
+            for (let i = 0; i < data.drr.data.length; i++) {
+              const v = data.drr.data[i];
+              imgData.data[i * 4] = v;     // R
+              imgData.data[i * 4 + 1] = v; // G
+              imgData.data[i * 4 + 2] = v; // B
+              imgData.data[i * 4 + 3] = 255; // A
+            }
+            setDrrImageData(imgData);
+          }
+          
+          // Store projected structures
+          if (data.projectedStructures) {
+            setProjectedStructures(data.projectedStructures);
+          }
+          
+          console.log('[BEV Enhanced] Loaded DRR:', !!data.drr, 'Structures:', data.projectedStructures?.length || 0);
+        }
+      } catch (err) {
+        console.error('[BEV Enhanced] Failed to fetch:', err);
+      } finally {
+        setEnhancedBevLoading(false);
+      }
+    };
+    
+    // Debounce during animation, fetch immediately otherwise
+    const debounce = animatingArc ? 500 : 100;
+    const timeoutId = setTimeout(fetchEnhancedBEV, debounce);
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedPlanSeriesId, selectedBeamNumber, controlPointIndex, ctSeriesId, structureSetId, showDRR, showStructuresInBEV, animatingArc]);
   
   // Pre-load ALL control point BEV data when beam is selected (for smooth animation)
   // Uses batch endpoint for fast single-request loading
@@ -320,25 +425,12 @@ export function RTPlanPanel({
     return initialBEV;
   }, [bevCache, controlPointIndex, initialBEV]);
   
-  // Helper function to get orientation labels based on gantry/couch angles
-  const getOrientationLabels = useCallback((gantryAngle: number, couchAngle: number) => {
-    // For HFS patient at gantry 0° (AP beam):
-    // Right = Patient Left (L), Left = Patient Right (R)
-    // Top = Superior (H = Head), Bottom = Inferior (F = Feet)
-    const labels = { right: 'L', left: 'R', top: 'H', bottom: 'F' };
-    const normalizedAngle = ((gantryAngle % 360) + 360) % 360;
-    
-    if (normalizedAngle >= 45 && normalizedAngle < 135) {
-      // Left lateral (gantry ~90°)
-      labels.right = 'P'; labels.left = 'A';
-    } else if (normalizedAngle >= 135 && normalizedAngle < 225) {
-      // PA (gantry ~180°)
-      labels.right = 'R'; labels.left = 'L';
-    } else if (normalizedAngle >= 225 && normalizedAngle < 315) {
-      // Right lateral (gantry ~270°)
-      labels.right = 'A'; labels.left = 'P';
-    }
-    return labels;
+  // Helper function to get orientation labels based on gantry/collimator/couch angles
+  // Uses IEC 61217 standard coordinate system transformations
+  const getOrientationLabels = useCallback((gantryAngle: number, couchAngle: number, collimatorAngle: number = 0) => {
+    // Use the IEC 61217 utility for accurate orientation labels
+    // Assumes HFS (Head First Supine) patient position - most common
+    return getBEVOrientationLabels(gantryAngle, collimatorAngle, couchAngle, 'HFS');
   }, []);
 
   // Draw BEV visualization with enhanced features
@@ -388,6 +480,35 @@ export function RTPlanPanel({
     // --- Background ---
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, width, height);
+    
+    // --- DRR Background (if available) ---
+    if (drrImageData && showDRR) {
+      // Create temporary canvas to scale DRR to fit
+      const drrCanvas = document.createElement('canvas');
+      drrCanvas.width = drrImageData.width;
+      drrCanvas.height = drrImageData.height;
+      const drrCtx = drrCanvas.getContext('2d');
+      if (drrCtx) {
+        drrCtx.putImageData(drrImageData, 0, 0);
+        
+        // Calculate DRR display area (match field of view)
+        const drrFov = 200; // mm - should match server-side fieldOfView
+        const drrScale = fieldScale * (drrFov / (drrImageData.width / 2));
+        const drrDisplayWidth = drrImageData.width * drrScale / fieldScale;
+        const drrDisplayHeight = drrImageData.height * drrScale / fieldScale;
+        
+        // Draw DRR centered on isocenter with some transparency
+        ctx.globalAlpha = 0.6;
+        ctx.drawImage(
+          drrCanvas,
+          centerX - drrDisplayWidth / 2,
+          centerY - drrDisplayHeight / 2,
+          drrDisplayWidth,
+          drrDisplayHeight
+        );
+        ctx.globalAlpha = 1.0;
+      }
+    }
     
     // --- Grid (50mm spacing) ---
     ctx.strokeStyle = 'rgba(70, 70, 90, 0.4)';
@@ -596,6 +717,44 @@ export function RTPlanPanel({
       }
     }
     
+    // --- Projected Structures (OARs and targets) ---
+    if (projectedStructures.length > 0 && showStructuresInBEV) {
+      for (const structure of projectedStructures) {
+        const [r, g, b] = structure.color;
+        const colorStr = `rgb(${r}, ${g}, ${b})`;
+        
+        ctx.strokeStyle = colorStr;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.8;
+        
+        for (const contour of structure.projectedContours) {
+          if (contour.length < 3) continue;
+          
+          ctx.beginPath();
+          ctx.moveTo(
+            centerX + contour[0].x * fieldScale,
+            centerY - contour[0].y * fieldScale
+          );
+          
+          for (let i = 1; i < contour.length; i++) {
+            ctx.lineTo(
+              centerX + contour[i].x * fieldScale,
+              centerY - contour[i].y * fieldScale
+            );
+          }
+          
+          ctx.closePath();
+          ctx.stroke();
+          
+          // Optional: slight fill for visibility
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.1)`;
+          ctx.fill();
+        }
+        
+        ctx.globalAlpha = 1.0;
+      }
+    }
+    
     // --- Central axis marker ---
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = beamColor;
@@ -611,8 +770,12 @@ export function RTPlanPanel({
     ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
     ctx.fill();
     
-    // --- Orientation labels ---
-    const orientLabels = getOrientationLabels(selectedBEV.gantryAngle, selectedBEV.couchAngle);
+    // --- Orientation labels (IEC 61217 standard) ---
+    const orientLabels = getOrientationLabels(
+      selectedBEV.gantryAngle, 
+      selectedBEV.couchAngle,
+      selectedBEV.collimatorAngle
+    );
     ctx.font = 'bold 14px system-ui';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.textAlign = 'center';
@@ -631,10 +794,17 @@ export function RTPlanPanel({
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, width, 28);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = 'bold 12px system-ui';
-    ctx.textAlign = 'center';
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(selectedBEV.beamName, centerX, 6);
+    ctx.fillText(selectedBEV.beamName, 8, 8);
+    
+    // Beam direction (IEC 61217)
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(180, 200, 255, 0.9)';
+    const directionName = getBeamDirectionName(selectedBEV.gantryAngle);
+    ctx.fillText(directionName, width - 8, 8);
     
     // --- Bottom info bar ---
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -653,7 +823,7 @@ export function RTPlanPanel({
       height - 12
     );
     
-  }, [selectedBEV, bevZoom, planData, selectedBeamNumber, getOrientationLabels]);
+  }, [selectedBEV, bevZoom, planData, selectedBeamNumber, getOrientationLabels, drrImageData, projectedStructures, showDRR, showStructuresInBEV]);
   
   // Redraw BEV when dependencies change
   useEffect(() => {
@@ -1049,6 +1219,28 @@ export function RTPlanPanel({
                   <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 px-2 py-1 rounded text-[10px] text-green-300">
                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                     LIVE
+                  </div>
+                )}
+                {/* Enhanced BEV indicators */}
+                {!animatingArc && (drrImageData || projectedStructures.length > 0) && (
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    {drrImageData && showDRR && (
+                      <div className="bg-purple-500/20 border border-purple-500/30 px-1.5 py-0.5 rounded text-[9px] text-purple-300">
+                        DRR
+                      </div>
+                    )}
+                    {projectedStructures.length > 0 && showStructuresInBEV && (
+                      <div className="bg-cyan-500/20 border border-cyan-500/30 px-1.5 py-0.5 rounded text-[9px] text-cyan-300">
+                        {projectedStructures.length} OARs
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Enhanced BEV loading */}
+                {enhancedBevLoading && (
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 px-1.5 py-0.5 rounded text-[9px] text-zinc-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Loading DRR...
                   </div>
                 )}
               </div>

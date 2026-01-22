@@ -101,8 +101,9 @@ interface RadiationTherapyPanelProps {
   onToggleMinimized?: (minimized: boolean) => void;
   fusionPanelVisible?: boolean;
   
-  // DVH support
+  // DVH support and BEV enhancement
   structureSetId?: number;
+  ctSeriesId?: number;
   
   // Quick actions
   onLocalizeMaxDose?: () => void;
@@ -169,8 +170,9 @@ export function RadiationTherapyPanel({
   onToggleMinimized,
   fusionPanelVisible = false,
   
-  // DVH
+  // DVH and BEV enhancement
   structureSetId,
+  ctSeriesId,
   
   // Actions
   onLocalizeMaxDose,
@@ -365,6 +367,10 @@ export function RadiationTherapyPanel({
               onBeamsLoaded={onBeamsLoaded}
               expandBEV={expandBEV}
               onToggleExpandBEV={() => setExpandBEV(!expandBEV)}
+              ctSeriesId={ctSeriesId}
+              structureSetId={structureSetId}
+              showDRR={true}
+              showStructuresInBEV={true}
             />
           )}
         </div>
