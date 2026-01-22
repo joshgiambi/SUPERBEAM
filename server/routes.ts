@@ -32,6 +32,7 @@ import mem3dRouter from './mem3d-api';
 import nninteractiveRouter from './nninteractive-api';
 import supersegRouter from './superseg-api';
 import rtDoseRouter from './rt-dose-api';
+import rtPlanRouter from './rt-plan-api';
 import dvhRouter, { triggerDvhPrecompute } from './dvh-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
 import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
@@ -7113,6 +7114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register RT Dose API routes
   app.use('/api/rt-dose', rtDoseRouter);
+
+  // Register RT Plan API routes
+  app.use('/api/rt-plan', rtPlanRouter);
 
   // Register DVH API routes
   app.use('/api/dvh', dvhRouter);
