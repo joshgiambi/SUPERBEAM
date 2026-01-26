@@ -64,6 +64,7 @@ import { MPRFloating } from '@/components/dicom/mpr-floating';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { fetchFusionManifest } from '@/lib/fusion-utils';
+import { DIRQATools, RegRevealConfig, RegRefineConfig, JacobianConfig, Landmark, JacobianStats } from '@/components/dicom/dir-qa-tools';
 
 // ============================================================================
 // TYPES
@@ -285,7 +286,88 @@ function FuseBoxContent() {
   const [autoRegType, setAutoRegType] = useState<AutoRegistrationType | null>(null);
   
   // Panel state
-  const [activePanel, setActivePanel] = useState<'controls' | 'transform' | 'autoReg'>('controls');
+  const [activePanel, setActivePanel] = useState<'controls' | 'transform' | 'autoReg' | 'qaTools'>('controls');
+  
+  // DIR QA Tools state
+  const [regRevealConfig, setRegRevealConfig] = useState<RegRevealConfig>({
+    enabled: false,
+    position: { x: 256, y: 256 },
+    size: 100,
+    showOriginal: true,
+  });
+  
+  const [regRefineConfig, setRegRefineConfig] = useState<RegRefineConfig>({
+    enabled: false,
+    landmarks: [],
+    selectedLandmarkId: null,
+    showPaired: true,
+    showUnpaired: true,
+  });
+  
+  const [jacobianConfig, setJacobianConfig] = useState<JacobianConfig>({
+    enabled: false,
+    colormap: 'diverging',
+    minThreshold: 0.5,
+    maxThreshold: 1.5,
+    showNegativeWarning: true,
+    opacity: 0.6,
+  });
+  
+  const [jacobianStats, setJacobianStats] = useState<JacobianStats | undefined>(undefined);
+  const [isComputingQA, setIsComputingQA] = useState(false);
+  
+  // QA recompute handler
+  const handleRecomputeQA = useCallback(async () => {
+    setIsComputingQA(true);
+    // In real implementation, this would call backend to compute Jacobian from DVF
+    // For now, simulate with mock data
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setJacobianStats({
+      min: 0.85 + Math.random() * 0.1,
+      max: 1.15 + Math.random() * 0.1,
+      mean: 0.98 + Math.random() * 0.04,
+      negativePercentage: Math.random() * 0.5,
+    });
+    setIsComputingQA(false);
+  }, []);
+  
+  // Apply refinement handler
+  const handleApplyRefinement = useCallback(async () => {
+    setIsComputingQA(true);
+    // In real implementation, this would:
+    // 1. Send locked landmarks to backend
+    // 2. Re-run registration with landmark constraints
+    // 3. Return new transform/DVF
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Mock: Apply small adjustments based on locked landmarks
+    const lockedLandmarks = regRefineConfig.landmarks.filter(lm => lm.isLocked);
+    if (lockedLandmarks.length > 0) {
+      const avgAdjustment = lockedLandmarks.reduce((acc, lm) => {
+        if (lm.secondaryPosition) {
+          return {
+            x: acc.x + (lm.primaryPosition.x - lm.secondaryPosition.x) * 0.1,
+            y: acc.y + (lm.primaryPosition.y - lm.secondaryPosition.y) * 0.1,
+            z: acc.z + (lm.primaryPosition.z - lm.secondaryPosition.z) * 0.1,
+          };
+        }
+        return acc;
+      }, { x: 0, y: 0, z: 0 });
+      
+      const newTransform = {
+        ...currentTransform,
+        translation: {
+          x: currentTransform.translation.x + avgAdjustment.x,
+          y: currentTransform.translation.y + avgAdjustment.y,
+          z: currentTransform.translation.z + avgAdjustment.z,
+        },
+      };
+      setCurrentTransform(newTransform);
+      addToHistory(newTransform, `Reg Refine: ${lockedLandmarks.length} locked landmarks applied`);
+    }
+    
+    setIsComputingQA(false);
+  }, [regRefineConfig.landmarks, currentTransform, addToHistory]);
   
   // Drag state for translation
   const [isDragging, setIsDragging] = useState(false);
@@ -1140,17 +1222,18 @@ function FuseBoxContent() {
           <div className="w-72 border-l border-white/5 flex flex-col shrink-0">
             {/* Panel Tabs - styled like DVH toggle buttons */}
             <div className="p-3 pb-0 flex-shrink-0">
-              <div className="flex items-center gap-0.5 p-0.5 bg-[#0d1117]/80 border border-white/10 rounded-lg">
+              <div className="flex items-center gap-0.5 p-0.5 bg-[#0d1117]/80 border border-white/10 rounded-lg flex-wrap">
                 {[
                   { id: 'controls', label: 'Controls', icon: <SunMedium className="w-3 h-3" /> },
                   { id: 'transform', label: 'Transform', icon: <Move className="w-3 h-3" /> },
                   { id: 'autoReg', label: 'Auto Reg', icon: <Wand2 className="w-3 h-3" /> },
+                  { id: 'qaTools', label: 'DIR QA', icon: <Target className="w-3 h-3" /> },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActivePanel(tab.id as any)}
                     className={cn(
-                      "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[10px] font-medium rounded-md transition-all",
+                      "flex-1 flex items-center justify-center gap-1 px-1.5 py-1.5 text-[9px] font-medium rounded-md transition-all min-w-[60px]",
                       activePanel === tab.id
                         ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                         : "text-gray-400 hover:text-gray-300"
@@ -1361,6 +1444,22 @@ function FuseBoxContent() {
                     Auto-registration currently applies mock transforms only
                   </div>
                 </div>
+              )}
+              
+              {/* DIR QA Tools Panel */}
+              {activePanel === 'qaTools' && (
+                <DIRQATools
+                  regRevealConfig={regRevealConfig}
+                  onRegRevealChange={setRegRevealConfig}
+                  regRefineConfig={regRefineConfig}
+                  onRegRefineChange={setRegRefineConfig}
+                  jacobianConfig={jacobianConfig}
+                  onJacobianChange={setJacobianConfig}
+                  jacobianStats={jacobianStats}
+                  onRecompute={handleRecomputeQA}
+                  onApplyRefinement={handleApplyRefinement}
+                  isComputing={isComputingQA}
+                />
               )}
             </div>
             
