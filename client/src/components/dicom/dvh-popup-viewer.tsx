@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
@@ -21,7 +22,12 @@ import {
   Info,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Zap
 } from 'lucide-react';
 import { formatDoseWithUnit, type DoseUnit } from '@/lib/rt-dose-manager';
 
@@ -44,11 +50,46 @@ interface DVHCurve {
     min: number;
     max: number;
     mean: number;
-    d95: number;
-    d50: number;
-    d2: number;
-    v100?: number;
+    d98: number;   // MIM: Dose covering 98% of volume
+    d95: number;   // MIM: Dose covering 95% of volume  
+    d50: number;   // MIM: Median dose
+    d2: number;    // MIM: Near-max dose (2% of volume)
+    v100?: number; // Volume receiving 100% of Rx
+    v95?: number;  // Volume receiving 95% of Rx
+    v50?: number;  // Volume receiving 50% of Rx
+    v20?: number;  // Volume receiving 20% of Rx (lung OAR metric)
+    v5?: number;   // Volume receiving 5 Gy (low dose bath)
   };
+}
+
+// MIM-style dose constraint for pass/fail evaluation
+interface DoseConstraint {
+  structurePattern: RegExp;
+  metric: 'Dmax' | 'Dmean' | 'D95' | 'D98' | 'D50' | 'V20' | 'V5';
+  comparator: '<' | '<=' | '>' | '>=';
+  value: number;
+  unit: 'Gy' | 'cGy' | '%';
+  priority: 'required' | 'optimal' | 'informational';
+  label: string;
+}
+
+// Standard QUANTEC-based constraints
+const STANDARD_CONSTRAINTS: DoseConstraint[] = [
+  { structurePattern: /spinal.*cord/i, metric: 'Dmax', comparator: '<', value: 50, unit: 'Gy', priority: 'required', label: 'Spinal Cord Max' },
+  { structurePattern: /brain.*stem/i, metric: 'Dmax', comparator: '<', value: 54, unit: 'Gy', priority: 'required', label: 'Brainstem Max' },
+  { structurePattern: /parotid/i, metric: 'Dmean', comparator: '<', value: 26, unit: 'Gy', priority: 'optimal', label: 'Parotid Mean' },
+  { structurePattern: /lung/i, metric: 'V20', comparator: '<', value: 37, unit: '%', priority: 'required', label: 'Lung V20' },
+  { structurePattern: /lung/i, metric: 'V5', comparator: '<', value: 65, unit: '%', priority: 'optimal', label: 'Lung V5' },
+  { structurePattern: /heart/i, metric: 'Dmean', comparator: '<', value: 26, unit: 'Gy', priority: 'required', label: 'Heart Mean' },
+  { structurePattern: /esophagus/i, metric: 'Dmean', comparator: '<', value: 34, unit: 'Gy', priority: 'optimal', label: 'Esophagus Mean' },
+  { structurePattern: /rectum/i, metric: 'V50', comparator: '<', value: 50, unit: '%', priority: 'required', label: 'Rectum V50' },
+  { structurePattern: /bladder/i, metric: 'V50', comparator: '<', value: 50, unit: '%', priority: 'optimal', label: 'Bladder V50' },
+];
+
+// BED calculation parameters
+interface BEDParams {
+  alphaOverBeta: number;  // α/β ratio (Gy)
+  numFractions: number;
 }
 
 interface DVHData {
@@ -65,11 +106,60 @@ interface DVHPopupViewerProps {
   structureSetId?: number;
   prescriptionDose?: number;
   doseUnit?: DoseUnit;
+  numFractions?: number;  // For BED/EQD2 calculations
+  enableConstraints?: boolean;  // Show constraint pass/fail indicators
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
+
+// BED/EQD2 calculation helpers (MIM feature)
+function calculateBED(dose: number, dosePerFraction: number, alphaOverBeta: number): number {
+  return dose * (1 + dosePerFraction / alphaOverBeta);
+}
+
+function calculateEQD2(dose: number, dosePerFraction: number, alphaOverBeta: number): number {
+  const bed = calculateBED(dose, dosePerFraction, alphaOverBeta);
+  return bed / (1 + 2 / alphaOverBeta);
+}
+
+// Constraint evaluation helper
+function evaluateConstraint(
+  curve: DVHCurve,
+  constraint: DoseConstraint,
+  prescriptionDose: number
+): { passed: boolean; value: number; target: number } | null {
+  // Check if structure name matches the constraint pattern
+  if (!constraint.structurePattern.test(curve.roiName)) {
+    return null;
+  }
+
+  let actualValue: number;
+  switch (constraint.metric) {
+    case 'Dmax': actualValue = curve.statistics.max; break;
+    case 'Dmean': actualValue = curve.statistics.mean; break;
+    case 'D95': actualValue = curve.statistics.d95; break;
+    case 'D98': actualValue = curve.statistics.d98; break;
+    case 'D50': actualValue = curve.statistics.d50; break;
+    case 'V20': actualValue = curve.statistics.v20 ?? 0; break;
+    case 'V5': actualValue = curve.statistics.v5 ?? 0; break;
+    default: return null;
+  }
+
+  const target = constraint.unit === '%' ? constraint.value : constraint.value;
+  let passed: boolean;
+  
+  switch (constraint.comparator) {
+    case '<': passed = actualValue < target; break;
+    case '<=': passed = actualValue <= target; break;
+    case '>': passed = actualValue > target; break;
+    case '>=': passed = actualValue >= target; break;
+    default: passed = false;
+  }
+
+  return { passed, value: actualValue, target };
+}
 
 export function DVHPopupViewer({
   isOpen,
@@ -77,7 +167,9 @@ export function DVHPopupViewer({
   doseSeriesId,
   structureSetId,
   prescriptionDose = 60,
-  doseUnit = 'Gy'
+  doseUnit = 'Gy',
+  numFractions = 30,
+  enableConstraints = true
 }: DVHPopupViewerProps) {
   const [dvhData, setDvhData] = useState<DVHData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,6 +180,13 @@ export function DVHPopupViewer({
   const [showGrid, setShowGrid] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
   const [showStats, setShowStats] = useState(true);
+  const [showConstraints, setShowConstraints] = useState(enableConstraints);
+  const [showBED, setShowBED] = useState(false);
+  const [bedAlphaOverBeta, setBedAlphaOverBeta] = useState(10); // Default: tumor α/β = 10 Gy
+  const [statsView, setStatsView] = useState<'basic' | 'extended' | 'constraints'>('basic');
+  
+  // Calculate dose per fraction
+  const dosePerFraction = useMemo(() => prescriptionDose / numFractions, [prescriptionDose, numFractions]);
 
   // Fetch DVH data from backend
   const fetchDVH = useCallback(async () => {
@@ -192,18 +291,49 @@ export function DVHPopupViewer({
     URL.revokeObjectURL(url);
   };
 
-  // Copy stats to clipboard
+  // Copy stats to clipboard (extended MIM format)
   const copyStats = () => {
     if (!selectedCurves.length) return;
     
-    let text = 'Structure\tVolume (cc)\tMin\tMax\tMean\tD95\tD50\tD2\n';
+    let text = 'Structure\tVolume (cc)\tMin\tMax\tMean\tD98\tD95\tD50\tD2\tV100\tV95\tV50\tV20\tV5\n';
     selectedCurves.forEach(curve => {
       const s = curve.statistics;
-      text += `${curve.roiName}\t${curve.volumeCc.toFixed(1)}\t${s.min.toFixed(2)}\t${s.max.toFixed(2)}\t${s.mean.toFixed(2)}\t${s.d95.toFixed(2)}\t${s.d50.toFixed(2)}\t${s.d2.toFixed(2)}\n`;
+      text += `${curve.roiName}\t${curve.volumeCc.toFixed(1)}\t${s.min.toFixed(2)}\t${s.max.toFixed(2)}\t${s.mean.toFixed(2)}\t${(s.d98 || 0).toFixed(2)}\t${s.d95.toFixed(2)}\t${s.d50.toFixed(2)}\t${s.d2.toFixed(2)}\t${(s.v100 || 0).toFixed(1)}%\t${(s.v95 || 0).toFixed(1)}%\t${(s.v50 || 0).toFixed(1)}%\t${(s.v20 || 0).toFixed(1)}%\t${(s.v5 || 0).toFixed(1)}%\n`;
     });
     
     navigator.clipboard.writeText(text);
   };
+  
+  // Get constraint evaluations for all selected curves
+  const constraintEvaluations = useMemo(() => {
+    if (!showConstraints || !selectedCurves.length) return [];
+    
+    const evaluations: Array<{
+      curve: DVHCurve;
+      constraint: DoseConstraint;
+      result: { passed: boolean; value: number; target: number };
+    }> = [];
+    
+    for (const curve of selectedCurves) {
+      for (const constraint of STANDARD_CONSTRAINTS) {
+        const result = evaluateConstraint(curve, constraint, prescriptionDose);
+        if (result) {
+          evaluations.push({ curve, constraint, result });
+        }
+      }
+    }
+    
+    return evaluations;
+  }, [selectedCurves, showConstraints, prescriptionDose]);
+  
+  // Count pass/fail for summary
+  const constraintSummary = useMemo(() => {
+    const passed = constraintEvaluations.filter(e => e.result.passed).length;
+    const failed = constraintEvaluations.filter(e => !e.result.passed).length;
+    const required = constraintEvaluations.filter(e => e.constraint.priority === 'required');
+    const requiredFailed = required.filter(e => !e.result.passed).length;
+    return { passed, failed, total: constraintEvaluations.length, requiredFailed };
+  }, [constraintEvaluations]);
 
   if (!isOpen) return null;
 
@@ -222,9 +352,30 @@ export function DVHPopupViewer({
                   Dose Volume Histogram
                 </CardTitle>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Series {doseSeriesId} • Rx: {prescriptionDose} Gy
+                  Series {doseSeriesId} • Rx: {prescriptionDose} Gy / {numFractions} fx ({dosePerFraction.toFixed(2)} Gy/fx)
                 </p>
               </div>
+              {/* Constraint summary badge */}
+              {showConstraints && constraintEvaluations.length > 0 && (
+                <div className="flex items-center gap-1.5 ml-2">
+                  {constraintSummary.requiredFailed > 0 ? (
+                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px]">
+                      <XCircle className="w-3 h-3 mr-1" />
+                      {constraintSummary.requiredFailed} required failed
+                    </Badge>
+                  ) : constraintSummary.failed > 0 ? (
+                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      {constraintSummary.failed} optional failed
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-green-500/20 text-green-300 border-green-500/30 text-[10px]">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      All constraints met
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -537,55 +688,278 @@ export function DVHPopupViewer({
                   )}
                 </div>
 
-                {/* Statistics Table */}
+                {/* Statistics Section with Tabs */}
                 <div className="border-t border-gray-700/50 pt-3">
-                  <button
-                    onClick={() => setShowStats(!showStats)}
-                    className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-300 mb-2"
-                  >
-                    {showStats ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    Statistics
-                  </button>
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowStats(!showStats)}
+                      className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-300"
+                    >
+                      {showStats ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      Statistics
+                    </button>
+                    
+                    {showStats && (
+                      <div className="flex items-center gap-1 p-0.5 bg-gray-800/50 rounded-lg">
+                        {[
+                          { id: 'basic', label: 'Basic' },
+                          { id: 'extended', label: 'Extended (MIM)' },
+                          { id: 'constraints', label: 'Constraints' },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => setStatsView(tab.id as any)}
+                            className={cn(
+                              "px-2 py-1 text-[10px] rounded-md transition-all",
+                              statsView === tab.id
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                : "text-gray-400 hover:text-gray-300"
+                            )}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   
                   {showStats && selectedCurves.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="text-gray-500 border-b border-gray-700/50">
-                            <th className="text-left py-1.5 px-2 font-medium">Structure</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Vol (cc)</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Min</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Max</th>
-                            <th className="text-right py-1.5 px-2 font-medium">Mean</th>
-                            <th className="text-right py-1.5 px-2 font-medium">D95</th>
-                            <th className="text-right py-1.5 px-2 font-medium">D50</th>
-                            <th className="text-right py-1.5 px-2 font-medium">D2</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedCurves.map((curve) => (
-                            <tr key={curve.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                              <td className="py-1.5 px-2">
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                    style={{ backgroundColor: curve.color }}
-                                  />
-                                  <span className="text-white truncate max-w-[120px]">{curve.roiName}</span>
-                                </div>
-                              </td>
-                              <td className="py-1.5 px-2 text-right text-gray-400 tabular-nums">{curve.volumeCc.toFixed(1)}</td>
-                              <td className="py-1.5 px-2 text-right text-blue-400 tabular-nums">{curve.statistics.min.toFixed(2)}</td>
-                              <td className="py-1.5 px-2 text-right text-red-400 tabular-nums">{curve.statistics.max.toFixed(2)}</td>
-                              <td className="py-1.5 px-2 text-right text-gray-300 tabular-nums">{curve.statistics.mean.toFixed(2)}</td>
-                              <td className="py-1.5 px-2 text-right text-green-400 tabular-nums">{curve.statistics.d95.toFixed(2)}</td>
-                              <td className="py-1.5 px-2 text-right text-cyan-400 tabular-nums">{curve.statistics.d50.toFixed(2)}</td>
-                              <td className="py-1.5 px-2 text-right text-orange-400 tabular-nums">{curve.statistics.d2.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <>
+                      {/* Basic Statistics Table */}
+                      {statsView === 'basic' && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="text-gray-500 border-b border-gray-700/50">
+                                <th className="text-left py-1.5 px-2 font-medium">Structure</th>
+                                <th className="text-right py-1.5 px-2 font-medium">Vol (cc)</th>
+                                <th className="text-right py-1.5 px-2 font-medium">Min</th>
+                                <th className="text-right py-1.5 px-2 font-medium">Max</th>
+                                <th className="text-right py-1.5 px-2 font-medium">Mean</th>
+                                <th className="text-right py-1.5 px-2 font-medium">D95</th>
+                                <th className="text-right py-1.5 px-2 font-medium">D50</th>
+                                <th className="text-right py-1.5 px-2 font-medium">D2</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedCurves.map((curve) => (
+                                <tr key={curve.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                                  <td className="py-1.5 px-2">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                        style={{ backgroundColor: curve.color }}
+                                      />
+                                      <span className="text-white truncate max-w-[120px]">{curve.roiName}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-1.5 px-2 text-right text-gray-400 tabular-nums">{curve.volumeCc.toFixed(1)}</td>
+                                  <td className="py-1.5 px-2 text-right text-blue-400 tabular-nums">{curve.statistics.min.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2 text-right text-red-400 tabular-nums">{curve.statistics.max.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2 text-right text-gray-300 tabular-nums">{curve.statistics.mean.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2 text-right text-green-400 tabular-nums">{curve.statistics.d95.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2 text-right text-cyan-400 tabular-nums">{curve.statistics.d50.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2 text-right text-orange-400 tabular-nums">{curve.statistics.d2.toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                      
+                      {/* Extended MIM Statistics Table */}
+                      {statsView === 'extended' && (
+                        <div className="space-y-3">
+                          {/* BED toggle */}
+                          <div className="flex items-center gap-4 p-2 bg-gray-800/30 rounded-lg">
+                            <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={showBED}
+                                onChange={(e) => setShowBED(e.target.checked)}
+                                className="rounded border-gray-600"
+                              />
+                              <Zap className="w-3 h-3" />
+                              Show BED/EQD2
+                            </label>
+                            {showBED && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-gray-500">α/β:</span>
+                                <select
+                                  value={bedAlphaOverBeta}
+                                  onChange={(e) => setBedAlphaOverBeta(Number(e.target.value))}
+                                  className="h-5 px-1 text-[10px] bg-gray-800 border border-gray-700 rounded text-gray-300"
+                                >
+                                  <option value={10}>10 Gy (Tumor)</option>
+                                  <option value={3}>3 Gy (Late Effects)</option>
+                                  <option value={1.5}>1.5 Gy (Prostate)</option>
+                                  <option value={8.5}>8.5 Gy (Breast)</option>
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-gray-500 border-b border-gray-700/50">
+                                  <th className="text-left py-1.5 px-2 font-medium">Structure</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">Vol</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">D98</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">D95</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">D50</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">D2</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">V100</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">V95</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">V50</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">V20</th>
+                                  <th className="text-right py-1.5 px-2 font-medium">V5</th>
+                                  {showBED && (
+                                    <>
+                                      <th className="text-right py-1.5 px-2 font-medium text-purple-400">BED</th>
+                                      <th className="text-right py-1.5 px-2 font-medium text-purple-400">EQD2</th>
+                                    </>
+                                  )}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedCurves.map((curve) => {
+                                  const meanBED = showBED ? calculateBED(curve.statistics.mean, dosePerFraction, bedAlphaOverBeta) : 0;
+                                  const meanEQD2 = showBED ? calculateEQD2(curve.statistics.mean, dosePerFraction, bedAlphaOverBeta) : 0;
+                                  
+                                  return (
+                                    <tr key={curve.roiNumber} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                                      <td className="py-1.5 px-2">
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                            style={{ backgroundColor: curve.color }}
+                                          />
+                                          <span className="text-white truncate max-w-[100px]">{curve.roiName}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-1.5 px-2 text-right text-gray-400 tabular-nums">{curve.volumeCc.toFixed(1)}</td>
+                                      <td className="py-1.5 px-2 text-right text-emerald-400 tabular-nums">{(curve.statistics.d98 || 0).toFixed(2)}</td>
+                                      <td className="py-1.5 px-2 text-right text-green-400 tabular-nums">{curve.statistics.d95.toFixed(2)}</td>
+                                      <td className="py-1.5 px-2 text-right text-cyan-400 tabular-nums">{curve.statistics.d50.toFixed(2)}</td>
+                                      <td className="py-1.5 px-2 text-right text-orange-400 tabular-nums">{curve.statistics.d2.toFixed(2)}</td>
+                                      <td className="py-1.5 px-2 text-right text-yellow-400 tabular-nums">{(curve.statistics.v100 || 0).toFixed(1)}%</td>
+                                      <td className="py-1.5 px-2 text-right text-lime-400 tabular-nums">{(curve.statistics.v95 || 0).toFixed(1)}%</td>
+                                      <td className="py-1.5 px-2 text-right text-teal-400 tabular-nums">{(curve.statistics.v50 || 0).toFixed(1)}%</td>
+                                      <td className="py-1.5 px-2 text-right text-blue-400 tabular-nums">{(curve.statistics.v20 || 0).toFixed(1)}%</td>
+                                      <td className="py-1.5 px-2 text-right text-indigo-400 tabular-nums">{(curve.statistics.v5 || 0).toFixed(1)}%</td>
+                                      {showBED && (
+                                        <>
+                                          <td className="py-1.5 px-2 text-right text-purple-400 tabular-nums">{meanBED.toFixed(1)}</td>
+                                          <td className="py-1.5 px-2 text-right text-purple-300 tabular-nums">{meanEQD2.toFixed(1)}</td>
+                                        </>
+                                      )}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Constraints Evaluation Table */}
+                      {statsView === 'constraints' && (
+                        <div className="space-y-2">
+                          {constraintEvaluations.length === 0 ? (
+                            <div className="flex items-center justify-center py-8 text-gray-500">
+                              <Info className="w-5 h-5 mr-2" />
+                              No applicable constraints found for selected structures
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="text-gray-500 border-b border-gray-700/50">
+                                    <th className="text-left py-1.5 px-2 font-medium">Structure</th>
+                                    <th className="text-left py-1.5 px-2 font-medium">Constraint</th>
+                                    <th className="text-right py-1.5 px-2 font-medium">Limit</th>
+                                    <th className="text-right py-1.5 px-2 font-medium">Actual</th>
+                                    <th className="text-center py-1.5 px-2 font-medium">Status</th>
+                                    <th className="text-center py-1.5 px-2 font-medium">Priority</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {constraintEvaluations.map((evaluation, idx) => (
+                                    <tr 
+                                      key={`${evaluation.curve.roiNumber}-${idx}`} 
+                                      className={cn(
+                                        "border-b border-gray-800/50",
+                                        evaluation.result.passed ? "hover:bg-gray-800/30" : "bg-red-500/5 hover:bg-red-500/10"
+                                      )}
+                                    >
+                                      <td className="py-1.5 px-2">
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                            style={{ backgroundColor: evaluation.curve.color }}
+                                          />
+                                          <span className="text-white truncate max-w-[100px]">{evaluation.curve.roiName}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-1.5 px-2 text-gray-300">{evaluation.constraint.label}</td>
+                                      <td className="py-1.5 px-2 text-right text-gray-400 tabular-nums">
+                                        {evaluation.constraint.comparator} {evaluation.result.target} {evaluation.constraint.unit}
+                                      </td>
+                                      <td className={cn(
+                                        "py-1.5 px-2 text-right tabular-nums font-medium",
+                                        evaluation.result.passed ? "text-gray-300" : "text-red-400"
+                                      )}>
+                                        {evaluation.result.value.toFixed(2)} {evaluation.constraint.unit === '%' ? '%' : 'Gy'}
+                                      </td>
+                                      <td className="py-1.5 px-2 text-center">
+                                        {evaluation.result.passed ? (
+                                          <CheckCircle2 className="w-4 h-4 text-green-400 inline" />
+                                        ) : (
+                                          <XCircle className="w-4 h-4 text-red-400 inline" />
+                                        )}
+                                      </td>
+                                      <td className="py-1.5 px-2 text-center">
+                                        <span className={cn(
+                                          "px-1.5 py-0.5 rounded text-[9px] font-medium",
+                                          evaluation.constraint.priority === 'required' 
+                                            ? "bg-red-500/20 text-red-300" 
+                                            : evaluation.constraint.priority === 'optimal'
+                                            ? "bg-amber-500/20 text-amber-300"
+                                            : "bg-gray-500/20 text-gray-400"
+                                        )}>
+                                          {evaluation.constraint.priority}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                          
+                          {/* Constraint Summary */}
+                          {constraintEvaluations.length > 0 && (
+                            <div className="flex items-center justify-between p-2 bg-gray-800/30 rounded-lg text-[10px]">
+                              <div className="flex items-center gap-4">
+                                <span className="text-gray-400">Summary:</span>
+                                <span className="text-green-400">
+                                  <CheckCircle2 className="w-3 h-3 inline mr-0.5" />
+                                  {constraintSummary.passed} passed
+                                </span>
+                                <span className="text-red-400">
+                                  <XCircle className="w-3 h-3 inline mr-0.5" />
+                                  {constraintSummary.failed} failed
+                                </span>
+                              </div>
+                              <span className="text-gray-500">
+                                QUANTEC-based constraints
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
