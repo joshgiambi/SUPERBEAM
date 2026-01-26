@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-01-26T21:40:24.145Z",
+  "generatedAt": "2026-01-26T22:28:19.487Z",
   "totalRequirements": 204,
   "byCategory": {
     "General": 103,
@@ -2387,7 +2387,7 @@
       "relatedTests": [],
       "status": "implemented",
       "createdDate": "2025-12-03",
-      "lastModified": "2025-12-12"
+      "lastModified": "2026-01-26"
     },
     {
       "id": "REQ-GEN-099",
@@ -2733,7 +2733,7 @@
       ],
       "status": "verified",
       "createdDate": "2025-12-03",
-      "lastModified": "2025-12-12"
+      "lastModified": "2026-01-26"
     },
     {
       "id": "REQ-RTSTRUCT-002",

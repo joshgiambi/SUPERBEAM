@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-01-26T21:40:24.481Z",
+  "generatedAt": "2026-01-26T22:28:19.791Z",
   "repositoryInfo": {
-    "totalCommits": 34,
+    "totalCommits": 36,
     "firstCommit": "2025-12-04",
     "lastCommit": "2026-01-26",
     "contributors": [
@@ -11,6 +11,50 @@
     "branch": "perf-fixes-backup-20260122"
   },
   "commits": [
+    {
+      "hash": "9ea70c6195a2c824b95b36dfd0e4217bd99fecab",
+      "shortHash": "9ea70c6",
+      "date": "2026-01-26",
+      "author": "joshgiambi",
+      "subject": "docs(ui): Update regulatory documentation for dashboard and viewer enhancements",
+      "regulatoryDescription": "DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhancements [Image Viewing, User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Viewing",
+        "User Interface"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-VIEW-*",
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "dfa2f0f82bcded4283fd82056e27067c7c3a49df",
+      "shortHash": "dfa2f0f",
+      "date": "2026-01-26",
+      "author": "joshgiambi",
+      "subject": "Enhance regulatory features and UI components",
+      "regulatoryDescription": "ENHANCEMENT: Enhance regulatory features and UI components [User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "User Interface"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
     {
       "hash": "13cf02515a3abe7fefba58551100c5178e1337b4",
       "shortHash": "13cf025",
@@ -807,13 +851,13 @@
     }
   ],
   "byCategory": {
+    "Image Viewing": 7,
+    "User Interface": 10,
     "Image Fusion": 4,
     "DVH": 2,
-    "User Interface": 8,
     "RT Plan": 4,
     "Performance": 6,
     "Infrastructure": 15,
-    "Image Viewing": 6,
     "Data Management": 3,
     "Boolean Operations": 3,
     "DICOM Processing": 13,
@@ -823,11 +867,11 @@
     "RT Dose": 1
   },
   "byChangeType": {
+    "docs": 4,
+    "enhancement": 12,
     "feature": 7,
     "fix": 3,
     "other": 4,
-    "enhancement": 11,
-    "refactor": 6,
-    "docs": 3
+    "refactor": 6
   }
 }

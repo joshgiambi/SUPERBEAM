@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-26T21:40:24.785Z",
+  "generatedAt": "2026-01-26T22:28:20.073Z",
   "entries": [
     {
       "requirementId": "REQ-AI-001",
@@ -734,11 +734,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -751,11 +751,11 @@
       "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -768,11 +768,11 @@
       "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -785,11 +785,11 @@
       "verificationRef": "promptHydrationDialog.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -802,11 +802,11 @@
       "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -819,11 +819,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -836,11 +836,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -853,11 +853,11 @@
       "verificationRef": "useToolbar.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -870,11 +870,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -887,11 +887,11 @@
       "verificationRef": "SegmentationService.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -904,11 +904,11 @@
       "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -921,11 +921,11 @@
       "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -938,11 +938,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2447,11 +2447,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2464,11 +2464,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MultipleSegmentationDataOverlays.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2481,11 +2481,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2498,11 +2498,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2515,11 +2515,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2532,11 +2532,11 @@
       "verificationRef": "useToolbar.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2549,11 +2549,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2566,11 +2566,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneBlendMode.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2583,11 +2583,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2600,11 +2600,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2617,11 +2617,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2634,11 +2634,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2651,11 +2651,11 @@
       "verificationRef": "Pending",
       "validationStatus": "partial",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2668,11 +2668,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2685,11 +2685,11 @@
       "verificationRef": "SegmentationService.test.ts, getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     },
     {
@@ -2702,11 +2702,11 @@
       "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, toggleVOISliceSync.test.ts",
       "validationStatus": "complete",
       "relatedChanges": [
+        "9ea70c6",
         "13cf025",
         "9ae494d",
         "c9c40ed",
-        "e4eae1b",
-        "c11768a"
+        "e4eae1b"
       ]
     }
   ]

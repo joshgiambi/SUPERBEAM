@@ -2,7 +2,7 @@
 
 ## CONVERGE Medical Imaging Viewer
 
-**Generated:** 2026-01-26T21:40:24.797Z
+**Generated:** 2026-01-26T22:28:20.084Z
 
 ---
 
@@ -51,4 +51,4 @@ npx tsx scripts/regulatory/run-all.ts
 
 ---
 
-*This is a living document. Last updated: 1/26/2026, 3:40:24 PM*
+*This is a living document. Last updated: 1/26/2026, 4:28:20 PM*

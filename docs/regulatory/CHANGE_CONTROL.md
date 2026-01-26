@@ -5,8 +5,8 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-26T21:40:24.481Z |
-| Total Changes | 34 |
+| Generated | 2026-01-26T22:28:19.791Z |
+| Total Changes | 36 |
 | Branch | perf-fixes-backup-20260122 |
 | First Change | 2025-12-04 |
 | Last Change | 2026-01-26 |
@@ -16,12 +16,12 @@
 
 | Change Type | Count | Description |
 |-------------|-------|-------------|
-| 📈 Enhancement | 11 | Improvements to existing functionality |
+| 📈 Enhancement | 12 | Improvements to existing functionality |
 | ✨ Feature | 7 | New functionality implemented |
 | ♻️ Refactor | 6 | Code maintenance without functional changes |
+| 📝 Docs | 4 | Documentation updates |
 | 📦 Other | 4 | Other changes |
 | 🔧 Fix | 3 | Defect corrections |
-| 📝 Docs | 3 | Documentation updates |
 
 ## Changes by Functional Area
 
@@ -29,9 +29,9 @@
 |-----------------|---------|
 | Infrastructure | 15 |
 | DICOM Processing | 13 |
-| User Interface | 8 |
+| User Interface | 10 |
+| Image Viewing | 7 |
 | Performance | 6 |
-| Image Viewing | 6 |
 | Image Fusion | 4 |
 | RT Plan | 4 |
 | AI Segmentation | 4 |
@@ -48,8 +48,8 @@
 |------------|-------|----------------------|
 | 🔴 High | 1 | Yes - Full verification |
 | 🟡 Medium | 19 | Yes - Standard verification |
-| 🟢 Low | 6 | Recommended |
-| ⚪ None | 8 | Not required |
+| 🟢 Low | 7 | Recommended |
+| ⚪ None | 9 | Not required |
 
 ## Detailed Change History
 
@@ -57,6 +57,8 @@
 
 | Date | Change ID | Type | Risk | Description | Affected Areas |
 |------|-----------|------|------|-------------|----------------|
+| 2026-01-26 | `9ea70c6` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhan... | Image Viewing, User Interface |
+| 2026-01-26 | `dfa2f0f` | 📈 | 🟢 | ENHANCEMENT: Enhance regulatory features and UI components [User Interface] | User Interface |
 | 2026-01-26 | `13cf025` | ✨ | 🟡 | NEW FEATURE: Add DIR QA tools - Reg Reveal, Reg Refine, Jacobian visualizatio... | Image Fusion |
 | 2026-01-26 | `9ae494d` | ✨ | 🟡 | NEW FEATURE: Add rigid and deformable registration capabilities to FuseBox [I... | Image Fusion |
 | 2026-01-26 | `79086f9` | ✨ | 🟡 | NEW FEATURE: Add MIM-style parameters and constraint evaluation [DVH, User In... | DVH, User Interface |
@@ -100,6 +102,34 @@
 ## Individual Change Records
 
 *Showing most recent 30 changes with full details*
+
+### Change 9ea70c6
+
+**DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhancements [Image Viewing, User Interface]**
+
+| Attribute | Value |
+|-----------|-------|
+| Date | 2026-01-26 |
+| Author | joshgiambi |
+| Change Type | docs |
+| Risk Impact | ⚪ NONE |
+| Verification | not-required |
+| Affected Areas | Image Viewing, User Interface |
+| Related Requirements | REQ-VIEW-*, REQ-UI-* |
+
+### Change dfa2f0f
+
+**ENHANCEMENT: Enhance regulatory features and UI components [User Interface]**
+
+| Attribute | Value |
+|-----------|-------|
+| Date | 2026-01-26 |
+| Author | joshgiambi |
+| Change Type | enhancement |
+| Risk Impact | 🟢 LOW |
+| Verification | pending |
+| Affected Areas | User Interface |
+| Related Requirements | REQ-UI-* |
 
 ### Change 13cf025
 
@@ -492,34 +522,6 @@
 | Verification | pending |
 | Affected Areas | RT Structure, Contour Tools, User Interface |
 | Related Requirements | REQ-RTSTRUCT-*, REQ-CONTOUR-*, REQ-UI-* |
-
-### Change d4f2cae
-
-**CODE MAINTENANCE: Add new SeriesPreview route and update AI Status Panel documentation; enhance DICOM components with Aurora styling. Multiviewport improvements. General clean up [AI Segmentation, Image Viewing, DICOM Processing, User Interface, Data Management]**
-
-| Attribute | Value |
-|-----------|-------|
-| Date | 2025-12-15 |
-| Author | joshgiambi |
-| Change Type | refactor |
-| Risk Impact | 🟡 MEDIUM |
-| Verification | pending |
-| Affected Areas | AI Segmentation, Image Viewing, DICOM Processing, User Interface, Data Management |
-| Related Requirements | REQ-AI-*, REQ-VIEW-*, REQ-DICOM-*, REQ-UI-*, REQ-DATA-* |
-
-### Change ba2122f
-
-**DOCUMENTATION: Major prototype improvements for bottom toolbars and multiviewport functions - Update documentation and configuration files; add OHIF viewer reference to .gitignore [Image Viewing, User Interface, Infrastructure]**
-
-| Attribute | Value |
-|-----------|-------|
-| Date | 2025-12-12 |
-| Author | joshgiambi |
-| Change Type | docs |
-| Risk Impact | ⚪ NONE |
-| Verification | not-required |
-| Affected Areas | Image Viewing, User Interface, Infrastructure |
-| Related Requirements | REQ-VIEW-*, REQ-UI-*, REQ-INFRA-* |
 
 ---
 
