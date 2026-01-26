@@ -1,0 +1,833 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-01-26T21:40:24.481Z",
+  "repositoryInfo": {
+    "totalCommits": 34,
+    "firstCommit": "2025-12-04",
+    "lastCommit": "2026-01-26",
+    "contributors": [
+      "joshgiambi"
+    ],
+    "branch": "perf-fixes-backup-20260122"
+  },
+  "commits": [
+    {
+      "hash": "13cf02515a3abe7fefba58551100c5178e1337b4",
+      "shortHash": "13cf025",
+      "date": "2026-01-26",
+      "author": "joshgiambi",
+      "subject": "feat(fusebox): Add DIR QA tools - Reg Reveal, Reg Refine, Jacobian visualization",
+      "regulatoryDescription": "NEW FEATURE: Add DIR QA tools - Reg Reveal, Reg Refine, Jacobian visualization [Image Fusion]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Fusion"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-FUSION-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "9ae494d98c8fe001a2ee440d14d45ee27bf2d159",
+      "shortHash": "9ae494d",
+      "date": "2026-01-26",
+      "author": "joshgiambi",
+      "subject": "feat(registration): Add rigid and deformable registration capabilities to FuseBox",
+      "regulatoryDescription": "NEW FEATURE: Add rigid and deformable registration capabilities to FuseBox [Image Fusion]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Fusion"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-FUSION-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "79086f9755dbd9966f47ba668110f6e91e6be5e0",
+      "shortHash": "79086f9",
+      "date": "2026-01-26",
+      "author": "joshgiambi",
+      "subject": "feat(dvh): Add MIM-style parameters and constraint evaluation",
+      "regulatoryDescription": "NEW FEATURE: Add MIM-style parameters and constraint evaluation [DVH, User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DVH",
+        "User Interface"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-DVH-*",
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "8f665e963af3e63c153739b7699b506f12e5edf5",
+      "shortHash": "8f665e9",
+      "date": "2026-01-22",
+      "author": "joshgiambi",
+      "subject": "Merge RT PLAN PREPARATION BUILD with performance fixes",
+      "regulatoryDescription": "DEFECT CORRECTION: Merge RT PLAN PREPARATION BUILD with performance fixes [RT Plan, Performance, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Plan",
+        "Performance",
+        "Infrastructure"
+      ],
+      "changeType": "fix",
+      "requirementIds": [
+        "REQ-RTPLAN-*",
+        "REQ-PERF-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "high"
+    },
+    {
+      "hash": "c9c40ed3878980b6c988b16423073072f98f4cba",
+      "shortHash": "c9c40ed",
+      "date": "2026-01-22",
+      "author": "joshgiambi",
+      "subject": "Performance optimizations and fusion sync fixes",
+      "regulatoryDescription": "DEFECT CORRECTION: Performance optimizations and fusion sync fixes [Image Fusion, Performance, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Fusion",
+        "Performance",
+        "Infrastructure"
+      ],
+      "changeType": "fix",
+      "requirementIds": [
+        "REQ-FUSION-*",
+        "REQ-PERF-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "6c67120a906dabce8e785c8a6335a558f3af611c",
+      "shortHash": "6c67120",
+      "date": "2026-01-21",
+      "author": "joshgiambi",
+      "subject": "RT PLAN PREPARATION BUILD - DO NOT USE FOR DEMO",
+      "regulatoryDescription": "CHANGE: RT PLAN PREPARATION BUILD - Pre-release version for demonstration purposes [RT Plan, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Plan",
+        "Infrastructure"
+      ],
+      "changeType": "other",
+      "requirementIds": [
+        "REQ-RTPLAN-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "e4eae1bbf91aa584cb293042c8a23d641d59a5cf",
+      "shortHash": "e4eae1b",
+      "date": "2026-01-21",
+      "author": "joshgiambi",
+      "subject": "FIRST CRACK AT RT PLAN (WIP ONLY) - Removed the Prescription Dose section from DoseControlPanel and replaced it with a new RadiationTherapyPanel for combined dose and plan visualization. - Updated ViewerInterface to handle RT Plan series, including state management for selected plans and beams. - Enhanced WorkingViewer to render beam overlays, improving visualization of treatment plans. - Registered new RT Plan API routes in the server for handling plan data. - Adjusted UI components for better responsiveness and user interaction with RT data.",
+      "regulatoryDescription": "ENHANCEMENT: Initial implementation AT RT PLAN (Work in progress) - Removed the Prescription Dose section from DoseControlPanel and replaced it with a new RadiationTherapyPanel for combined dose and plan visualization. - Updated ViewerInterface to handle RT Plan series, including state management for selected plans and beams. - Enhanced WorkingViewer to render beam overlays, improving visualization of treatment plans. - Registered new RT Plan API routes in the server for handling plan data. - Adjusted UI components for better responsiveness and user interaction with RT data [RT Plan, Image Viewing, User Interface, Data Management, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Plan",
+        "Image Viewing",
+        "User Interface",
+        "Data Management",
+        "Infrastructure"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-RTPLAN-*",
+        "REQ-VIEW-*",
+        "REQ-UI-*",
+        "REQ-DATA-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "274419adbd2177a79671f19c1839a97e0c30a77b",
+      "shortHash": "274419a",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Refactor DVH API and enhance caching mechanisms for improved performance",
+      "regulatoryDescription": "CODE MAINTENANCE: Refactor DVH API and enhance caching mechanisms for improved performance [DVH, Performance, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DVH",
+        "Performance",
+        "Infrastructure"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-DVH-*",
+        "REQ-PERF-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "fce2ad7cac39fa3ff30a59a78b55a0175a44adfd",
+      "shortHash": "fce2ad7",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Update MarginOperationsPrototype to include output color in template management",
+      "regulatoryDescription": "ENHANCEMENT: Update MarginOperationsPrototype to include output color in template management [Boolean Operations]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Boolean Operations"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-BOOL-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "d0c41b805832e80fa2e7dd037c2f18f1344e2853",
+      "shortHash": "d0c41b8",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Implement logging control and template management enhancements in DICOM components",
+      "regulatoryDescription": "NEW FEATURE: Implement logging control and template management enhancements in DICOM components [DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "c33c816305ef6edb8e2ef3fddac650ec8edfff22",
+      "shortHash": "c33c816",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Enhance DICOM components with improved superstructure management and margin operations",
+      "regulatoryDescription": "ENHANCEMENT: Enhance DICOM components with improved superstructure management and margin operations [RT Structure, DICOM Processing, Boolean Operations]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Structure",
+        "DICOM Processing",
+        "Boolean Operations"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-RTSTRUCT-*",
+        "REQ-DICOM-*",
+        "REQ-BOOL-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "61fe7d3aab1965e48d60da752bf688e4a0d08034",
+      "shortHash": "61fe7d3",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Enhance DICOM components and SAM integration for multi-point segmentation",
+      "regulatoryDescription": "ENHANCEMENT: Enhance DICOM components and SAM integration for multi-point segmentation [AI Segmentation, DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "AI Segmentation",
+        "DICOM Processing"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-AI-*",
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "8d2a14088707c7562922245509c5812560791e5c",
+      "shortHash": "8d2a140",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Refactor AI Status Panel and DICOM components for SAM integration",
+      "regulatoryDescription": "CODE MAINTENANCE: Refactor AI Status Panel and DICOM components for SAM integration [AI Segmentation, DICOM Processing, User Interface, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "AI Segmentation",
+        "DICOM Processing",
+        "User Interface",
+        "Infrastructure"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-AI-*",
+        "REQ-DICOM-*",
+        "REQ-UI-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "67cabf63c83cfac45b9782ba96bdee425fea99d6",
+      "shortHash": "67cabf6",
+      "date": "2026-01-20",
+      "author": "joshgiambi",
+      "subject": "Refactor DICOM components and update SAM integration for enhanced functionality",
+      "regulatoryDescription": "CODE MAINTENANCE: Refactor DICOM components and update SAM integration for enhanced functionality [AI Segmentation, DICOM Processing, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "AI Segmentation",
+        "DICOM Processing",
+        "Infrastructure"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-AI-*",
+        "REQ-DICOM-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "cd39b0b3e384cab9ec0fae67d617904fdde7d358",
+      "shortHash": "cd39b0b",
+      "date": "2026-01-19",
+      "author": "joshgiambi",
+      "subject": "Refactor DICOM components for enhanced margin operations and UI improvements",
+      "regulatoryDescription": "CODE MAINTENANCE: Refactor DICOM components for enhanced margin operations and UI improvements [DICOM Processing, Boolean Operations, User Interface, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing",
+        "Boolean Operations",
+        "User Interface",
+        "Infrastructure"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-DICOM-*",
+        "REQ-BOOL-*",
+        "REQ-UI-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "face4670c2a6d301dd7465eeebd6ee30f4c44724",
+      "shortHash": "face467",
+      "date": "2026-01-19",
+      "author": "joshgiambi",
+      "subject": "Update DICOM components and documentation for improved functionality",
+      "regulatoryDescription": "DOCUMENTATION: Update DICOM components and documentation for improved functionality [DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "d122e1c3a1cb3dc32e835545e3e21080abe76b1c",
+      "shortHash": "d122e1c",
+      "date": "2026-01-14",
+      "author": "joshgiambi",
+      "subject": "Enhance DICOM components with responsive design and caching optimizations",
+      "regulatoryDescription": "ENHANCEMENT: Enhance DICOM components with responsive design and caching optimizations [DICOM Processing, Performance]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing",
+        "Performance"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-DICOM-*",
+        "REQ-PERF-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "c11768a79558bded6977bedbd9f3ffa67b002780",
+      "shortHash": "c11768a",
+      "date": "2026-01-14",
+      "author": "joshgiambi",
+      "subject": "Implement FuseBox functionality for advanced fusion editing",
+      "regulatoryDescription": "NEW FEATURE: Implement FuseBox functionality for advanced fusion editing [Image Fusion, Contour Tools]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Fusion",
+        "Contour Tools"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-FUSION-*",
+        "REQ-CONTOUR-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "8de8edb125090de187fdc8c4b2f42820106eb0dc",
+      "shortHash": "8de8edb",
+      "date": "2025-12-19",
+      "author": "joshgiambi",
+      "subject": "Enhance DICOM components with RT Dose functionality",
+      "regulatoryDescription": "ENHANCEMENT: Enhance DICOM components with RT Dose functionality [RT Dose, DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Dose",
+        "DICOM Processing"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-RTDOSE-*",
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "9432ca74975d60d13cd4dd167bb855ced2bd102e",
+      "shortHash": "9432ca7",
+      "date": "2025-12-19",
+      "author": "joshgiambi",
+      "subject": "Synchronize slice index updates in ViewerInterface for improved side-by-side mode functionality",
+      "regulatoryDescription": "ENHANCEMENT: Synchronize slice index updates in ViewerInterface for improved side-by-side mode functionality [Image Viewing, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Viewing",
+        "Infrastructure"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-VIEW-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "b8d065a1444d034d69539ad9b4652be338c92198",
+      "shortHash": "b8d065a",
+      "date": "2025-12-19",
+      "author": "joshgiambi",
+      "subject": "Refactor DICOM components for improved functionality and performance",
+      "regulatoryDescription": "CODE MAINTENANCE: Refactor DICOM components for improved functionality and performance [DICOM Processing, Performance, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing",
+        "Performance",
+        "Infrastructure"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-DICOM-*",
+        "REQ-PERF-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "09d30878024954b2f6e2334d1071a23c8bbc307d",
+      "shortHash": "09d3087",
+      "date": "2025-12-19",
+      "author": "joshgiambi",
+      "subject": "Enhance DICOM components with new features and improvements",
+      "regulatoryDescription": "ENHANCEMENT: Enhance DICOM components with new features and improvements [DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "ab483129963ee1f90b51b6c4b761ac840e1cd8e1",
+      "shortHash": "ab48312",
+      "date": "2025-12-18",
+      "author": "joshgiambi",
+      "subject": "Update gitignore to exclude patient data and storage directories",
+      "regulatoryDescription": "ENHANCEMENT: Update gitignore to exclude patient data and storage directories [Data Management]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Data Management"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-DATA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "0b6e5989d6d5ead3fd98a3cf31a4f5c7e9c1ac0f",
+      "shortHash": "0b6e598",
+      "date": "2025-12-18",
+      "author": "joshgiambi",
+      "subject": "Enhance global cache and viewport sync files with additional spacing for improved readability",
+      "regulatoryDescription": "ENHANCEMENT: Enhance global cache and viewport sync files with additional spacing for improved readability [Image Viewing, Performance, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Viewing",
+        "Performance",
+        "Infrastructure"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-VIEW-*",
+        "REQ-PERF-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "d40adb3f02cb061b6b91076b4b4ec8c59efb8f23",
+      "shortHash": "d40adb3",
+      "date": "2025-12-18",
+      "author": "joshgiambi",
+      "subject": "Add robust DICOM import functionality and metadata writer",
+      "regulatoryDescription": "CHANGE: Add robust DICOM import functionality and metadata writer [DICOM Processing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "DICOM Processing"
+      ],
+      "changeType": "other",
+      "requirementIds": [
+        "REQ-DICOM-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "bbe4a881610378500e0b40079517fc50a9c8eebb",
+      "shortHash": "bbe4a88",
+      "date": "2025-12-17",
+      "author": "joshgiambi",
+      "subject": "Fix coordinate misalignment in smart brush and pen tools",
+      "regulatoryDescription": "DEFECT CORRECTION: Fix coordinate misalignment in smart brush and pen tools [Contour Tools]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Contour Tools"
+      ],
+      "changeType": "fix",
+      "requirementIds": [
+        "REQ-CONTOUR-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "daff8ed9ab1cfc22125b97df2638356710bc61fd",
+      "shortHash": "daff8ed",
+      "date": "2025-12-17",
+      "author": "joshgiambi",
+      "subject": "Style Generate buttons with consistent dark backgrounds for better text visibility",
+      "regulatoryDescription": "CHANGE: Style Generate buttons with consistent dark backgrounds for better text visibility [User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "User Interface"
+      ],
+      "changeType": "other",
+      "requirementIds": [
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "low"
+    },
+    {
+      "hash": "679d498466bc12b0e837221b5ed7d472ec17af62",
+      "shortHash": "679d498",
+      "date": "2025-12-17",
+      "author": "joshgiambi",
+      "subject": "Re-implement contour toolbar improvements: Radix DropdownMenu, Dissect tool, larger sizes, swapped Smooth/Nth, updated Blob labels",
+      "regulatoryDescription": "NEW FEATURE: Re-implement contour toolbar improvements: Radix DropdownMenu, Dissect tool, larger sizes, swapped Smooth/Nth, updated Blob labels [RT Structure, Contour Tools, User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Structure",
+        "Contour Tools",
+        "User Interface"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-RTSTRUCT-*",
+        "REQ-CONTOUR-*",
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "d4f2caeb61fd34443ec9ed612ed38dd095be8e3e",
+      "shortHash": "d4f2cae",
+      "date": "2025-12-15",
+      "author": "joshgiambi",
+      "subject": "Add new SeriesPreview route and update AI Status Panel documentation; enhance DICOM components with Aurora styling. Multiviewport improvements. General clean up.",
+      "regulatoryDescription": "CODE MAINTENANCE: Add new SeriesPreview route and update AI Status Panel documentation; enhance DICOM components with Aurora styling. Multiviewport improvements. General clean up [AI Segmentation, Image Viewing, DICOM Processing, User Interface, Data Management]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "AI Segmentation",
+        "Image Viewing",
+        "DICOM Processing",
+        "User Interface",
+        "Data Management"
+      ],
+      "changeType": "refactor",
+      "requirementIds": [
+        "REQ-AI-*",
+        "REQ-VIEW-*",
+        "REQ-DICOM-*",
+        "REQ-UI-*",
+        "REQ-DATA-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    },
+    {
+      "hash": "ba2122f1f452b70d3b3d98a1403b55d7272c051a",
+      "shortHash": "ba2122f",
+      "date": "2025-12-12",
+      "author": "joshgiambi",
+      "subject": "Major prototype improvements for bottom toolbars and multiviewport functions - Update documentation and configuration files; add OHIF viewer reference to .gitignore",
+      "regulatoryDescription": "DOCUMENTATION: Major prototype improvements for bottom toolbars and multiviewport functions - Update documentation and configuration files; add OHIF viewer reference to .gitignore [Image Viewing, User Interface, Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Image Viewing",
+        "User Interface",
+        "Infrastructure"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-VIEW-*",
+        "REQ-UI-*",
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "3030536836ff1d936d451f90909a2530cf7bc9dd",
+      "shortHash": "3030536",
+      "date": "2025-12-04",
+      "author": "joshgiambi",
+      "subject": "Update environment configuration and scripts for Replit setup; modify Python dependencies and logging settings",
+      "regulatoryDescription": "ENHANCEMENT: Update environment configuration and scripts for Replit setup; modify Python dependencies and logging settings [Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Infrastructure"
+      ],
+      "changeType": "enhancement",
+      "requirementIds": [
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "2b92a2791c34b00001ee600b089f901a0dfcaa39",
+      "shortHash": "2b92a27",
+      "date": "2025-12-04",
+      "author": "joshgiambi",
+      "subject": "Integrate B2 test data sync into dev workflow",
+      "regulatoryDescription": "CHANGE: Integrate B2 test data sync into dev workflow [Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Infrastructure"
+      ],
+      "changeType": "other",
+      "requirementIds": [
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "0b3460549954b1a0f97eddfae559dd931693c993",
+      "shortHash": "0b34605",
+      "date": "2025-12-04",
+      "author": "joshgiambi",
+      "subject": "Add Backblaze B2 test data sync script and documentation",
+      "regulatoryDescription": "DOCUMENTATION: Add Backblaze B2 test data sync script and documentation [Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Infrastructure"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "f37115a11adef3c7c5ebff02f7c06fe834fb5140",
+      "shortHash": "f37115a",
+      "date": "2025-12-04",
+      "author": "joshgiambi",
+      "subject": "Initial commit - SUPERBEAM medical imaging viewer",
+      "regulatoryDescription": "NEW FEATURE: Initial commit - SUPERBEAM medical imaging viewer [RT Plan, Image Viewing]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "RT Plan",
+        "Image Viewing"
+      ],
+      "changeType": "feature",
+      "requirementIds": [
+        "REQ-RTPLAN-*",
+        "REQ-VIEW-*"
+      ],
+      "verificationStatus": "pending",
+      "riskImpact": "medium"
+    }
+  ],
+  "byCategory": {
+    "Image Fusion": 4,
+    "DVH": 2,
+    "User Interface": 8,
+    "RT Plan": 4,
+    "Performance": 6,
+    "Infrastructure": 15,
+    "Image Viewing": 6,
+    "Data Management": 3,
+    "Boolean Operations": 3,
+    "DICOM Processing": 13,
+    "RT Structure": 2,
+    "AI Segmentation": 4,
+    "Contour Tools": 3,
+    "RT Dose": 1
+  },
+  "byChangeType": {
+    "feature": 7,
+    "fix": 3,
+    "other": 4,
+    "enhancement": 11,
+    "refactor": 6,
+    "docs": 3
+  }
+}

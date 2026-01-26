@@ -18,6 +18,58 @@ import { logger } from './logger';
 const router = Router();
 
 // ============================================================================
+// DRR Cache - LRU cache for generated DRR images
+// ============================================================================
+
+interface DRRCacheEntry {
+  data: { width: number; height: number; data: number[] };
+  timestamp: number;
+}
+
+const DRR_CACHE = new Map<string, DRRCacheEntry>();
+const DRR_CACHE_MAX_SIZE = 50; // Store up to 50 DRR images
+const DRR_CACHE_TTL = 10 * 60 * 1000; // 10 minutes TTL
+
+function getDRRCacheKey(
+  ctSeriesId: number,
+  gantryAngle: number,
+  collimatorAngle: number,
+  width: number,
+  height: number
+): string {
+  // Round angles to 0.1 degree precision to allow some caching benefit
+  const roundedGantry = Math.round(gantryAngle * 10) / 10;
+  const roundedCollimator = Math.round(collimatorAngle * 10) / 10;
+  return `drr_${ctSeriesId}_g${roundedGantry}_c${roundedCollimator}_${width}x${height}`;
+}
+
+function getDRRFromCache(key: string): DRRCacheEntry['data'] | null {
+  const entry = DRR_CACHE.get(key);
+  if (!entry) return null;
+  
+  // Check TTL
+  if (Date.now() - entry.timestamp > DRR_CACHE_TTL) {
+    DRR_CACHE.delete(key);
+    return null;
+  }
+  
+  return entry.data;
+}
+
+function setDRRInCache(key: string, data: DRRCacheEntry['data']): void {
+  // Evict oldest entries if cache is full
+  if (DRR_CACHE.size >= DRR_CACHE_MAX_SIZE) {
+    const oldest = Array.from(DRR_CACHE.entries())
+      .sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+    if (oldest) {
+      DRR_CACHE.delete(oldest[0]);
+    }
+  }
+  
+  DRR_CACHE.set(key, { data, timestamp: Date.now() });
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -205,6 +257,13 @@ export interface BEVProjection {
     shape?: 'CIRCULAR' | 'RECTANGULAR' | 'CUSTOM';
     dimension?: { x: number; y: number } | number;
   };
+  
+  // Arc beam properties (VMAT/Arc)
+  isArc?: boolean;
+  finalGantryAngle?: number;
+  gantryRotationDirection?: 'CW' | 'CC' | 'NONE';
+  arcSweepAngle?: number;
+  avoidanceSectors?: Array<{ startAngle: number; endAngle: number }>;
 }
 
 // ============================================================================
@@ -934,6 +993,36 @@ function calculateBEVProjection(beam: RTBeam, controlPointIndex: number = 0): BE
     dimension: beam.applicator.apertureDimension,
   } : undefined;
   
+  // Determine if this is an arc beam (VMAT/Arc)
+  // Arc beams have multiple control points with different gantry angles
+  const firstCP = beam.controlPoints[0];
+  const lastCP = beam.controlPoints[beam.controlPoints.length - 1];
+  const gantryRotationDirection = firstCP?.gantryRotationDirection || 'NONE';
+  
+  // Check if this is an arc based on:
+  // 1. Gantry rotation direction is not NONE
+  // 2. First and last control points have different gantry angles
+  // 3. Beam type is DYNAMIC (common for VMAT)
+  const initialGantryAngle = firstCP?.gantryAngle ?? 0;
+  const finalGantryAngle = lastCP?.gantryAngle ?? initialGantryAngle;
+  const gantryAngleDiff = Math.abs(finalGantryAngle - initialGantryAngle);
+  const isArc = (gantryRotationDirection !== 'NONE' && gantryAngleDiff > 1) ||
+                (beam.beamType === 'DYNAMIC' && beam.numberOfControlPoints > 2 && gantryAngleDiff > 1);
+  
+  // Calculate arc sweep angle
+  let arcSweepAngle = 0;
+  if (isArc) {
+    if (gantryRotationDirection === 'CW') {
+      // Clockwise: gantry increases
+      arcSweepAngle = finalGantryAngle - initialGantryAngle;
+      if (arcSweepAngle < 0) arcSweepAngle += 360;
+    } else if (gantryRotationDirection === 'CC') {
+      // Counter-clockwise: gantry decreases
+      arcSweepAngle = finalGantryAngle - initialGantryAngle;
+      if (arcSweepAngle > 0) arcSweepAngle -= 360;
+    }
+  }
+  
   return {
     beamNumber: beam.beamNumber,
     beamName: beam.beamName,
@@ -950,6 +1039,11 @@ function calculateBEVProjection(beam: RTBeam, controlPointIndex: number = 0): BE
     wedges: wedgeVis,
     blocks: blockVis,
     applicator: applicatorVis,
+    // Arc beam properties
+    isArc,
+    finalGantryAngle: isArc ? finalGantryAngle : undefined,
+    gantryRotationDirection: isArc ? gantryRotationDirection : undefined,
+    arcSweepAngle: isArc ? arcSweepAngle : undefined,
   };
 }
 
@@ -1223,7 +1317,10 @@ function projectPointToBEV(
 }
 
 /**
- * Project structure contours to BEV
+ * Project structure contours to BEV with optional silhouette mode
+ * 
+ * When silhouette mode is enabled, all projected contours are unioned together
+ * to create a single clean outline (like viewing the structure from beam's perspective)
  */
 function projectStructuresToBEV(
   structures: Array<{
@@ -1240,7 +1337,8 @@ function projectStructuresToBEV(
   isocenter: [number, number, number],
   gantryAngleRad: number,
   collimatorAngleRad: number,
-  sad: number
+  sad: number,
+  useSilhouette: boolean = true // Default to silhouette mode for cleaner BEV
 ): ProjectedStructure[] {
   const projected: ProjectedStructure[] = [];
   
@@ -1255,7 +1353,7 @@ function projectStructuresToBEV(
         const y = contour.points[i * 3 + 1];
         const z = contour.points[i * 3 + 2];
         
-        const projected = projectPointToBEV(
+        const projectedPt = projectPointToBEV(
           [x, y, z],
           sourcePosition,
           isocenter,
@@ -1264,8 +1362,8 @@ function projectStructuresToBEV(
           sad
         );
         
-        if (projected) {
-          projectedPoints.push(projected);
+        if (projectedPt) {
+          projectedPoints.push(projectedPt);
         }
       }
       
@@ -1276,11 +1374,46 @@ function projectStructuresToBEV(
     }
     
     if (projectedContours.length > 0) {
+      let finalContours = projectedContours;
+      
+      // Compute silhouette: union all projected contours into single outline
+      if (useSilhouette && projectedContours.length > 1) {
+        try {
+          // Convert to polygon-clipping format: [[[x,y], [x,y], ...]]
+          const polygons = projectedContours.map(contour => 
+            [contour.map(pt => [pt.x, pt.y] as [number, number])]
+          );
+          
+          // Start with first polygon and union with all others
+          let result: polygonClipping.MultiPolygon = polygons[0] as polygonClipping.MultiPolygon;
+          
+          for (let i = 1; i < polygons.length; i++) {
+            try {
+              result = polygonClipping.union(result, polygons[i] as polygonClipping.MultiPolygon);
+            } catch (e) {
+              // Skip invalid polygons
+            }
+          }
+          
+          // Convert back to our format
+          if (result && result.length > 0) {
+            finalContours = result.flatMap(polygon => 
+              polygon.map(ring => 
+                ring.map(pt => ({ x: pt[0], y: pt[1] }))
+              )
+            );
+          }
+        } catch (e) {
+          // If union fails, fall back to original contours
+          logger.debug('Silhouette union failed, using individual contours:', e);
+        }
+      }
+      
       projected.push({
         roiNumber: structure.roiNumber,
         structureName: structure.structureName,
         color: structure.color,
-        projectedContours,
+        projectedContours: finalContours,
       });
     }
   }
@@ -1288,9 +1421,116 @@ function projectStructuresToBEV(
   return projected;
 }
 
+// CT Volume cache to avoid reloading for multiple DRR generations
+interface CTVolumeCache {
+  ctSeriesId: number;
+  volumeData: Int16Array[];
+  slicePositions: number[];
+  imgPos: [number, number, number];
+  pixelSpacing: [number, number];
+  rows: number;
+  columns: number;
+  timestamp: number;
+}
+
+let ctVolumeCache: CTVolumeCache | null = null;
+const CT_VOLUME_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function loadCTVolume(ctSeriesId: number): Promise<CTVolumeCache | null> {
+  // Check cache
+  if (ctVolumeCache && 
+      ctVolumeCache.ctSeriesId === ctSeriesId && 
+      Date.now() - ctVolumeCache.timestamp < CT_VOLUME_CACHE_TTL) {
+    return ctVolumeCache;
+  }
+  
+  const ctImages = await storage.getImagesBySeriesId(ctSeriesId);
+  if (ctImages.length === 0) {
+    logger.warn('No CT images found for DRR generation');
+    return null;
+  }
+  
+  // Sort by slice position
+  const sortedImages = [...ctImages].sort((a, b) => {
+    const posA = parseImagePosition(a.imagePosition);
+    const posB = parseImagePosition(b.imagePosition);
+    return (posA?.[2] || 0) - (posB?.[2] || 0);
+  });
+  
+  const firstImg = sortedImages[0];
+  const imgPos = parseImagePosition(firstImg.imagePosition) || [0, 0, 0];
+  const pixelSpacing = parsePixelSpacing(firstImg.pixelSpacing) || [1, 1];
+  const rows = firstImg.rows || 512;
+  const columns = firstImg.columns || 512;
+  
+  // Calculate slice spacing
+  let sliceSpacing = 1;
+  if (sortedImages.length > 1) {
+    const pos1 = parseImagePosition(sortedImages[0].imagePosition);
+    const pos2 = parseImagePosition(sortedImages[1].imagePosition);
+    if (pos1 && pos2) {
+      sliceSpacing = Math.abs(pos2[2] - pos1[2]) || 1;
+    }
+  }
+  
+  // Load volume data - use every slice for better quality
+  const volumeData: Int16Array[] = [];
+  const slicePositions: number[] = [];
+  
+  // Sample adaptively - more slices for thin-slice CTs, fewer for thick
+  const sampleStep = sliceSpacing < 2 ? Math.ceil(2 / sliceSpacing) : 1;
+  
+  logger.info(`Loading CT volume: ${sortedImages.length} slices, spacing ${sliceSpacing}mm, sampling every ${sampleStep}`);
+  
+  for (let i = 0; i < sortedImages.length; i += sampleStep) {
+    const img = sortedImages[i];
+    if (!img.filePath || !fs.existsSync(img.filePath)) continue;
+    
+    try {
+      const buffer = fs.readFileSync(img.filePath);
+      const dataSet = dicomParser.parseDicom(buffer);
+      const pixelDataElement = dataSet.elements.x7fe00010;
+      
+      if (pixelDataElement) {
+        const pixelData = new Int16Array(
+          buffer.buffer,
+          buffer.byteOffset + pixelDataElement.dataOffset,
+          pixelDataElement.length / 2
+        );
+        volumeData.push(pixelData);
+        
+        const pos = parseImagePosition(img.imagePosition);
+        slicePositions.push(pos?.[2] || i * sliceSpacing);
+      }
+    } catch (e) {
+      // Skip failed slices
+    }
+  }
+  
+  if (volumeData.length < 2) {
+    logger.warn('Not enough CT slices loaded for DRR');
+    return null;
+  }
+  
+  logger.info(`CT volume loaded: ${volumeData.length} slices`);
+  
+  ctVolumeCache = {
+    ctSeriesId,
+    volumeData,
+    slicePositions,
+    imgPos: imgPos as [number, number, number],
+    pixelSpacing: pixelSpacing as [number, number],
+    rows,
+    columns,
+    timestamp: Date.now()
+  };
+  
+  return ctVolumeCache;
+}
+
 /**
  * Generate DRR (Digitally Reconstructed Radiograph) by ray-casting through CT volume
- * Returns base64-encoded grayscale PNG
+ * Uses caching for both CT volume and generated DRR images
  */
 async function generateDRR(
   ctSeriesId: number,
@@ -1301,85 +1541,31 @@ async function generateDRR(
   sad: number,
   options: DRROptions
 ): Promise<{ width: number; height: number; data: number[] } | null> {
+  const { width, height, fieldOfView, stepSize } = options;
+  
+  // Check DRR cache first
+  const cacheKey = getDRRCacheKey(
+    ctSeriesId, 
+    gantryAngleRad * 180 / Math.PI, 
+    collimatorAngleRad * 180 / Math.PI,
+    width,
+    height
+  );
+  
+  const cached = getDRRFromCache(cacheKey);
+  if (cached) {
+    logger.info(`DRR cache hit for ${cacheKey}`);
+    return cached;
+  }
+  
   try {
-    // Get CT images
-    const ctImages = await storage.getImagesBySeriesId(ctSeriesId);
-    if (ctImages.length === 0) {
-      logger.warn('No CT images found for DRR generation');
+    // Load CT volume (cached)
+    const volume = await loadCTVolume(ctSeriesId);
+    if (!volume) {
       return null;
     }
     
-    // Sort by slice position
-    const sortedImages = [...ctImages].sort((a, b) => {
-      const posA = parseImagePosition(a.imagePosition);
-      const posB = parseImagePosition(b.imagePosition);
-      return (posA?.[2] || 0) - (posB?.[2] || 0);
-    });
-    
-    // Get volume geometry from first image
-    const firstImg = sortedImages[0];
-    const imgPos = parseImagePosition(firstImg.imagePosition) || [0, 0, 0];
-    const imgOrient = parseImageOrientation(firstImg.imageOrientation) || [1, 0, 0, 0, 1, 0];
-    const pixelSpacing = parsePixelSpacing(firstImg.pixelSpacing) || [1, 1];
-    const rows = firstImg.rows || 512;
-    const columns = firstImg.columns || 512;
-    
-    // Calculate slice spacing
-    let sliceSpacing = 1;
-    if (sortedImages.length > 1) {
-      const pos1 = parseImagePosition(sortedImages[0].imagePosition);
-      const pos2 = parseImagePosition(sortedImages[1].imagePosition);
-      if (pos1 && pos2) {
-        sliceSpacing = Math.abs(pos2[2] - pos1[2]) || 1;
-      }
-    }
-    
-    // Build 3D volume (load pixel data for each slice)
-    // For performance, we'll use a simplified approach: sample every Nth slice
-    const volumeData: Int16Array[] = [];
-    const slicePositions: number[] = [];
-    
-    const sampleStep = Math.max(1, Math.floor(sortedImages.length / 100)); // Max ~100 slices for performance
-    
-    for (let i = 0; i < sortedImages.length; i += sampleStep) {
-      const img = sortedImages[i];
-      if (!img.filePath || !fs.existsSync(img.filePath)) continue;
-      
-      try {
-        const buffer = fs.readFileSync(img.filePath);
-        const dataSet = dicomParser.parseDicom(buffer);
-        const pixelDataElement = dataSet.elements.x7fe00010;
-        
-        if (pixelDataElement) {
-          const pixelData = new Int16Array(
-            buffer.buffer,
-            buffer.byteOffset + pixelDataElement.dataOffset,
-            pixelDataElement.length / 2
-          );
-          volumeData.push(pixelData);
-          
-          const pos = parseImagePosition(img.imagePosition);
-          slicePositions.push(pos?.[2] || i * sliceSpacing);
-        }
-      } catch (e) {
-        // Skip failed slices
-      }
-    }
-    
-    if (volumeData.length < 2) {
-      logger.warn('Not enough CT slices loaded for DRR');
-      return null;
-    }
-    
-    // DRR generation parameters
-    const { width, height, fieldOfView, stepSize } = options;
-    const drrData: number[] = new Array(width * height).fill(0);
-    
-    // Ray-casting through volume
-    const cosG = Math.cos(gantryAngleRad);
-    const sinG = Math.sin(gantryAngleRad);
-    const cosC = Math.cos(collimatorAngleRad);
-    const sinC = Math.sin(collimatorAngleRad);
+    const { volumeData, slicePositions, imgPos, pixelSpacing, rows, columns } = volume;
     
     // Volume bounds
     const volMinZ = slicePositions[0];
@@ -1389,6 +1575,28 @@ async function generateDRR(
     const volMinY = imgPos[1];
     const volMaxY = imgPos[1] + rows * pixelSpacing[1];
     
+    // Effective slice spacing
+    const effSliceSpacing = slicePositions.length > 1 
+      ? (volMaxZ - volMinZ) / (slicePositions.length - 1) 
+      : 1;
+    
+    // Pre-compute rotation matrices for efficiency
+    const cosG = Math.cos(gantryAngleRad);
+    const sinG = Math.sin(gantryAngleRad);
+    const cosC = Math.cos(collimatorAngleRad);
+    const sinC = Math.sin(collimatorAngleRad);
+    
+    // DRR output buffer
+    const drrData: number[] = new Array(width * height).fill(0);
+    
+    // Use adaptive step size based on slice spacing
+    const adaptiveStep = Math.max(stepSize, effSliceSpacing * 0.5);
+    const maxSteps = Math.ceil(600 / adaptiveStep); // Max 600mm depth
+    
+    logger.info(`Generating DRR: ${width}x${height}, FOV ${fieldOfView}mm, step ${adaptiveStep}mm`);
+    const startTime = Date.now();
+    
+    // Ray-cast each pixel
     for (let py = 0; py < height; py++) {
       for (let px = 0; px < width; px++) {
         // BEV pixel to world coordinate at isocenter plane
@@ -1399,72 +1607,85 @@ async function generateDRR(
         const rotX = bevX * cosC + bevY * sinC;
         const rotY = -bevX * sinC + bevY * cosC;
         
-        // Convert to world coordinates at isocenter plane
-        // This is the target point on the isocenter plane
+        // Target point on isocenter plane (apply gantry rotation)
         const targetX = isocenter[0] + rotX * cosG;
         const targetY = isocenter[1] - rotX * sinG;
         const targetZ = isocenter[2] + rotY;
         
-        // Ray from source toward target
+        // Ray direction from source toward target
         const rayDirX = targetX - sourcePosition[0];
         const rayDirY = targetY - sourcePosition[1];
         const rayDirZ = targetZ - sourcePosition[2];
         const rayLen = Math.sqrt(rayDirX**2 + rayDirY**2 + rayDirZ**2);
-        const rayDirNorm = [rayDirX/rayLen, rayDirY/rayLen, rayDirZ/rayLen];
+        const invRayLen = 1 / rayLen;
+        const rayNormX = rayDirX * invRayLen;
+        const rayNormY = rayDirY * invRayLen;
+        const rayNormZ = rayDirZ * invRayLen;
         
         // Ray march through volume
         let accumulator = 0;
-        const maxSteps = Math.ceil(500 / stepSize); // Max 500mm depth
         
         for (let step = 0; step < maxSteps; step++) {
-          const t = step * stepSize;
-          const sampleX = sourcePosition[0] + rayDirNorm[0] * t;
-          const sampleY = sourcePosition[1] + rayDirNorm[1] * t;
-          const sampleZ = sourcePosition[2] + rayDirNorm[2] * t;
+          const t = step * adaptiveStep;
+          const sampleX = sourcePosition[0] + rayNormX * t;
+          const sampleY = sourcePosition[1] + rayNormY * t;
+          const sampleZ = sourcePosition[2] + rayNormZ * t;
           
-          // Check if sample is within volume bounds
+          // Bounds check
           if (sampleX < volMinX || sampleX > volMaxX ||
               sampleY < volMinY || sampleY > volMaxY ||
               sampleZ < volMinZ || sampleZ > volMaxZ) {
             continue;
           }
           
-          // Find slice index
+          // Find slice index using binary search for better performance
           let sliceIdx = 0;
-          for (let s = 0; s < slicePositions.length - 1; s++) {
-            if (sampleZ >= slicePositions[s] && sampleZ < slicePositions[s + 1]) {
-              sliceIdx = s;
-              break;
+          let lo = 0, hi = slicePositions.length - 1;
+          while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (slicePositions[mid] < sampleZ) {
+              lo = mid + 1;
+            } else {
+              hi = mid;
             }
           }
+          sliceIdx = Math.max(0, lo - 1);
           
-          // Sample from nearest slice (simple nearest-neighbor)
           const sliceData = volumeData[sliceIdx];
           if (!sliceData) continue;
           
-          // Convert world to pixel coordinates in slice
+          // Convert world to pixel coordinates
           const pixX = Math.floor((sampleX - imgPos[0]) / pixelSpacing[0]);
           const pixY = Math.floor((sampleY - imgPos[1]) / pixelSpacing[1]);
           
           if (pixX >= 0 && pixX < columns && pixY >= 0 && pixY < rows) {
             const hu = sliceData[pixY * columns + pixX];
-            // Accumulate (HU + 1000) to make air = 0, water = 1000
-            accumulator += Math.max(0, hu + 1000) * stepSize * 0.001; // Scale factor
+            // Accumulate (HU + 1000) - air=0, water=1000, bone=2000+
+            accumulator += Math.max(0, hu + 1000) * adaptiveStep * 0.001;
           }
         }
         
-        // Apply exponential attenuation (Beer-Lambert law approximation)
-        const intensity = Math.exp(-accumulator * 0.005) * 255;
+        // Apply exponential attenuation (Beer-Lambert approximation)
+        // Invert so bone appears bright (like real X-ray)
+        const intensity = Math.exp(-accumulator * 0.003) * 255;
         drrData[py * width + px] = Math.max(0, Math.min(255, 255 - intensity));
       }
     }
     
-    return { width, height, data: drrData };
+    const elapsed = Date.now() - startTime;
+    logger.info(`DRR generated in ${elapsed}ms`);
+    
+    // Cache the result
+    const result = { width, height, data: drrData };
+    setDRRInCache(cacheKey, result);
+    
+    return result;
   } catch (error) {
     logger.error('DRR generation error:', error);
     return null;
   }
 }
+
 
 function parseImagePosition(pos: any): [number, number, number] | null {
   if (!pos) return null;
@@ -1543,8 +1764,11 @@ router.get('/:seriesId/bev/:beamNumber/enhanced', async (req: Request, res: Resp
     
     const response: any = { ...bev };
     
+    logger.info(`Enhanced BEV request: includeDRR=${includeDRR}, ctSeriesId=${ctSeriesId}, includeStructures=${includeStructures}, structureSetId=${structureSetId}`);
+    
     // Generate DRR if requested and CT series is available
     if (includeDRR && ctSeriesId) {
+      logger.info(`Generating DRR for CT series ${ctSeriesId}, gantry ${cp.gantryAngle}°`);
       const drr = await generateDRR(
         ctSeriesId,
         sourcePosition,
@@ -1556,15 +1780,27 @@ router.get('/:seriesId/bev/:beamNumber/enhanced', async (req: Request, res: Resp
       );
       if (drr) {
         response.drr = drr;
+        logger.info(`DRR generated: ${drr.width}x${drr.height}`);
+      } else {
+        logger.warn('DRR generation returned null');
       }
+    } else {
+      logger.info(`Skipping DRR: includeDRR=${includeDRR}, ctSeriesId=${ctSeriesId}`);
     }
     
     // Project structures if requested
+    // NOTE: structureSetId from client is actually the SERIES ID (loadedRTSeriesId)
+    // so we must use getRTStructureSetBySeriesId, not getRTStructureSet
     if (includeStructures && structureSetId) {
+      logger.info(`[BEV Structures] Looking up RT structure set by series ID: ${structureSetId}`);
       try {
-        const rtStructureSet = await storage.getRTStructureSet(structureSetId);
+        // Use getRTStructureSetBySeriesId since client passes series ID, not database ID
+        const rtStructureSet = await storage.getRTStructureSetBySeriesId(structureSetId);
+        logger.info(`[BEV Structures] Found RT structure set: ${rtStructureSet ? `id=${rtStructureSet.id}` : 'null'}`);
+        
         if (rtStructureSet) {
-          const structures = await storage.getRTStructuresBySetId(structureSetId);
+          const structures = await storage.getRTStructuresBySetId(rtStructureSet.id);
+          logger.info(`[BEV Structures] Found ${structures.length} structures`);
           
           // Load contours for each structure
           const structuresWithContours = await Promise.all(
@@ -1583,6 +1819,8 @@ router.get('/:seriesId/bev/:beamNumber/enhanced', async (req: Request, res: Resp
             })
           );
           
+          logger.info(`[BEV Structures] Loaded contours for ${structuresWithContours.length} structures, projecting to BEV...`);
+          
           const projected = projectStructuresToBEV(
             structuresWithContours,
             sourcePosition,
@@ -1592,11 +1830,16 @@ router.get('/:seriesId/bev/:beamNumber/enhanced', async (req: Request, res: Resp
             sad
           );
           
+          logger.info(`[BEV Structures] Projected ${projected.length} structures to BEV`);
           response.projectedStructures = projected;
+        } else {
+          logger.warn(`[BEV Structures] No RT structure set found for series ID: ${structureSetId}`);
         }
       } catch (e) {
-        logger.warn('Failed to project structures:', e);
+        logger.warn('[BEV Structures] Failed to project structures:', e);
       }
+    } else {
+      logger.info(`[BEV Structures] Skipping: includeStructures=${includeStructures}, structureSetId=${structureSetId}`);
     }
     
     res.json(response);
@@ -1644,6 +1887,79 @@ router.get('/:seriesId/bev/:beamNumber/all', async (req: Request, res: Response,
       beamName: beam.beamName,
       totalControlPoints: beam.controlPoints.length,
       bevProjections,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/rt-plan/:seriesId/drr/:beamNumber
+ * Dedicated DRR endpoint for efficient pre-loading
+ * Generates DRR image for a specific beam at a control point
+ */
+router.get('/:seriesId/drr/:beamNumber', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const seriesId = parseInt(req.params.seriesId, 10);
+    const beamNumber = parseInt(req.params.beamNumber, 10);
+    const controlPointIndex = parseInt(req.query.controlPoint as string || '0', 10);
+    const ctSeriesId = parseInt(req.query.ctSeriesId as string || '0', 10);
+    const width = parseInt(req.query.width as string || '256', 10);
+    const height = parseInt(req.query.height as string || '256', 10);
+    const fov = parseInt(req.query.fov as string || '200', 10);
+    
+    if (isNaN(seriesId) || isNaN(beamNumber) || isNaN(ctSeriesId) || ctSeriesId === 0) {
+      return res.status(400).json({ error: 'Invalid parameters. ctSeriesId is required.' });
+    }
+
+    const result = await loadPlanDicom(seriesId);
+    if (!result) {
+      return res.status(404).json({ error: 'RT Plan series not found' });
+    }
+
+    const beams = extractBeams(result.dataSet);
+    const beam = beams.find(b => b.beamNumber === beamNumber);
+    
+    if (!beam) {
+      return res.status(404).json({ error: 'Beam not found' });
+    }
+
+    // Get control point data
+    const cp = beam.controlPoints[controlPointIndex] || beam.controlPoints[0];
+    const gantryAngleRad = (cp.gantryAngle * Math.PI) / 180;
+    const collimatorAngleRad = ((cp.beamLimitingDeviceAngle || 0) * Math.PI) / 180;
+    const sad = beam.sourceAxisDistance;
+    const iso = cp.isocenterPosition;
+    
+    // Calculate source position
+    const sourceX = iso[0] + sad * Math.sin(gantryAngleRad);
+    const sourceY = iso[1] - sad * Math.cos(gantryAngleRad);
+    const sourceZ = iso[2];
+    const sourcePosition: [number, number, number] = [sourceX, sourceY, sourceZ];
+    
+    // Generate DRR with caching
+    const drr = await generateDRR(
+      ctSeriesId,
+      sourcePosition,
+      iso,
+      gantryAngleRad,
+      collimatorAngleRad,
+      sad,
+      { width, height, fieldOfView: fov, stepSize: 3 }
+    );
+    
+    if (!drr) {
+      return res.status(500).json({ error: 'Failed to generate DRR' });
+    }
+    
+    // Return DRR data with beam info
+    res.json({
+      beamNumber,
+      beamName: beam.beamName,
+      controlPointIndex,
+      gantryAngle: cp.gantryAngle,
+      collimatorAngle: cp.beamLimitingDeviceAngle || 0,
+      drr
     });
   } catch (error) {
     next(error);

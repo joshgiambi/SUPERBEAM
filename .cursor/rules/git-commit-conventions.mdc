@@ -1,0 +1,38 @@
+---
+description: Git Commit Conventions for Regulatory
+alwaysApply: false
+---
+## Git Commit Conventions
+
+When creating git commits, ALWAYS use conventional commit format for regulatory traceability:
+
+Format: <type>(<scope>): <description>
+
+Types:
+- feat: New feature or capability
+- fix: Bug fix or defect correction
+- refactor: Code restructuring without behavior change
+- docs: Documentation only
+- perf: Performance improvement
+- test: Adding or updating tests
+
+Scopes (use the most relevant):
+- rt-structure: RT Structure Sets, contours, ROIs
+- rt-dose: RT Dose display and calculations
+- rt-plan: RT Plan, beams, MLC
+- dvh: Dose-Volume Histogram
+- fusion: Image fusion and registration
+- viewer: Viewport, display, rendering
+- contour: Drawing tools, pen, brush
+- ai: SAM, SegVol, predictions
+- import: DICOM import/upload
+- ui: User interface, panels, dialogs
+
+Examples:
+- fix(rt-structure): Handle database-only structure sets in auto-save
+- feat(dvh): Add constraint evaluation panel
+- refactor(viewer): Simplify viewport state management
+
+For medium/high risk changes (rt-dose, rt-plan, ai, rt-structure), include a brief description of what was fixed and why in the commit body.
+
+After significant feature completions or bug fixes, mention that regulatory docs will auto-update on commit.

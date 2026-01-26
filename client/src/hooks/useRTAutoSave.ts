@@ -96,6 +96,72 @@ export function useRTAutoSave({
     }
   }, [seriesId, structures, onSaveSuccess, onSaveError]);
 
+  // Save snapshot with custom description (creates a labeled history entry)
+  const saveSnapshot = useCallback(async (description?: string) => {
+    if (!seriesId || !structures || isSavingRef.current) {
+      return false;
+    }
+
+    try {
+      isSavingRef.current = true;
+      setSaveStatus(prev => ({ ...prev, status: 'saving', error: null }));
+
+      const snapshotDescription = description || `Snapshot at ${new Date().toLocaleTimeString()}`;
+      console.log(`📸 Saving snapshot: "${snapshotDescription}" for series ${seriesId}...`);
+
+      const response = await fetch(`/api/rt-structures/${seriesId}/save`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          structures,
+          action: 'snapshot',
+          actionDetails: {
+            timestamp: new Date().toISOString(),
+            description: snapshotDescription,
+            structureCount: structures.length,
+            structureNames: structures.map((s: any) => s.structureName).filter(Boolean)
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save snapshot');
+      }
+
+      const now = new Date();
+      setSaveStatus({
+        status: 'saved',
+        lastSaved: now,
+        error: null
+      });
+
+      // Store the saved state
+      previousStructuresRef.current = JSON.stringify(structures);
+
+      console.log(`✅ Snapshot saved successfully: "${snapshotDescription}"`);
+      
+      onSaveSuccess?.();
+      return true;
+    } catch (error) {
+      console.error('Error saving snapshot:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      setSaveStatus({
+        status: 'error',
+        lastSaved: null,
+        error: errorMessage
+      });
+      
+      onSaveError?.(error instanceof Error ? error : new Error(errorMessage));
+      return false;
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [seriesId, structures, onSaveSuccess, onSaveError]);
+
   // Auto-save effect with debouncing
   useEffect(() => {
     if (!enabled || !seriesId || !structures) {
@@ -195,6 +261,7 @@ export function useRTAutoSave({
     lastSaved: saveStatus.lastSaved,
     error: saveStatus.error,
     saveNow,
+    saveSnapshot,
     isSaving: isSavingRef.current
   };
 }

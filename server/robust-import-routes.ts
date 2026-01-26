@@ -80,11 +80,33 @@ const importSessions = new Map<string, ImportSession>();
 const UPLOAD_BASE_PATH = 'uploads/import-sessions';
 const MAX_FILES_PER_SESSION = 50000; // 50k files max
 const MAX_SESSION_SIZE_BYTES = 5 * 1024 * 1024 * 1024; // 5GB max per session
+const IMPORT_SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours TTL for import sessions
+const IMPORT_SESSION_MAX_COUNT = 20; // Max concurrent import sessions
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_BASE_PATH)) {
   fs.mkdirSync(UPLOAD_BASE_PATH, { recursive: true });
 }
+
+// Periodic cleanup of stale import sessions
+setInterval(() => {
+  const now = Date.now();
+  for (const [sessionId, session] of importSessions.entries()) {
+    // Clean up sessions older than TTL
+    if (now - session.createdAt.getTime() > IMPORT_SESSION_TTL_MS) {
+      importSessions.delete(sessionId);
+      // Also try to clean up the session directory
+      const sessionDir = path.join(UPLOAD_BASE_PATH, sessionId);
+      if (fs.existsSync(sessionDir)) {
+        try {
+          fs.rmSync(sessionDir, { recursive: true, force: true });
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+    }
+  }
+}, 10 * 60 * 1000); // Run every 10 minutes
 
 // Generate session ID
 function generateSessionId(): string {

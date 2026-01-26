@@ -13,6 +13,7 @@ import SeriesPreview from "@/pages/series-preview";
 import FuseBox from "@/pages/fusebox";
 import DVHViewerPage from "@/pages/dvh-viewer-page";
 import BEDCalculatorPage from "@/pages/bed-calculator-page";
+import RegulatoryDashboard from "@/pages/regulatory-dashboard";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/fusebox" component={FuseBox} />
       <Route path="/dvh-viewer" component={DVHViewerPage} />
       <Route path="/bed-calculator" component={BEDCalculatorPage} />
+      <Route path="/regulatory" component={RegulatoryDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

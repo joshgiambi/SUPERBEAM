@@ -1,0 +1,3146 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-01-26T21:40:24.145Z",
+  "totalRequirements": 204,
+  "byCategory": {
+    "General": 103,
+    "Image Viewing": 16,
+    "Boolean Operations": 3,
+    "Structure Management": 4,
+    "Margin Operations": 4,
+    "Contour Tools": 21,
+    "DICOM Handling": 10,
+    "Dose-Volume Histogram": 3,
+    "Image Fusion": 13,
+    "Measurements": 1,
+    "Multi-Planar Reconstruction": 1,
+    "Patient Management": 2,
+    "AI Segmentation": 10,
+    "Data Import": 3,
+    "RT Dose Display": 3,
+    "RT Plan Display": 3,
+    "RT Structure Display": 2,
+    "Series Management": 2
+  },
+  "byRisk": {
+    "low": 137,
+    "medium": 51,
+    "high": 16
+  },
+  "requirements": [
+    {
+      "id": "REQ-AI-001",
+      "title": "Prediction Overlay",
+      "description": "Prediction Overlay Component",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/components/dicom/prediction-overlay.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-22",
+      "lastModified": "2025-12-22"
+    },
+    {
+      "id": "REQ-AI-002",
+      "title": "Block Matching Prediction",
+      "description": "Block Matching (Optical Flow) Prediction Engine",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/block-matching-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-04",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-AI-003",
+      "title": "Fast Slice Prediction",
+      "description": "Simple Shape-Based Contour Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/fast-slice-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "toggleVOISliceSync.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-AI-004",
+      "title": "Image Aware Prediction",
+      "description": "Image-Aware Prediction Refinement",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/image-aware-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "areAllImageDimensionsEqual.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-11-20",
+      "lastModified": "2025-12-19"
+    },
+    {
+      "id": "REQ-AI-005",
+      "title": "Prediction History Manager",
+      "description": "Prediction History Manager",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/prediction-history-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-15",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-AI-006",
+      "title": "Robust Slice Prediction",
+      "description": "First-Principles Shape & Pattern Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/robust-slice-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "toggleVOISliceSync.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-AI-007",
+      "title": "Sam Controller",
+      "description": "SAM (Segment Anything Model) Controller",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/sam-controller.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-13",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-AI-008",
+      "title": "Sam Server Client",
+      "description": "SAM Server Client - Server-side Segment Anything Model",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/sam-server-client.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-20",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-AI-009",
+      "title": "Mem3d Api API",
+      "description": "Server-side API for ai segmentation operations",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "server/mem3d-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-23",
+      "lastModified": "2025-10-23"
+    },
+    {
+      "id": "REQ-AI-010",
+      "title": "Segvol Api API",
+      "description": "Server-side API for ai segmentation operations",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "sourceFile": "server/segvol-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-23",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-BOOL-001",
+      "title": "Boolean Panel",
+      "description": "Provides Boolean Panel functionality",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/BooleanPanel.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-BOOL-002",
+      "title": "Boolean Operations Toolbar New",
+      "description": "Template interface for saved operations",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/boolean-operations-toolbar-new.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "useToolbar.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-03"
+    },
+    {
+      "id": "REQ-BOOL-003",
+      "title": "Clipper Boolean Operations",
+      "description": "Comprehensive boolean operations for medical contours using js-angusj-clipper",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/clipper-boolean-operations.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-CONTOUR-001",
+      "title": "Contour Edit Panel",
+      "description": "Provides Contour Edit Panel functionality",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/contour-edit-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts",
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-002",
+      "title": "Contour Edit Toolbar",
+      "description": "Contour Edit Toolbar - V4 Aurora Edition",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/contour-edit-toolbar.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "useToolbar.test.ts",
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-CONTOUR-003",
+      "title": "Eclipse Pen Tool",
+      "description": "Eclipse TPS-style Pen Tool Implementation",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/eclipse-pen-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-CONTOUR-004",
+      "title": "Eclipse Planar Contour Tool",
+      "description": "Eclipse TPS Draw Planar Contour Tool Implementation",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/eclipse-planar-contour-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "ContourSegLocking.spec.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-CONTOUR-005",
+      "title": "Ghost Contour Overlay",
+      "description": "GhostContourOverlay - Renders ghost contours from other viewports",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/ghost-contour-overlay.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts",
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-CONTOUR-006",
+      "title": "Pen Tool Unified V2",
+      "description": "Unique viewport ID for cross-viewport ghost contour sync",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/pen-tool-unified-v2.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-CONTOUR-007",
+      "title": "Pen Tool V2",
+      "description": "Helper function to check if two polygons intersect",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/pen-tool-v2.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-CONTOUR-008",
+      "title": "Pen Tool",
+      "description": "Update overlay canvas size",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/pen-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-009",
+      "title": "Simple Brush Tool",
+      "description": "Check if a canvas point is inside a predicted contour",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/simple-brush-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-CONTOUR-010",
+      "title": "Brush To Polygon",
+      "description": "Create a perfect circle polygon at the given center with exact radius",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/brush-to-polygon.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "polygon-utils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-CONTOUR-011",
+      "title": "Contour Boolean Operations",
+      "description": "Simple/naive boolean operations for medical imaging contours",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-boolean-operations.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-012",
+      "title": "Contour Directional Grow",
+      "description": "Directional contour grow/shrink operations for medical imaging",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-directional-grow.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "Bidirectional.spec.ts",
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-013",
+      "title": "Contour Grow",
+      "description": "Contour Growing Algorithm for Medical Imaging",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-grow.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-014",
+      "title": "Contour Interpolation",
+      "description": "Contour interpolation utilities matching Eclipse TPS behavior.",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-interpolation.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-015",
+      "title": "Contour Polish",
+      "description": "Medical-grade contour polishing utilities for smooth brush edges",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-polish.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-016",
+      "title": "Contour Prediction",
+      "description": "Next Slice Prediction Algorithm for Medical Imaging Contours",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-04",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-CONTOUR-017",
+      "title": "Contour Smooth Simple",
+      "description": "Simple contour smoothing using moving average",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-smooth-simple.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-018",
+      "title": "Contour V2",
+      "description": "V2 Professional Contour Class",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/contour-v2.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-CONTOUR-019",
+      "title": "Mask To Contours",
+      "description": "Convert binary mask to DICOM contour points",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/mask-to-contours.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-03"
+    },
+    {
+      "id": "REQ-CONTOUR-020",
+      "title": "Simple Contour Prediction",
+      "description": "Improved Contour Prediction with Interpolation and Scaling",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/simple-contour-prediction.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContourSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-22",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-CONTOUR-021",
+      "title": "Smart Brush Utils",
+      "description": "Smart brush utilities for adaptive contouring",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/smart-brush-utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-19"
+    },
+    {
+      "id": "REQ-DICOM-001",
+      "title": "Dicom Uploader",
+      "description": "Step types for the upload process",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/dicom-uploader.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-DICOM-002",
+      "title": "Dicom Preview Modal",
+      "description": "Fetch all images from the series",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/patient-manager/dicom-preview-modal.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts",
+        "TMTVModalityUnit.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DICOM-003",
+      "title": "Dicom Thumbnail",
+      "description": "Fetch the middle image thumbnail from the series",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/patient-manager/dicom-thumbnail.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-DICOM-004",
+      "title": "Dicom Utils.test",
+      "description": "DICOM Utilities Unit Tests",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/__tests__/dicom-utils.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-DICOM-005",
+      "title": "Dicom Coordinates",
+      "description": "Shared DICOM coordinate transformation utilities",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-coordinates.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DICOM-006",
+      "title": "Dicom Loader",
+      "description": "Robust DICOM loading without external dependencies",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-loader.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "interleaveCenterLoader.test.ts",
+        "nthLoader.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DICOM-007",
+      "title": "Dicom Spatial Helpers",
+      "description": "DICOM Spatial Helper Utilities",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-spatial-helpers.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DICOM-008",
+      "title": "Dicom Types",
+      "description": "DICOM types for RT structure operations",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-types.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DICOM-009",
+      "title": "Dicom Utils",
+      "description": "Helper functions for safe metadata parsing",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-DICOM-010",
+      "title": "Dicom Worker Manager",
+      "description": "DICOM Worker Manager",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dicom-worker-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "initWebWorkerProgressHandler.test.ts",
+        "DicomTagBrowser.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-DVH-001",
+      "title": "Dvh Popup Viewer",
+      "description": "DVH Popup Viewer",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/dvh-popup-viewer.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-DVH-002",
+      "title": "Dvh Viewer",
+      "description": "DVH Viewer Component",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/dvh-viewer.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-14",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-DVH-003",
+      "title": "Dvh Api API",
+      "description": "Server-side API for dose-volume histogram operations",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "sourceFile": "server/dvh-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-FUSION-001",
+      "title": "Flexible Fusion Layout",
+      "description": "FlexibleFusionLayout - Responsive Multi-Viewport Grid System",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/flexible-fusion-layout.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-12",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-FUSION-002",
+      "title": "Fusion Control Panel V2",
+      "description": "Layout preset types for flexible fusion layout",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/fusion-control-panel-v2.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-003",
+      "title": "Fusion Control Panel",
+      "description": "PT/PET: Use Auto (manifest) settings only",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/fusion-control-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-004",
+      "title": "Fusion Debug Dialog",
+      "description": "Group by primary series",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/fusion-debug-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-FUSION-005",
+      "title": "Fusion Panel",
+      "description": "CT series",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/fusion-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-03",
+      "lastModified": "2025-10-03"
+    },
+    {
+      "id": "REQ-FUSION-006",
+      "title": "Fusion Viewport Grid",
+      "description": "Fusion Viewport Grid - HYBRID PROTOTYPE",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/fusion-viewport-grid.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-007",
+      "title": "Smart Fusion Viewport Manager",
+      "description": "--- Types ---",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/smart-fusion-viewport-manager.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-008",
+      "title": "Unified Fusion Layout Toolbar V2",
+      "description": "Unified Fusion/Layout Toolbar V2",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/unified-fusion-layout-toolbar-v2.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "useToolbar.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-10",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-009",
+      "title": "Unified Fusion Topbar",
+      "description": "UnifiedFusionTopbar",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/unified-fusion-topbar.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-12",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-FUSION-010",
+      "title": "Fusion Layout Service",
+      "description": "Fusion Layout Persistence Service",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/fusion-layout-service.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "SegmentationService.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-04",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-FUSION-011",
+      "title": "Fusion Overlay Manager",
+      "description": "FusionOverlayManager - Clean fusion implementation following OHIF/Cornerstone3D patterns",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/fusion-overlay-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-FUSION-012",
+      "title": "Fusion Utils",
+      "description": "Parallel batch loading for faster secondary scan loading",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/fusion-utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-FUSION-013",
+      "title": "Global Fusion Cache",
+      "description": "GlobalFusionCache - Shared fusion overlay cache for multi-viewport performance",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/global-fusion-cache.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-001",
+      "title": "Ai Status Panel",
+      "description": "AI Status Panel",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ai-status-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-GEN-002",
+      "title": "Ai Tumor Tool",
+      "description": "AI Tumor Tool - Single-Click Segmentation using SAM (Segment Anything Model)",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/ai-tumor-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-GEN-003",
+      "title": "Dose Control Panel",
+      "description": "DoseControlPanel - Modern floating control panel for RT Dose visualization",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/dose-control-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-004",
+      "title": "Error Modal",
+      "description": "Provides Error Modal functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/error-modal.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "TMTVModalityUnit.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-005",
+      "title": "Loading Progress",
+      "description": "You can extend this to pass actual series info",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/loading-progress.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "initWebWorkerProgressHandler.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-22",
+      "lastModified": "2025-10-22"
+    },
+    {
+      "id": "REQ-GEN-006",
+      "title": "Radiation Therapy Panel",
+      "description": "RadiationTherapyPanel - Combined RT Dose and RT Plan visualization panel",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/radiation-therapy-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-007",
+      "title": "Save As New Dialog",
+      "description": "Provides Save As New Dialog functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/save-as-new-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-008",
+      "title": "Smart Nth Settings Dialog",
+      "description": "Provides Smart Nth Settings Dialog functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/smart-nth-settings-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-15",
+      "lastModified": "2025-10-15"
+    },
+    {
+      "id": "REQ-GEN-009",
+      "title": "User Settings Panel",
+      "description": "User Settings Panel",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/user-settings-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-04",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-GEN-010",
+      "title": "V4 Aurora Panels V2",
+      "description": "V4 Aurora Panels V2 Prototype",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/v4-aurora-panels-v2.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-GEN-011",
+      "title": "Canvas Preview",
+      "description": "Fetch middle image for preview",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/patient-manager/canvas-preview.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-012",
+      "title": "Metadata Edit Dialog",
+      "description": "Reset patient data when dialog opens",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/patient-manager/metadata-edit-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-013",
+      "title": "Accordion",
+      "description": "Implements Accordion functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/accordion.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-GEN-014",
+      "title": "Alert Dialog",
+      "description": "Implements Alert Dialog functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/alert-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-015",
+      "title": "Alert",
+      "description": "Implements Alert functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/alert.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-016",
+      "title": "Aspect Ratio",
+      "description": "Implements Aspect Ratio functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/aspect-ratio.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "hydrationUtils.test.ts",
+        "promptHydrationDialog.test.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "RTHydration.spec.ts",
+        "RTHydration2.spec.ts",
+        "RTHydrationFromMPR.spec.ts",
+        "RTHydrationThenMPR.spec.ts",
+        "RTNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGHydration.spec.ts",
+        "SEGHydrationFrom3DFourUp.spec.ts",
+        "SEGHydrationFromMPR.spec.ts",
+        "SEGHydrationThenMPR.spec.ts",
+        "SEGNoHydrationThenMPR.spec.ts",
+        "SRHydration.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-03",
+      "lastModified": "2025-10-03"
+    },
+    {
+      "id": "REQ-GEN-017",
+      "title": "Avatar",
+      "description": "Implements Avatar functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/avatar.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-018",
+      "title": "Badge",
+      "description": "Implements Badge functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/badge.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-019",
+      "title": "Breadcrumb",
+      "description": "Implements Breadcrumb functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/breadcrumb.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-020",
+      "title": "Button",
+      "description": "Implements Button functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/button.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-021",
+      "title": "Calendar",
+      "description": "Implements Calendar functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/calendar.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-022",
+      "title": "Card",
+      "description": "Implements Card functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/card.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-023",
+      "title": "Carousel",
+      "description": "Implements Carousel functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/carousel.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-024",
+      "title": "Chart",
+      "description": "Format: { THEME_NAME: CSS_SELECTOR }",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/chart.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-025",
+      "title": "Checkbox",
+      "description": "Implements Checkbox functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/checkbox.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-11-03"
+    },
+    {
+      "id": "REQ-GEN-026",
+      "title": "Collapsible",
+      "description": "Implements Collapsible functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/collapsible.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-03",
+      "lastModified": "2025-10-03"
+    },
+    {
+      "id": "REQ-GEN-027",
+      "title": "Color Picker",
+      "description": "Color Picker Popover Component",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/color-picker.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-028",
+      "title": "Command",
+      "description": "Implements Command functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/command.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-029",
+      "title": "Context Menu",
+      "description": "Implements Context Menu functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/context-menu.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContextMenu.spec.ts",
+        "DataOverlayMenu.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-030",
+      "title": "Dialog",
+      "description": "Implements Dialog functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-031",
+      "title": "Drawer",
+      "description": "Implements Drawer functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/drawer.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-032",
+      "title": "Dropdown Menu",
+      "description": "Implements Dropdown Menu functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/dropdown-menu.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContextMenu.spec.ts",
+        "DataOverlayMenu.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-033",
+      "title": "Form",
+      "description": "Implements Form functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/form.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "coordinate-transforms.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-034",
+      "title": "Hover Card",
+      "description": "Implements Hover Card functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/hover-card.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-035",
+      "title": "Input Otp",
+      "description": "Implements Input Otp functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/input-otp.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-036",
+      "title": "Input",
+      "description": "Implements Input functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/input.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-037",
+      "title": "Label",
+      "description": "Implements Label functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/label.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "LabelMapSegLocking.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-038",
+      "title": "Menubar",
+      "description": "Implements Menubar functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/menubar.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-039",
+      "title": "Navigation Menu",
+      "description": "Implements Navigation Menu functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/navigation-menu.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "ContextMenu.spec.ts",
+        "DataOverlayMenu.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-040",
+      "title": "Pagination",
+      "description": "Implements Pagination functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/pagination.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-041",
+      "title": "Popover",
+      "description": "Implements Popover functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/popover.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-042",
+      "title": "Progress",
+      "description": "Implements Progress functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/progress.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "initWebWorkerProgressHandler.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-043",
+      "title": "Radio Group",
+      "description": "Implements Radio Group functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/radio-group.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-044",
+      "title": "Resizable",
+      "description": "Implements Resizable functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/resizable.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-045",
+      "title": "Scroll Area",
+      "description": "Implements Scroll Area functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/scroll-area.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "areAllImageDimensionsEqual.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-046",
+      "title": "Select",
+      "description": "Implements Select functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/select.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-047",
+      "title": "Separator",
+      "description": "Implements Separator functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/separator.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-048",
+      "title": "Sheet",
+      "description": "Implements Sheet functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/sheet.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-049",
+      "title": "Sidebar",
+      "description": "This is the internal state of the sidebar.",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/sidebar.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-050",
+      "title": "Skeleton",
+      "description": "Implements Skeleton functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/skeleton.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-03",
+      "lastModified": "2025-10-03"
+    },
+    {
+      "id": "REQ-GEN-051",
+      "title": "Slider",
+      "description": "Implements Slider functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/slider.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-052",
+      "title": "Switch",
+      "description": "Implements Switch functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/switch.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-053",
+      "title": "Table",
+      "description": "Implements Table functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/table.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-054",
+      "title": "Tabs",
+      "description": "Implements Tabs functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/tabs.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-055",
+      "title": "Textarea",
+      "description": "Implements Textarea functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/textarea.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-056",
+      "title": "Toast",
+      "description": "Implements Toast functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/toast.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-22",
+      "lastModified": "2025-10-22"
+    },
+    {
+      "id": "REQ-GEN-057",
+      "title": "Toaster",
+      "description": "Provides Toaster functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/toaster.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-058",
+      "title": "Toggle Group",
+      "description": "Implements Toggle Group functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/toggle-group.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "toggleVOISliceSync.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-059",
+      "title": "Toggle",
+      "description": "Implements Toggle functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/toggle.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "toggleVOISliceSync.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-060",
+      "title": "Tooltip",
+      "description": "Implements Tooltip functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/ui/tooltip.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-GEN-061",
+      "title": "Coordinate Transforms.test",
+      "description": "Coordinate Transform Unit Tests",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/__tests__/coordinate-transforms.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "coordinate-transforms.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-062",
+      "title": "Dice Coefficient.test",
+      "description": "Dice Coefficient Calculation Tests",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/__tests__/dice-coefficient.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dice-coefficient.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-063",
+      "title": "Polygon Utils.test",
+      "description": "Polygon Utilities Unit Tests",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/__tests__/polygon-utils.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-064",
+      "title": "Window Level.test",
+      "description": "Window/Level and Image Display Unit Tests",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/__tests__/window-level.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "window-level.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-065",
+      "title": "Background Loader",
+      "description": "Background Image Loading Service",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/background-loader.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "interleaveCenterLoader.test.ts",
+        "nthLoader.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-066",
+      "title": "Beam Overlay Renderer",
+      "description": "Beam Overlay Renderer",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/beam-overlay-renderer.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-067",
+      "title": "Bev Renderer",
+      "description": "BEV (Beam's Eye View) Renderer",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/bev/BevRenderer.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-068",
+      "title": "Index",
+      "description": "BEV (Beam's Eye View) Rendering Module",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/bev/index.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "index.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-069",
+      "title": "Clipper Adapter",
+      "description": "Centralized Clipper library adapter",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/clipper-adapter.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-070",
+      "title": "Console Logger",
+      "description": "Console Logger - Captures console logs and sends to debug hub",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/console-logger.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-071",
+      "title": "Coordinate Transformer V2",
+      "description": "V2 Professional Coordinate Transformer",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/coordinate-transformer-v2.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "coordinate-transforms.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-072",
+      "title": "Cornerstone Config",
+      "description": "Cornerstone.js configuration for DICOM rendering",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/cornerstone-config.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "getCornerstoneBlendMode.test.ts",
+        "getCornerstoneOrientation.test.ts",
+        "getCornerstoneViewportType.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-073",
+      "title": "Cornerstone3d Adapter",
+      "description": "Cornerstone3D Adapter Layer",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/cornerstone3d-adapter.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-GEN-074",
+      "title": "Dice Utils",
+      "description": "polygon-clipping format",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/dice-utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dice-coefficient.test.ts",
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-075",
+      "title": "Fast Polar Interpolation",
+      "description": "Fast Arc-Length Interpolation for Contours",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/fast-polar-interpolation.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-15",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-GEN-076",
+      "title": "BEVRenderer",
+      "description": "BEV (Beam's Eye View) Renderer",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/BEVRenderer.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-077",
+      "title": "IEC61217",
+      "description": "IEC 61217 Coordinate System Transformations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/IEC61217.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-078",
+      "title": "MLCModels",
+      "description": "MLC (Multi-Leaf Collimator) Model Definitions",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/MLCModels.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-079",
+      "title": "Matrix4",
+      "description": "Matrix4 - 4x4 Transformation Matrix for RT Plan geometry",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/Matrix4.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-080",
+      "title": "Vector3",
+      "description": "Vector3 - 3D Vector class for RT Plan geometry calculations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/Vector3.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-081",
+      "title": "Index",
+      "description": "Geometry Library for RT Plan Visualization",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/geometry/index.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "index.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-082",
+      "title": "Image Load Pool Manager",
+      "description": "ImageLoadPoolManager - OHIF-style Image Loading Priority Queue",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/image-load-pool-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "interleaveCenterLoader.test.ts",
+        "nthLoader.test.ts",
+        "areAllImageDimensionsEqual.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-083",
+      "title": "Log",
+      "description": "Provides Log functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/log.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-084",
+      "title": "Medical Pixel Spacing",
+      "description": "Medical-safe pixel spacing extraction and validation",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/medical-pixel-spacing.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-085",
+      "title": "Mlc Models",
+      "description": "MLC Model Definitions",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/mlc-models.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-086",
+      "title": "Pills",
+      "description": "More subdued fill + brighter border for readability on dark backgrounds",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/pills.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-14",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-087",
+      "title": "Polygon Engine",
+      "description": "PolygonEngine - Comprehensive 2D polygon operations for RT structure manipulation",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/polygon-engine.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "polygon-utils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-03"
+    },
+    {
+      "id": "REQ-GEN-088",
+      "title": "Polygon Operations V2",
+      "description": "V2 Professional Polygon Operations Manager",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/polygon-operations-v2.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "polygon-utils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-089",
+      "title": "Polygon Union",
+      "description": "Simple polygon union using a grid-based approach",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/polygon-union.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "polygon-utils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-14"
+    },
+    {
+      "id": "REQ-GEN-090",
+      "title": "Polygon Utils",
+      "description": "Convert RT structure contour points to polygon format",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/polygon-utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-091",
+      "title": "Query Client",
+      "description": "Provides Get Query Fn functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/queryClient.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-092",
+      "title": "Rt Coordinate Transforms",
+      "description": "RT Coordinate Transformation Utilities",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/rt-coordinate-transforms.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "coordinate-transforms.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-GEN-093",
+      "title": "Sdt Interpolation",
+      "description": "Compute bounds across polygons with padding in mm",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/sdt-interpolation.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-094",
+      "title": "Simple Polygon Operations",
+      "description": "Simple polygon operations using the polygon-clipping library",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/simple-polygon-operations.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "polygon-utils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-29"
+    },
+    {
+      "id": "REQ-GEN-095",
+      "title": "Smooth Ripple Animation",
+      "description": "Border Glow Animation",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/smooth-ripple-animation.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-14",
+      "lastModified": "2025-10-14"
+    },
+    {
+      "id": "REQ-GEN-096",
+      "title": "Structure Set V2",
+      "description": "V2 Professional Structure Set Entity",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/structure-set-v2.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-GEN-097",
+      "title": "Tool State Manager",
+      "description": "brushSize, etc.",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/tool-state-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-09"
+    },
+    {
+      "id": "REQ-GEN-098",
+      "title": "Undo System",
+      "description": "Completely revamped undo/redo system - reliable and simple",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/undo-system.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-GEN-099",
+      "title": "Utils",
+      "description": "Provides Cn functionality",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/utils.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "dicom-utils.test.ts",
+        "polygon-utils.test.ts",
+        "hydrationUtils.test.ts",
+        "segmentUtils.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-02",
+      "lastModified": "2025-10-02"
+    },
+    {
+      "id": "REQ-GEN-100",
+      "title": "Nninteractive Api API",
+      "description": "Server-side API for general operations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "server/nninteractive-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-25",
+      "lastModified": "2025-10-25"
+    },
+    {
+      "id": "REQ-GEN-101",
+      "title": "Regulatory Api API",
+      "description": "Server-side API for general operations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "server/regulatory-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-102",
+      "title": "Routes API",
+      "description": "Server-side API for general operations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "server/routes.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-GEN-103",
+      "title": "Superseg Api API",
+      "description": "Server-side API for general operations",
+      "category": "General",
+      "riskClass": "low",
+      "sourceFile": "server/superseg-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-04",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-IMPORT-001",
+      "title": "Robust Import",
+      "description": "Robust DICOM Import Component",
+      "category": "Data Import",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/robust-import.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-17",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-IMPORT-002",
+      "title": "Upload Zone",
+      "description": "Process files in batches to avoid overwhelming the server",
+      "category": "Data Import",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/upload-zone.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-IMPORT-003",
+      "title": "Robust Import Routes API",
+      "description": "Server-side API for data import operations",
+      "category": "Data Import",
+      "riskClass": "low",
+      "sourceFile": "server/robust-import-routes.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-MARGIN-001",
+      "title": "Advanced Margin Tool",
+      "description": "mm",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/advanced-margin-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "useToolbar.test.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-MARGIN-002",
+      "title": "Margin Operation Panel",
+      "description": "Margin values",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/margin-operation-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-11-20",
+      "lastModified": "2025-11-20"
+    },
+    {
+      "id": "REQ-MARGIN-003",
+      "title": "Margin Subtract Panel",
+      "description": "MarginSubtractPanel - Clinical PTV Generation Tool",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/margin-subtract-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-03"
+    },
+    {
+      "id": "REQ-MARGIN-004",
+      "title": "Margin Toolbar",
+      "description": "Show settings by default",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/margin-toolbar.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "useToolbar.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-MEAS-001",
+      "title": "Measurement Tool",
+      "description": "Clean up overlay when not active",
+      "category": "Measurements",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/measurement-tool.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "findNearbyToolData.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "useToolbar.test.ts",
+        "JumpToMeasurementMPR.spec.ts",
+        "MeasurementPanel.spec.ts",
+        "SEGDrawingToolsResizing.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-MPR-001",
+      "title": "Mpr Floating",
+      "description": "Coronal: X axis = Columns. Fixed Row (sliceIndex).",
+      "category": "Multi-Planar Reconstruction",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/mpr-floating.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-PATIENT-001",
+      "title": "Patient Preview Card",
+      "description": "Provides Patient Preview Card functionality",
+      "category": "Patient Management",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/patient-preview-card.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getViewportOrientationFromImageOrientationPatient.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-PATIENT-002",
+      "title": "Patient Card",
+      "description": "Delete confirmation dialog states",
+      "category": "Patient Management",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/patient-manager/patient-card.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getViewportOrientationFromImageOrientationPatient.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-RTDOSE-001",
+      "title": "Rt Dose Overlay",
+      "description": "RTDoseOverlay - React component for displaying RT Dose overlays",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "sourceFile": "client/src/components/dicom/rt-dose-overlay.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTDOSE-002",
+      "title": "Rt Dose Manager",
+      "description": "RTDoseManager - Radiotherapy Dose Visualization Manager",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/rt-dose-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTDOSE-003",
+      "title": "Rt Dose Api API",
+      "description": "Server-side API for rt dose display operations",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "sourceFile": "server/rt-dose-api.ts",
+      "sourceType": "api",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-14"
+    },
+    {
+      "id": "REQ-RTPLAN-001",
+      "title": "Rt Plan Panel",
+      "description": "RT Plan Panel - Beam visualization and BEV (Beam's Eye View)",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "sourceFile": "client/src/components/dicom/rt-plan-panel.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "rt-plan-validation.test.ts",
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTPLAN-002",
+      "title": "Rt Plan Validation.test",
+      "description": "RT Plan Validation Tests",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "sourceFile": "client/src/lib/__tests__/rt-plan-validation.test.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "rt-plan-validation.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-22",
+      "lastModified": "2026-01-22"
+    },
+    {
+      "id": "REQ-RTPLAN-003",
+      "title": "Rt Plan Api API",
+      "description": "Server-side API for rt plan display operations",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "sourceFile": "server/rt-plan-api.ts",
+      "sourceType": "api",
+      "relatedTests": [
+        "rt-plan-validation.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTSTRUCT-001",
+      "title": "Rt Structure History Modal",
+      "description": "Load history when dialog opens",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/rt-structure-history-modal.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "TMTVModalityUnit.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-RTSTRUCT-002",
+      "title": "Rt Structure Overlay",
+      "description": "Marks contours as predictions",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/rt-structure-overlay.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-21",
+      "lastModified": "2026-01-21"
+    },
+    {
+      "id": "REQ-SERIES-001",
+      "title": "Series Selector",
+      "description": "Multi-viewport state",
+      "category": "Series Management",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/series-selector.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-SERIES-002",
+      "title": "Global Series Cache",
+      "description": "GlobalSeriesCache - Shared image cache for multi-viewport performance",
+      "category": "Series Management",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/global-series-cache.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-30",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-STRUCT-001",
+      "title": "Superstructure Manager",
+      "description": "SuperstructureManager Component",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/SuperstructureManager.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-03",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-STRUCT-002",
+      "title": "Blob Management Dialog",
+      "description": "Blob Management Dialog - Aurora Edition",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/blob-management-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-14",
+      "lastModified": "2025-12-18"
+    },
+    {
+      "id": "REQ-STRUCT-003",
+      "title": "Structure Blob List",
+      "description": "Structure Blob List - Expandable blob viewer in sidebar",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/structure-blob-list.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "Worklist.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-14",
+      "lastModified": "2025-10-14"
+    },
+    {
+      "id": "REQ-STRUCT-004",
+      "title": "Blob Operations",
+      "description": "Blob Operations Library",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "sourceFile": "client/src/lib/blob-operations.ts",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-14",
+      "lastModified": "2025-10-22"
+    },
+    {
+      "id": "REQ-VIEW-001",
+      "title": "Advanced Viewport Layout",
+      "description": "AdvancedViewportLayout - Multi-Viewport Layout Engine",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/AdvancedViewportLayout.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-12-09",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-VIEW-002",
+      "title": "Multi Viewport",
+      "description": "Multi-viewport component for displaying multiple DICOM viewports in a grid",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/multi-viewport.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts",
+        "MultipleSegmentationDataOverlays.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-003",
+      "title": "Sonnet Viewport Manager",
+      "description": "SONNET: Smart Orchestrated Navigation Network for Enhanced Tomography",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/sonnet-viewport-manager.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-004",
+      "title": "Unified Viewport Switcher",
+      "description": "Unified Viewport Mode Switcher",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/unified-viewport-switcher.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-005",
+      "title": "Viewer Interface",
+      "description": "TypeScript declaration for cornerstone",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewer-interface.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-VIEW-006",
+      "title": "Viewer Toolbar",
+      "description": "ViewerToolbar - V4 Aurora Edition",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewer-toolbar.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "useToolbar.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-03",
+      "lastModified": "2026-01-20"
+    },
+    {
+      "id": "REQ-VIEW-007",
+      "title": "Viewport Action Bar",
+      "description": "ViewportActionBar - OHIF-style individual viewport topbar controls",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewport-action-bar.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-008",
+      "title": "Viewport Action Corners",
+      "description": "ViewportActionCorners - Compound component for positioning UI elements",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewport-action-corners.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneBlendMode.test.ts",
+        "getCornerstoneOrientation.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-009",
+      "title": "Viewport Orientation Markers",
+      "description": "ViewportOrientationMarkers - OHIF-style anatomical orientation markers",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewport-orientation-markers.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneOrientation.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-10"
+    },
+    {
+      "id": "REQ-VIEW-010",
+      "title": "Viewport Overlay",
+      "description": "ViewportOverlay - OHIF-style overlay for displaying viewport metadata",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewport-overlay.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts",
+        "DataOverlayMenu.spec.ts",
+        "MPRThenRTOverlayNoHydration.spec.ts",
+        "MPRThenSEGOverlayNoHydration.spec.ts",
+        "MultipleSegmentationDataOverlays.spec.ts",
+        "RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "RTDataOverlayNoHydrationThenMPR.spec.ts",
+        "SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts",
+        "SEGDataOverlayNoHydrationThenMPR.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2025-12-11"
+    },
+    {
+      "id": "REQ-VIEW-011",
+      "title": "Viewport Pane Ohif",
+      "description": "ViewportPaneOHIF - OHIF-style viewport pane with action corners and overlays",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/viewport-pane-ohif.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts",
+        "MeasurementPanel.spec.ts",
+        "SegmentationPanel.spec.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-09",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-VIEW-012",
+      "title": "Working Viewer",
+      "description": "Unique viewport ID for cross-viewport ghost contour synchronization",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/dicom/working-viewer.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-VIEW-013",
+      "title": "Primary Viewport",
+      "description": "PrimaryViewport Component",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/components/viewer/PrimaryViewport.tsx",
+      "sourceType": "component",
+      "relatedTests": [],
+      "status": "implemented",
+      "createdDate": "2025-10-02",
+      "lastModified": "2025-10-02"
+    },
+    {
+      "id": "REQ-VIEW-014",
+      "title": "Gpu Viewport Manager",
+      "description": "GPU Viewport Manager - OHIF-style Cornerstone3D integration",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/gpu-viewport-manager.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-10-01"
+    },
+    {
+      "id": "REQ-VIEW-015",
+      "title": "Viewport Grid Service",
+      "description": "Set a predefined layout with optional initial series",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/viewport-grid-service.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "SegmentationService.test.ts",
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-10-01",
+      "lastModified": "2025-12-12"
+    },
+    {
+      "id": "REQ-VIEW-016",
+      "title": "Viewport Scroll Sync",
+      "description": "ViewportScrollSync - Ref-based scroll synchronization for multi-viewport",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "sourceFile": "client/src/lib/viewport-scroll-sync.ts",
+      "sourceType": "component",
+      "relatedTests": [
+        "getActiveViewportEnabledElement.test.ts",
+        "getCornerstoneViewportType.test.ts",
+        "getViewportEnabledElement.test.ts",
+        "getViewportOrientationFromImageOrientationPatient.test.ts",
+        "isMeasurementWithinViewport.test.ts",
+        "removeViewportSegmentationRepresentations.test.ts",
+        "toggleVOISliceSync.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2025-12-19",
+      "lastModified": "2026-01-26"
+    }
+  ]
+}

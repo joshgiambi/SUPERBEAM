@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, Maximize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes, Star } from 'lucide-react';
 import { DICOMSeries, WindowLevel, WINDOW_LEVEL_PRESETS } from '@/lib/dicom-utils';
@@ -20,6 +21,7 @@ import { groupStructureBlobs, computeBlobVolumeCc, createContourKey, type Blob }
 import { SaveAsNewDialog } from './save-as-new-dialog';
 import { RTStructureHistoryModal } from './rt-structure-history-modal';
 import { useSuperstructures } from './SuperstructureManager';
+import { ColorSwatchInput } from '@/components/ui/color-picker';
 
 interface SeriesSelectorProps {
   series: DICOMSeries[];
@@ -132,6 +134,8 @@ export function SeriesSelector({
   const [historySeriesId, setHistorySeriesId] = useState<number | null>(null);
   const [seriesHistoryStatus, setSeriesHistoryStatus] = useState<Map<number, boolean>>(new Map());
   const [expandedSuperstructures, setExpandedSuperstructures] = useState<Set<number>>(new Set());
+  const [expandedRTGroups, setExpandedRTGroups] = useState<Set<number>>(new Set()); // Track which RT series groups are expanded (keyed by referencedSeriesId)
+  const [selectedRTForCT, setSelectedRTForCT] = useState<Map<number, number>>(new Map()); // Track selected RT series ID for each CT series (ctSeriesId -> rtSeriesId)
   // Calculate allVisible dynamically based on current visibility state
   const allVisible = useMemo(() => {
     if (!rtStructures?.structures || structureVisibility.size === 0) return true;
@@ -163,6 +167,64 @@ export function SeriesSelector({
       if (secId === seriesId) return vpNum;
     }
     return null;
+  };
+  
+  // Helper: Get RT series for a CT, grouped with selected/most recent first
+  // Returns { primary: selectedOrMostRecentRTSeries, others: otherRTSeries[] }
+  const getGroupedRTSeriesForCT = (ctSeriesId: number) => {
+    const matching = (rtSeries || []).filter((rtS: any) => 
+      rtS.referencedSeriesId === ctSeriesId || (!rtS.referencedSeriesId && rtSeries.length === 1)
+    );
+    
+    if (matching.length === 0) return { primary: null, others: [] };
+    
+    // Check if user has explicitly selected an RT for this CT
+    const userSelectedRTId = selectedRTForCT.get(ctSeriesId);
+    
+    // Sort by id descending (higher id = more recent) as a proxy for creation time
+    // Also check createdAt/updatedAt if available
+    const sorted = [...matching].sort((a, b) => {
+      // Try to use timestamps if available
+      const aTime = a.updatedAt || a.createdAt || a.id;
+      const bTime = b.updatedAt || b.createdAt || b.id;
+      
+      if (typeof aTime === 'string' && typeof bTime === 'string') {
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+      }
+      // Fall back to id comparison (higher = newer)
+      return (b.id || 0) - (a.id || 0);
+    });
+    
+    // If user selected an RT, make it primary
+    if (userSelectedRTId) {
+      const selectedIndex = sorted.findIndex(rt => rt.id === userSelectedRTId);
+      if (selectedIndex > 0) {
+        // Move selected to top
+        const [selected] = sorted.splice(selectedIndex, 1);
+        return {
+          primary: selected,
+          others: sorted
+        };
+      }
+    }
+    
+    return {
+      primary: sorted[0],
+      others: sorted.slice(1)
+    };
+  };
+  
+  // Helper: Toggle RT group expansion
+  const toggleRTGroupExpanded = (ctSeriesId: number) => {
+    setExpandedRTGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(ctSeriesId)) {
+        next.delete(ctSeriesId);
+      } else {
+        next.add(ctSeriesId);
+      }
+      return next;
+    });
   };
   
   // Helper: Open series preview in a lightweight popup window
@@ -736,6 +798,11 @@ export function SeriesSelector({
         onLoadedRTSeriesIdChange(rtSeries?.id ?? null);
       }
       
+      // Track which RT is selected for its parent CT (so it shows at top of group)
+      if (rtSeries.referencedSeriesId) {
+        setSelectedRTForCT(prev => new Map(prev).set(rtSeries.referencedSeriesId, rtSeries.id));
+      }
+      
       // Auto-expand structures accordion section when an RT structure set is selected
       setAccordionValues(prev => {
         if (!prev.includes('structures')) {
@@ -752,6 +819,17 @@ export function SeriesSelector({
         if (rtStructData && (rtStructData.seriesId === undefined || rtStructData.seriesId === null)) {
           rtStructData.seriesId = Number(rtSeries?.id) || null;
         }
+        
+        // DEBUG: Log what's coming from API
+        console.warn('📥 DEBUG: Loaded RT structures from API:', {
+          seriesId: rtSeries.id,
+          structureCount: rtStructData?.structures?.length,
+          structureNames: rtStructData?.structures?.map((s: any) => s.structureName),
+          roiNumbers: rtStructData?.structures?.map((s: any) => s.roiNumber),
+          uniqueNames: new Set(rtStructData?.structures?.map((s: any) => s.structureName)).size,
+          uniqueRoiNumbers: new Set(rtStructData?.structures?.map((s: any) => s.roiNumber)).size
+        });
+        
         if (onRTStructureLoad) {
           onRTStructureLoad(rtStructData);
         }
@@ -1357,9 +1435,9 @@ export function SeriesSelector({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="h-full flex flex-col space-y-4">
+      <div className="h-full flex flex-col space-y-2">
         {/* Main Series and Structures Panel */}
-        <Card className="flex-1 bg-gray-950/95 border border-gray-600/60 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
+        <Card className="flex-1 min-h-0 bg-gray-950/95 border border-gray-600/60 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
           <CardContent className="p-0 h-full flex flex-col">
             <div className="flex-1 overflow-hidden flex flex-col">
               <Accordion 
@@ -1777,65 +1855,96 @@ export function SeriesSelector({
 
                             {/* Nested Series - Secondary/Fusion Options */}
                             <div className="ml-3 space-y-2">
-                              {/* RT Structure Series nested under CT - FIRST, show those that reference this primary CT */}
-                              {rtSeries && rtSeries.length > 0 && rtSeries.filter((rtS: any) => {
-                                const isMatch = rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1);
-                                return isMatch;
-                              }).length > 0 && (
-                                <div className="space-y-2 border-l-2 border-green-500/40 pl-2">
-                                  {rtSeries.filter((rtS: any) => 
-                                    rtS.referencedSeriesId === seriesItem.id || (!rtS.referencedSeriesId && rtSeries.length === 1)
-                                  ).map((rtS: any) => (
-                                    <Button
-                                      key={rtS.id}
-                                      variant="ghost"
-                                      className={cn(
-                                        "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
-                                        selectedRTSeries?.id === rtS.id 
-                                          ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                              {/* RT Structure Series nested under CT - with accordion for multiple structure sets */}
+                              {(() => {
+                                const { primary: primaryRT, others: otherRTs } = getGroupedRTSeriesForCT(seriesItem.id);
+                                if (!primaryRT) return null;
+                                
+                                const hasOthers = otherRTs.length > 0;
+                                const isExpanded = expandedRTGroups.has(seriesItem.id);
+                                
+                                // Helper to render a single RT series button
+                                const renderRTButton = (rtS: any, isNested = false) => (
+                                  <Button
+                                    key={rtS.id}
+                                    variant="ghost"
+                                    className={cn(
+                                      "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                      selectedRTSeries?.id === rtS.id 
+                                        ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                        : isNested
+                                          ? 'bg-gray-800/10 border-transparent hover:bg-gray-800/30 hover:border-gray-700/20 text-gray-400'
                                           : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
-                                      )}
-                                      onClick={() => handleRTSeriesSelect(rtS)}
-                                    >
-                                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <Badge className={cn("flex-shrink-0", pillClassForModality('RT'))}>
-                                          RT
-                                        </Badge>
-                                        <span className={cn(
-                                          "truncate text-xs leading-tight",
-                                          selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
-                                        )}>
-                                          {rtS.seriesDescription || 'Structure Set'}
-                                        </span>
-                                      </div>
-                                      
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div
-                                            className={`flex-shrink-0 transition-colors p-1 ${
-                                              seriesHistoryStatus.get(rtS.id)
-                                                ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
-                                                : 'text-gray-600 cursor-not-allowed'
-                                            }`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (seriesHistoryStatus.get(rtS.id)) {
-                                                setHistorySeriesId(rtS.id);
-                                                setShowHistoryModal(true);
-                                              }
-                                            }}
-                                          >
-                                            <History className="h-3.5 w-3.5" />
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </Button>
-                                  ))}
-                                </div>
-                              )}
+                                    )}
+                                    onClick={() => handleRTSeriesSelect(rtS)}
+                                  >
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <Badge className={cn("flex-shrink-0", pillClassForModality('RT'), isNested && "opacity-70")}>
+                                        RT
+                                      </Badge>
+                                      <span className={cn(
+                                        "truncate text-xs leading-tight",
+                                        selectedRTSeries?.id === rtS.id ? "text-green-200" : isNested ? "text-gray-400" : "text-gray-300"
+                                      )}>
+                                        {rtS.seriesDescription || 'Structure Set'}
+                                      </span>
+                                    </div>
+                                    
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          className={`flex-shrink-0 transition-colors p-1 ${
+                                            seriesHistoryStatus.get(rtS.id)
+                                              ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
+                                              : 'text-gray-600 cursor-not-allowed'
+                                          }`}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (seriesHistoryStatus.get(rtS.id)) {
+                                              setHistorySeriesId(rtS.id);
+                                              setShowHistoryModal(true);
+                                            }
+                                          }}
+                                        >
+                                          <History className="h-3.5 w-3.5" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </Button>
+                                );
+                                
+                                return (
+                                  <div className="relative border-l-2 border-green-500/40 pl-2 space-y-1">
+                                    {/* Chevron positioned on the green line */}
+                                    {hasOthers && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleRTGroupExpanded(seriesItem.id);
+                                        }}
+                                        className="absolute -left-[7px] top-3.5 p-0 bg-gray-950 border border-gray-950 hover:bg-green-500/20 hover:border-green-500/40 rounded transition-all duration-200 z-10 flex items-center justify-center w-3.5 h-3.5"
+                                      >
+                                        {isExpanded ? (
+                                          <ChevronDown className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                        ) : (
+                                          <ChevronRight className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                        )}
+                                      </button>
+                                    )}
+                                    
+                                    {/* Primary RT with count badge */}
+                                    <div className="flex items-center gap-1">
+                                      <div className="flex-1">{renderRTButton(primaryRT)}</div>
+                                    </div>
+                                    
+                                    {/* Expanded older versions */}
+                                    {hasOthers && isExpanded && otherRTs.map((rtS: any) => renderRTButton(rtS, true))}
+                                  </div>
+                                );
+                              })()}
                               
                               {/* RT Dose Series nested under CT - after RT structures */}
                               {doseSeries && doseSeries.length > 0 && doseSeries.filter((doseS: any) => 
@@ -2027,36 +2136,85 @@ export function SeriesSelector({
                                             )}
                                           </div>
                                         </div>
-                                        {/* RT Structure nested under this secondary CT */}
-                                        {rtSeries && rtSeries.filter((rtS: any) => rtS.referencedSeriesId === ctS.id).length > 0 && (
-                                          <div className="ml-3 space-y-1 border-l-2 border-green-500/30 pl-2 mt-1">
-                                            {rtSeries.filter((rtS: any) => rtS.referencedSeriesId === ctS.id).map((rtS: any) => (
-                                              <Button
-                                                key={rtS.id}
-                                                variant="ghost"
-                                                className={cn(
-                                                  "group w-full px-2 py-1 min-h-7 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
-                                                  selectedRTSeries?.id === rtS.id 
-                                                    ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
-                                                    : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
-                                                )}
-                                                onClick={() => handleRTSeriesSelect(rtS)}
-                                              >
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                  <Badge className={cn("flex-shrink-0 text-[10px] px-1.5", pillClassForModality('RT'))}>
-                                                    RT
-                                                  </Badge>
-                                                  <span className={cn(
-                                                    "truncate text-[11px] leading-tight",
-                                                    selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
-                                                  )}>
-                                                    {rtS.seriesDescription || 'Structure Set'}
-                                                  </span>
-                                                </div>
-                                              </Button>
-                                            ))}
-                                          </div>
-                                        )}
+                                        {/* RT Structure nested under this secondary CT - with chevron on line */}
+                                        {(() => {
+                                          const { primary: primaryRT, others: otherRTs } = getGroupedRTSeriesForCT(ctS.id);
+                                          if (!primaryRT) return null;
+                                          
+                                          const hasOthers = otherRTs.length > 0;
+                                          const isExpanded = expandedRTGroups.has(ctS.id);
+                                          
+                                          return (
+                                            <div className="relative ml-3 space-y-1 border-l-2 border-green-500/30 pl-2 mt-1">
+                                              {/* Chevron positioned on the green line */}
+                                              {hasOthers && (
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleRTGroupExpanded(ctS.id);
+                                                  }}
+                                                  className="absolute -left-[7px] top-2.5 p-0 bg-gray-950 border border-gray-950 hover:bg-green-500/20 hover:border-green-500/40 rounded transition-all duration-200 z-10 flex items-center justify-center w-3.5 h-3.5"
+                                                >
+                                                  {isExpanded ? (
+                                                    <ChevronDown className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                                  ) : (
+                                                    <ChevronRight className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                                  )}
+                                                </button>
+                                              )}
+                                              
+                                              {/* Primary RT */}
+                                              <div className="flex items-center gap-1">
+                                                <Button
+                                                  variant="ghost"
+                                                  className={cn(
+                                                    "group flex-1 px-2 py-1 min-h-7 text-left justify-between text-xs leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                                    selectedRTSeries?.id === primaryRT.id 
+                                                      ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                                      : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
+                                                  )}
+                                                  onClick={() => handleRTSeriesSelect(primaryRT)}
+                                                >
+                                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <Badge className={cn("flex-shrink-0 text-[10px] px-1.5", pillClassForModality('RT'))}>
+                                                      RT
+                                                    </Badge>
+                                                    <span className={cn(
+                                                      "truncate text-[11px] leading-tight",
+                                                      selectedRTSeries?.id === primaryRT.id ? "text-green-200" : "text-gray-300"
+                                                    )}>
+                                                      {primaryRT.seriesDescription || 'Structure Set'}
+                                                    </span>
+                                                  </div>
+                                                </Button>
+                                              </div>
+                                              
+                                              {/* Expanded older versions */}
+                                              {hasOthers && isExpanded && otherRTs.map((rtS: any) => (
+                                                <Button
+                                                  key={rtS.id}
+                                                  variant="ghost"
+                                                  className={cn(
+                                                    "group w-full px-2 py-1 min-h-6 text-left justify-between text-[10px] leading-3 rounded-lg transition-all duration-150 border backdrop-blur-sm",
+                                                    selectedRTSeries?.id === rtS.id 
+                                                      ? 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200' 
+                                                      : 'bg-gray-800/10 border-transparent hover:bg-gray-800/30 hover:border-gray-700/20 text-gray-400'
+                                                  )}
+                                                  onClick={() => handleRTSeriesSelect(rtS)}
+                                                >
+                                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <Badge className={cn("flex-shrink-0 text-[9px] px-1 opacity-70", pillClassForModality('RT'))}>
+                                                      RT
+                                                    </Badge>
+                                                    <span className="truncate text-[10px] leading-tight text-gray-400">
+                                                      {rtS.seriesDescription || 'Structure Set'}
+                                                    </span>
+                                                  </div>
+                                                </Button>
+                                              ))}
+                                            </div>
+                                          );
+                                        })()}
                                         </div>
                                       );
                                     })}
@@ -2489,7 +2647,6 @@ export function SeriesSelector({
                                      );
 
                                      const ctCards = ctSiblings.map((ctS) => {
-                                       const rtForCt = (rtSeries || []).filter((rtS: any) => rtS.referencedSeriesId === ctS.id);
                                        const loadingState = secondaryLoadingStates?.get(ctS.id);
                                        const isCurrentlyLoading = currentlyLoadingSecondary === ctS.id;
                                        const progress = Math.max(0, Math.min(100, loadingState?.progress ?? 0));
@@ -2641,73 +2798,118 @@ export function SeriesSelector({
                                              </div>
                                            </div>
 
-                                          {/* RT Structure Series nested below */}
-                                          {rtForCt.length > 0 && rtForCt.map((rtS: any) => {
-                                            const hasSuperstructures = rtSeriesWithSuperstructures.has(rtS.id);
-                                            return (
-                                            <div key={rtS.id} className="pl-3">
-                                              <Button
-                                                variant={selectedRTSeries?.id === rtS.id ? 'default' : 'ghost'}
-                                                className={cn(
-                                                  "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 border rounded-lg transition-all duration-150 backdrop-blur-sm",
-                                                  selectedRTSeries?.id === rtS.id
-                                                    ? hasSuperstructures
-                                                      ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20 text-gray-200'
-                                                      : 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200'
-                                                    : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
-                                                )}
-                                                onClick={() => handleRTSeriesSelect(rtS)}
-                                              >
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                  <Badge variant="outline" className={cn(
-                                                    "flex-shrink-0",
-                                                    pillClassForModality('RT')
-                                                  )}>
-                                                    RT
-                                                  </Badge>
-                                                  <span className={cn(
-                                                    "truncate text-xs leading-tight",
-                                                    selectedRTSeries?.id === rtS.id ? "text-green-200" : "text-gray-300"
-                                                  )}>{rtS.seriesDescription || 'Structure Set'}</span>
-                                                  {hasSuperstructures && (
-                                                    <Tooltip>
-                                                      <TooltipTrigger asChild>
-                                                        <Boxes className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                        <p className="text-xs">Contains superstructures</p>
-                                                      </TooltipContent>
-                                                    </Tooltip>
+                                          {/* RT Structure Series nested below - with accordion */}
+                                          {(() => {
+                                            const { primary: primaryRT, others: otherRTs } = getGroupedRTSeriesForCT(ctS.id);
+                                            if (!primaryRT) return null;
+                                            
+                                            const hasOthers = otherRTs.length > 0;
+                                            const isExpanded = expandedRTGroups.has(ctS.id);
+                                            const hasSuperstructures = rtSeriesWithSuperstructures.has(primaryRT.id);
+                                            
+                                            const renderRTButton = (rtS: any, isNested = false) => {
+                                              const hasSS = rtSeriesWithSuperstructures.has(rtS.id);
+                                              return (
+                                                <Button
+                                                  variant={selectedRTSeries?.id === rtS.id ? 'default' : 'ghost'}
+                                                  className={cn(
+                                                    "group w-full px-2 py-1.5 min-h-9 text-left justify-between text-xs leading-3 border rounded-lg transition-all duration-150 backdrop-blur-sm",
+                                                    selectedRTSeries?.id === rtS.id
+                                                      ? hasSS
+                                                        ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/60 shadow-md shadow-blue-500/20 text-gray-200'
+                                                        : 'bg-gradient-to-r from-green-500/20 to-green-600/10 border-green-400/60 shadow-md shadow-green-500/20 text-gray-200'
+                                                      : isNested
+                                                        ? 'bg-gray-800/10 border-transparent hover:bg-gray-800/30 hover:border-gray-700/20 text-gray-400'
+                                                        : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30 text-gray-300'
                                                   )}
+                                                  onClick={() => handleRTSeriesSelect(rtS)}
+                                                >
+                                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <Badge variant="outline" className={cn(
+                                                      "flex-shrink-0",
+                                                      pillClassForModality('RT'),
+                                                      isNested && "opacity-70"
+                                                    )}>
+                                                      RT
+                                                    </Badge>
+                                                    <span className={cn(
+                                                      "truncate text-xs leading-tight",
+                                                      selectedRTSeries?.id === rtS.id ? "text-green-200" : isNested ? "text-gray-400" : "text-gray-300"
+                                                    )}>{rtS.seriesDescription || 'Structure Set'}</span>
+                                                    {hasSS && (
+                                                      <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                          <Boxes className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                          <p className="text-xs">Contains superstructures</p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    )}
+                                                  </div>
+                                                  
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <div
+                                                        className={`flex-shrink-0 transition-colors p-1 ${
+                                                          seriesHistoryStatus.get(rtS.id)
+                                                            ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
+                                                            : 'text-gray-600 cursor-not-allowed'
+                                                        }`}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          if (seriesHistoryStatus.get(rtS.id)) {
+                                                            setHistorySeriesId(rtS.id);
+                                                            setShowHistoryModal(true);
+                                                          }
+                                                        }}
+                                                      >
+                                                        <History className="h-3.5 w-3.5" />
+                                                      </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </Button>
+                                              );
+                                            };
+                                            
+                                            return (
+                                              <div className="relative pl-3 space-y-1 border-l-2 border-green-500/40">
+                                                {/* Chevron positioned on the green line */}
+                                                {hasOthers && (
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      toggleRTGroupExpanded(ctS.id);
+                                                    }}
+                                                    className="absolute -left-[7px] top-3.5 p-0 bg-gray-950 border border-gray-950 hover:bg-green-500/20 hover:border-green-500/40 rounded transition-all duration-200 z-10 flex items-center justify-center w-3.5 h-3.5"
+                                                  >
+                                                    {isExpanded ? (
+                                                      <ChevronDown className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                                    ) : (
+                                                      <ChevronRight className="h-3 w-3 text-green-500 transition-transform duration-200" strokeWidth={4} />
+                                                    )}
+                                                  </button>
+                                                )}
+                                                
+                                                {/* Primary RT with count badge */}
+                                                <div className="flex items-center gap-1">
+                                                  <div className="flex-1 min-w-0">
+                                                    {renderRTButton(primaryRT)}
+                                                  </div>
                                                 </div>
                                                 
-                                                <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                    <div
-                                                      className={`flex-shrink-0 transition-colors p-1 ${
-                                                        seriesHistoryStatus.get(rtS.id)
-                                                          ? 'text-blue-400 hover:text-blue-300 cursor-pointer'
-                                                          : 'text-gray-600 cursor-not-allowed'
-                                                      }`}
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (seriesHistoryStatus.get(rtS.id)) {
-                                                          setHistorySeriesId(rtS.id);
-                                                          setShowHistoryModal(true);
-                                                        }
-                                                      }}
-                                                    >
-                                                      <History className="h-3.5 w-3.5" />
-                                                    </div>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                    <p>{seriesHistoryStatus.get(rtS.id) ? 'View History' : 'No history available'}</p>
-                                                  </TooltipContent>
-                                                </Tooltip>
-                                              </Button>
-                                            </div>
+                                                {/* Expanded older versions */}
+                                                {hasOthers && isExpanded && otherRTs.map((rtS: any) => (
+                                                  <div key={rtS.id}>
+                                                    {renderRTButton(rtS, true)}
+                                                  </div>
+                                                ))}
+                                              </div>
                                             );
-                                          })}
+                                          })()}
                                         </div>
                                       );
                                      });
@@ -2853,6 +3055,18 @@ export function SeriesSelector({
               <AccordionContent className="px-4 pb-4 flex flex-col h-full">
                 {rtStructures?.structures ? (
                   <>
+                    {/* DEBUG: Log structures when rendering */}
+                    {(() => {
+                      console.warn('🔍 DEBUG: Rendering structures:', {
+                        seriesId: rtStructures?.seriesId,
+                        structureCount: rtStructures?.structures?.length,
+                        structureNames: rtStructures?.structures?.map((s: any) => s.structureName),
+                        roiNumbers: rtStructures?.structures?.map((s: any) => s.roiNumber),
+                        uniqueNames: new Set(rtStructures?.structures?.map((s: any) => s.structureName)).size,
+                        uniqueRoiNumbers: new Set(rtStructures?.structures?.map((s: any) => s.roiNumber)).size
+                      });
+                      return null;
+                    })()}
                     {/* Search Bar - Fixed at top */}
                     <div className="relative mb-2 mr-1 flex-shrink-0">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
@@ -2939,21 +3153,103 @@ export function SeriesSelector({
                         </TooltipContent>
                       </Tooltip>
                       
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowNewStructureDialog(true)}
-                            className="bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
+                      <Popover open={showNewStructureDialog} onOpenChange={setShowNewStructureDialog}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 rounded-lg backdrop-blur-sm transition-all duration-150"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </PopoverTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border-green-400/30">
+                            <p>Create new structure</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <PopoverContent 
+                          side="right" 
+                          align="start" 
+                          sideOffset={8}
+                          className="w-[280px] p-0 bg-transparent border-0 shadow-none z-[100]"
+                        >
+                          <div 
+                            className="rounded-xl backdrop-blur-xl overflow-hidden"
+                            style={{
+                              background: 'linear-gradient(180deg, hsla(150, 15%, 12%, 0.98) 0%, hsla(150, 10%, 8%, 0.99) 100%)',
+                              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(34, 197, 94, 0.2), 0 0 40px -15px rgba(34, 197, 94, 0.15)',
+                            }}
                           >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gradient-to-br from-green-600/95 via-green-500/95 to-green-600/95 border-green-400/30">
-                          <p>Create new structure</p>
-                        </TooltipContent>
-                      </Tooltip>
+                            {/* Header */}
+                            <div className="px-3 py-2.5 border-b border-white/[0.06] flex items-center gap-2">
+                              <Plus className="w-4 h-4 text-green-400" />
+                              <span className="text-sm font-medium text-white">New Structure</span>
+                            </div>
+
+                            {/* Form */}
+                            <div className="p-3 space-y-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-gray-400">Name</Label>
+                                <Input
+                                  value={newStructureName}
+                                  onChange={(e) => setNewStructureName(e.target.value)}
+                                  className="h-8 bg-black/20 border-white/[0.08] text-white text-sm placeholder-gray-500 focus:border-green-500/40 rounded-lg"
+                                  placeholder="e.g., PTV_70, GTV"
+                                  autoFocus
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-gray-400">Color</Label>
+                                <ColorSwatchInput 
+                                  color={newStructureColor} 
+                                  onChange={setNewStructureColor}
+                                  className="w-full"
+                                />
+                              </div>
+
+                              {/* Preview */}
+                              {newStructureName && (
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/[0.06]">
+                                  <div 
+                                    className="w-3 h-3 rounded border border-white/30"
+                                    style={{ backgroundColor: newStructureColor }}
+                                  />
+                                  <span className="text-xs font-medium text-white truncate flex-1">{newStructureName}</span>
+                                  <span className="text-[10px] text-green-400/70">New</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-3 py-2.5 border-t border-white/[0.06] flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setShowNewStructureDialog(false);
+                                  setNewStructureName('');
+                                  setNewStructureColor('#FF0000');
+                                }}
+                                className="h-7 px-2.5 text-xs text-gray-400 hover:text-white hover:bg-white/5"
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                size="sm"
+                                onClick={handleCreateNewStructure}
+                                disabled={!newStructureName.trim()}
+                                className="h-7 px-3 text-xs bg-green-600/20 border border-green-500/40 text-green-400 hover:bg-green-600/30 disabled:opacity-40 disabled:cursor-not-allowed rounded-md"
+                              >
+                                Create
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -4002,7 +4298,7 @@ export function SeriesSelector({
       </Card>
 
       {/* Window/Level Controls - Redesigned */}
-      <Card className="bg-gray-950/95 border border-gray-700/50 rounded-xl overflow-hidden shadow-xl">
+      <Card className="mt-auto bg-gray-950/95 border border-gray-700/50 rounded-xl overflow-hidden shadow-xl">
         <CardContent className="p-0">
           <Accordion 
             type="single" 
@@ -4116,70 +4412,6 @@ export function SeriesSelector({
         </CardContent>
       </Card>
 
-      {/* New Structure Dialog - Glassmorphic Styling */}
-      <Dialog open={showNewStructureDialog} onOpenChange={setShowNewStructureDialog}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900/95 border border-gray-700/50 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-white text-lg font-semibold">Create New Structure</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Add a new anatomical structure to the current RT Structure Set.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="structure-name" className="text-right text-gray-300">
-                Name
-              </Label>
-              <Input
-                id="structure-name"
-                value={newStructureName}
-                onChange={(e) => setNewStructureName(e.target.value)}
-                className="col-span-3 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-500 focus:bg-gray-800/70 focus:border-green-500/50 backdrop-blur-sm"
-                placeholder="e.g., LIVER, HEART, PTV"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="structure-color" className="text-right text-gray-300">
-                Color
-              </Label>
-              <div className="col-span-3 flex items-center gap-2">
-                <div className="relative">
-                  <Input
-                    id="structure-color"
-                    type="color"
-                    value={newStructureColor}
-                    onChange={(e) => setNewStructureColor(e.target.value)}
-                    className="w-20 h-10 p-1 cursor-pointer bg-gray-800/50 border-gray-600/50 rounded-lg"
-                  />
-                </div>
-                <span className="text-sm text-gray-400 bg-gray-800/30 px-3 py-1 rounded-lg backdrop-blur-sm border border-gray-700/30">
-                  {newStructureColor.toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowNewStructureDialog(false);
-                setNewStructureName('');
-                setNewStructureColor('#FF0000');
-              }}
-              className="bg-gray-800/50 border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:text-white backdrop-blur-sm"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreateNewStructure}
-              className="bg-green-600/20 border border-green-500/30 text-green-400 hover:bg-green-600/30 hover:text-green-300 backdrop-blur-sm transition-all duration-150"
-            >
-              Create Structure
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Save As New Dialog */}
       {saveAsNewSeriesId && selectedRTSeries && (
         <SaveAsNewDialog
@@ -4188,30 +4420,49 @@ export function SeriesSelector({
           seriesId={saveAsNewSeriesId}
           currentLabel={selectedRTSeries.seriesDescription || 'RT Structure Set'}
           structureCount={rtStructures?.structures?.length || 0}
-          onSaveSuccess={(newSeriesId) => {
-            console.log('New RT structure set created:', newSeriesId);
+          structures={rtStructures?.structures}
+          onSaveSuccess={async (newSeriesId) => {
+            console.log('✅ New RT structure set created with ID:', newSeriesId);
+            
+            // Show success toast
+            toast({
+              title: 'Structure set created',
+              description: 'New structure set saved successfully',
+            });
+            
             // Reload RT series to show the new structure set
-            if (studyIds && studyIds.length > 0) {
-              const loadRTForStudy = async (studyId: number) => {
-                try {
-                  const response = await fetch(`/api/studies/${studyId}/rt-structures`);
+            const studyIdsToLoad = studyIds || (studyId ? [studyId] : []);
+            if (studyIdsToLoad.length > 0) {
+              try {
+                // Small delay to ensure server has finished creating the new series
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                for (const id of studyIdsToLoad) {
+                  const response = await fetch(`/api/studies/${id}/rt-structures`);
                   if (response.ok) {
                     const rtData = await response.json();
+                    console.log(`📥 Reloaded ${rtData.length} RT series for study ${id}`);
                     setRTSeries(prev => {
-                      const filtered = prev.filter((rt: any) => rt.studyId !== studyId);
-                      return [...filtered, ...rtData];
+                      // Remove old entries for this study and add new ones
+                      const filtered = prev.filter((rt: any) => rt.studyId !== id);
+                      const merged = [...filtered, ...rtData];
+                      // Deduplicate by ID
+                      const unique = new Map(merged.map(s => [s.id, s]));
+                      return Array.from(unique.values());
                     });
                   }
-                } catch (error) {
-                  console.error('Error reloading RT structures:', error);
                 }
-              };
-              studyIds.forEach(id => loadRTForStudy(id));
+              } catch (error) {
+                console.error('Error reloading RT structures:', error);
+              }
             }
+            
             // Refresh history status for the original series (it now has history)
             if (saveAsNewSeriesId) {
               setSeriesHistoryStatus(prev => new Map(prev).set(saveAsNewSeriesId, true));
             }
+            // Also mark the new series as having history
+            setSeriesHistoryStatus(prev => new Map(prev).set(newSeriesId, true));
           }}
         />
       )}

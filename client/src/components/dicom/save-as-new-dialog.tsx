@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  DialogOverlay,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save, Loader2 } from 'lucide-react';
+import { Copy, Loader2, AlertCircle, Layers } from 'lucide-react';
 
 interface SaveAsNewDialogProps {
   open: boolean;
@@ -18,6 +15,7 @@ interface SaveAsNewDialogProps {
   seriesId: number;
   currentLabel: string;
   structureCount: number;
+  structures?: any[] | null;
   onSaveSuccess: (newSeriesId: number) => void;
 }
 
@@ -27,11 +25,19 @@ export function SaveAsNewDialog({
   seriesId,
   currentLabel,
   structureCount,
+  structures,
   onSaveSuccess
 }: SaveAsNewDialogProps) {
   const [newLabel, setNewLabel] = useState(`${currentLabel} (Copy)`);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setNewLabel(`${currentLabel} (Copy)`);
+      setError(null);
+    }
+  }, [open, currentLabel]);
 
   const handleSave = async () => {
     if (!newLabel.trim()) {
@@ -45,11 +51,10 @@ export function SaveAsNewDialog({
     try {
       const response = await fetch(`/api/rt-structures/${seriesId}/save-as-new`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          newLabel: newLabel.trim()
+          newLabel: newLabel.trim(),
+          structures: structures || undefined
         }),
       });
 
@@ -63,9 +68,6 @@ export function SaveAsNewDialog({
       
       onSaveSuccess(data.newSeriesId);
       onOpenChange(false);
-      
-      // Reset form
-      setNewLabel(`${currentLabel} (Copy)`);
     } catch (err) {
       console.error('Error creating new structure set:', err);
       setError(err instanceof Error ? err.message : 'Failed to create new structure set');
@@ -75,76 +77,100 @@ export function SaveAsNewDialog({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isSaving) {
+    if (e.key === 'Enter' && !isSaving && newLabel.trim()) {
       handleSave();
     }
   };
 
+  if (!open) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Save As New Structure Set</DialogTitle>
-          <DialogDescription>
-            Create a duplicate of the current RT structure set with a new name.
-            This will preserve the original set and create an independent copy.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="newLabel">New Structure Set Name</Label>
-            <Input
-              id="newLabel"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter new structure set name"
-              disabled={isSaving}
-              autoFocus
-            />
+      <DialogOverlay className="bg-black/60 backdrop-blur-sm" />
+      <DialogContent className="p-0 bg-transparent border-0 shadow-none w-[280px] max-w-[280px] [&>button]:hidden">
+        <div 
+          className="rounded-xl backdrop-blur-xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, hsla(210, 15%, 12%, 0.98) 0%, hsla(210, 10%, 8%, 0.99) 100%)',
+            boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.2), 0 0 40px -15px rgba(59, 130, 246, 0.15)',
+          }}
+        >
+          {/* Header */}
+          <div className="px-3 py-2.5 border-b border-white/[0.06] flex items-center gap-2">
+            <Copy className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-medium text-white">Save As New</span>
           </div>
 
-          <div className="rounded-lg bg-muted p-3 space-y-1">
-            <p className="text-sm font-medium">Current Structure Set:</p>
-            <p className="text-sm text-muted-foreground">{currentLabel}</p>
-            <p className="text-sm text-muted-foreground">
-              Contains {structureCount} structure{structureCount !== 1 ? 's' : ''}
-            </p>
-          </div>
-
-          {error && (
-            <div className="rounded-lg bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">{error}</p>
+          {/* Form */}
+          <div className="p-3 space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Name</Label>
+              <Input
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="h-8 bg-black/20 border-white/[0.08] text-white text-sm placeholder-gray-500 focus:border-blue-500/40 rounded-lg"
+                placeholder="Enter name for copy"
+                disabled={isSaving}
+                autoFocus
+              />
             </div>
-          )}
-        </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !newLabel.trim()}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save As New
-              </>
+            {/* Current Set Info */}
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/[0.06]">
+              <Layers className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{currentLabel}</p>
+                <p className="text-[10px] text-gray-500">{structureCount} structure{structureCount !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {newLabel.trim() && newLabel.trim() !== currentLabel && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/[0.06]">
+                <div className="w-3 h-3 rounded bg-blue-500/50 border border-blue-400/30" />
+                <span className="text-xs font-medium text-white truncate flex-1">{newLabel}</span>
+                <span className="text-[10px] text-blue-400/70">New</span>
+              </div>
             )}
-          </Button>
-        </DialogFooter>
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                <p className="text-[11px] text-red-300">{error}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-3 py-2.5 border-t border-white/[0.06] flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+              className="h-7 px-2.5 text-xs text-gray-400 hover:text-white hover:bg-white/5"
+            >
+              Cancel
+            </Button>
+            <Button 
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving || !newLabel.trim()}
+              className="h-7 px-3 text-xs bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30 disabled:opacity-40 disabled:cursor-not-allowed rounded-md"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create'
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

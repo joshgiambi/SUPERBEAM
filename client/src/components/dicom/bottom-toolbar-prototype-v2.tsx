@@ -35,6 +35,9 @@ import {
   X,
   CircuitBoard,
   Settings2,
+  Save,
+  Check,
+  Loader2,
 } from 'lucide-react';
 
 interface BottomToolbarPrototypeV2Props {
@@ -78,6 +81,10 @@ interface BottomToolbarPrototypeV2Props {
   // FuseBox props - appears when fusion is active
   hasFusionActive?: boolean;     // Is a fusion secondary currently loaded/displayed?
   onFuseBoxOpen?: () => void;    // Open the FuseBox popup for fusion editing
+  // Save props
+  onSaveSnapshot?: () => void;   // Save current state to history
+  saveStatus?: 'idle' | 'saving' | 'saved' | 'error';  // Current save status
+  lastSaved?: Date | null;       // Last saved timestamp
 }
 
 export function BottomToolbarPrototypeV2({
@@ -120,6 +127,10 @@ export function BottomToolbarPrototypeV2({
   // FuseBox props
   hasFusionActive = false,
   onFuseBoxOpen,
+  // Save props
+  onSaveSnapshot,
+  saveStatus = 'idle',
+  lastSaved = null,
 }: BottomToolbarPrototypeV2Props) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -391,6 +402,40 @@ export function BottomToolbarPrototypeV2({
                 </div>
               )}
             </div>
+
+            <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+            {/* Save Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onSaveSnapshot}
+                  disabled={saveStatus === 'saving'}
+                  className={cn(
+                    'h-8 px-3 flex items-center gap-1.5 rounded-lg transition-all text-sm font-medium',
+                    saveStatus === 'saving' 
+                      ? 'bg-blue-500/20 text-blue-300 cursor-wait'
+                      : saveStatus === 'saved'
+                      ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  )}
+                >
+                  {saveStatus === 'saving' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : saveStatus === 'saved' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  <span>Save</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-gray-900/95 border-gray-700 text-xs">
+                {saveStatus === 'saved' && lastSaved 
+                  ? `Last saved: ${lastSaved.toLocaleTimeString()}`
+                  : 'Save structures to history'}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Main Toolbar with Contour/Boolean/Margin attached */}

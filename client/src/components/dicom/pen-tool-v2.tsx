@@ -110,6 +110,25 @@ export default function PenToolV2({
   const [firstPointMode, setFirstPointMode] = useState<'inside' | 'outside' | null>(null);
   const [hasCrossedBoundary, setHasCrossedBoundary] = useState(false);
   const [shouldComplete, setShouldComplete] = useState(false);
+  
+  // Eclipse-style vertex morphing state
+  const [hoveredVertex, setHoveredVertex] = useState<{ contourIdx: number; pointIdx: number } | null>(null);
+  const [isDraggingVertex, setIsDraggingVertex] = useState(false);
+  const [draggedVertex, setDraggedVertex] = useState<{
+    contourIdx: number;
+    pointIdx: number;
+    originalContour: number[];
+    originalSlicePosition: number;
+  } | null>(null);
+  // Live preview of morphed contour (world coordinates)
+  const [morphPreviewContour, setMorphPreviewContour] = useState<number[] | null>(null);
+  
+  // Morphing constants
+  const VERTEX_HIT_RADIUS = 12; // pixels - how close to click on a vertex
+  const CONTOUR_HOVER_DISTANCE = 20; // pixels - how close to contour to show vertices
+  const INFLUENCE_RADIUS_WORLD = 30; // mm - soft falloff radius for nearby vertices
+  const VERTEX_DISPLAY_RADIUS = 100; // pixels - only show vertices within this radius of cursor
+  const MIN_VERTEX_SPACING = 25; // pixels - minimum spacing between displayed vertices
 
   // Get contours at current slice
   const getContoursAtCurrentSlice = useCallback(() => {
@@ -237,6 +256,89 @@ export default function PenToolV2({
     
     return { x: canvasX, y: canvasY };
   }, [imageMetadata, ctTransform]);
+
+  // Find the nearest vertex to the cursor (for Eclipse-style morphing)
+  const findNearestVertex = useCallback((canvasX: number, canvasY: number): { contourIdx: number; pointIdx: number } | null => {
+    const contours = getContoursAtCurrentSlice();
+    if (contours.length === 0) return null;
+    
+    let nearestVertex: { contourIdx: number; pointIdx: number; distance: number } | null = null;
+    let isNearBoundary = false;
+    
+    // First, check if cursor is near any contour boundary
+    for (let contourIdx = 0; contourIdx < contours.length; contourIdx++) {
+      const contour = contours[contourIdx];
+      const points = contour.points;
+      if (!points || points.length < 9) continue;
+      
+      // Check distance to each edge segment
+      for (let i = 0; i < points.length; i += 3) {
+        const j = (i + 3) % points.length;
+        const p1 = worldToCanvas(points[i], points[i + 1]);
+        const p2 = worldToCanvas(points[j], points[j + 1]);
+        
+        // Distance from point to line segment
+        const A = canvasX - p1.x;
+        const B = canvasY - p1.y;
+        const C = p2.x - p1.x;
+        const D = p2.y - p1.y;
+        
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+        
+        if (lenSq !== 0) param = dot / lenSq;
+        
+        let xx, yy;
+        if (param < 0) {
+          xx = p1.x;
+          yy = p1.y;
+        } else if (param > 1) {
+          xx = p2.x;
+          yy = p2.y;
+        } else {
+          xx = p1.x + param * C;
+          yy = p1.y + param * D;
+        }
+        
+        const dx = canvasX - xx;
+        const dy = canvasY - yy;
+        const distToEdge = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distToEdge < CONTOUR_HOVER_DISTANCE) {
+          isNearBoundary = true;
+          break;
+        }
+      }
+      
+      if (isNearBoundary) break;
+    }
+    
+    // Only check for vertices if we're near a contour boundary
+    if (!isNearBoundary) return null;
+    
+    // Find the nearest vertex
+    for (let contourIdx = 0; contourIdx < contours.length; contourIdx++) {
+      const contour = contours[contourIdx];
+      const points = contour.points;
+      if (!points || points.length < 9) continue;
+      
+      for (let i = 0; i < points.length; i += 3) {
+        const canvasPos = worldToCanvas(points[i], points[i + 1]);
+        const dx = canvasX - canvasPos.x;
+        const dy = canvasY - canvasPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < VERTEX_HIT_RADIUS) {
+          if (!nearestVertex || distance < nearestVertex.distance) {
+            nearestVertex = { contourIdx, pointIdx: i, distance };
+          }
+        }
+      }
+    }
+    
+    return nearestVertex ? { contourIdx: nearestVertex.contourIdx, pointIdx: nearestVertex.pointIdx } : null;
+  }, [getContoursAtCurrentSlice, worldToCanvas, CONTOUR_HOVER_DISTANCE, VERTEX_HIT_RADIUS]);
 
   // Determine initial operation mode based on first click
   const determineInitialMode = useCallback((firstWorldPoint: Point): 'inside' | 'outside' => {
@@ -387,6 +489,24 @@ export default function PenToolV2({
     return '#00ff00';
   }, [selectedStructure, rtStructures]);
 
+  // Get lighter version of structure color for point outlines
+  const getLighterStructureColor = useCallback(() => {
+    if (!selectedStructure || !rtStructures?.structures) return 'rgba(144, 255, 144, 0.9)';
+    
+    const structure = rtStructures.structures.find(
+      (s: any) => s.roiNumber === selectedStructure
+    );
+    
+    if (structure?.color) {
+      const [r, g, b] = structure.color;
+      // Lighten by blending toward white (increase each channel by 40% toward 255)
+      const lighten = (c: number) => Math.min(255, Math.round(c + (255 - c) * 0.5));
+      return `rgb(${lighten(r)}, ${lighten(g)}, ${lighten(b)})`;
+    }
+    
+    return 'rgba(144, 255, 144, 0.9)';
+  }, [selectedStructure, rtStructures]);
+
   // Check if new polygon crosses existing contours
   const doesPolygonCrossExisting = useCallback((newVertices: Point[]): boolean => {
     const contours = getContoursAtCurrentSlice();
@@ -445,6 +565,27 @@ export default function PenToolV2({
     };
 
     if (event.button === 0) { // Left click
+      // ECLIPSE-STYLE: Check if clicking on an existing vertex for morphing
+      // Only do this if we're not already drawing a new polygon
+      if (vertices.length === 0) {
+        const nearVertex = findNearestVertex(canvasPoint.x, canvasPoint.y);
+        if (nearVertex) {
+          const contours = getContoursAtCurrentSlice();
+          const contour = contours[nearVertex.contourIdx];
+          if (contour && contour.points) {
+            console.log('🔷 Starting vertex drag at index', nearVertex.pointIdx);
+            setIsDraggingVertex(true);
+            setDraggedVertex({
+              contourIdx: nearVertex.contourIdx,
+              pointIdx: nearVertex.pointIdx,
+              originalContour: [...contour.points],
+              originalSlicePosition: contour.slicePosition
+            });
+            return; // Don't start a new polygon
+          }
+        }
+      }
+      
       if (isNearFirstVertex(canvasPoint) && vertices.length >= 3) {
         // Close polygon by clicking near first vertex
         setShouldComplete(true);
@@ -471,7 +612,7 @@ export default function PenToolV2({
         setShouldComplete(true);
       }
     }
-  }, [isActive, selectedStructure, vertices.length, firstPointMode, isNearFirstVertex, canvasToWorld, determineInitialMode]);
+  }, [isActive, selectedStructure, vertices.length, firstPointMode, isNearFirstVertex, canvasToWorld, determineInitialMode, findNearestVertex, getContoursAtCurrentSlice]);
 
   const handleMouseMove = useCallback(async (event: MouseEvent) => {
     if (!isActive || !canvasRef.current) return;
@@ -484,6 +625,58 @@ export default function PenToolV2({
     };
     
     setMousePosition(canvasPoint);
+    
+    // ECLIPSE-STYLE: Handle vertex dragging with soft falloff
+    if (isDraggingVertex && draggedVertex && selectedStructure && rtStructures?.structures) {
+      // Convert canvas position to world coordinates
+      const worldPos = canvasToWorld(canvasPoint.x, canvasPoint.y);
+      
+      // Create new contour with morphed vertices (preview only)
+      const newContour = [...draggedVertex.originalContour];
+      
+      // Get original dragged vertex position
+      const draggedX = draggedVertex.originalContour[draggedVertex.pointIdx];
+      const draggedY = draggedVertex.originalContour[draggedVertex.pointIdx + 1];
+      
+      // Calculate delta movement
+      const deltaX = worldPos.x - draggedX;
+      const deltaY = worldPos.y - draggedY;
+      
+      // Update dragged vertex to new position
+      newContour[draggedVertex.pointIdx] = worldPos.x;
+      newContour[draggedVertex.pointIdx + 1] = worldPos.y;
+      
+      // Apply soft falloff to nearby vertices (Eclipse-style morphing)
+      for (let i = 0; i < newContour.length; i += 3) {
+        if (i === draggedVertex.pointIdx) continue;
+        
+        const vx = draggedVertex.originalContour[i];
+        const vy = draggedVertex.originalContour[i + 1];
+        const distance = Math.sqrt((vx - draggedX) ** 2 + (vy - draggedY) ** 2);
+        
+        if (distance < INFLUENCE_RADIUS_WORLD && distance > 0) {
+          // Smooth falloff using cosine interpolation (smoother than linear)
+          const t = distance / INFLUENCE_RADIUS_WORLD;
+          const influence = 0.5 * (1 + Math.cos(Math.PI * t)); // Cosine falloff: 1 at center, 0 at edge
+          
+          newContour[i] += deltaX * influence;
+          newContour[i + 1] += deltaY * influence;
+        }
+      }
+      
+      // Save preview contour for rendering (don't update actual structure until mouse up)
+      setMorphPreviewContour(newContour);
+      
+      return; // Don't process other mouse move logic while dragging vertex
+    }
+    
+    // ECLIPSE-STYLE: Update hovered vertex when not drawing
+    if (!isDrawingContinuous && vertices.length === 0) {
+      const nearVertex = findNearestVertex(canvasPoint.x, canvasPoint.y);
+      setHoveredVertex(nearVertex);
+    } else {
+      setHoveredVertex(null);
+    }
     
     // Check if crossing boundary when drawing from outside
     if (firstPointMode === 'outside' && vertices.length > 1 && !hasCrossedBoundary) {
@@ -523,13 +716,48 @@ export default function PenToolV2({
         setVertices((prev: Point[]) => [...prev, canvasPoint]);
       }
     }
-  }, [isActive, isDrawingContinuous, vertices, isNearFirstVertex]);
+  }, [isActive, isDrawingContinuous, vertices, isNearFirstVertex, isDraggingVertex, draggedVertex, 
+      selectedStructure, rtStructures, canvasToWorld, onContourUpdate, findNearestVertex,
+      firstPointMode, hasCrossedBoundary, getContoursAtCurrentSlice, INFLUENCE_RADIUS_WORLD]);
 
   const handleMouseUp = useCallback((event: MouseEvent) => {
     if (event.button === 0) { // Left button
       setIsDrawingContinuous(false);
+      
+      // ECLIPSE-STYLE: Complete vertex drag and apply the morphed contour
+      if (isDraggingVertex && draggedVertex && morphPreviewContour && selectedStructure && rtStructures?.structures) {
+        console.log('🔷 Completing vertex drag - applying morphed contour');
+        
+        const structure = rtStructures.structures.find((s: any) => s.roiNumber === selectedStructure);
+        if (structure) {
+          // Find and update the contour in the structure with the preview
+          const tolerance = 1.5;
+          const contourIndex = structure.contours.findIndex((c: any) => 
+            Math.abs(c.slicePosition - draggedVertex.originalSlicePosition) <= tolerance
+          );
+          
+          if (contourIndex !== -1) {
+            structure.contours[contourIndex] = {
+              ...structure.contours[contourIndex],
+              points: morphPreviewContour,
+              numberOfPoints: morphPreviewContour.length / 3
+            };
+            
+            // Trigger save
+            onContourUpdate({
+              action: "update_rt_structures",
+              structureId: selectedStructure
+            });
+          }
+        }
+        
+        // Clear states
+        setIsDraggingVertex(false);
+        setDraggedVertex(null);
+        setMorphPreviewContour(null);
+      }
     }
-  }, []);
+  }, [isDraggingVertex, draggedVertex, morphPreviewContour, onContourUpdate, selectedStructure, rtStructures]);
 
   const handleContextMenu = useCallback((event: Event) => {
     if (isActive) {
@@ -832,6 +1060,11 @@ export default function PenToolV2({
     setHasCrossedBoundary(false);
     setMousePosition(null);
     setShouldComplete(false);
+    // Reset morphing state on slice change
+    setHoveredVertex(null);
+    setIsDraggingVertex(false);
+    setDraggedVertex(null);
+    setMorphPreviewContour(null);
     // Clear overlay canvas when slice changes
     if (overlayCanvasRef.current) {
       const ctx = overlayCanvasRef.current.getContext('2d');
@@ -880,8 +1113,236 @@ export default function PenToolV2({
     ctx.clearRect(0, 0, overlay.width, overlay.height);
     
     const structureColor = getStructureColor();
+    const lighterColor = getLighterStructureColor();
+    const pulseTime = Date.now() / 150; // For animations
     
-    // Draw completed vertices
+    // ECLIPSE-STYLE: Draw vertex indicators when hovering near contour
+    if ((hoveredVertex || isDraggingVertex) && vertices.length === 0) {
+      const contours = getContoursAtCurrentSlice();
+      
+      // If dragging, draw the LIVE PREVIEW of the morphed contour
+      if (isDraggingVertex && morphPreviewContour && morphPreviewContour.length >= 9) {
+        // Draw the morphed contour preview (bright, prominent)
+        ctx.strokeStyle = structureColor;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        
+        for (let i = 0; i < morphPreviewContour.length; i += 3) {
+          const canvasPos = worldToCanvas(morphPreviewContour[i], morphPreviewContour[i + 1]);
+          if (i === 0) {
+            ctx.moveTo(canvasPos.x, canvasPos.y);
+          } else {
+            ctx.lineTo(canvasPos.x, canvasPos.y);
+          }
+        }
+        ctx.closePath();
+        ctx.stroke();
+        
+        // Draw semi-transparent fill to make the shape more visible
+        ctx.fillStyle = structureColor;
+        ctx.globalAlpha = 0.15;
+        ctx.fill();
+        
+        // Draw vertices on the preview contour
+        ctx.globalAlpha = 1;
+        for (let i = 0; i < morphPreviewContour.length; i += 3) {
+          const canvasPos = worldToCanvas(morphPreviewContour[i], morphPreviewContour[i + 1]);
+          const isDraggedPoint = draggedVertex && draggedVertex.pointIdx === i;
+          
+          if (isDraggedPoint) {
+            // Dragged vertex - large pulsing white circle with glow
+            const pulseSize = 10 + Math.sin(pulseTime) * 2;
+            
+            // Glow effect
+            ctx.shadowColor = structureColor;
+            ctx.shadowBlur = 15;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = structureColor;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(canvasPos.x, canvasPos.y, pulseSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+          } else {
+            // Check if this vertex is within influence radius (show it moving)
+            const draggedX = draggedVertex?.originalContour[draggedVertex.pointIdx] || 0;
+            const draggedY = draggedVertex?.originalContour[draggedVertex.pointIdx + 1] || 0;
+            const origX = draggedVertex?.originalContour[i] || 0;
+            const origY = draggedVertex?.originalContour[i + 1] || 0;
+            const distFromDragged = Math.sqrt((origX - draggedX) ** 2 + (origY - draggedY) ** 2);
+            const isInfluenced = distFromDragged < INFLUENCE_RADIUS_WORLD;
+            
+            // Vertex dot - larger with lighter outline for visibility
+            ctx.fillStyle = isInfluenced ? '#ffff00' : structureColor;
+            ctx.strokeStyle = lighterColor;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(canvasPos.x, canvasPos.y, isInfluenced ? 5 : 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+        
+        // Draw influence radius circle around dragged point
+        if (draggedVertex && mousePosition) {
+          const dragCanvasPos = worldToCanvas(
+            morphPreviewContour[draggedVertex.pointIdx], 
+            morphPreviewContour[draggedVertex.pointIdx + 1]
+          );
+          ctx.strokeStyle = lighterColor;
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.3;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          const pixelSpacing = imageMetadata?.pixelSpacing?.split('\\').map(Number) || [1, 1];
+          const avgSpacing = (pixelSpacing[0] + pixelSpacing[1]) / 2;
+          const transform = ctTransform?.current || { scale: 1 };
+          const influenceRadiusCanvas = (INFLUENCE_RADIUS_WORLD / avgSpacing) * transform.scale;
+          ctx.arc(dragCanvasPos.x, dragCanvasPos.y, influenceRadiusCanvas, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        
+      } else {
+        // Not dragging - show hover state with vertex indicators
+        // Only show vertices near the cursor, spaced apart for easy selection
+        
+        if (!mousePosition) {
+          ctx.globalAlpha = 1;
+          return;
+        }
+        
+        for (let contourIdx = 0; contourIdx < contours.length; contourIdx++) {
+          const contour = contours[contourIdx];
+          const points = contour.points;
+          if (!points || points.length < 9) continue;
+          
+          // Draw subtle contour outline near cursor
+          ctx.strokeStyle = structureColor;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          
+          for (let i = 0; i < points.length; i += 3) {
+            const canvasPos = worldToCanvas(points[i], points[i + 1]);
+            if (i === 0) {
+              ctx.moveTo(canvasPos.x, canvasPos.y);
+            } else {
+              ctx.lineTo(canvasPos.x, canvasPos.y);
+            }
+          }
+          ctx.closePath();
+          ctx.stroke();
+          
+          // Calculate which vertices to display:
+          // 1. Only within VERTEX_DISPLAY_RADIUS of cursor
+          // 2. Spaced at least MIN_VERTEX_SPACING apart
+          // 3. Always include the hovered vertex (closest to cursor)
+          
+          const verticesToDraw: { idx: number; canvasPos: { x: number; y: number }; distToCursor: number }[] = [];
+          
+          // First pass: collect vertices within display radius
+          for (let i = 0; i < points.length; i += 3) {
+            const canvasPos = worldToCanvas(points[i], points[i + 1]);
+            const dx = canvasPos.x - mousePosition.x;
+            const dy = canvasPos.y - mousePosition.y;
+            const distToCursor = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distToCursor < VERTEX_DISPLAY_RADIUS) {
+              verticesToDraw.push({ idx: i, canvasPos, distToCursor });
+            }
+          }
+          
+          // Sort by distance to cursor (closest first)
+          verticesToDraw.sort((a, b) => a.distToCursor - b.distToCursor);
+          
+          // Second pass: filter to ensure spacing, but always keep the closest one
+          const finalVertices: typeof verticesToDraw = [];
+          
+          for (const vertex of verticesToDraw) {
+            const isHoveredVertex = hoveredVertex && 
+                                   hoveredVertex.contourIdx === contourIdx && 
+                                   hoveredVertex.pointIdx === vertex.idx;
+            
+            // Always include hovered vertex (closest)
+            if (isHoveredVertex || finalVertices.length === 0) {
+              finalVertices.push(vertex);
+              continue;
+            }
+            
+            // Check spacing from already-added vertices
+            let tooClose = false;
+            for (const existing of finalVertices) {
+              const dx = vertex.canvasPos.x - existing.canvasPos.x;
+              const dy = vertex.canvasPos.y - existing.canvasPos.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < MIN_VERTEX_SPACING) {
+                tooClose = true;
+                break;
+              }
+            }
+            
+            if (!tooClose) {
+              finalVertices.push(vertex);
+            }
+          }
+          
+          // Draw the selected vertices
+          for (const vertex of finalVertices) {
+            const isHovered = hoveredVertex && 
+                             hoveredVertex.contourIdx === contourIdx && 
+                             hoveredVertex.pointIdx === vertex.idx;
+            
+            if (isHovered) {
+              // HOVERED VERTEX - Large pulsing circle with glow
+              const pulseSize = 9 + Math.sin(pulseTime) * 3;
+              
+              // Glow effect
+              ctx.shadowColor = lighterColor;
+              ctx.shadowBlur = 12;
+              
+              ctx.fillStyle = lighterColor;
+              ctx.strokeStyle = structureColor;
+              ctx.lineWidth = 3;
+              ctx.globalAlpha = 1;
+              ctx.beginPath();
+              ctx.arc(vertex.canvasPos.x, vertex.canvasPos.y, pulseSize, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+              
+              ctx.shadowBlur = 0;
+              
+              // Draw "grab" text hint
+              ctx.font = '11px sans-serif';
+              ctx.fillStyle = '#ffffff';
+              ctx.textAlign = 'center';
+              ctx.fillText('drag to morph', vertex.canvasPos.x, vertex.canvasPos.y - 18);
+            } else {
+              // Nearby vertex - visible dot with lighter outline
+              // Fade based on distance to cursor
+              const fadeAlpha = Math.max(0.4, 1 - (vertex.distToCursor / VERTEX_DISPLAY_RADIUS) * 0.6);
+              
+              ctx.fillStyle = structureColor;
+              ctx.strokeStyle = lighterColor;
+              ctx.lineWidth = 1.5;
+              ctx.globalAlpha = fadeAlpha;
+              ctx.beginPath();
+              ctx.arc(vertex.canvasPos.x, vertex.canvasPos.y, 5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+          }
+        }
+      }
+      
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw completed vertices (for new polygon drawing)
     if (vertices.length > 0) {
       ctx.strokeStyle = structureColor;
       ctx.fillStyle = structureColor;
@@ -914,27 +1375,63 @@ export default function PenToolV2({
         
         // Color based on mode: green=inside, yellow=outside, red=crossed boundary
         let vertexColor = '#ffff00'; // Default yellow (outside)
+        let lighterVertexColor = '#ffff99'; // Lighter yellow
         if (firstPointMode === 'inside') {
           vertexColor = '#00ff00'; // Green
+          lighterVertexColor = '#99ff99'; // Lighter green
         } else if (firstPointMode === 'outside' && hasCrossedBoundary) {
           vertexColor = '#ff0000'; // Red (crossed boundary)
+          lighterVertexColor = '#ff9999'; // Lighter red
         }
         
         ctx.fillStyle = vertexColor;
         ctx.fill();
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = lighterVertexColor;
         ctx.lineWidth = 2;
         ctx.stroke();
       }
     }
-  }, [isActive, vertices, mousePosition, firstPointMode, hasCrossedBoundary, getStructureColor, isNearFirstVertex]);
+  }, [isActive, vertices, mousePosition, firstPointMode, hasCrossedBoundary, getStructureColor, getLighterStructureColor,
+      isNearFirstVertex, hoveredVertex, isDraggingVertex, draggedVertex, getContoursAtCurrentSlice, 
+      worldToCanvas, imageMetadata, ctTransform, INFLUENCE_RADIUS_WORLD, morphPreviewContour]);
 
-  // Draw overlay when state changes (no continuous loop - saves CPU/GPU)
+  // Draw overlay when state changes
   useEffect(() => {
-    if (isActive && (vertices.length > 0 || mousePosition)) {
+    if (isActive && (vertices.length > 0 || mousePosition || hoveredVertex || isDraggingVertex || morphPreviewContour)) {
       drawOverlay();
     }
-  }, [isActive, drawOverlay, vertices.length, mousePosition]);
+  }, [isActive, drawOverlay, vertices.length, mousePosition, hoveredVertex, isDraggingVertex, morphPreviewContour]);
+  
+  // Continuous animation loop for hover/drag pulse effects
+  useEffect(() => {
+    if (!isActive || (!hoveredVertex && !isDraggingVertex)) return;
+    
+    let animationId: number;
+    const animate = () => {
+      drawOverlay();
+      animationId = requestAnimationFrame(animate);
+    };
+    animationId = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isActive, hoveredVertex, isDraggingVertex, drawOverlay]);
+  
+  // Update cursor based on hover/drag state
+  useEffect(() => {
+    if (!canvasRef.current || !isActive) return;
+    
+    if (isDraggingVertex) {
+      canvasRef.current.style.cursor = 'grabbing';
+    } else if (hoveredVertex) {
+      canvasRef.current.style.cursor = 'grab';
+    } else {
+      canvasRef.current.style.cursor = 'crosshair';
+    }
+  }, [isActive, hoveredVertex, isDraggingVertex, canvasRef]);
 
   // Reset when switching structures or becoming inactive
   useEffect(() => {
@@ -944,6 +1441,11 @@ export default function PenToolV2({
       setFirstPointMode(null);
       setHasCrossedBoundary(false);
       setMousePosition(null);
+      // Reset morphing state
+      setHoveredVertex(null);
+      setIsDraggingVertex(false);
+      setDraggedVertex(null);
+      setMorphPreviewContour(null);
       // Clear overlay canvas when becoming inactive
       if (overlayCanvasRef.current) {
         const ctx = overlayCanvasRef.current.getContext('2d');
@@ -951,8 +1453,12 @@ export default function PenToolV2({
           ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
         }
       }
+      // Reset cursor
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = 'default';
+      }
     }
-  }, [isActive, selectedStructure]);
+  }, [isActive, selectedStructure, canvasRef]);
 
   return null; // This component only handles interactions
 }

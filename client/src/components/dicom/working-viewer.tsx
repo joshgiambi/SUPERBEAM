@@ -48,6 +48,7 @@ import {
 } from "@/lib/cornerstone3d-adapter";
 import { log } from '@/lib/log';
 import { createOrUpdateGPUViewport, hideGPUViewport, cleanupGPUViewports } from "@/lib/gpu-viewport-manager";
+import { drawBeamOverlay, type SliceGeometry } from "@/lib/beam-overlay-renderer";
 import { getDicomWorkerManager, destroyDicomWorkerManager } from '@/lib/dicom-worker-manager';
 import { getSliceZ, sameSlice, getSpacing, getRescaleParams, SLICE_TOL_MM } from "@/lib/dicom-spatial-helpers";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -1995,7 +1996,9 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
   // RT Plan / Beam Overlay Rendering
   // ============================================================================
   
-  // Render beam direction indicators on the viewport
+  // Render beam direction indicators on the viewport using enhanced beam overlay renderer
+  // Supports: static beams, arc/VMAT beams with elliptical visualization, couch angle,
+  // avoidance sectors (red highlighting), and rotated labels
   const renderBeamOverlay = useCallback((
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
@@ -2033,156 +2036,41 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
     const imageX = (canvas.width - scaledWidth) / 2 + currentPanX;
     const imageY = (canvas.height - scaledHeight) / 2 + currentPanY;
     
-    // Beam colors
-    const BEAM_COLORS = [
-      '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-      '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'
-    ];
+    // Create slice geometry for the beam overlay renderer
+    const sliceGeometry: SliceGeometry = {
+      slicePosition: currentSliceZ,
+      orientation: (orientation as 'axial' | 'coronal' | 'sagittal') || 'axial',
+      imagePosition: imagePosition as [number, number, number],
+      pixelSpacing: [rowSpacing, colSpacing],
+      dimensions: { width: imageWidth, height: imageHeight },
+    };
     
-    ctx.save();
-    ctx.globalAlpha = beamOverlayOpacity;
+    // Canvas transform for coordinate conversion
+    const canvasTransform = {
+      scale: totalScale,
+      offsetX: imageX,
+      offsetY: imageY,
+    };
     
-    // Draw each beam
-    bevProjections.forEach((bev, index) => {
-      const beam = beams.find(b => b.beamNumber === bev.beamNumber);
-      if (!beam) return;
-      
-      const isSelected = selectedBeamNumber === bev.beamNumber;
-      const color = BEAM_COLORS[index % BEAM_COLORS.length];
-      
-      // Convert isocenter world coordinates to pixel coordinates
-      const isoX = (bev.isocenterPosition[0] - imagePosition[0]) / colSpacing;
-      const isoY = (bev.isocenterPosition[1] - imagePosition[1]) / rowSpacing;
-      
-      // Convert to canvas coordinates
-      const isoCanvasX = imageX + isoX * totalScale;
-      const isoCanvasY = imageY + isoY * totalScale;
-      
-      // Check if isocenter is within reasonable bounds of the image
-      if (isoCanvasX < -100 || isoCanvasX > canvas.width + 100 ||
-          isoCanvasY < -100 || isoCanvasY > canvas.height + 100) {
-        return; // Isocenter is too far from view
+    // Use the enhanced beam overlay renderer from the library
+    drawBeamOverlay(
+      ctx,
+      beams,
+      bevProjections,
+      sliceGeometry,
+      canvasTransform,
+      {
+        opacity: beamOverlayOpacity,
+        showFieldOutline: true,
+        showIsocenter: true,
+        showBeamDirection: true,
+        showLabels: true,
+        selectedBeamNumber: selectedBeamNumber,
+        lineWidth: 2,
+        arrowLength: 80,
       }
-      
-      // Calculate beam direction in 2D (projected onto axial plane)
-      // Gantry angle determines the beam entry direction
-      const gantryRad = (bev.gantryAngle * Math.PI) / 180;
-      
-      // Arrow length (longer for selected beam)
-      const arrowLength = isSelected ? 120 : 80;
-      
-      // Beam entry direction (from source toward isocenter)
-      // In IEC coordinates: gantry 0° = beam from +Y, 90° = beam from +X
-      const beamDirX = Math.sin(gantryRad);
-      const beamDirY = -Math.cos(gantryRad);
-      
-      // Draw beam entry indicator (arrow pointing toward isocenter)
-      const entryX = isoCanvasX - beamDirX * arrowLength;
-      const entryY = isoCanvasY - beamDirY * arrowLength;
-      
-      // Draw beam line
-      ctx.strokeStyle = color;
-      ctx.lineWidth = isSelected ? 3 : 2;
-      ctx.setLineDash(isSelected ? [] : [8, 4]);
-      ctx.beginPath();
-      ctx.moveTo(entryX, entryY);
-      ctx.lineTo(isoCanvasX, isoCanvasY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Draw arrowhead at isocenter
-      const headLen = isSelected ? 15 : 10;
-      const angle = Math.atan2(isoCanvasY - entryY, isoCanvasX - entryX);
-      ctx.beginPath();
-      ctx.moveTo(isoCanvasX, isoCanvasY);
-      ctx.lineTo(
-        isoCanvasX - headLen * Math.cos(angle - Math.PI / 6),
-        isoCanvasY - headLen * Math.sin(angle - Math.PI / 6)
-      );
-      ctx.moveTo(isoCanvasX, isoCanvasY);
-      ctx.lineTo(
-        isoCanvasX - headLen * Math.cos(angle + Math.PI / 6),
-        isoCanvasY - headLen * Math.sin(angle + Math.PI / 6)
-      );
-      ctx.stroke();
-      
-      // Draw beam exit indicator (arrow continuing through isocenter)
-      const exitX = isoCanvasX + beamDirX * (arrowLength * 0.6);
-      const exitY = isoCanvasY + beamDirY * (arrowLength * 0.6);
-      ctx.setLineDash([4, 4]);
-      ctx.globalAlpha = beamOverlayOpacity * 0.5;
-      ctx.beginPath();
-      ctx.moveTo(isoCanvasX, isoCanvasY);
-      ctx.lineTo(exitX, exitY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = beamOverlayOpacity;
-      
-      // Draw isocenter marker
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(isoCanvasX, isoCanvasY, isSelected ? 6 : 4, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Draw white center dot
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(isoCanvasX, isoCanvasY, isSelected ? 3 : 2, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Draw beam label
-      if (isSelected || beams.length <= 4) {
-        ctx.font = isSelected ? 'bold 12px system-ui' : '10px system-ui';
-        ctx.fillStyle = color;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        
-        // Position label at beam entry point
-        const labelX = entryX;
-        const labelY = entryY - 8;
-        
-        // Background for readability
-        const labelText = `${bev.beamName} (G${bev.gantryAngle.toFixed(0)}°)`;
-        const textMetrics = ctx.measureText(labelText);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(
-          labelX - textMetrics.width / 2 - 4,
-          labelY - 14,
-          textMetrics.width + 8,
-          16
-        );
-        
-        ctx.fillStyle = color;
-        ctx.fillText(labelText, labelX, labelY);
-      }
-      
-      // If selected, draw field size indicator
-      if (isSelected && beam.fieldSizeX && beam.fieldSizeY) {
-        // Draw rough field outline at isocenter plane
-        const halfFieldX = (beam.fieldSizeX / 2) / colSpacing * totalScale;
-        const halfFieldY = (beam.fieldSizeY / 2) / rowSpacing * totalScale;
-        
-        // Rotate field rectangle by collimator angle
-        const collRad = (bev.collimatorAngle * Math.PI) / 180;
-        
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 3]);
-        ctx.globalAlpha = beamOverlayOpacity * 0.6;
-        
-        ctx.save();
-        ctx.translate(isoCanvasX, isoCanvasY);
-        ctx.rotate(collRad);
-        ctx.strokeRect(-halfFieldX, -halfFieldY, halfFieldX * 2, halfFieldY * 2);
-        ctx.restore();
-        
-        ctx.setLineDash([]);
-        ctx.globalAlpha = beamOverlayOpacity;
-      }
-    });
-    
-    ctx.restore();
-  }, [showBeamOverlay, beams, bevProjections, selectedBeamNumber, beamOverlayOpacity, parseImagePosition]);
+    );
+  }, [showBeamOverlay, beams, bevProjections, selectedBeamNumber, beamOverlayOpacity, parseImagePosition, orientation]);
   
   // Abort controller for series changes
   const seriesAbortRef = useRef<AbortController | null>(null);
@@ -4199,11 +4087,19 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     // Special handling for undo/redo results which return full RT structures
     if (payload && payload.structures && !payload.action) {
-      console.log('Applying undo/redo result with', payload.structures.length, 'structures');
+      console.warn('🟠 DEBUG: Applying undo/redo result with', payload.structures.length, 'structures');
+      console.warn('🟠 DEBUG: payload.seriesId:', payload.seriesId);
       
-      // Optimize update to only change modified structures
+      // CRITICAL FIX: If the seriesId changed, this is a full replacement, not a merge!
+      // Don't merge when switching between different RT structure sets
       setLocalRTStructures((prevStructures: any) => {
-        if (!prevStructures) return payload;
+        // If no previous structures or seriesId changed, just replace entirely
+        if (!prevStructures || prevStructures.seriesId !== payload.seriesId) {
+          console.warn('🟠 DEBUG: Full replacement (seriesId changed or no prev)');
+          return payload;
+        }
+        
+        console.warn('🟠 DEBUG: Merging structures (same seriesId)');
         
         // Create a new object with the same reference for unchanged properties
         const updatedStructures = {

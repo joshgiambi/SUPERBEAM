@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { ColorPickerPopover } from '@/components/ui/color-picker';
 import {
   Tooltip,
   TooltipContent,
@@ -608,16 +609,15 @@ export function MarginOperationsPrototype({
                     exit={{ opacity: 0, x: 10 }}
                     className="flex items-center gap-2"
                   >
-                    <button
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'color';
-                        input.value = outputColor;
-                        input.onchange = (e) => setOutputColor((e.target as HTMLInputElement).value);
-                        input.click();
-                      }}
-                      className="w-6 h-6 rounded-md cursor-pointer transition-transform hover:scale-110 border border-white/20"
-                      style={{ backgroundColor: outputColor }}
+                    <ColorPickerPopover
+                      color={outputColor}
+                      onChange={setOutputColor}
+                      label=""
+                      compact
+                      swatchSize="md"
+                      side="top"
+                      align="start"
+                      accentHue={180}
                     />
                     <Input
                       value={outputName}

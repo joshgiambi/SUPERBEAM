@@ -19,7 +19,7 @@ export class UndoRedoManager {
     console.log('UndoRedoManager: Initialized new undo/redo system');
   }
 
-  // Save a complete state snapshot
+  // Save a complete state snapshot - async to avoid blocking UI
   saveState(
     seriesId: number, 
     action: string, 
@@ -28,34 +28,38 @@ export class UndoRedoManager {
     slicePosition?: number,
     structureName?: string
   ): void {
-    console.log(`UndoRedoManager: Saving state - Action: ${action}, Structure: ${structureId}, Slice: ${slicePosition ?? 'N/A'}`);
-    
-    // Create deep copy to avoid reference issues
-    const state: UndoState = {
-      seriesId,
-      timestamp: Date.now(),
-      action,
-      structureId,
-      structureName,
-      slicePosition,
-      rtStructures: JSON.parse(JSON.stringify(rtStructures))
-    };
+    // Use setTimeout to defer the expensive deep copy operation
+    // This allows the UI to update immediately while the undo state is saved in background
+    setTimeout(() => {
+      console.log(`UndoRedoManager: Saving state - Action: ${action}, Structure: ${structureId}, Slice: ${slicePosition ?? 'N/A'}`);
+      
+      // Create deep copy to avoid reference issues
+      const state: UndoState = {
+        seriesId,
+        timestamp: Date.now(),
+        action,
+        structureId,
+        structureName,
+        slicePosition,
+        rtStructures: JSON.parse(JSON.stringify(rtStructures))
+      };
 
-    // Remove any redo entries after current index
-    this.history = this.history.slice(0, this.currentIndex + 1);
-    
-    // Add new state
-    this.history.push(state);
-    this.currentIndex++;
+      // Remove any redo entries after current index
+      this.history = this.history.slice(0, this.currentIndex + 1);
+      
+      // Add new state
+      this.history.push(state);
+      this.currentIndex++;
 
-    // Limit history size
-    if (this.history.length > this.maxHistorySize) {
-      this.history.shift();
-      this.currentIndex--;
-    }
+      // Limit history size
+      if (this.history.length > this.maxHistorySize) {
+        this.history.shift();
+        this.currentIndex--;
+      }
 
-    console.log(`UndoRedoManager: State saved. History length: ${this.history.length}, Current index: ${this.currentIndex}`);
-    this.notifyChange();
+      console.log(`UndoRedoManager: State saved. History length: ${this.history.length}, Current index: ${this.currentIndex}`);
+      this.notifyChange();
+    }, 0);
   }
 
   // Undo to previous state

@@ -181,6 +181,12 @@ export interface BEVProjection {
     shape?: 'CIRCULAR' | 'RECTANGULAR' | 'CUSTOM';
     dimension?: { x: number; y: number } | number;
   };
+  // Arc beam properties (VMAT/Arc)
+  isArc?: boolean;
+  finalGantryAngle?: number;
+  gantryRotationDirection?: 'CW' | 'CC' | 'NONE';
+  arcSweepAngle?: number; // Total arc sweep in degrees
+  avoidanceSectors?: Array<{ startAngle: number; endAngle: number }>; // Avoidance regions
 }
 
 export interface RTPlanSummary {

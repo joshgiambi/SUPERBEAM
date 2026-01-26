@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { ColorPickerPopover } from '@/components/ui/color-picker';
 import {
   Tooltip,
   TooltipContent,
@@ -1264,19 +1265,14 @@ export function ContourEditToolbar({
 
               {/* Structure Color + Name */}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'color';
-                    input.value = accentHex;
-                    input.onchange = (e) => handleColorChange((e.target as HTMLInputElement).value);
-                    input.click();
-                  }}
-                  className="w-4 h-4 rounded cursor-pointer transition-transform hover:scale-110"
-                  style={{ 
-                    backgroundColor: accentRgb,
-                    boxShadow: `0 0 12px -2px ${accentRgb}60`,
-                  }}
+                <ColorPickerPopover
+                  color={accentHex}
+                  onChange={handleColorChange}
+                  compact
+                  swatchSize="sm"
+                  side="bottom"
+                  align="start"
+                  accentHue={accentHue}
                 />
                 {isEditingName ? (
                   <Input

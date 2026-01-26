@@ -53,10 +53,10 @@ import {
   Clock,
   X,
   Beaker,
-  FlaskConical,
   Tag,
   Zap,
-  Server
+  Server,
+  Shield
 } from "lucide-react";
 
 interface Patient {
@@ -1180,23 +1180,14 @@ export default function PatientManager() {
                   <span className="text-sm font-medium">Prototypes</span>
                 </Button>
               </Link>
-              <Link href="/ohif-prototypes">
+              <Link href="/regulatory">
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="h-8 px-3 text-white/90 hover:text-cyan-400 hover:bg-cyan-600/20 hover:border-cyan-500/50 hover:shadow-md hover:shadow-cyan-500/20 border border-transparent rounded-lg transition-all duration-200"
+                  className="h-8 px-3 text-white/90 hover:text-emerald-400 hover:bg-emerald-600/20 hover:border-emerald-500/50 hover:shadow-md hover:shadow-emerald-500/20 border border-transparent rounded-lg transition-all duration-200"
                 >
-                  <FlaskConical className="h-4 w-4 mr-1.5" />
-                  <span className="text-sm font-medium">OHIF</span>
-                </Button>
-              </Link>
-              <Link href="/introducing">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-8 px-3 text-white/90 hover:text-amber-400 hover:bg-amber-600/20 hover:border-amber-500/50 hover:shadow-md hover:shadow-amber-500/20 border border-transparent rounded-lg transition-all duration-200"
-                >
-                  <span className="text-sm font-medium">✨ Intro</span>
+                  <Shield className="h-4 w-4 mr-1.5" />
+                  <span className="text-sm font-medium">Regulatory</span>
                 </Button>
               </Link>
             </div>

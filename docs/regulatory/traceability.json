@@ -1,0 +1,2713 @@
+{
+  "generatedAt": "2026-01-26T21:40:24.785Z",
+  "entries": [
+    {
+      "requirementId": "REQ-AI-001",
+      "title": "Prediction Overlay",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-PREDICTION_OVERLAY",
+      "implementationRef": "client/src/components/dicom/prediction-overlay.tsx",
+      "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-002",
+      "title": "Block Matching Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-BLOCK_MATCHING_PREDICTION",
+      "implementationRef": "client/src/lib/block-matching-prediction.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-003",
+      "title": "Fast Slice Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-FAST_SLICE_PREDICTION",
+      "implementationRef": "client/src/lib/fast-slice-prediction.ts",
+      "verificationRef": "toggleVOISliceSync.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-004",
+      "title": "Image Aware Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-IMAGE_AWARE_PREDICTION",
+      "implementationRef": "client/src/lib/image-aware-prediction.ts",
+      "verificationRef": "getViewportOrientationFromImageOrientationPatient.test.ts, areAllImageDimensionsEqual.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-005",
+      "title": "Prediction History Manager",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-PREDICTION_HISTORY_MANAGER",
+      "implementationRef": "client/src/lib/prediction-history-manager.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-006",
+      "title": "Robust Slice Prediction",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-ROBUST_SLICE_PREDICTION",
+      "implementationRef": "client/src/lib/robust-slice-prediction.ts",
+      "verificationRef": "toggleVOISliceSync.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-007",
+      "title": "Sam Controller",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-SAM_CONTROLLER",
+      "implementationRef": "client/src/lib/sam-controller.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-008",
+      "title": "Sam Server Client",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-SAM_SERVER_CLIENT",
+      "implementationRef": "client/src/lib/sam-server-client.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-009",
+      "title": "Mem3d Api API",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-MEM3D_API",
+      "implementationRef": "server/mem3d-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-AI-010",
+      "title": "Segvol Api API",
+      "category": "AI Segmentation",
+      "riskClass": "high",
+      "designRef": "DES-SEGVOL_API",
+      "implementationRef": "server/segvol-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-BOOL-001",
+      "title": "Boolean Panel",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "designRef": "DES-BOOLEANPANEL",
+      "implementationRef": "client/src/components/dicom/BooleanPanel.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "fce2ad7",
+        "c33c816",
+        "cd39b0b"
+      ]
+    },
+    {
+      "requirementId": "REQ-BOOL-002",
+      "title": "Boolean Operations Toolbar New",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "designRef": "DES-BOOLEAN_OPERATIONS_TOOLBAR_NEW",
+      "implementationRef": "client/src/components/dicom/boolean-operations-toolbar-new.tsx",
+      "verificationRef": "useToolbar.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "fce2ad7",
+        "c33c816",
+        "cd39b0b"
+      ]
+    },
+    {
+      "requirementId": "REQ-BOOL-003",
+      "title": "Clipper Boolean Operations",
+      "category": "Boolean Operations",
+      "riskClass": "medium",
+      "designRef": "DES-CLIPPER_BOOLEAN_OPERATIONS",
+      "implementationRef": "client/src/lib/clipper-boolean-operations.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "fce2ad7",
+        "c33c816",
+        "cd39b0b"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-001",
+      "title": "Contour Edit Panel",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_EDIT_PANEL",
+      "implementationRef": "client/src/components/dicom/contour-edit-panel.tsx",
+      "verificationRef": "ContourSegLocking.spec.ts, MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-002",
+      "title": "Contour Edit Toolbar",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_EDIT_TOOLBAR",
+      "implementationRef": "client/src/components/dicom/contour-edit-toolbar.tsx",
+      "verificationRef": "useToolbar.test.ts, ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-003",
+      "title": "Eclipse Pen Tool",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-ECLIPSE_PEN_TOOL",
+      "implementationRef": "client/src/components/dicom/eclipse-pen-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-004",
+      "title": "Eclipse Planar Contour Tool",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-ECLIPSE_PLANAR_CONTOUR_TOOL",
+      "implementationRef": "client/src/components/dicom/eclipse-planar-contour-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, ContourSegLocking.spec.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-005",
+      "title": "Ghost Contour Overlay",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-GHOST_CONTOUR_OVERLAY",
+      "implementationRef": "client/src/components/dicom/ghost-contour-overlay.tsx",
+      "verificationRef": "ContourSegLocking.spec.ts, DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-006",
+      "title": "Pen Tool Unified V2",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-PEN_TOOL_UNIFIED_V2",
+      "implementationRef": "client/src/components/dicom/pen-tool-unified-v2.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-007",
+      "title": "Pen Tool V2",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-PEN_TOOL_V2",
+      "implementationRef": "client/src/components/dicom/pen-tool-v2.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-008",
+      "title": "Pen Tool",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-PEN_TOOL",
+      "implementationRef": "client/src/components/dicom/pen-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-009",
+      "title": "Simple Brush Tool",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-SIMPLE_BRUSH_TOOL",
+      "implementationRef": "client/src/components/dicom/simple-brush-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-010",
+      "title": "Brush To Polygon",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-BRUSH_TO_POLYGON",
+      "implementationRef": "client/src/lib/brush-to-polygon.ts",
+      "verificationRef": "polygon-utils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-011",
+      "title": "Contour Boolean Operations",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_BOOLEAN_OPERATIONS",
+      "implementationRef": "client/src/lib/contour-boolean-operations.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-012",
+      "title": "Contour Directional Grow",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_DIRECTIONAL_GROW",
+      "implementationRef": "client/src/lib/contour-directional-grow.ts",
+      "verificationRef": "Bidirectional.spec.ts, ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-013",
+      "title": "Contour Grow",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_GROW",
+      "implementationRef": "client/src/lib/contour-grow.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-014",
+      "title": "Contour Interpolation",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_INTERPOLATION",
+      "implementationRef": "client/src/lib/contour-interpolation.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-015",
+      "title": "Contour Polish",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_POLISH",
+      "implementationRef": "client/src/lib/contour-polish.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-016",
+      "title": "Contour Prediction",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_PREDICTION",
+      "implementationRef": "client/src/lib/contour-prediction.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-017",
+      "title": "Contour Smooth Simple",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_SMOOTH_SIMPLE",
+      "implementationRef": "client/src/lib/contour-smooth-simple.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-018",
+      "title": "Contour V2",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-CONTOUR_V2",
+      "implementationRef": "client/src/lib/contour-v2.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-019",
+      "title": "Mask To Contours",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-MASK_TO_CONTOURS",
+      "implementationRef": "client/src/lib/mask-to-contours.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-020",
+      "title": "Simple Contour Prediction",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-SIMPLE_CONTOUR_PREDICTION",
+      "implementationRef": "client/src/lib/simple-contour-prediction.ts",
+      "verificationRef": "ContourSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-CONTOUR-021",
+      "title": "Smart Brush Utils",
+      "category": "Contour Tools",
+      "riskClass": "medium",
+      "designRef": "DES-SMART_BRUSH_UTILS",
+      "implementationRef": "client/src/lib/smart-brush-utils.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "c11768a",
+        "bbe4a88",
+        "679d498"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-001",
+      "title": "Dicom Uploader",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_UPLOADER",
+      "implementationRef": "client/src/components/dicom/dicom-uploader.tsx",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-002",
+      "title": "Dicom Preview Modal",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_PREVIEW_MODAL",
+      "implementationRef": "client/src/components/patient-manager/dicom-preview-modal.tsx",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts, TMTVModalityUnit.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-003",
+      "title": "Dicom Thumbnail",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_THUMBNAIL",
+      "implementationRef": "client/src/components/patient-manager/dicom-thumbnail.tsx",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-004",
+      "title": "Dicom Utils.test",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_UTILS.TEST",
+      "implementationRef": "client/src/lib/__tests__/dicom-utils.test.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-005",
+      "title": "Dicom Coordinates",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_COORDINATES",
+      "implementationRef": "client/src/lib/dicom-coordinates.ts",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-006",
+      "title": "Dicom Loader",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_LOADER",
+      "implementationRef": "client/src/lib/dicom-loader.ts",
+      "verificationRef": "dicom-utils.test.ts, interleaveCenterLoader.test.ts, nthLoader.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-007",
+      "title": "Dicom Spatial Helpers",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_SPATIAL_HELPERS",
+      "implementationRef": "client/src/lib/dicom-spatial-helpers.ts",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-008",
+      "title": "Dicom Types",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_TYPES",
+      "implementationRef": "client/src/lib/dicom-types.ts",
+      "verificationRef": "dicom-utils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-009",
+      "title": "Dicom Utils",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_UTILS",
+      "implementationRef": "client/src/lib/dicom-utils.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DICOM-010",
+      "title": "Dicom Worker Manager",
+      "category": "DICOM Handling",
+      "riskClass": "low",
+      "designRef": "DES-DICOM_WORKER_MANAGER",
+      "implementationRef": "client/src/lib/dicom-worker-manager.ts",
+      "verificationRef": "dicom-utils.test.ts, initWebWorkerProgressHandler.test.ts, DicomTagBrowser.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "d0c41b8",
+        "c33c816",
+        "61fe7d3",
+        "8d2a140",
+        "67cabf6"
+      ]
+    },
+    {
+      "requirementId": "REQ-DVH-001",
+      "title": "Dvh Popup Viewer",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "designRef": "DES-DVH_POPUP_VIEWER",
+      "implementationRef": "client/src/components/dicom/dvh-popup-viewer.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-DVH-002",
+      "title": "Dvh Viewer",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "designRef": "DES-DVH_VIEWER",
+      "implementationRef": "client/src/components/dicom/dvh-viewer.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-DVH-003",
+      "title": "Dvh Api API",
+      "category": "Dose-Volume Histogram",
+      "riskClass": "medium",
+      "designRef": "DES-DVH_API",
+      "implementationRef": "server/dvh-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-FUSION-001",
+      "title": "Flexible Fusion Layout",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FLEXIBLE_FUSION_LAYOUT",
+      "implementationRef": "client/src/components/dicom/flexible-fusion-layout.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-002",
+      "title": "Fusion Control Panel V2",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_CONTROL_PANEL_V2",
+      "implementationRef": "client/src/components/dicom/fusion-control-panel-v2.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-003",
+      "title": "Fusion Control Panel",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_CONTROL_PANEL",
+      "implementationRef": "client/src/components/dicom/fusion-control-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-004",
+      "title": "Fusion Debug Dialog",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_DEBUG_DIALOG",
+      "implementationRef": "client/src/components/dicom/fusion-debug-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-005",
+      "title": "Fusion Panel",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_PANEL",
+      "implementationRef": "client/src/components/dicom/fusion-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-006",
+      "title": "Fusion Viewport Grid",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_VIEWPORT_GRID",
+      "implementationRef": "client/src/components/dicom/fusion-viewport-grid.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-007",
+      "title": "Smart Fusion Viewport Manager",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-SMART_FUSION_VIEWPORT_MANAGER",
+      "implementationRef": "client/src/components/dicom/smart-fusion-viewport-manager.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-008",
+      "title": "Unified Fusion Layout Toolbar V2",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-UNIFIED_FUSION_LAYOUT_TOOLBAR_V2",
+      "implementationRef": "client/src/components/dicom/unified-fusion-layout-toolbar-v2.tsx",
+      "verificationRef": "useToolbar.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-009",
+      "title": "Unified Fusion Topbar",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-UNIFIED_FUSION_TOPBAR",
+      "implementationRef": "client/src/components/dicom/unified-fusion-topbar.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-010",
+      "title": "Fusion Layout Service",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_LAYOUT_SERVICE",
+      "implementationRef": "client/src/lib/fusion-layout-service.ts",
+      "verificationRef": "SegmentationService.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-011",
+      "title": "Fusion Overlay Manager",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_OVERLAY_MANAGER",
+      "implementationRef": "client/src/lib/fusion-overlay-manager.ts",
+      "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-012",
+      "title": "Fusion Utils",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-FUSION_UTILS",
+      "implementationRef": "client/src/lib/fusion-utils.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-FUSION-013",
+      "title": "Global Fusion Cache",
+      "category": "Image Fusion",
+      "riskClass": "medium",
+      "designRef": "DES-GLOBAL_FUSION_CACHE",
+      "implementationRef": "client/src/lib/global-fusion-cache.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-GEN-001",
+      "title": "Ai Status Panel",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-AI_STATUS_PANEL",
+      "implementationRef": "client/src/components/ai-status-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-002",
+      "title": "Ai Tumor Tool",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-AI_TUMOR_TOOL",
+      "implementationRef": "client/src/components/dicom/ai-tumor-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-003",
+      "title": "Dose Control Panel",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DOSE_CONTROL_PANEL",
+      "implementationRef": "client/src/components/dicom/dose-control-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-004",
+      "title": "Error Modal",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ERROR_MODAL",
+      "implementationRef": "client/src/components/dicom/error-modal.tsx",
+      "verificationRef": "TMTVModalityUnit.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-005",
+      "title": "Loading Progress",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-LOADING_PROGRESS",
+      "implementationRef": "client/src/components/dicom/loading-progress.tsx",
+      "verificationRef": "initWebWorkerProgressHandler.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-006",
+      "title": "Radiation Therapy Panel",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-RADIATION_THERAPY_PANEL",
+      "implementationRef": "client/src/components/dicom/radiation-therapy-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-007",
+      "title": "Save As New Dialog",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SAVE_AS_NEW_DIALOG",
+      "implementationRef": "client/src/components/dicom/save-as-new-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-008",
+      "title": "Smart Nth Settings Dialog",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SMART_NTH_SETTINGS_DIALOG",
+      "implementationRef": "client/src/components/dicom/smart-nth-settings-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-009",
+      "title": "User Settings Panel",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-USER_SETTINGS_PANEL",
+      "implementationRef": "client/src/components/dicom/user-settings-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-010",
+      "title": "V4 Aurora Panels V2",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-V4_AURORA_PANELS_V2",
+      "implementationRef": "client/src/components/dicom/v4-aurora-panels-v2.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-011",
+      "title": "Canvas Preview",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CANVAS_PREVIEW",
+      "implementationRef": "client/src/components/patient-manager/canvas-preview.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-012",
+      "title": "Metadata Edit Dialog",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-METADATA_EDIT_DIALOG",
+      "implementationRef": "client/src/components/patient-manager/metadata-edit-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-013",
+      "title": "Accordion",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ACCORDION",
+      "implementationRef": "client/src/components/ui/accordion.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-014",
+      "title": "Alert Dialog",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ALERT_DIALOG",
+      "implementationRef": "client/src/components/ui/alert-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-015",
+      "title": "Alert",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ALERT",
+      "implementationRef": "client/src/components/ui/alert.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-016",
+      "title": "Aspect Ratio",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ASPECT_RATIO",
+      "implementationRef": "client/src/components/ui/aspect-ratio.tsx",
+      "verificationRef": "hydrationUtils.test.ts, promptHydrationDialog.test.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, RTHydration.spec.ts, RTHydration2.spec.ts, RTHydrationFromMPR.spec.ts, RTHydrationThenMPR.spec.ts, RTNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts, SEGHydration.spec.ts, SEGHydrationFrom3DFourUp.spec.ts, SEGHydrationFromMPR.spec.ts, SEGHydrationThenMPR.spec.ts, SEGNoHydrationThenMPR.spec.ts, SRHydration.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-017",
+      "title": "Avatar",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-AVATAR",
+      "implementationRef": "client/src/components/ui/avatar.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-018",
+      "title": "Badge",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BADGE",
+      "implementationRef": "client/src/components/ui/badge.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-019",
+      "title": "Breadcrumb",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BREADCRUMB",
+      "implementationRef": "client/src/components/ui/breadcrumb.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-020",
+      "title": "Button",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BUTTON",
+      "implementationRef": "client/src/components/ui/button.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-021",
+      "title": "Calendar",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CALENDAR",
+      "implementationRef": "client/src/components/ui/calendar.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-022",
+      "title": "Card",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CARD",
+      "implementationRef": "client/src/components/ui/card.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-023",
+      "title": "Carousel",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CAROUSEL",
+      "implementationRef": "client/src/components/ui/carousel.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-024",
+      "title": "Chart",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CHART",
+      "implementationRef": "client/src/components/ui/chart.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-025",
+      "title": "Checkbox",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CHECKBOX",
+      "implementationRef": "client/src/components/ui/checkbox.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-026",
+      "title": "Collapsible",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-COLLAPSIBLE",
+      "implementationRef": "client/src/components/ui/collapsible.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-027",
+      "title": "Color Picker",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-COLOR_PICKER",
+      "implementationRef": "client/src/components/ui/color-picker.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-028",
+      "title": "Command",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-COMMAND",
+      "implementationRef": "client/src/components/ui/command.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-029",
+      "title": "Context Menu",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CONTEXT_MENU",
+      "implementationRef": "client/src/components/ui/context-menu.tsx",
+      "verificationRef": "ContextMenu.spec.ts, DataOverlayMenu.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-030",
+      "title": "Dialog",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DIALOG",
+      "implementationRef": "client/src/components/ui/dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-031",
+      "title": "Drawer",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DRAWER",
+      "implementationRef": "client/src/components/ui/drawer.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-032",
+      "title": "Dropdown Menu",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DROPDOWN_MENU",
+      "implementationRef": "client/src/components/ui/dropdown-menu.tsx",
+      "verificationRef": "ContextMenu.spec.ts, DataOverlayMenu.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-033",
+      "title": "Form",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-FORM",
+      "implementationRef": "client/src/components/ui/form.tsx",
+      "verificationRef": "coordinate-transforms.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-034",
+      "title": "Hover Card",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-HOVER_CARD",
+      "implementationRef": "client/src/components/ui/hover-card.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-035",
+      "title": "Input Otp",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-INPUT_OTP",
+      "implementationRef": "client/src/components/ui/input-otp.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-036",
+      "title": "Input",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-INPUT",
+      "implementationRef": "client/src/components/ui/input.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-037",
+      "title": "Label",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-LABEL",
+      "implementationRef": "client/src/components/ui/label.tsx",
+      "verificationRef": "LabelMapSegLocking.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-038",
+      "title": "Menubar",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-MENUBAR",
+      "implementationRef": "client/src/components/ui/menubar.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-039",
+      "title": "Navigation Menu",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-NAVIGATION_MENU",
+      "implementationRef": "client/src/components/ui/navigation-menu.tsx",
+      "verificationRef": "ContextMenu.spec.ts, DataOverlayMenu.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-040",
+      "title": "Pagination",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-PAGINATION",
+      "implementationRef": "client/src/components/ui/pagination.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-041",
+      "title": "Popover",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POPOVER",
+      "implementationRef": "client/src/components/ui/popover.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-042",
+      "title": "Progress",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-PROGRESS",
+      "implementationRef": "client/src/components/ui/progress.tsx",
+      "verificationRef": "initWebWorkerProgressHandler.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-043",
+      "title": "Radio Group",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-RADIO_GROUP",
+      "implementationRef": "client/src/components/ui/radio-group.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-044",
+      "title": "Resizable",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-RESIZABLE",
+      "implementationRef": "client/src/components/ui/resizable.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-045",
+      "title": "Scroll Area",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SCROLL_AREA",
+      "implementationRef": "client/src/components/ui/scroll-area.tsx",
+      "verificationRef": "areAllImageDimensionsEqual.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-046",
+      "title": "Select",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SELECT",
+      "implementationRef": "client/src/components/ui/select.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-047",
+      "title": "Separator",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SEPARATOR",
+      "implementationRef": "client/src/components/ui/separator.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-048",
+      "title": "Sheet",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SHEET",
+      "implementationRef": "client/src/components/ui/sheet.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-049",
+      "title": "Sidebar",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SIDEBAR",
+      "implementationRef": "client/src/components/ui/sidebar.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-050",
+      "title": "Skeleton",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SKELETON",
+      "implementationRef": "client/src/components/ui/skeleton.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-051",
+      "title": "Slider",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SLIDER",
+      "implementationRef": "client/src/components/ui/slider.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-052",
+      "title": "Switch",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SWITCH",
+      "implementationRef": "client/src/components/ui/switch.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-053",
+      "title": "Table",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TABLE",
+      "implementationRef": "client/src/components/ui/table.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-054",
+      "title": "Tabs",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TABS",
+      "implementationRef": "client/src/components/ui/tabs.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-055",
+      "title": "Textarea",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TEXTAREA",
+      "implementationRef": "client/src/components/ui/textarea.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-056",
+      "title": "Toast",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOAST",
+      "implementationRef": "client/src/components/ui/toast.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-057",
+      "title": "Toaster",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOASTER",
+      "implementationRef": "client/src/components/ui/toaster.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-058",
+      "title": "Toggle Group",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOGGLE_GROUP",
+      "implementationRef": "client/src/components/ui/toggle-group.tsx",
+      "verificationRef": "toggleVOISliceSync.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-059",
+      "title": "Toggle",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOGGLE",
+      "implementationRef": "client/src/components/ui/toggle.tsx",
+      "verificationRef": "toggleVOISliceSync.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-060",
+      "title": "Tooltip",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOOLTIP",
+      "implementationRef": "client/src/components/ui/tooltip.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-061",
+      "title": "Coordinate Transforms.test",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-COORDINATE_TRANSFORMS.TEST",
+      "implementationRef": "client/src/lib/__tests__/coordinate-transforms.test.ts",
+      "verificationRef": "coordinate-transforms.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-062",
+      "title": "Dice Coefficient.test",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DICE_COEFFICIENT.TEST",
+      "implementationRef": "client/src/lib/__tests__/dice-coefficient.test.ts",
+      "verificationRef": "dice-coefficient.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-063",
+      "title": "Polygon Utils.test",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POLYGON_UTILS.TEST",
+      "implementationRef": "client/src/lib/__tests__/polygon-utils.test.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-064",
+      "title": "Window Level.test",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-WINDOW_LEVEL.TEST",
+      "implementationRef": "client/src/lib/__tests__/window-level.test.ts",
+      "verificationRef": "window-level.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-065",
+      "title": "Background Loader",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BACKGROUND_LOADER",
+      "implementationRef": "client/src/lib/background-loader.ts",
+      "verificationRef": "interleaveCenterLoader.test.ts, nthLoader.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-066",
+      "title": "Beam Overlay Renderer",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BEAM_OVERLAY_RENDERER",
+      "implementationRef": "client/src/lib/beam-overlay-renderer.ts",
+      "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-067",
+      "title": "Bev Renderer",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BEVRENDERER",
+      "implementationRef": "client/src/lib/bev/BevRenderer.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-068",
+      "title": "Index",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-INDEX",
+      "implementationRef": "client/src/lib/bev/index.ts",
+      "verificationRef": "index.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-069",
+      "title": "Clipper Adapter",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CLIPPER_ADAPTER",
+      "implementationRef": "client/src/lib/clipper-adapter.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-070",
+      "title": "Console Logger",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CONSOLE_LOGGER",
+      "implementationRef": "client/src/lib/console-logger.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-071",
+      "title": "Coordinate Transformer V2",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-COORDINATE_TRANSFORMER_V2",
+      "implementationRef": "client/src/lib/coordinate-transformer-v2.ts",
+      "verificationRef": "coordinate-transforms.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-072",
+      "title": "Cornerstone Config",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CORNERSTONE_CONFIG",
+      "implementationRef": "client/src/lib/cornerstone-config.ts",
+      "verificationRef": "getCornerstoneBlendMode.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-073",
+      "title": "Cornerstone3d Adapter",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-CORNERSTONE3D_ADAPTER",
+      "implementationRef": "client/src/lib/cornerstone3d-adapter.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-074",
+      "title": "Dice Utils",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-DICE_UTILS",
+      "implementationRef": "client/src/lib/dice-utils.ts",
+      "verificationRef": "dice-coefficient.test.ts, dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-075",
+      "title": "Fast Polar Interpolation",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-FAST_POLAR_INTERPOLATION",
+      "implementationRef": "client/src/lib/fast-polar-interpolation.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-076",
+      "title": "BEVRenderer",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-BEVRENDERER",
+      "implementationRef": "client/src/lib/geometry/BEVRenderer.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-077",
+      "title": "IEC61217",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-IEC61217",
+      "implementationRef": "client/src/lib/geometry/IEC61217.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-078",
+      "title": "MLCModels",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-MLCMODELS",
+      "implementationRef": "client/src/lib/geometry/MLCModels.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-079",
+      "title": "Matrix4",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-MATRIX4",
+      "implementationRef": "client/src/lib/geometry/Matrix4.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-080",
+      "title": "Vector3",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-VECTOR3",
+      "implementationRef": "client/src/lib/geometry/Vector3.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-081",
+      "title": "Index",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-INDEX",
+      "implementationRef": "client/src/lib/geometry/index.ts",
+      "verificationRef": "index.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-082",
+      "title": "Image Load Pool Manager",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-IMAGE_LOAD_POOL_MANAGER",
+      "implementationRef": "client/src/lib/image-load-pool-manager.ts",
+      "verificationRef": "getViewportOrientationFromImageOrientationPatient.test.ts, interleaveCenterLoader.test.ts, nthLoader.test.ts, areAllImageDimensionsEqual.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-083",
+      "title": "Log",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-LOG",
+      "implementationRef": "client/src/lib/log.ts",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-084",
+      "title": "Medical Pixel Spacing",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-MEDICAL_PIXEL_SPACING",
+      "implementationRef": "client/src/lib/medical-pixel-spacing.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-085",
+      "title": "Mlc Models",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-MLC_MODELS",
+      "implementationRef": "client/src/lib/mlc-models.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-086",
+      "title": "Pills",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-PILLS",
+      "implementationRef": "client/src/lib/pills.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-087",
+      "title": "Polygon Engine",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POLYGON_ENGINE",
+      "implementationRef": "client/src/lib/polygon-engine.ts",
+      "verificationRef": "polygon-utils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-088",
+      "title": "Polygon Operations V2",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POLYGON_OPERATIONS_V2",
+      "implementationRef": "client/src/lib/polygon-operations-v2.ts",
+      "verificationRef": "polygon-utils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-089",
+      "title": "Polygon Union",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POLYGON_UNION",
+      "implementationRef": "client/src/lib/polygon-union.ts",
+      "verificationRef": "polygon-utils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-090",
+      "title": "Polygon Utils",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-POLYGON_UTILS",
+      "implementationRef": "client/src/lib/polygon-utils.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-091",
+      "title": "Query Client",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-QUERYCLIENT",
+      "implementationRef": "client/src/lib/queryClient.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-092",
+      "title": "Rt Coordinate Transforms",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-RT_COORDINATE_TRANSFORMS",
+      "implementationRef": "client/src/lib/rt-coordinate-transforms.ts",
+      "verificationRef": "coordinate-transforms.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-093",
+      "title": "Sdt Interpolation",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SDT_INTERPOLATION",
+      "implementationRef": "client/src/lib/sdt-interpolation.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-094",
+      "title": "Simple Polygon Operations",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SIMPLE_POLYGON_OPERATIONS",
+      "implementationRef": "client/src/lib/simple-polygon-operations.ts",
+      "verificationRef": "polygon-utils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-095",
+      "title": "Smooth Ripple Animation",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SMOOTH_RIPPLE_ANIMATION",
+      "implementationRef": "client/src/lib/smooth-ripple-animation.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-096",
+      "title": "Structure Set V2",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-STRUCTURE_SET_V2",
+      "implementationRef": "client/src/lib/structure-set-v2.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-097",
+      "title": "Tool State Manager",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-TOOL_STATE_MANAGER",
+      "implementationRef": "client/src/lib/tool-state-manager.ts",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-098",
+      "title": "Undo System",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-UNDO_SYSTEM",
+      "implementationRef": "client/src/lib/undo-system.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-099",
+      "title": "Utils",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-UTILS",
+      "implementationRef": "client/src/lib/utils.ts",
+      "verificationRef": "dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-100",
+      "title": "Nninteractive Api API",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-NNINTERACTIVE_API",
+      "implementationRef": "server/nninteractive-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-101",
+      "title": "Regulatory Api API",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-REGULATORY_API",
+      "implementationRef": "server/regulatory-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-102",
+      "title": "Routes API",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-ROUTES",
+      "implementationRef": "server/routes.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-GEN-103",
+      "title": "Superseg Api API",
+      "category": "General",
+      "riskClass": "low",
+      "designRef": "DES-SUPERSEG_API",
+      "implementationRef": "server/superseg-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-IMPORT-001",
+      "title": "Robust Import",
+      "category": "Data Import",
+      "riskClass": "low",
+      "designRef": "DES-ROBUST_IMPORT",
+      "implementationRef": "client/src/components/dicom/robust-import.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "e4eae1b",
+        "ab48312",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-IMPORT-002",
+      "title": "Upload Zone",
+      "category": "Data Import",
+      "riskClass": "low",
+      "designRef": "DES-UPLOAD_ZONE",
+      "implementationRef": "client/src/components/dicom/upload-zone.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "e4eae1b",
+        "ab48312",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-IMPORT-003",
+      "title": "Robust Import Routes API",
+      "category": "Data Import",
+      "riskClass": "low",
+      "designRef": "DES-ROBUST_IMPORT_ROUTES",
+      "implementationRef": "server/robust-import-routes.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "e4eae1b",
+        "ab48312",
+        "d4f2cae"
+      ]
+    },
+    {
+      "requirementId": "REQ-MARGIN-001",
+      "title": "Advanced Margin Tool",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "designRef": "DES-ADVANCED_MARGIN_TOOL",
+      "implementationRef": "client/src/components/dicom/advanced-margin-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-MARGIN-002",
+      "title": "Margin Operation Panel",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "designRef": "DES-MARGIN_OPERATION_PANEL",
+      "implementationRef": "client/src/components/dicom/margin-operation-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-MARGIN-003",
+      "title": "Margin Subtract Panel",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "designRef": "DES-MARGIN_SUBTRACT_PANEL",
+      "implementationRef": "client/src/components/dicom/margin-subtract-panel.tsx",
+      "verificationRef": "MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-MARGIN-004",
+      "title": "Margin Toolbar",
+      "category": "Margin Operations",
+      "riskClass": "medium",
+      "designRef": "DES-MARGIN_TOOLBAR",
+      "implementationRef": "client/src/components/dicom/margin-toolbar.tsx",
+      "verificationRef": "useToolbar.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-MEAS-001",
+      "title": "Measurement Tool",
+      "category": "Measurements",
+      "riskClass": "medium",
+      "designRef": "DES-MEASUREMENT_TOOL",
+      "implementationRef": "client/src/components/dicom/measurement-tool.tsx",
+      "verificationRef": "findNearbyToolData.test.ts, isMeasurementWithinViewport.test.ts, useToolbar.test.ts, JumpToMeasurementMPR.spec.ts, MeasurementPanel.spec.ts, SEGDrawingToolsResizing.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-MPR-001",
+      "title": "Mpr Floating",
+      "category": "Multi-Planar Reconstruction",
+      "riskClass": "low",
+      "designRef": "DES-MPR_FLOATING",
+      "implementationRef": "client/src/components/dicom/mpr-floating.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-PATIENT-001",
+      "title": "Patient Preview Card",
+      "category": "Patient Management",
+      "riskClass": "low",
+      "designRef": "DES-PATIENT_PREVIEW_CARD",
+      "implementationRef": "client/src/components/dicom/patient-preview-card.tsx",
+      "verificationRef": "getViewportOrientationFromImageOrientationPatient.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-PATIENT-002",
+      "title": "Patient Card",
+      "category": "Patient Management",
+      "riskClass": "low",
+      "designRef": "DES-PATIENT_CARD",
+      "implementationRef": "client/src/components/patient-manager/patient-card.tsx",
+      "verificationRef": "getViewportOrientationFromImageOrientationPatient.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-RTDOSE-001",
+      "title": "Rt Dose Overlay",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_DOSE_OVERLAY",
+      "implementationRef": "client/src/components/dicom/rt-dose-overlay.tsx",
+      "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTDOSE-002",
+      "title": "Rt Dose Manager",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_DOSE_MANAGER",
+      "implementationRef": "client/src/lib/rt-dose-manager.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTDOSE-003",
+      "title": "Rt Dose Api API",
+      "category": "RT Dose Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_DOSE_API",
+      "implementationRef": "server/rt-dose-api.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTPLAN-001",
+      "title": "Rt Plan Panel",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_PLAN_PANEL",
+      "implementationRef": "client/src/components/dicom/rt-plan-panel.tsx",
+      "verificationRef": "rt-plan-validation.test.ts, MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTPLAN-002",
+      "title": "Rt Plan Validation.test",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_PLAN_VALIDATION.TEST",
+      "implementationRef": "client/src/lib/__tests__/rt-plan-validation.test.ts",
+      "verificationRef": "rt-plan-validation.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTPLAN-003",
+      "title": "Rt Plan Api API",
+      "category": "RT Plan Display",
+      "riskClass": "high",
+      "designRef": "DES-RT_PLAN_API",
+      "implementationRef": "server/rt-plan-api.ts",
+      "verificationRef": "rt-plan-validation.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTSTRUCT-001",
+      "title": "Rt Structure History Modal",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "designRef": "DES-RT_STRUCTURE_HISTORY_MODAL",
+      "implementationRef": "client/src/components/dicom/rt-structure-history-modal.tsx",
+      "verificationRef": "TMTVModalityUnit.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-RTSTRUCT-002",
+      "title": "Rt Structure Overlay",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "designRef": "DES-RT_STRUCTURE_OVERLAY",
+      "implementationRef": "client/src/components/dicom/rt-structure-overlay.tsx",
+      "verificationRef": "DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "6c67120",
+        "e4eae1b",
+        "c33c816",
+        "8de8edb"
+      ]
+    },
+    {
+      "requirementId": "REQ-SERIES-001",
+      "title": "Series Selector",
+      "category": "Series Management",
+      "riskClass": "low",
+      "designRef": "DES-SERIES_SELECTOR",
+      "implementationRef": "client/src/components/dicom/series-selector.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-SERIES-002",
+      "title": "Global Series Cache",
+      "category": "Series Management",
+      "riskClass": "low",
+      "designRef": "DES-GLOBAL_SERIES_CACHE",
+      "implementationRef": "client/src/lib/global-series-cache.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": []
+    },
+    {
+      "requirementId": "REQ-STRUCT-001",
+      "title": "Superstructure Manager",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "designRef": "DES-SUPERSTRUCTUREMANAGER",
+      "implementationRef": "client/src/components/dicom/SuperstructureManager.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "8f665e9",
+        "c9c40ed",
+        "6c67120",
+        "e4eae1b",
+        "274419a"
+      ]
+    },
+    {
+      "requirementId": "REQ-STRUCT-002",
+      "title": "Blob Management Dialog",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "designRef": "DES-BLOB_MANAGEMENT_DIALOG",
+      "implementationRef": "client/src/components/dicom/blob-management-dialog.tsx",
+      "verificationRef": "promptHydrationDialog.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "c9c40ed",
+        "6c67120",
+        "e4eae1b",
+        "274419a"
+      ]
+    },
+    {
+      "requirementId": "REQ-STRUCT-003",
+      "title": "Structure Blob List",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "designRef": "DES-STRUCTURE_BLOB_LIST",
+      "implementationRef": "client/src/components/dicom/structure-blob-list.tsx",
+      "verificationRef": "Worklist.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "8f665e9",
+        "c9c40ed",
+        "6c67120",
+        "e4eae1b",
+        "274419a"
+      ]
+    },
+    {
+      "requirementId": "REQ-STRUCT-004",
+      "title": "Blob Operations",
+      "category": "Structure Management",
+      "riskClass": "medium",
+      "designRef": "DES-BLOB_OPERATIONS",
+      "implementationRef": "client/src/lib/blob-operations.ts",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "8f665e9",
+        "c9c40ed",
+        "6c67120",
+        "e4eae1b",
+        "274419a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-001",
+      "title": "Advanced Viewport Layout",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-ADVANCEDVIEWPORTLAYOUT",
+      "implementationRef": "client/src/components/dicom/AdvancedViewportLayout.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-002",
+      "title": "Multi Viewport",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-MULTI_VIEWPORT",
+      "implementationRef": "client/src/components/dicom/multi-viewport.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MultipleSegmentationDataOverlays.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-003",
+      "title": "Sonnet Viewport Manager",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-SONNET_VIEWPORT_MANAGER",
+      "implementationRef": "client/src/components/dicom/sonnet-viewport-manager.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-004",
+      "title": "Unified Viewport Switcher",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-UNIFIED_VIEWPORT_SWITCHER",
+      "implementationRef": "client/src/components/dicom/unified-viewport-switcher.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-005",
+      "title": "Viewer Interface",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWER_INTERFACE",
+      "implementationRef": "client/src/components/dicom/viewer-interface.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-006",
+      "title": "Viewer Toolbar",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWER_TOOLBAR",
+      "implementationRef": "client/src/components/dicom/viewer-toolbar.tsx",
+      "verificationRef": "useToolbar.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-007",
+      "title": "Viewport Action Bar",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_ACTION_BAR",
+      "implementationRef": "client/src/components/dicom/viewport-action-bar.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-008",
+      "title": "Viewport Action Corners",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_ACTION_CORNERS",
+      "implementationRef": "client/src/components/dicom/viewport-action-corners.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneBlendMode.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-009",
+      "title": "Viewport Orientation Markers",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_ORIENTATION_MARKERS",
+      "implementationRef": "client/src/components/dicom/viewport-orientation-markers.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-010",
+      "title": "Viewport Overlay",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_OVERLAY",
+      "implementationRef": "client/src/components/dicom/viewport-overlay.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-011",
+      "title": "Viewport Pane Ohif",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_PANE_OHIF",
+      "implementationRef": "client/src/components/dicom/viewport-pane-ohif.tsx",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MeasurementPanel.spec.ts, SegmentationPanel.spec.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-012",
+      "title": "Working Viewer",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-WORKING_VIEWER",
+      "implementationRef": "client/src/components/dicom/working-viewer.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-013",
+      "title": "Primary Viewport",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-PRIMARYVIEWPORT",
+      "implementationRef": "client/src/components/viewer/PrimaryViewport.tsx",
+      "verificationRef": "Pending",
+      "validationStatus": "partial",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-014",
+      "title": "Gpu Viewport Manager",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-GPU_VIEWPORT_MANAGER",
+      "implementationRef": "client/src/lib/gpu-viewport-manager.ts",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-015",
+      "title": "Viewport Grid Service",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_GRID_SERVICE",
+      "implementationRef": "client/src/lib/viewport-grid-service.ts",
+      "verificationRef": "SegmentationService.test.ts, getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    },
+    {
+      "requirementId": "REQ-VIEW-016",
+      "title": "Viewport Scroll Sync",
+      "category": "Image Viewing",
+      "riskClass": "low",
+      "designRef": "DES-VIEWPORT_SCROLL_SYNC",
+      "implementationRef": "client/src/lib/viewport-scroll-sync.ts",
+      "verificationRef": "getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, toggleVOISliceSync.test.ts",
+      "validationStatus": "complete",
+      "relatedChanges": [
+        "13cf025",
+        "9ae494d",
+        "c9c40ed",
+        "e4eae1b",
+        "c11768a"
+      ]
+    }
+  ]
+}

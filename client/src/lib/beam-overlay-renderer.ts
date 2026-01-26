@@ -1,466 +1,482 @@
 /**
  * Beam Overlay Renderer
  * 
- * Renders RT Plan beam geometry onto CT slice images (CIAO - CT Image And Overlay)
- * 
- * Features:
- * - Divergent field line projection from source through isocenter to slice plane
- * - MLC aperture outline at slice intersection
- * - Isocenter markers
- * - Beam direction indicators
- * - Support for all slice orientations (axial, coronal, sagittal)
+ * Renders radiation beam overlays on CT slices - only when slice is near isocenter
+ * Based on clinical TPS behavior where beams only appear on relevant slices
  */
 
-import {
-  Vec3,
-  vec3Subtract,
-  vec3Normalize,
-  vec3Scale,
-  vec3Add,
-  calculateSourcePosition,
-  applyCollimatorRotation,
-} from './rt-coordinate-transforms';
-import type { BEVProjection, BeamSummary } from '@/types/rt-plan';
+import type { BeamSummary, BEVProjection } from '@/types/rt-plan';
+import { getBeamColor } from '@/types/rt-plan';
+
+const DEG_TO_RAD = Math.PI / 180;
+
+// Colors
+const ISOCENTER_COLOR = '#FF0000';
+const BEAM_LINE_COLOR = '#FFFF00';
 
 export interface SliceGeometry {
-  /** Slice position in world coordinates (for axial: Z value, etc.) */
   slicePosition: number;
-  /** Slice orientation */
   orientation: 'axial' | 'coronal' | 'sagittal';
-  /** Image position (DICOM Image Position Patient) */
-  imagePosition: Vec3;
-  /** Pixel spacing [row spacing, column spacing] in mm */
+  imagePosition: [number, number, number];
   pixelSpacing: [number, number];
-  /** Image dimensions in pixels */
   dimensions: { width: number; height: number };
-  /** Image orientation vectors [row direction, column direction] */
-  imageOrientation?: [Vec3, Vec3];
+}
+
+export interface CanvasTransform {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
 }
 
 export interface BeamOverlayOptions {
-  /** Opacity of the beam overlay (0-1) */
-  opacity: number;
-  /** Whether to draw field outline */
-  showFieldOutline: boolean;
-  /** Whether to draw isocenter marker */
-  showIsocenter: boolean;
-  /** Whether to draw beam direction arrow */
-  showBeamDirection: boolean;
-  /** Whether to draw beam label */
-  showLabels: boolean;
-  /** Highlight selected beam */
-  selectedBeamNumber: number | null;
-  /** Line width for field outline */
-  lineWidth: number;
-  /** Arrow length in pixels */
-  arrowLength: number;
-}
-
-const DEFAULT_OPTIONS: BeamOverlayOptions = {
-  opacity: 0.7,
-  showFieldOutline: true,
-  showIsocenter: true,
-  showBeamDirection: true,
-  showLabels: true,
-  selectedBeamNumber: null,
-  lineWidth: 2,
-  arrowLength: 80,
-};
-
-const BEAM_COLORS = [
-  '#3B82F6', // Blue
-  '#10B981', // Green
-  '#F59E0B', // Amber
-  '#EF4444', // Red
-  '#8B5CF6', // Purple
-  '#EC4899', // Pink
-  '#06B6D4', // Cyan
-  '#F97316', // Orange
-];
-
-/**
- * Get beam color by index
- */
-export function getBeamColor(index: number): string {
-  return BEAM_COLORS[index % BEAM_COLORS.length];
+  opacity?: number;
+  showFieldOutline?: boolean;
+  showIsocenter?: boolean;
+  showBeamDirection?: boolean;
+  showLabels?: boolean;
+  selectedBeamNumber?: number | null;
+  lineWidth?: number;
+  arrowLength?: number;
+  /** Tolerance in mm for showing beam on slice (default 10mm) */
+  sliceTolerance?: number;
 }
 
 /**
- * Calculate where a ray from source through a point intersects a plane
+ * Check if a slice is near the isocenter (within tolerance)
  */
-function rayPlaneIntersection(
-  source: Vec3,
-  point: Vec3,
-  planeNormal: Vec3,
-  planePoint: Vec3
-): Vec3 | null {
-  const rayDir = vec3Normalize(vec3Subtract(point, source));
+function isSliceNearIsocenter(
+  isocenter: [number, number, number],
+  slice: SliceGeometry,
+  tolerance: number
+): boolean {
+  const [ix, iy, iz] = isocenter;
   
-  // Plane equation: dot(normal, P - planePoint) = 0
-  // Ray: P = source + t * rayDir
-  // t = dot(normal, planePoint - source) / dot(normal, rayDir)
-  
-  const denom = planeNormal[0] * rayDir[0] + planeNormal[1] * rayDir[1] + planeNormal[2] * rayDir[2];
-  
-  if (Math.abs(denom) < 1e-10) {
-    return null; // Ray parallel to plane
+  if (slice.orientation === 'axial') {
+    // For axial, check Z distance
+    return Math.abs(iz - slice.slicePosition) <= tolerance;
+  } else if (slice.orientation === 'coronal') {
+    // For coronal, check Y distance  
+    return Math.abs(iy - slice.slicePosition) <= tolerance;
+  } else {
+    // For sagittal, check X distance
+    return Math.abs(ix - slice.slicePosition) <= tolerance;
   }
-  
-  const diff = vec3Subtract(planePoint, source);
-  const t = (planeNormal[0] * diff[0] + planeNormal[1] * diff[1] + planeNormal[2] * diff[2]) / denom;
-  
-  if (t < 0) {
-    return null; // Intersection behind source
-  }
-  
-  return vec3Add(source, vec3Scale(rayDir, t));
 }
 
 /**
- * Convert world coordinates to pixel coordinates on a slice
+ * Convert patient coordinates to image pixels
  */
-function worldToSlicePixels(
-  worldPos: Vec3,
+function patientToImagePixels(
+  point: [number, number, number],
   slice: SliceGeometry
-): { x: number; y: number } | null {
-  const imgPos = slice.imagePosition;
-  const spacing = slice.pixelSpacing;
-  
-  let x: number, y: number;
-  
-  switch (slice.orientation) {
-    case 'axial':
-      // For axial: X maps to columns, Y maps to rows
-      x = (worldPos[0] - imgPos[0]) / spacing[1];
-      y = (worldPos[1] - imgPos[1]) / spacing[0];
-      break;
-    case 'coronal':
-      // For coronal: X maps to columns, Z maps to rows (inverted)
-      x = (worldPos[0] - imgPos[0]) / spacing[1];
-      y = (imgPos[2] - worldPos[2]) / spacing[0];
-      break;
-    case 'sagittal':
-      // For sagittal: Y maps to columns, Z maps to rows (inverted)
-      x = (worldPos[1] - imgPos[1]) / spacing[1];
-      y = (imgPos[2] - worldPos[2]) / spacing[0];
-      break;
-    default:
-      return null;
+): { x: number; y: number } {
+  const [px, py, pz] = point;
+  const [ipx, ipy, ipz] = slice.imagePosition;
+  const [rowSpacing, colSpacing] = slice.pixelSpacing;
+
+  if (slice.orientation === 'axial') {
+    return {
+      x: (px - ipx) / colSpacing,
+      y: (py - ipy) / rowSpacing,
+    };
+  } else if (slice.orientation === 'coronal') {
+    return {
+      x: (px - ipx) / colSpacing,
+      y: (ipz - pz) / rowSpacing,
+    };
+  } else {
+    return {
+      x: (py - ipy) / colSpacing,
+      y: (ipz - pz) / rowSpacing,
+    };
   }
-  
-  return { x, y };
 }
 
 /**
- * Get plane normal for slice orientation
+ * Convert image pixels to canvas coordinates
  */
-function getPlaneNormal(orientation: 'axial' | 'coronal' | 'sagittal'): Vec3 {
-  switch (orientation) {
-    case 'axial': return [0, 0, 1];
-    case 'coronal': return [0, 1, 0];
-    case 'sagittal': return [1, 0, 0];
-  }
+function imageToCanvas(
+  pos: { x: number; y: number },
+  transform: CanvasTransform
+): { x: number; y: number } {
+  return {
+    x: transform.offsetX + pos.x * transform.scale,
+    y: transform.offsetY + pos.y * transform.scale,
+  };
 }
 
 /**
- * Get plane point for slice
+ * Calculate beam direction for display
  */
-function getPlanePoint(slice: SliceGeometry): Vec3 {
-  switch (slice.orientation) {
-    case 'axial':
-      return [0, 0, slice.slicePosition];
-    case 'coronal':
-      return [0, slice.slicePosition, 0];
-    case 'sagittal':
-      return [slice.slicePosition, 0, 0];
+function getBeamDirection(
+  gantryAngle: number,
+  couchAngle: number,
+  orientation: 'axial' | 'coronal' | 'sagittal'
+): { dx: number; dy: number } {
+  const gRad = gantryAngle * DEG_TO_RAD;
+  const cRad = couchAngle * DEG_TO_RAD;
+
+  // IEC 61217: Gantry 0° = beam from anterior (Y+), 90° = from left (X+)
+  const bx = Math.cos(cRad) * Math.sin(gRad);
+  const by = -Math.cos(gRad);
+  const bz = Math.sin(cRad) * Math.sin(gRad);
+
+  let dx: number, dy: number;
+  if (orientation === 'axial') {
+    dx = bx;
+    dy = by;
+  } else if (orientation === 'coronal') {
+    dx = bx;
+    dy = -bz;
+  } else {
+    dx = by;
+    dy = -bz;
   }
+
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len > 0.001) {
+    dx /= len;
+    dy /= len;
+  }
+  return { dx, dy };
 }
 
 /**
- * Project field aperture corners from isocenter plane to slice plane
- */
-function projectFieldToSlice(
-  bev: BEVProjection,
-  slice: SliceGeometry
-): Array<{ x: number; y: number }> | null {
-  const source = bev.sourcePosition;
-  const iso = bev.isocenterPosition;
-  const jaw = bev.jawAperture;
-  const collAngle = bev.collimatorAngle;
-  const gantryAngle = bev.gantryAngle;
-  
-  const planeNormal = getPlaneNormal(slice.orientation);
-  const planePoint = getPlanePoint(slice);
-  
-  // Define corners of jaw aperture at isocenter plane (BEV coordinates)
-  const bevCorners = [
-    { x: jaw.x1, y: jaw.y1 },
-    { x: jaw.x2, y: jaw.y1 },
-    { x: jaw.x2, y: jaw.y2 },
-    { x: jaw.x1, y: jaw.y2 },
-  ];
-  
-  const gantryRad = (gantryAngle * Math.PI) / 180;
-  const cosG = Math.cos(gantryRad);
-  const sinG = Math.sin(gantryRad);
-  
-  const projectedCorners: Array<{ x: number; y: number }> = [];
-  
-  for (const corner of bevCorners) {
-    // Apply collimator rotation in BEV space
-    const rotated = applyCollimatorRotation(corner, collAngle);
-    
-    // Convert BEV coordinates to world coordinates at isocenter plane
-    // BEV X is perpendicular to beam (crossline), BEV Y is along patient (inline/superior)
-    // For gantry at 0° (AP beam): BEV X = patient X, BEV Y = patient Z
-    const worldAtIso: Vec3 = [
-      iso[0] + rotated.x * cosG,
-      iso[1] + rotated.x * sinG,
-      iso[2] + rotated.y, // BEV Y maps to patient Z
-    ];
-    
-    // Project from source through this point to the slice plane
-    const intersection = rayPlaneIntersection(
-      source,
-      worldAtIso,
-      planeNormal,
-      planePoint
-    );
-    
-    if (!intersection) continue;
-    
-    // Convert to pixel coordinates
-    const pixel = worldToSlicePixels(intersection, slice);
-    if (pixel) {
-      projectedCorners.push(pixel);
-    }
-  }
-  
-  return projectedCorners.length >= 3 ? projectedCorners : null;
-}
-
-/**
- * Draw beam overlay on a canvas
+ * Main draw function - only draws beams near current slice
  */
 export function drawBeamOverlay(
   ctx: CanvasRenderingContext2D,
   beams: BeamSummary[],
   bevProjections: BEVProjection[],
   slice: SliceGeometry,
-  canvasTransform: {
-    scale: number;
-    offsetX: number;
-    offsetY: number;
-  },
-  options: Partial<BeamOverlayOptions> = {}
+  transform: CanvasTransform,
+  options: BeamOverlayOptions = {}
 ): void {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+  const {
+    opacity = 0.9,
+    showIsocenter = true,
+    showBeamDirection = true,
+    showLabels = true,
+    selectedBeamNumber = null,
+    lineWidth = 2,
+    sliceTolerance = 15,  // Only show beams within 15mm of slice
+  } = options;
+
+  if (!beams?.length || !bevProjections?.length) return;
+
   ctx.save();
-  ctx.globalAlpha = opts.opacity;
-  
-  for (let i = 0; i < bevProjections.length; i++) {
-    const bev = bevProjections[i];
+  ctx.globalAlpha = opacity;
+
+  // Track which isocenters are on this slice
+  const visibleIsocenters = new Map<string, { x: number; y: number; selected: boolean }>();
+
+  // Process each beam
+  bevProjections.forEach((bev, index) => {
     const beam = beams.find(b => b.beamNumber === bev.beamNumber);
-    if (!beam) continue;
-    
-    const isSelected = opts.selectedBeamNumber === bev.beamNumber;
-    const color = getBeamColor(i);
-    
-    // Transform coordinates from slice pixels to canvas
-    const toCanvas = (p: { x: number; y: number }) => ({
-      x: canvasTransform.offsetX + p.x * canvasTransform.scale,
-      y: canvasTransform.offsetY + p.y * canvasTransform.scale,
-    });
-    
-    // Convert isocenter to slice pixels
-    const isoPixel = worldToSlicePixels(bev.isocenterPosition, slice);
-    if (!isoPixel) continue;
-    
-    const isoCanvas = toCanvas(isoPixel);
-    
-    // Check if isocenter is within reasonable bounds
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-    if (isoCanvas.x < -200 || isoCanvas.x > canvasWidth + 200 ||
-        isoCanvas.y < -200 || isoCanvas.y > canvasHeight + 200) {
-      continue;
+    if (!beam) return;
+
+    // CRITICAL: Only show beam if current slice is near the isocenter
+    if (!isSliceNearIsocenter(bev.isocenterPosition, slice, sliceTolerance)) {
+      return;  // Skip this beam - it's not on this slice
     }
-    
-    // --- Draw field outline ---
-    if (opts.showFieldOutline) {
-      const fieldCorners = projectFieldToSlice(bev, slice);
-      
-      if (fieldCorners && fieldCorners.length >= 3) {
-        ctx.beginPath();
-        const first = toCanvas(fieldCorners[0]);
-        ctx.moveTo(first.x, first.y);
-        
-        for (let j = 1; j < fieldCorners.length; j++) {
-          const pt = toCanvas(fieldCorners[j]);
-          ctx.lineTo(pt.x, pt.y);
-        }
-        ctx.closePath();
-        
-        // Fill with semi-transparent color
-        ctx.fillStyle = `${color}25`;
-        ctx.fill();
-        
-        // Stroke outline
-        ctx.strokeStyle = color;
-        ctx.lineWidth = isSelected ? opts.lineWidth * 1.5 : opts.lineWidth;
-        ctx.setLineDash(isSelected ? [] : [6, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+
+    const isSelected = selectedBeamNumber === bev.beamNumber;
+    const color = getBeamColor(index);
+
+    // Convert isocenter to canvas coordinates
+    const isoImgPx = patientToImagePixels(bev.isocenterPosition, slice);
+    const isoCanvas = imageToCanvas(isoImgPx, transform);
+
+    // Skip if way outside canvas
+    if (isoCanvas.x < -100 || isoCanvas.x > ctx.canvas.width + 100 ||
+        isoCanvas.y < -100 || isoCanvas.y > ctx.canvas.height + 100) {
+      return;
     }
-    
-    // --- Draw beam direction arrow ---
-    if (opts.showBeamDirection) {
-      const gantryRad = (bev.gantryAngle * Math.PI) / 180;
-      
-      // Calculate beam entry direction in 2D (projected onto slice)
-      let beamDirX: number, beamDirY: number;
-      
-      switch (slice.orientation) {
-        case 'axial':
-          // For axial view, show beam direction in XY plane
-          beamDirX = Math.sin(gantryRad);
-          beamDirY = -Math.cos(gantryRad);
-          break;
-        case 'coronal':
-          // For coronal view, project onto XZ plane
-          beamDirX = Math.sin(gantryRad);
-          beamDirY = 0; // Simplified - actual depends on gantry angle
-          break;
-        case 'sagittal':
-          // For sagittal view, project onto YZ plane
-          beamDirX = -Math.cos(gantryRad);
-          beamDirY = 0;
-          break;
-      }
-      
-      const arrowLen = isSelected ? opts.arrowLength * 1.2 : opts.arrowLength;
-      
-      // Arrow from source direction to isocenter
-      const entryX = isoCanvas.x - beamDirX * arrowLen;
-      const entryY = isoCanvas.y - beamDirY * arrowLen;
-      
-      // Draw beam line
-      ctx.strokeStyle = color;
-      ctx.lineWidth = isSelected ? 3 : 2;
-      ctx.setLineDash(isSelected ? [] : [8, 4]);
-      ctx.beginPath();
-      ctx.moveTo(entryX, entryY);
-      ctx.lineTo(isoCanvas.x, isoCanvas.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Draw arrowhead at isocenter
-      const headLen = isSelected ? 15 : 10;
-      const angle = Math.atan2(isoCanvas.y - entryY, isoCanvas.x - entryX);
-      ctx.beginPath();
-      ctx.moveTo(isoCanvas.x, isoCanvas.y);
-      ctx.lineTo(
-        isoCanvas.x - headLen * Math.cos(angle - Math.PI / 6),
-        isoCanvas.y - headLen * Math.sin(angle - Math.PI / 6)
-      );
-      ctx.moveTo(isoCanvas.x, isoCanvas.y);
-      ctx.lineTo(
-        isoCanvas.x - headLen * Math.cos(angle + Math.PI / 6),
-        isoCanvas.y - headLen * Math.sin(angle + Math.PI / 6)
-      );
-      ctx.stroke();
-      
-      // Exit indicator (dashed, lighter)
-      ctx.globalAlpha = opts.opacity * 0.5;
-      ctx.setLineDash([4, 4]);
-      const exitX = isoCanvas.x + beamDirX * (arrowLen * 0.5);
-      const exitY = isoCanvas.y + beamDirY * (arrowLen * 0.5);
-      ctx.beginPath();
-      ctx.moveTo(isoCanvas.x, isoCanvas.y);
-      ctx.lineTo(exitX, exitY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = opts.opacity;
+
+    // Store isocenter
+    const isoKey = bev.isocenterPosition.map(v => v.toFixed(1)).join(',');
+    if (!visibleIsocenters.has(isoKey) || isSelected) {
+      visibleIsocenters.set(isoKey, { x: isoCanvas.x, y: isoCanvas.y, selected: isSelected });
     }
-    
-    // --- Draw isocenter marker ---
-    if (opts.showIsocenter) {
-      // Outer ring
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(isoCanvas.x, isoCanvas.y, isSelected ? 7 : 5, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Inner dot
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(isoCanvas.x, isoCanvas.y, isSelected ? 3 : 2, 0, Math.PI * 2);
-      ctx.fill();
+
+    // Draw beam line
+    if (showBeamDirection) {
+      drawBeamLine(ctx, bev, isoCanvas, isoImgPx, slice, transform, color, isSelected, lineWidth);
     }
-    
-    // --- Draw label ---
-    if (opts.showLabels && (isSelected || beams.length <= 6)) {
-      ctx.font = isSelected ? 'bold 12px system-ui' : '10px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      
-      const labelText = `${bev.beamName} (G${bev.gantryAngle.toFixed(0)}°)`;
-      const gantryRad = (bev.gantryAngle * Math.PI) / 180;
-      const labelOffset = opts.arrowLength + 15;
-      
-      let labelX: number, labelY: number;
-      switch (slice.orientation) {
-        case 'axial':
-          labelX = isoCanvas.x - Math.sin(gantryRad) * labelOffset;
-          labelY = isoCanvas.y + Math.cos(gantryRad) * labelOffset - 5;
-          break;
-        default:
-          labelX = isoCanvas.x;
-          labelY = isoCanvas.y - labelOffset;
-      }
-      
-      // Background for readability
-      const metrics = ctx.measureText(labelText);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(
-        labelX - metrics.width / 2 - 4,
-        labelY - 14,
-        metrics.width + 8,
-        18
-      );
-      
-      ctx.fillStyle = color;
-      ctx.fillText(labelText, labelX, labelY);
+
+    // Draw arc path for VMAT beams
+    if (bev.isArc && bev.finalGantryAngle !== undefined) {
+      drawArcPath(ctx, bev, isoCanvas, isoImgPx, slice, transform, color, isSelected, lineWidth);
+    }
+
+    // Draw label
+    if (showLabels) {
+      drawLabel(ctx, bev, isoCanvas, slice.orientation, color, isSelected);
+    }
+  });
+
+  // Draw isocenter markers for visible isocenters
+  if (showIsocenter) {
+    for (const iso of visibleIsocenters.values()) {
+      drawIsocenter(ctx, iso.x, iso.y, iso.selected ? 8 : 6);
     }
   }
-  
+
   ctx.restore();
 }
 
 /**
- * Check if a beam intersects with the current slice
+ * Draw beam direction line
  */
-export function beamIntersectsSlice(
+function drawBeamLine(
+  ctx: CanvasRenderingContext2D,
   bev: BEVProjection,
+  isoCanvas: { x: number; y: number },
+  isoImgPx: { x: number; y: number },
   slice: SliceGeometry,
-  tolerance: number = 50 // mm tolerance for considering beam relevance
-): boolean {
-  const iso = bev.isocenterPosition;
-  
-  switch (slice.orientation) {
-    case 'axial':
-      return Math.abs(iso[2] - slice.slicePosition) <= tolerance;
-    case 'coronal':
-      return Math.abs(iso[1] - slice.slicePosition) <= tolerance;
-    case 'sagittal':
-      return Math.abs(iso[0] - slice.slicePosition) <= tolerance;
-  }
+  transform: CanvasTransform,
+  color: string,
+  isSelected: boolean,
+  lineWidth: number
+): void {
+  const { dx, dy } = getBeamDirection(bev.gantryAngle, bev.couchAngle, slice.orientation);
+
+  // Calculate line length based on image bounds
+  const maxLen = Math.min(
+    isoImgPx.x, slice.dimensions.width - isoImgPx.x,
+    isoImgPx.y, slice.dimensions.height - isoImgPx.y
+  );
+  const lineLen = Math.max(maxLen * 0.6, 50) * transform.scale;
+
+  // Entry point (source side)
+  const entryX = isoCanvas.x - dx * lineLen;
+  const entryY = isoCanvas.y - dy * lineLen;
+
+  // Exit point
+  const exitX = isoCanvas.x + dx * lineLen * 0.5;
+  const exitY = isoCanvas.y + dy * lineLen * 0.5;
+
+  // Draw entry line
+  ctx.strokeStyle = color;
+  ctx.lineWidth = isSelected ? lineWidth + 1 : lineWidth;
+  ctx.beginPath();
+  ctx.moveTo(entryX, entryY);
+  ctx.lineTo(isoCanvas.x, isoCanvas.y);
+  ctx.stroke();
+
+  // Arrowhead at isocenter
+  const angle = Math.atan2(dy, dx);
+  const headLen = isSelected ? 12 : 9;
+  ctx.beginPath();
+  ctx.moveTo(isoCanvas.x, isoCanvas.y);
+  ctx.lineTo(
+    isoCanvas.x - headLen * Math.cos(angle - Math.PI / 6),
+    isoCanvas.y - headLen * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.moveTo(isoCanvas.x, isoCanvas.y);
+  ctx.lineTo(
+    isoCanvas.x - headLen * Math.cos(angle + Math.PI / 6),
+    isoCanvas.y - headLen * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.stroke();
+
+  // Exit line (dashed)
+  ctx.setLineDash([5, 5]);
+  ctx.globalAlpha *= 0.5;
+  ctx.beginPath();
+  ctx.moveTo(isoCanvas.x, isoCanvas.y);
+  ctx.lineTo(exitX, exitY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha *= 2;
 }
 
-export default {
-  drawBeamOverlay,
-  beamIntersectsSlice,
-  getBeamColor,
-};
+/**
+ * Draw arc path for VMAT
+ */
+function drawArcPath(
+  ctx: CanvasRenderingContext2D,
+  bev: BEVProjection,
+  isoCanvas: { x: number; y: number },
+  isoImgPx: { x: number; y: number },
+  slice: SliceGeometry,
+  transform: CanvasTransform,
+  color: string,
+  isSelected: boolean,
+  lineWidth: number
+): void {
+  if (!bev.finalGantryAngle) return;
+
+  const couchRad = bev.couchAngle * DEG_TO_RAD;
+  
+  // Arc radius
+  const maxR = Math.min(
+    isoImgPx.x, slice.dimensions.width - isoImgPx.x,
+    isoImgPx.y, slice.dimensions.height - isoImgPx.y
+  );
+  const radius = Math.max(maxR * 0.5, 60) * transform.scale;
+
+  let radiusX = radius, radiusY = radius, rotation = 0;
+  
+  if (slice.orientation === 'axial' && Math.abs(bev.couchAngle) > 1) {
+    radiusY = radius * Math.abs(Math.cos(couchRad));
+    rotation = -couchRad;
+  } else if (slice.orientation === 'coronal') {
+    radiusY = Math.max(radius * Math.abs(Math.sin(couchRad)), radius * 0.2);
+  } else if (slice.orientation === 'sagittal') {
+    radiusX = Math.max(radius * Math.abs(Math.sin(couchRad)), radius * 0.2);
+  }
+
+  // Calculate sweep
+  const dir = bev.gantryRotationDirection || 'CW';
+  let sweep = bev.finalGantryAngle - bev.gantryAngle;
+  if (dir === 'CW' && sweep < 0) sweep += 360;
+  if (dir === 'CC' && sweep > 0) sweep -= 360;
+
+  const startA = (bev.gantryAngle - 90) * DEG_TO_RAD;
+  const endA = startA + sweep * DEG_TO_RAD;
+
+  ctx.save();
+  ctx.translate(isoCanvas.x, isoCanvas.y);
+  ctx.rotate(rotation);
+
+  // Arc
+  ctx.strokeStyle = '#00FFFF';
+  ctx.lineWidth = isSelected ? lineWidth + 1 : lineWidth;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, radiusX, radiusY, 0, startA, endA, sweep < 0);
+  ctx.stroke();
+
+  // Start dot
+  ctx.fillStyle = '#00FFFF';
+  ctx.beginPath();
+  ctx.arc(radiusX * Math.cos(startA), radiusY * Math.sin(startA), 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // End arrow
+  const endX = radiusX * Math.cos(endA);
+  const endY = radiusY * Math.sin(endA);
+  const tang = endA + (sweep >= 0 ? Math.PI / 2 : -Math.PI / 2);
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX - 10 * Math.cos(tang - 0.4), endY - 10 * Math.sin(tang - 0.4));
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX - 10 * Math.cos(tang + 0.4), endY - 10 * Math.sin(tang + 0.4));
+  ctx.stroke();
+
+  // Avoidance sectors
+  if (bev.avoidanceSectors?.length) {
+    ctx.strokeStyle = '#FF6B6B';
+    ctx.setLineDash([6, 4]);
+    for (const s of bev.avoidanceSectors) {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radiusX + 6, radiusY + 6, 0, (s.startAngle - 90) * DEG_TO_RAD, (s.endAngle - 90) * DEG_TO_RAD);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draw beam label
+ */
+function drawLabel(
+  ctx: CanvasRenderingContext2D,
+  bev: BEVProjection,
+  isoCanvas: { x: number; y: number },
+  orientation: 'axial' | 'coronal' | 'sagittal',
+  color: string,
+  isSelected: boolean
+): void {
+  const { dx, dy } = getBeamDirection(bev.gantryAngle, bev.couchAngle, orientation);
+  
+  // Position label along beam entry direction
+  const dist = isSelected ? 90 : 70;
+  const lx = isoCanvas.x - dx * dist;
+  const ly = isoCanvas.y - dy * dist;
+
+  // Text
+  const isArc = bev.isArc && bev.finalGantryAngle;
+  const text = isArc 
+    ? `${bev.beamName} (${Math.abs(bev.finalGantryAngle! - bev.gantryAngle).toFixed(0)}°)`
+    : `${bev.beamName} G${bev.gantryAngle.toFixed(0)}°`;
+
+  ctx.save();
+  ctx.translate(lx, ly);
+  
+  // Rotate to follow beam direction, keeping text readable
+  let rot = Math.atan2(dy, dx) + Math.PI / 2;
+  if (rot > Math.PI / 2) rot -= Math.PI;
+  if (rot < -Math.PI / 2) rot += Math.PI;
+  ctx.rotate(rot);
+
+  ctx.font = isSelected ? 'bold 13px system-ui' : '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const w = ctx.measureText(text).width + 10;
+  
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(-w / 2, -10, w, 20);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = isSelected ? 2 : 1;
+  ctx.strokeRect(-w / 2, -10, w, 20);
+
+  // Text
+  ctx.fillStyle = isSelected ? '#FFFFFF' : color;
+  ctx.fillText(text, 0, 0);
+
+  ctx.restore();
+}
+
+/**
+ * Draw isocenter marker
+ */
+function drawIsocenter(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number
+): void {
+  ctx.strokeStyle = ISOCENTER_COLOR;
+  ctx.lineWidth = 2;
+
+  // Circle
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Crosshair
+  const len = size * 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x - len, y);
+  ctx.lineTo(x + len, y);
+  ctx.moveTo(x, y - len);
+  ctx.lineTo(x, y + len);
+  ctx.stroke();
+
+  // Center dot
+  ctx.fillStyle = ISOCENTER_COLOR;
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/**
+ * Check if slice is near isocenter (exported for external use)
+ */
+export function sliceIntersectsIsocenter(
+  slice: SliceGeometry,
+  isocenter: [number, number, number],
+  tolerance: number = 15
+): boolean {
+  return isSliceNearIsocenter(isocenter, slice, tolerance);
+}

@@ -44,10 +44,15 @@ interface DVHCurve {
     min: number;
     max: number;
     mean: number;
-    d95: number;
-    d50: number;
-    d2: number;
-    v100?: number;
+    d98?: number;   // MIM: Dose covering 98% of volume
+    d95: number;    // MIM: Dose covering 95% of volume
+    d50: number;    // MIM: Median dose
+    d2: number;     // MIM: Near-max dose (2% of volume)
+    v100?: number;  // Volume receiving 100% of Rx
+    v95?: number;   // Volume receiving 95% of Rx
+    v50?: number;   // Volume receiving 50% of Rx
+    v20?: number;   // Volume receiving 20% of Rx (lung OAR)
+    v5?: number;    // Volume receiving 5 Gy (low dose bath)
   };
 }
 
@@ -88,6 +93,7 @@ export function DVHPopupViewer({
   const [showGrid, setShowGrid] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
   const [showStats, setShowStats] = useState(true);
+  const [showExtendedStats, setShowExtendedStats] = useState(false);  // Toggle for MIM extended metrics
 
   // Fetch DVH data from backend
   const fetchDVH = useCallback(async () => {
@@ -192,14 +198,22 @@ export function DVHPopupViewer({
     URL.revokeObjectURL(url);
   };
 
-  // Copy stats to clipboard
+  // Copy stats to clipboard (includes extended MIM metrics)
   const copyStats = () => {
     if (!selectedCurves.length) return;
     
-    let text = 'Structure\tVolume (cc)\tMin\tMax\tMean\tD95\tD50\tD2\n';
+    const headers = showExtendedStats 
+      ? 'Structure\tVolume (cc)\tMin\tMax\tMean\tD98\tD95\tD50\tD2\tV100\tV95\tV50\tV20\tV5\n'
+      : 'Structure\tVolume (cc)\tMin\tMax\tMean\tD98\tD95\tD50\tD2\n';
+    
+    let text = headers;
     selectedCurves.forEach(curve => {
       const s = curve.statistics;
-      text += `${curve.roiName}\t${curve.volumeCc.toFixed(1)}\t${s.min.toFixed(2)}\t${s.max.toFixed(2)}\t${s.mean.toFixed(2)}\t${s.d95.toFixed(2)}\t${s.d50.toFixed(2)}\t${s.d2.toFixed(2)}\n`;
+      if (showExtendedStats) {
+        text += `${curve.roiName}\t${curve.volumeCc.toFixed(1)}\t${s.min.toFixed(2)}\t${s.max.toFixed(2)}\t${s.mean.toFixed(2)}\t${(s.d98 ?? 0).toFixed(2)}\t${s.d95.toFixed(2)}\t${s.d50.toFixed(2)}\t${s.d2.toFixed(2)}\t${(s.v100 ?? 0).toFixed(1)}%\t${(s.v95 ?? 0).toFixed(1)}%\t${(s.v50 ?? 0).toFixed(1)}%\t${(s.v20 ?? 0).toFixed(1)}%\t${(s.v5 ?? 0).toFixed(1)}%\n`;
+      } else {
+        text += `${curve.roiName}\t${curve.volumeCc.toFixed(1)}\t${s.min.toFixed(2)}\t${s.max.toFixed(2)}\t${s.mean.toFixed(2)}\t${(s.d98 ?? 0).toFixed(2)}\t${s.d95.toFixed(2)}\t${s.d50.toFixed(2)}\t${s.d2.toFixed(2)}\n`;
+      }
     });
     
     navigator.clipboard.writeText(text);
@@ -539,13 +553,26 @@ export function DVHPopupViewer({
 
                 {/* Statistics Table */}
                 <div className="border-t border-gray-700/50 pt-3">
-                  <button
-                    onClick={() => setShowStats(!showStats)}
-                    className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-300 mb-2"
-                  >
-                    {showStats ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    Statistics
-                  </button>
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowStats(!showStats)}
+                      className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-300"
+                    >
+                      {showStats ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      Statistics
+                    </button>
+                    {showStats && (
+                      <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showExtendedStats}
+                          onChange={(e) => setShowExtendedStats(e.target.checked)}
+                          className="rounded border-gray-600 w-3 h-3"
+                        />
+                        Extended (MIM)
+                      </label>
+                    )}
+                  </div>
                   
                   {showStats && selectedCurves.length > 0 && (
                     <div className="overflow-x-auto">
@@ -557,9 +584,19 @@ export function DVHPopupViewer({
                             <th className="text-right py-1.5 px-2 font-medium">Min</th>
                             <th className="text-right py-1.5 px-2 font-medium">Max</th>
                             <th className="text-right py-1.5 px-2 font-medium">Mean</th>
+                            <th className="text-right py-1.5 px-2 font-medium">D98</th>
                             <th className="text-right py-1.5 px-2 font-medium">D95</th>
                             <th className="text-right py-1.5 px-2 font-medium">D50</th>
                             <th className="text-right py-1.5 px-2 font-medium">D2</th>
+                            {showExtendedStats && (
+                              <>
+                                <th className="text-right py-1.5 px-2 font-medium text-yellow-500">V100</th>
+                                <th className="text-right py-1.5 px-2 font-medium text-yellow-500">V95</th>
+                                <th className="text-right py-1.5 px-2 font-medium text-yellow-500">V50</th>
+                                <th className="text-right py-1.5 px-2 font-medium text-yellow-500">V20</th>
+                                <th className="text-right py-1.5 px-2 font-medium text-yellow-500">V5</th>
+                              </>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -578,9 +615,19 @@ export function DVHPopupViewer({
                               <td className="py-1.5 px-2 text-right text-blue-400 tabular-nums">{curve.statistics.min.toFixed(2)}</td>
                               <td className="py-1.5 px-2 text-right text-red-400 tabular-nums">{curve.statistics.max.toFixed(2)}</td>
                               <td className="py-1.5 px-2 text-right text-gray-300 tabular-nums">{curve.statistics.mean.toFixed(2)}</td>
+                              <td className="py-1.5 px-2 text-right text-emerald-400 tabular-nums">{(curve.statistics.d98 ?? 0).toFixed(2)}</td>
                               <td className="py-1.5 px-2 text-right text-green-400 tabular-nums">{curve.statistics.d95.toFixed(2)}</td>
                               <td className="py-1.5 px-2 text-right text-cyan-400 tabular-nums">{curve.statistics.d50.toFixed(2)}</td>
                               <td className="py-1.5 px-2 text-right text-orange-400 tabular-nums">{curve.statistics.d2.toFixed(2)}</td>
+                              {showExtendedStats && (
+                                <>
+                                  <td className="py-1.5 px-2 text-right text-yellow-400 tabular-nums">{(curve.statistics.v100 ?? 0).toFixed(1)}%</td>
+                                  <td className="py-1.5 px-2 text-right text-lime-400 tabular-nums">{(curve.statistics.v95 ?? 0).toFixed(1)}%</td>
+                                  <td className="py-1.5 px-2 text-right text-teal-400 tabular-nums">{(curve.statistics.v50 ?? 0).toFixed(1)}%</td>
+                                  <td className="py-1.5 px-2 text-right text-sky-400 tabular-nums">{(curve.statistics.v20 ?? 0).toFixed(1)}%</td>
+                                  <td className="py-1.5 px-2 text-right text-indigo-400 tabular-nums">{(curve.statistics.v5 ?? 0).toFixed(1)}%</td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>

@@ -63,7 +63,18 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   // Shared image cache to prevent reloading when switching modes
   const imageCache = useRef<Map<string, { images: any[], metadata: any }>>(new Map());
   
-  const [rtStructures, setRTStructures] = useState<any>(null);
+  const [rtStructures, setRTStructuresInternal] = useState<any>(null);
+  
+  // DEBUG: Wrapper to trace all rtStructures state changes
+  const setRTStructures = (newValue: any) => {
+    console.warn('🔴 DEBUG setRTStructures called:', {
+      newSeriesId: newValue?.seriesId,
+      newStructureCount: newValue?.structures?.length,
+      newStructureNames: newValue?.structures?.map((s: any) => s.structureName),
+      caller: new Error().stack?.split('\n')[2]?.trim()
+    });
+    setRTStructuresInternal(newValue);
+  };
   const [structureVisibility, setStructureVisibility] = useState<Map<number, boolean>>(new Map());
   const [selectedStructures, setSelectedStructures] = useState<Set<number>>(new Set());
   const [selectedStructureColors, setSelectedStructureColors] = useState<string[]>([]);
@@ -105,7 +116,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   // RT Plan / Beam state
   const [planSeries, setPlanSeries] = useState<any[]>([]);
   const [selectedPlanSeriesId, setSelectedPlanSeriesId] = useState<number | null>(null);
-  const [showBeamOverlay, setShowBeamOverlay] = useState(false);
+  const [showBeamOverlay, setShowBeamOverlay] = useState(true);
   const [selectedBeamNumber, setSelectedBeamNumber] = useState<number | null>(null);
   const [beamOverlayOpacity, setBeamOverlayOpacity] = useState(0.7);
   const [loadedBeams, setLoadedBeams] = useState<BeamSummary[]>([]);
@@ -131,7 +142,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [loadedRTSeriesId, setLoadedRTSeriesId] = useState<number | null>(null);
   
   // Auto-save RT structures with 5-second debounce
-  const { saveStatus, lastSaved, error: autoSaveError, saveNow } = useRTAutoSave({
+  const { saveStatus, lastSaved, error: autoSaveError, saveNow, saveSnapshot } = useRTAutoSave({
     seriesId: loadedRTSeriesId,
     structures: rtStructures?.structures || null,
     enabled: !!loadedRTSeriesId && !!rtStructures?.structures,
@@ -148,6 +159,26 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       });
     }
   });
+  
+  // Handler to save a labeled snapshot
+  const handleSaveSnapshot = useCallback(async () => {
+    if (!loadedRTSeriesId || !rtStructures?.structures) {
+      toast({
+        title: 'No structures to save',
+        description: 'Load RT structures first',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const success = await saveSnapshot();
+    if (success) {
+      toast({
+        title: 'Snapshot saved',
+        description: 'Structure set saved to history',
+      });
+    }
+  }, [loadedRTSeriesId, rtStructures, saveSnapshot, toast]);
   
   // MPR visibility state
   const [mprVisible, setMprVisible] = useState(false);
@@ -2411,7 +2442,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   return (
     <>
       <div className="animate-in fade-in-50 duration-500">
-      <div className="flex gap-4" style={{ height: 'calc(100vh - 8rem)' }}>
+      <div className="flex gap-4" style={{ height: 'calc(100vh - 5.5rem)' }}>
         
         {/* Series Selector - Responsive Width */}
         <div className="w-full md:w-96 h-full overflow-hidden flex-shrink-0 hidden md:block">
@@ -2995,6 +3026,10 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           viewerOffsetLeft={384}
           // FuseBox props - show when fusion secondary is active
           hasFusionActive={secondarySeriesId !== null}
+          // Save props
+          onSaveSnapshot={handleSaveSnapshot}
+          saveStatus={saveStatus}
+          lastSaved={lastSaved}
           onFuseBoxOpen={() => {
             // Store fusion data in sessionStorage for the new window
             const selectedSecondary = fusionManifest?.secondaries.find(s => s.secondarySeriesId === secondarySeriesId);
@@ -3987,6 +4022,9 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           minimized={dosePanelMinimized}
           onToggleMinimized={setDosePanelMinimized}
           fusionPanelVisible={secondarySeriesId !== null}
+          
+          // For enhanced BEV with DRR and structure projection
+          ctSeriesId={selectedSeries?.id}
           structureSetId={loadedRTSeriesId || undefined}
           
           // Actions

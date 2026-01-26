@@ -6,6 +6,7 @@ import { storage } from "./storage";
 import { Server } from "http";
 import dicomParser from 'dicom-parser';
 import { RTStructureParser } from './rt-structure-parser';
+import { RTStructureWriter, RTStructureWriteInput } from './rt-structure-writer';
 import polygonClipping from 'polygon-clipping';
 import { db } from "./db";
 import { images as imagesTable, patientTags } from "@shared/schema";
@@ -36,6 +37,7 @@ import rtPlanRouter from './rt-plan-api';
 import dvhRouter, { triggerDvhPrecompute } from './dvh-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
 import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
+import regulatoryRouter from './regulatory-api';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Helper function to check if two polygons overlap
@@ -276,8 +278,60 @@ const rtStructureModifications = new Map<number, {
   historyIndex: number
 }>();
 
-// Cache for parsed RT structure sets to improve performance
-const rtStructureCache = new Map<string, any>();
+// ============================================================================
+// LRU Cache for parsed RT structure sets to improve performance
+// Prevents unbounded memory growth that was causing OOM crashes
+// ============================================================================
+interface RTStructureCacheEntry {
+  data: any;
+  timestamp: number;
+  accessTime: number;
+}
+const rtStructureCache = new Map<string, RTStructureCacheEntry>();
+const RT_STRUCTURE_CACHE_MAX_SIZE = 20; // Max number of RT structures to cache
+const RT_STRUCTURE_CACHE_TTL = 30 * 60 * 1000; // 30 minutes TTL
+
+function getRTStructureFromCache(key: string): any | null {
+  const entry = rtStructureCache.get(key);
+  if (!entry) return null;
+  
+  // Check TTL
+  if (Date.now() - entry.timestamp > RT_STRUCTURE_CACHE_TTL) {
+    rtStructureCache.delete(key);
+    return null;
+  }
+  
+  // Update access time for LRU
+  entry.accessTime = Date.now();
+  return entry.data;
+}
+
+function setRTStructureInCache(key: string, data: any): void {
+  // Evict oldest entries if cache is full (LRU eviction)
+  if (rtStructureCache.size >= RT_STRUCTURE_CACHE_MAX_SIZE) {
+    let oldestKey: string | null = null;
+    let oldestAccess = Infinity;
+    for (const [k, v] of rtStructureCache.entries()) {
+      if (v.accessTime < oldestAccess) {
+        oldestAccess = v.accessTime;
+        oldestKey = k;
+      }
+    }
+    if (oldestKey) {
+      rtStructureCache.delete(oldestKey);
+    }
+  }
+  
+  rtStructureCache.set(key, { 
+    data, 
+    timestamp: Date.now(),
+    accessTime: Date.now()
+  });
+}
+
+function clearRTStructureCache(): void {
+  rtStructureCache.clear();
+}
 
 // Request deduplication for RT structure loading to prevent concurrent requests
 const rtStructureLoadingPromises = new Map<number, Promise<any>>();
@@ -306,6 +360,61 @@ const triageSessions = new Map<string, {
   patientCount: number;
   imageCount: number;
 }>();
+
+// ============================================================================
+// Periodic cache cleanup to prevent memory leaks
+// ============================================================================
+const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const PARSING_SESSION_TTL = 30 * 60 * 1000; // 30 minutes
+const TRIAGE_SESSION_TTL = 60 * 60 * 1000; // 1 hour
+
+function cleanupStaleSessions(): void {
+  const now = Date.now();
+  
+  // Cleanup parsing sessions
+  for (const [sessionId, session] of parsingSessions.entries()) {
+    const age = now - session.startedAt.getTime();
+    if (age > PARSING_SESSION_TTL) {
+      parsingSessions.delete(sessionId);
+    }
+  }
+  
+  // Cleanup triage sessions
+  for (const [sessionId, session] of triageSessions.entries()) {
+    if (now - session.timestamp > TRIAGE_SESSION_TTL) {
+      triageSessions.delete(sessionId);
+    }
+  }
+  
+  // Cleanup expired RT structure cache entries
+  for (const [key, entry] of rtStructureCache.entries()) {
+    if (now - entry.timestamp > RT_STRUCTURE_CACHE_TTL) {
+      rtStructureCache.delete(key);
+    }
+  }
+  
+  // Cleanup loading promises that might be stuck (older than 5 minutes)
+  // These should complete quickly, so if they're still here, something went wrong
+  // Note: We can't easily check promise age, so we just clear them periodically
+  // This is safe because the promises will just be recreated on next request
+  if (rtStructureLoadingPromises.size > 50) {
+    rtStructureLoadingPromises.clear();
+  }
+  if (rtStructureStudyLoadingPromises.size > 50) {
+    rtStructureStudyLoadingPromises.clear();
+  }
+}
+
+// Start periodic cleanup
+setInterval(cleanupStaleSessions, SESSION_CLEANUP_INTERVAL);
+
+// Log memory usage periodically in development
+if (process.env.NODE_ENV === 'development') {
+  setInterval(() => {
+    const used = process.memoryUsage();
+    console.log(`[Memory] Heap: ${Math.round(used.heapUsed / 1024 / 1024)}MB / ${Math.round(used.heapTotal / 1024 / 1024)}MB | RT Cache: ${rtStructureCache.size} | Sessions: ${parsingSessions.size} | Triage: ${triageSessions.size}`);
+  }, 60000); // Log every minute
+}
 
 // Function to extract ZIP files
 async function extractZipFile(zipPath: string, destDir: string): Promise<string[]> {
@@ -2125,6 +2234,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For each RT structure, determine which CT/MR series it references (search across all patient series)
       const rtSeriesWithAssociations = await Promise.all(rtSeriesAll.map(async (rtSeries) => {
+        let referencedSeriesId: number | null = null;
+        let referencedSeriesDescription: string | null = null;
+        let referencedSeriesUID: string | null = null;
+        
+        // First, try to get from DICOM file parsing
         try {
           const imgs = await storage.getImagesBySeriesId(rtSeries.id);
           if (imgs.length > 0 && imgs[0].filePath) {
@@ -2138,12 +2252,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Look up referenced series across ALL patient series
                 const referencedSeries = allSeriesForPatient.find(s => s.seriesInstanceUID === rtStructureSet.referencedSeriesUID);
                 if (referencedSeries) {
-                  return {
-                    ...rtSeries,
-                    referencedSeriesId: referencedSeries.id,
-                    referencedSeriesDescription: referencedSeries.seriesDescription || `${referencedSeries.modality} Series`,
-                    referencedSeriesUID: rtStructureSet.referencedSeriesUID
-                  };
+                  referencedSeriesId = referencedSeries.id;
+                  referencedSeriesDescription = referencedSeries.seriesDescription || `${referencedSeries.modality} Series`;
+                  referencedSeriesUID = rtStructureSet.referencedSeriesUID;
                 }
               }
             }
@@ -2151,6 +2262,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           console.log('Error parsing RT structure associations:', error);
         }
+        
+        // Fallback: check database for referencedSeriesId (for duplicated/created structure sets)
+        if (!referencedSeriesId) {
+          try {
+            const rtStructSetDb = await storage.getRTStructureSetBySeriesId(rtSeries.id);
+            if (rtStructSetDb?.referencedSeriesId) {
+              referencedSeriesId = rtStructSetDb.referencedSeriesId;
+              const referencedSeries = allSeriesForPatient.find(s => s.id === referencedSeriesId);
+              if (referencedSeries) {
+                referencedSeriesDescription = referencedSeries.seriesDescription || `${referencedSeries.modality} Series`;
+                referencedSeriesUID = referencedSeries.seriesInstanceUID;
+              }
+            }
+          } catch (dbError) {
+            console.log('Error getting RT structure set from DB:', dbError);
+          }
+        }
+        
+        if (referencedSeriesId) {
+          return {
+            ...rtSeries,
+            referencedSeriesId,
+            referencedSeriesDescription,
+            referencedSeriesUID
+          };
+        }
+        
         return rtSeries;
       }));
 
@@ -2264,33 +2402,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (images.length > 0 && images[0].filePath) {
             rtStructPath = images[0].filePath;
-          } else {
-            throw new Error("RT Structure file not found in database for series " + seriesId);
           }
           
-          if (!fs.existsSync(rtStructPath)) {
-            throw new Error("RT Structure file not found at: " + rtStructPath);
-          }
-
-          // Use optimized cached parsed structure set or parse and cache it
-          let rtStructureSet;
-          if (rtStructureCache.has(rtStructPath)) {
-            const cached = rtStructureCache.get(rtStructPath);
-            // Use structured cloning if available, otherwise shallow clone with deep structure array copy
-            if (typeof structuredClone !== 'undefined') {
-              rtStructureSet = structuredClone(cached);
+          let rtStructureSet: any = null;
+          let loadedFromFile = false;
+          
+          // Try to load from DICOM file first
+          if (rtStructPath && fs.existsSync(rtStructPath)) {
+            // Use optimized cached parsed structure set or parse and cache it
+            const cached = getRTStructureFromCache(rtStructPath);
+            if (cached) {
+              // Use structured cloning if available, otherwise shallow clone with deep structure array copy
+              if (typeof structuredClone !== 'undefined') {
+                rtStructureSet = structuredClone(cached);
+              } else {
+                rtStructureSet = {
+                  ...cached,
+                  structures: cached.structures.map((s: any) => ({
+                    ...s,
+                    contours: s.contours.map((c: any) => ({ ...c, points: [...c.points] }))
+                  }))
+                };
+              }
+              loadedFromFile = true;
             } else {
-              rtStructureSet = {
-                ...cached,
-                structures: cached.structures.map((s: any) => ({
-                  ...s,
-                  contours: s.contours.map((c: any) => ({ ...c, points: [...c.points] }))
-                }))
-              };
+              try {
+                rtStructureSet = RTStructureParser.parseRTStructureSet(rtStructPath);
+                if (rtStructureSet && rtStructureSet.structures && rtStructureSet.structures.length > 0) {
+                  setRTStructureInCache(rtStructPath, rtStructureSet);
+                  loadedFromFile = true;
+                }
+              } catch (parseError) {
+                console.warn(`Failed to parse DICOM file ${rtStructPath}, trying database fallback:`, parseError);
+              }
             }
-          } else {
-            rtStructureSet = RTStructureParser.parseRTStructureSet(rtStructPath);
-            rtStructureCache.set(rtStructPath, rtStructureSet);
+          }
+          
+          // Fallback: Load from database if file parsing failed or produced no results
+          if (!rtStructureSet || !rtStructureSet.structures || rtStructureSet.structures.length === 0) {
+            console.log(`📦 Loading RT structures from database for series ${seriesId}`);
+            const dbRtStructureSet = await storage.getRTStructureSetBySeriesId(seriesId);
+            
+            if (dbRtStructureSet) {
+              const dbStructures = await storage.getRTStructuresBySetId(dbRtStructureSet.id);
+              
+              if (dbStructures && dbStructures.length > 0) {
+                // Load contours for each structure
+                const structuresWithContours = await Promise.all(
+                  dbStructures.map(async (struct: any) => {
+                    const contours = await storage.getRTStructureContours(struct.id);
+                    return {
+                      roiNumber: struct.roiNumber,
+                      structureName: struct.structureName,
+                      name: struct.structureName,
+                      color: struct.color || [255, 0, 0],
+                      isVisible: struct.isVisible !== false,
+                      contours: (contours || []).map((c: any) => ({
+                        slicePosition: c.slicePosition,
+                        z: c.slicePosition,
+                        points: c.points || [],
+                        isPredicted: c.isPredicted || false,
+                        predictionConfidence: c.predictionConfidence
+                      }))
+                    };
+                  })
+                );
+                
+                rtStructureSet = {
+                  seriesId: seriesId,
+                  structureSetLabel: dbRtStructureSet.structureSetLabel || rtStructSeries.seriesDescription || 'Structure Set',
+                  frameOfReferenceUID: dbRtStructureSet.frameOfReferenceUID,
+                  structures: structuresWithContours
+                };
+                
+                console.log(`✅ Loaded ${structuresWithContours.length} structures from database`);
+              }
+            }
+          }
+          
+          // If still no data, return empty structure set
+          if (!rtStructureSet) {
+            rtStructureSet = {
+              seriesId: seriesId,
+              structureSetLabel: rtStructSeries.seriesDescription || 'Structure Set',
+              structures: []
+            };
           }
           
           // Merge with in-memory modifications
@@ -2311,6 +2507,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 };
               }
             });
+          }
+          
+          // DEBUG: Log structure details before returning
+          const structureCount = rtStructureSet.structures?.length || 0;
+          const roiNumbers = rtStructureSet.structures?.map((s: any) => s.roiNumber) || [];
+          const uniqueRoiNumbers = new Set(roiNumbers).size;
+          console.log(`📊 DEBUG API Response for series ${seriesId}: ${structureCount} structures, ${uniqueRoiNumbers} unique ROI numbers`);
+          if (structureCount !== uniqueRoiNumbers) {
+            console.warn(`⚠️ DUPLICATE STRUCTURES DETECTED in series ${seriesId}!`);
+            console.warn('ROI numbers:', roiNumbers);
           }
           
           return rtStructureSet;
@@ -5172,7 +5378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store in cache so it can be loaded
       const cacheKey = `${rtSeries.id}`;
-      rtStructureCache.set(cacheKey, blankRTStructureSet);
+      setRTStructureInCache(cacheKey, blankRTStructureSet);
 
       // Initialize modifications storage
       rtStructureModifications.set(rtSeries.id, {
@@ -5369,8 +5575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (images.length > 0 && images[0].filePath && fs.existsSync(images[0].filePath)) {
           const rtStructPath = images[0].filePath;
-          if (rtStructureCache.has(rtStructPath)) {
-            const cached = rtStructureCache.get(rtStructPath);
+          const cached = getRTStructureFromCache(rtStructPath);
+          if (cached) {
             cached.structures.forEach((s: any) => {
               originalStructures[s.roiNumber] = s.contours?.length || 0;
             });
@@ -5483,11 +5689,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use cached parsed structure set or parse and cache it
       let rtStructureSet;
-      if (rtStructureCache.has(rtStructPath)) {
-        rtStructureSet = JSON.parse(JSON.stringify(rtStructureCache.get(rtStructPath)));
+      const cachedUndo = getRTStructureFromCache(rtStructPath);
+      if (cachedUndo) {
+        rtStructureSet = JSON.parse(JSON.stringify(cachedUndo));
       } else {
         rtStructureSet = RTStructureParser.parseRTStructureSet(rtStructPath);
-        rtStructureCache.set(rtStructPath, JSON.parse(JSON.stringify(rtStructureSet)));
+        setRTStructureInCache(rtStructPath, JSON.parse(JSON.stringify(rtStructureSet)));
       }
       
       // Apply modifications from current state only if we're not at the original state
@@ -5561,11 +5768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use cached parsed structure set or parse and cache it
       let rtStructureSet;
-      if (rtStructureCache.has(rtStructPath)) {
-        rtStructureSet = JSON.parse(JSON.stringify(rtStructureCache.get(rtStructPath)));
+      const cachedRedo = getRTStructureFromCache(rtStructPath);
+      if (cachedRedo) {
+        rtStructureSet = JSON.parse(JSON.stringify(cachedRedo));
       } else {
         rtStructureSet = RTStructureParser.parseRTStructureSet(rtStructPath);
-        rtStructureCache.set(rtStructPath, JSON.parse(JSON.stringify(rtStructureSet)));
+        setRTStructureInCache(rtStructPath, JSON.parse(JSON.stringify(rtStructureSet)));
       }
       
       // Apply modifications from current state
@@ -5600,8 +5808,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Structures array is required" });
       }
 
-      // Get the current RT structure set with in-memory modifications
-      const rtStructureSet = await getCurrentRTStructureSet(seriesId);
+      // Try to get the current RT structure set - may fail for database-only sets
+      let rtStructureSet: any;
+      try {
+        const result = await getCurrentRTStructureSet(seriesId);
+        rtStructureSet = result.rtStructureSet;
+      } catch (fileError) {
+        // No DICOM file - try to get existing database record or create minimal structure
+        console.log(`📦 No DICOM file for series ${seriesId}, using database-only save`);
+        
+        // Try to get existing RT structure set from database
+        const existingSet = await storage.getRTStructureSetBySeriesId(seriesId);
+        if (existingSet) {
+          rtStructureSet = {
+            structures: [],
+            frameOfReferenceUID: existingSet.frameOfReferenceUID || '',
+            referencedSeriesUID: existingSet.referencedSeriesId ? 
+              (await storage.getSeriesById(existingSet.referencedSeriesId))?.seriesInstanceUID : '',
+            structureSetLabel: existingSet.structureSetLabel || '',
+            structureSetDate: existingSet.structureSetDate || new Date().toISOString().slice(0,10).replace(/-/g, ''),
+          };
+        } else {
+          // No database record either - create minimal structure
+          const series = await storage.getSeriesById(seriesId);
+          if (!series || series.modality !== 'RTSTRUCT') {
+            throw new Error('RT Structure Set not found');
+          }
+          rtStructureSet = {
+            structures: [],
+            frameOfReferenceUID: '',
+            referencedSeriesUID: '',
+            structureSetLabel: series.seriesDescription || 'RT Structure Set',
+            structureSetDate: new Date().toISOString().slice(0,10).replace(/-/g, ''),
+          };
+        }
+      }
       
       // Update structures with the provided data
       rtStructureSet.structures = structures;
@@ -5630,7 +5871,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save RT structure set as new (duplicate with new name)
+  // Fix orphaned RT structure set references (for duplicated sets that lost their reference)
+  app.post("/api/rt-structures/fix-references", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { studyId } = req.body;
+      
+      if (!studyId) {
+        return res.status(400).json({ message: "studyId is required" });
+      }
+      
+      // Get all series for this study
+      const allSeries = await storage.getSeriesByStudyId(studyId);
+      const rtSeriesAll = allSeries.filter(s => s.modality === 'RTSTRUCT');
+      
+      // Find the primary CT series (the one that's NOT an RTSTRUCT)
+      const ctSeries = allSeries.filter(s => s.modality === 'CT');
+      if (ctSeries.length === 0) {
+        return res.status(400).json({ message: "No CT series found in study" });
+      }
+      
+      // Get all RT structure sets and find the one with a valid referencedSeriesId
+      const rtSetsWithReference = await Promise.all(rtSeriesAll.map(async (rtS) => {
+        const rtSet = await storage.getRTStructureSetBySeriesId(rtS.id);
+        return { series: rtS, rtSet };
+      }));
+      
+      // Find a source with valid reference
+      const sourceWithRef = rtSetsWithReference.find(r => r.rtSet?.referencedSeriesId);
+      if (!sourceWithRef) {
+        // Try to get from DICOM file of first RT series
+        const firstRt = rtSeriesAll[0];
+        if (firstRt) {
+          const imgs = await storage.getImagesBySeriesId(firstRt.id);
+          if (imgs.length > 0 && imgs[0].filePath && fs.existsSync(imgs[0].filePath)) {
+            const parsed = RTStructureParser.parseRTStructureSet(imgs[0].filePath);
+            if (parsed.referencedSeriesUID) {
+              const refSeries = allSeries.find(s => s.seriesInstanceUID === parsed.referencedSeriesUID);
+              if (refSeries) {
+                // Found the reference, now fix all orphaned records
+                const fixed: number[] = [];
+                for (const { series, rtSet } of rtSetsWithReference) {
+                  if (rtSet && !rtSet.referencedSeriesId) {
+                    await storage.updateRTStructureSet(rtSet.id, { referencedSeriesId: refSeries.id });
+                    fixed.push(series.id);
+                    console.log(`✅ Fixed referencedSeriesId for RT series ${series.id} -> ${refSeries.id}`);
+                  }
+                }
+                return res.json({ success: true, fixed, referencedSeriesId: refSeries.id });
+              }
+            }
+          }
+        }
+        return res.status(400).json({ message: "Could not find a valid reference source" });
+      }
+      
+      // Fix all orphaned records using the found reference
+      const refSeriesId = sourceWithRef.rtSet!.referencedSeriesId!;
+      const fixed: number[] = [];
+      for (const { series, rtSet } of rtSetsWithReference) {
+        if (rtSet && !rtSet.referencedSeriesId) {
+          await storage.updateRTStructureSet(rtSet.id, { referencedSeriesId: refSeriesId });
+          fixed.push(series.id);
+          console.log(`✅ Fixed referencedSeriesId for RT series ${series.id} -> ${refSeriesId}`);
+        }
+      }
+      
+      res.json({ success: true, fixed, referencedSeriesId: refSeriesId });
+    } catch (error) {
+      console.error('Error fixing RT structure references:', error);
+      next(error);
+    }
+  });
+
+  // Save RT structure set as new (duplicate with new name) - creates actual DICOM file
   app.post("/api/rt-structures/:seriesId/save-as-new", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const seriesId = parseInt(req.params.seriesId);
@@ -5657,22 +5970,230 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { timestamp: new Date().toISOString(), newLabel }
       );
 
-      // Duplicate the RT structure set with new name
-      const { newSeriesId, rtStructureSet } = await storage.duplicateRTStructureSet(seriesId, newLabel);
+      // Get the original series and study info
+      const originalSeries = await storage.getSeriesById(seriesId);
+      if (!originalSeries) {
+        return res.status(404).json({ message: "Original series not found" });
+      }
+      
+      const study = await storage.getStudy(originalSeries.studyId);
+      if (!study) {
+        return res.status(404).json({ message: "Study not found" });
+      }
+      
+      // Get patient info
+      const patient = study.patientId ? await storage.getPatientById(study.patientId) : null;
+      
+      // Get the original DICOM file to extract metadata
+      const originalImages = await storage.getImagesBySeriesId(seriesId);
+      const originalFilePath = originalImages.length > 0 ? originalImages[0].filePath : null;
+      
+      // Generate new UIDs
+      const newSeriesInstanceUID = RTStructureWriter.generateUID();
+      const newSOPInstanceUID = RTStructureWriter.generateUID();
+      
+      // Determine output path for new DICOM file
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'rt-structures');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const outputFileName = `RTSTRUCT_${newSOPInstanceUID}.dcm`;
+      const outputPath = path.join(uploadsDir, outputFileName);
+      
+      // Get referenced CT series info
+      let referencedSeriesUID = currentSet.referencedSeriesUID || '';
+      let referencedFrameOfReferenceUID = currentSet.frameOfReferenceUID || '';
+      let referencedSOPInstanceUIDs: string[] = [];
+      
+      // Try to get from original file if available
+      if (originalFilePath && fs.existsSync(originalFilePath)) {
+        try {
+          const originalParsed = RTStructureParser.parseRTStructureSet(originalFilePath);
+          referencedSeriesUID = referencedSeriesUID || originalParsed.referencedSeriesUID || '';
+          referencedFrameOfReferenceUID = referencedFrameOfReferenceUID || originalParsed.frameOfReferenceUID || '';
+        } catch (e) {
+          console.warn('Could not parse original RT structure file:', e);
+        }
+      }
+      
+      // If we still don't have referenced series UID, try to get from DB
+      if (!referencedSeriesUID) {
+        const rtStructSetDb = await storage.getRTStructureSetBySeriesId(seriesId);
+        if (rtStructSetDb?.referencedSeriesId) {
+          const refSeries = await storage.getSeriesById(rtStructSetDb.referencedSeriesId);
+          if (refSeries) {
+            referencedSeriesUID = refSeries.seriesInstanceUID;
+          }
+        }
+      }
+      
+      // Build write input
+      const writeInput: RTStructureWriteInput = {
+        studyInstanceUID: study.studyInstanceUID,
+        referencedSeriesInstanceUID: referencedSeriesUID,
+        referencedFrameOfReferenceUID: referencedFrameOfReferenceUID,
+        referencedSOPInstanceUIDs: referencedSOPInstanceUIDs,
+        seriesInstanceUID: newSeriesInstanceUID,
+        sopInstanceUID: newSOPInstanceUID,
+        structureSetLabel: newLabel,
+        patientId: patient?.patientId || 'UNKNOWN',
+        patientName: patient?.patientName || 'UNKNOWN',
+        structures: currentSet.structures.map((s: any) => ({
+          roiNumber: s.roiNumber,
+          structureName: s.structureName || s.name,
+          color: Array.isArray(s.color) ? s.color as [number, number, number] : [255, 0, 0] as [number, number, number],
+          contours: (s.contours || []).map((c: any) => ({
+            slicePosition: c.slicePosition || c.z,
+            points: Array.isArray(c.points) ? c.points : []
+          }))
+        }))
+      };
+      
+      // Write the DICOM file
+      RTStructureWriter.writeRTStructureSet(writeInput, outputPath);
+      
+      // Create new series in database
+      const newSeries = await storage.createSeries({
+        studyId: originalSeries.studyId,
+        seriesInstanceUID: newSeriesInstanceUID,
+        seriesNumber: (originalSeries.seriesNumber || 0) + 1,
+        seriesDescription: newLabel,
+        modality: 'RTSTRUCT',
+        imageCount: 1,
+        sliceThickness: null,
+        metadata: originalSeries.metadata
+      });
+      
+      // Create image record pointing to the new DICOM file
+      await storage.createImage({
+        seriesId: newSeries.id,
+        sopInstanceUID: newSOPInstanceUID,
+        instanceNumber: 1,
+        filePath: outputPath,
+        sliceLocation: null,
+        imagePosition: null,
+        metadata: {}
+      });
+      
+      // Get referenced series ID for database
+      let referencedSeriesId: number | null = null;
+      const rtStructSetDb = await storage.getRTStructureSetBySeriesId(seriesId);
+      if (rtStructSetDb?.referencedSeriesId) {
+        referencedSeriesId = rtStructSetDb.referencedSeriesId;
+      }
+      
+      // Create new RT structure set record
+      const newRTSet = await storage.createRTStructureSet({
+        seriesId: newSeries.id,
+        studyId: originalSeries.studyId,
+        referencedSeriesId: referencedSeriesId,
+        frameOfReferenceUID: referencedFrameOfReferenceUID || null,
+        structureSetLabel: newLabel,
+        structureSetDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+      });
+      
+      // Copy structures to database
+      for (const structure of currentSet.structures) {
+        const newStructure = await storage.createRTStructure({
+          rtStructureSetId: newRTSet.id,
+          roiNumber: structure.roiNumber,
+          structureName: structure.structureName || structure.name,
+          color: Array.isArray(structure.color) ? structure.color : [255, 0, 0],
+          isVisible: true,
+        });
+        
+        // Copy contours
+        if (structure.contours && structure.contours.length > 0) {
+          const contourRecords = structure.contours.map((c: any) => ({
+            rtStructureId: newStructure.id,
+            slicePosition: c.slicePosition || c.z,
+            points: Array.isArray(c.points) ? c.points : [],
+            isPredicted: c.isPredicted || false,
+            predictionConfidence: c.predictionConfidence || null,
+          }));
+          await storage.createRTStructureContours(contourRecords);
+        }
+      }
+      
+      // Create history entry
+      await storage.createRTStructureHistory({
+        rtStructureSetId: newRTSet.id,
+        userId: null,
+        actionType: 'duplicate',
+        actionDetails: JSON.stringify({ originalSeriesId: seriesId, newLabel, dicomFilePath: outputPath }),
+        affectedStructureIds: currentSet.structures.map((s: any) => s.roiNumber),
+        snapshot: JSON.stringify({ 
+          structures: currentSet.structures.map((s: any) => ({ 
+            roiNumber: s.roiNumber, 
+            structureName: s.structureName || s.name 
+          })) 
+        }),
+      });
       
       // Clear in-memory modifications for the original series
       rtStructureModifications.delete(seriesId);
       
-      console.log(`✅ Created new RT structure set "${newLabel}" with series ID ${newSeriesId}`);
+      console.log(`✅ Created new RT structure set "${newLabel}" with series ID ${newSeries.id}`);
+      console.log(`   DICOM file: ${outputPath}`);
       
       res.status(201).json({
         success: true,
         message: "New RT structure set created successfully",
-        newSeriesId,
-        rtStructureSet
+        newSeriesId: newSeries.id,
+        rtStructureSet: newRTSet,
+        dicomFilePath: outputPath
       });
     } catch (error) {
       console.error('Error creating new RT structure set:', error);
+      next(error);
+    }
+  });
+
+  // Cleanup duplicate structures in a series
+  app.post("/api/rt-structures/:seriesId/cleanup-duplicates", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const seriesId = parseInt(req.params.seriesId);
+      
+      const rtStructureSet = await storage.getRTStructureSetBySeriesId(seriesId);
+      if (!rtStructureSet) {
+        return res.status(404).json({ message: "RT structure set not found" });
+      }
+      
+      // Get all structures for this set
+      const structures = await storage.getRTStructuresBySetId(rtStructureSet.id);
+      
+      // Find duplicates by ROI number
+      const roiMap = new Map<number, any[]>();
+      for (const struct of structures) {
+        const existing = roiMap.get(struct.roiNumber) || [];
+        existing.push(struct);
+        roiMap.set(struct.roiNumber, existing);
+      }
+      
+      // Delete duplicates (keep the first one, delete the rest)
+      let deletedCount = 0;
+      for (const [roiNumber, duplicates] of roiMap.entries()) {
+        if (duplicates.length > 1) {
+          console.log(`Found ${duplicates.length} duplicates for ROI ${roiNumber}, keeping first, deleting ${duplicates.length - 1}`);
+          // Keep the first one (oldest), delete the rest
+          for (let i = 1; i < duplicates.length; i++) {
+            await storage.deleteRTStructure(duplicates[i].id);
+            deletedCount++;
+          }
+        }
+      }
+      
+      console.log(`✅ Cleaned up ${deletedCount} duplicate structures from series ${seriesId}`);
+      
+      res.json({
+        success: true,
+        message: `Removed ${deletedCount} duplicate structures`,
+        originalCount: structures.length,
+        uniqueCount: roiMap.size,
+        deletedCount
+      });
+    } catch (error) {
+      console.error('Error cleaning up duplicates:', error);
       next(error);
     }
   });
@@ -5757,7 +6278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       rtStructureModifications.delete(seriesId);
       
       // Get the restored RT structure set
-      const rtStructureSet = await getCurrentRTStructureSet(seriesId);
+      const { rtStructureSet } = await getCurrentRTStructureSet(seriesId);
       
       console.log(`✅ Restored RT structure set from history ${historyId}`);
       
@@ -5988,6 +6509,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return 'Auto-saved changes';
       case 'manual_save':
         return 'Manually saved';
+      case 'snapshot':
+        return actionDetails.description || `Snapshot (${actionDetails.structureCount || 0} structures)`;
       case 'duplicate':
         return `Duplicated as "${actionDetails.newLabel}"`;
       case 'restore':
@@ -6249,15 +6772,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Parse or use cache - optimized to avoid expensive deep cloning
     let rtStructureSet: any;
-    if (rtStructureCache.has(rtStructPath)) {
-      const cached = rtStructureCache.get(rtStructPath);
+    const cachedMerge = getRTStructureFromCache(rtStructPath);
+    if (cachedMerge) {
       // Use structured cloning if available, otherwise shallow clone with deep structure array copy
       if (typeof structuredClone !== 'undefined') {
-        rtStructureSet = structuredClone(cached);
+        rtStructureSet = structuredClone(cachedMerge);
       } else {
         rtStructureSet = {
-          ...cached,
-          structures: cached.structures.map((s: any) => ({
+          ...cachedMerge,
+          structures: cachedMerge.structures.map((s: any) => ({
             ...s,
             contours: s.contours.map((c: any) => ({ ...c, points: [...c.points] }))
           }))
@@ -6265,7 +6788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } else {
       rtStructureSet = RTStructureParser.parseRTStructureSet(rtStructPath);
-      rtStructureCache.set(rtStructPath, rtStructureSet);
+      setRTStructureInCache(rtStructPath, rtStructureSet);
     }
 
     // Apply in-memory modifications if any
@@ -7120,6 +7643,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register DVH API routes
   app.use('/api/dvh', dvhRouter);
+
+  // Register Regulatory Documentation API routes
+  app.use('/api/regulatory', regulatoryRouter);
 
   // Register Robust Import routes (handles large 20k+ file uploads)
   registerRobustImportRoutes(app);

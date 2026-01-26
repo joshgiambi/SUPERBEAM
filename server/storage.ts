@@ -1113,12 +1113,28 @@ export class DatabaseStorage implements IStorage {
 
     // Delete all existing structures and contours for this set
     const existingStructures = await this.getRTStructuresBySetId(rtStructureSet.id);
+    console.log(`🗑️ Deleting ${existingStructures.length} existing structures before save`);
     for (const structure of existingStructures) {
       await this.deleteRTStructure(structure.id);
     }
 
+    // Deduplicate incoming structures by ROI number (keep first occurrence)
+    const seenRoiNumbers = new Set<number>();
+    const deduplicatedStructures = (structureSetData.structures || []).filter((s: any) => {
+      if (seenRoiNumbers.has(s.roiNumber)) {
+        console.warn(`⚠️ Skipping duplicate structure with ROI number ${s.roiNumber} (${s.structureName})`);
+        return false;
+      }
+      seenRoiNumbers.add(s.roiNumber);
+      return true;
+    });
+    
+    if (deduplicatedStructures.length !== structureSetData.structures?.length) {
+      console.warn(`⚠️ Removed ${(structureSetData.structures?.length || 0) - deduplicatedStructures.length} duplicate structures from save data`);
+    }
+
     // Save each structure with its contours
-    for (const structure of structureSetData.structures) {
+    for (const structure of deduplicatedStructures) {
       const rtStructure = await this.createRTStructure({
         rtStructureSetId: rtStructureSet.id,
         roiNumber: structure.roiNumber,
@@ -1151,7 +1167,7 @@ export class DatabaseStorage implements IStorage {
       snapshot: JSON.stringify(structureSetData),
     });
 
-    console.log(`✅ Saved RT structure set with ${structureSetData.structures.length} structures`);
+    console.log(`✅ Saved RT structure set with ${deduplicatedStructures.length} structures`);
   }
 
   // Duplicate RT structure set to create a new version

@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+  DialogOverlay,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,7 +13,8 @@ import {
   Loader2, 
   Clock,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -128,18 +127,18 @@ export function RTStructureHistoryModal({
   const getActionBadgeStyles = (actionType: string) => {
     switch (actionType) {
       case 'auto_save':
-        return 'border-emerald-500/60 text-emerald-400 bg-emerald-500/10';
+        return 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10';
       case 'manual_save':
-        return 'border-blue-500/60 text-blue-400 bg-blue-500/10';
+        return 'border-blue-500/50 text-blue-400 bg-blue-500/10';
       case 'duplicate':
-        return 'border-purple-500/60 text-purple-400 bg-purple-500/10';
+        return 'border-purple-500/50 text-purple-400 bg-purple-500/10';
       case 'restore':
-        return 'border-amber-500/60 text-amber-400 bg-amber-500/10';
+        return 'border-amber-500/50 text-amber-400 bg-amber-500/10';
       case 'brush':
       case 'pen':
-        return 'border-cyan-500/60 text-cyan-400 bg-cyan-500/10';
+        return 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10';
       default:
-        return 'border-gray-500/60 text-gray-400 bg-gray-500/10';
+        return 'border-zinc-500/50 text-zinc-400 bg-zinc-500/10';
     }
   };
 
@@ -157,166 +156,193 @@ export function RTStructureHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] max-h-[85vh] flex flex-col bg-gradient-to-br from-gray-900/98 via-gray-900/95 to-gray-950/98 border border-white/20 backdrop-blur-xl shadow-2xl">
-        <DialogHeader className="border-b border-white/10 pb-4">
-          <DialogTitle className="flex items-center gap-3 text-lg font-semibold text-white">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30">
-              <History className="h-5 w-5 text-blue-400" />
+      <DialogOverlay className="bg-black/60 backdrop-blur-sm" />
+      <DialogContent className="p-0 bg-transparent border-0 shadow-none sm:max-w-[720px] [&>button]:hidden">
+        <div 
+          className="rounded-2xl overflow-hidden border border-zinc-600/30 shadow-2xl shadow-black/40"
+          style={{
+            background: 'linear-gradient(180deg, rgba(80, 80, 90, 0.20) 0%, rgba(20, 20, 25, 0.98) 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-600/25">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                <History className="h-4 w-4 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100">RT Structure History</h3>
+                <p className="text-xs text-zinc-400">
+                  <span className="text-emerald-400 font-medium">{structureSetLabel}</span>
+                </p>
+              </div>
             </div>
-            RT Structure History
-          </DialogTitle>
-          <DialogDescription className="text-gray-400 text-sm">
-            View and restore previous versions of <span className="text-green-400 font-medium">{structureSetLabel}</span>
-          </DialogDescription>
-        </DialogHeader>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 transition-all"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
-        {error && (
-          <div className="rounded-lg bg-gradient-to-br from-red-900/30 to-red-950/30 border border-red-500/40 p-3 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-300">{error}</p>
-          </div>
-        )}
+          {/* Content */}
+          <div className="p-4">
+            {error && (
+              <div className="flex items-center gap-2.5 p-3 rounded-lg bg-red-500/10 border border-red-500/30 mb-4">
+                <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-300">{error}</p>
+              </div>
+            )}
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-400 mb-3" />
-            <p className="text-sm text-gray-400">Loading history...</p>
-          </div>
-        ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="p-4 rounded-full bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 mb-4">
-              <Clock className="h-10 w-10 text-gray-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-300 mb-1">
-              No history available yet
-            </p>
-            <p className="text-xs text-gray-500 max-w-xs">
-              Changes will be automatically saved as you edit structures.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0 pt-2">
-            {/* Timeline list */}
-            <div className="md:col-span-2">
-              <ScrollArea className="h-[420px] pr-3">
-                <div className="space-y-2">
-                  {history.map((entry, index) => (
-                    <button
-                      key={entry.id}
-                      onClick={() => setSelectedEntry(entry)}
-                      className={cn(
-                        "w-full text-left p-3 rounded-lg border transition-all duration-200 backdrop-blur-sm",
-                        selectedEntry?.id === entry.id
-                          ? 'bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-blue-600/15 border-blue-400/50 shadow-md shadow-blue-500/10'
-                          : 'bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-900/40 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-700/40'
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "text-[10px] font-semibold px-2 py-0.5 flex items-center gap-1",
-                                getActionBadgeStyles(entry.actionType)
-                              )}
-                            >
-                              {getActionIcon(entry.actionType)}
-                              {entry.actionType.replace('_', ' ')}
-                            </Badge>
-                            {index === 0 && (
-                              <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 border-emerald-500/60 text-emerald-400 bg-emerald-500/10">
-                                Latest
-                              </Badge>
-                            )}
-                          </div>
-                          <p className={cn(
-                            "text-sm font-medium truncate mb-1",
-                            selectedEntry?.id === entry.id ? "text-blue-200" : "text-gray-200"
-                          )}>
-                            {entry.actionSummary}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
-                          </p>
-                        </div>
-                        
-                        <div className="flex-shrink-0 mt-1">
-                          <div className={cn(
-                            "h-2.5 w-2.5 rounded-full transition-all",
-                            selectedEntry?.id === entry.id 
-                              ? "bg-blue-400 shadow-sm shadow-blue-400/50" 
-                              : "bg-gray-600"
-                          )} />
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-400 mb-3" />
+                <p className="text-sm text-zinc-400">Loading history...</p>
+              </div>
+            ) : history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40 mb-3">
+                  <Clock className="h-8 w-8 text-zinc-500" />
                 </div>
-              </ScrollArea>
-            </div>
-
-            {/* Details panel */}
-            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-gray-800/50 via-gray-800/30 to-gray-900/50 p-4 backdrop-blur-sm">
-              {selectedEntry ? (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Details</h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="p-2.5 rounded-lg bg-gray-900/50 border border-gray-700/40">
-                        <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Action</span>
-                        <p className="font-medium text-gray-200 text-xs">{selectedEntry.actionSummary}</p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-gray-900/50 border border-gray-700/40">
-                        <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Timestamp</span>
-                        <p className="font-medium text-gray-200 text-xs">
-                          {selectedEntry.timestamp.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-gray-900/50 border border-gray-700/40">
-                        <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Affected Structures</span>
-                        <p className="font-medium text-gray-200 text-xs">
-                          {selectedEntry.affectedStructures.length} structure
-                          {selectedEntry.affectedStructures.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
+                <p className="text-sm font-medium text-zinc-300 mb-1">
+                  No history available yet
+                </p>
+                <p className="text-xs text-zinc-500 max-w-xs">
+                  Changes will be automatically saved as you edit structures.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Timeline list */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Timeline</span>
+                    <span className="text-[10px] text-zinc-500">{history.length} entries</span>
                   </div>
+                  <ScrollArea className="h-[360px] pr-2">
+                    <div className="space-y-1.5">
+                      {history.map((entry, index) => (
+                        <button
+                          key={entry.id}
+                          onClick={() => setSelectedEntry(entry)}
+                          className={cn(
+                            "w-full text-left p-3 rounded-xl border transition-all duration-200",
+                            selectedEntry?.id === entry.id
+                              ? 'bg-blue-500/15 border-blue-500/40'
+                              : 'bg-zinc-800/30 border-zinc-700/30 hover:border-zinc-600/50 hover:bg-zinc-800/50'
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-[10px] font-medium px-1.5 py-0 h-5 flex items-center gap-1",
+                                    getActionBadgeStyles(entry.actionType)
+                                  )}
+                                >
+                                  {getActionIcon(entry.actionType)}
+                                  {entry.actionType.replace('_', ' ')}
+                                </Badge>
+                                {index === 0 && (
+                                  <Badge variant="outline" className="text-[10px] font-medium px-1.5 py-0 h-5 border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                                    Latest
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className={cn(
+                                "text-xs font-medium truncate mb-0.5",
+                                selectedEntry?.id === entry.id ? "text-blue-200" : "text-zinc-200"
+                              )}>
+                                {entry.actionSummary}
+                              </p>
+                              <p className="text-[11px] text-zinc-500">
+                                {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
+                              </p>
+                            </div>
+                            
+                            <div className="flex-shrink-0 mt-1">
+                              <div className={cn(
+                                "h-2 w-2 rounded-full transition-all",
+                                selectedEntry?.id === entry.id 
+                                  ? "bg-blue-400 shadow-sm shadow-blue-400/50" 
+                                  : "bg-zinc-600"
+                              )} />
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
 
-                  {selectedEntry.canRestore && (
-                    <Button
-                      onClick={() => handleRestore(selectedEntry.id)}
-                      disabled={isRestoring}
-                      className={cn(
-                        "w-full h-10 text-sm font-medium rounded-lg transition-all duration-200",
-                        isRestoring
-                          ? "bg-gray-700/50 text-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-600/80 to-blue-500/80 hover:from-blue-600 hover:to-blue-500 text-white border border-blue-500/50 hover:border-blue-400/70 shadow-lg shadow-blue-500/20"
+                {/* Details panel */}
+                <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/50 p-3">
+                  {selectedEntry ? (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Details</h4>
+                      <div className="space-y-2">
+                        <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-700/30">
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500 block mb-1">Action</span>
+                          <p className="font-medium text-zinc-200 text-xs">{selectedEntry.actionSummary}</p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-700/30">
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500 block mb-1">Timestamp</span>
+                          <p className="font-medium text-zinc-200 text-xs">
+                            {selectedEntry.timestamp.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-700/30">
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500 block mb-1">Affected</span>
+                          <p className="font-medium text-zinc-200 text-xs">
+                            {selectedEntry.affectedStructures.length} structure
+                            {selectedEntry.affectedStructures.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {selectedEntry.canRestore && (
+                        <Button
+                          onClick={() => handleRestore(selectedEntry.id)}
+                          disabled={isRestoring}
+                          size="sm"
+                          className={cn(
+                            "w-full h-8 text-xs font-medium rounded-lg transition-all",
+                            isRestoring
+                              ? "bg-zinc-700/50 text-zinc-400 cursor-not-allowed"
+                              : "bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30 hover:border-blue-400/60"
+                          )}
+                        >
+                          {isRestoring ? (
+                            <>
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              Restoring...
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                              Restore
+                            </>
+                          )}
+                        </Button>
                       )}
-                    >
-                      {isRestoring ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Restoring...
-                        </>
-                      ) : (
-                        <>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Restore to This Point
-                        </>
-                      )}
-                    </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Clock className="h-6 w-6 text-zinc-600 mb-2" />
+                      <p className="text-xs text-zinc-500">Select an entry</p>
+                    </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <Clock className="h-8 w-8 text-gray-600 mb-2" />
-                  <p className="text-xs text-gray-500">Select an entry to view details</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

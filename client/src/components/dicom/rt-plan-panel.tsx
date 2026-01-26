@@ -43,7 +43,6 @@ import { getBeamColor } from '@/types/rt-plan';
 import { 
   getBEVOrientationLabels, 
   getBeamDirectionName,
-  type PatientPosition 
 } from '@/lib/geometry/IEC61217';
 
 // Projected structure for BEV display
@@ -239,12 +238,23 @@ export function RTPlanPanel({
   
   // Fetch enhanced BEV data (DRR and structure projections) when CT/structures available
   useEffect(() => {
+    console.log('[BEV Enhanced] Check:', {
+      selectedPlanSeriesId,
+      selectedBeamNumber,
+      ctSeriesId,
+      structureSetId,
+      showDRR,
+      showStructuresInBEV
+    });
+    
     if (!selectedPlanSeriesId || selectedBeamNumber === null) {
+      console.log('[BEV Enhanced] Skip: no plan or beam selected');
       return;
     }
     
     // Only fetch if we have CT or structure data to enhance with
     if (!ctSeriesId && !structureSetId) {
+      console.log('[BEV Enhanced] Skip: no CT or structure set ID');
       return;
     }
     
@@ -261,12 +271,19 @@ export function RTPlanPanel({
           params.append('structureSetId', structureSetId.toString());
         }
         
-        const response = await fetch(
-          `/api/rt-plan/${selectedPlanSeriesId}/bev/${selectedBeamNumber}/enhanced?${params}`
-        );
+        const url = `/api/rt-plan/${selectedPlanSeriesId}/bev/${selectedBeamNumber}/enhanced?${params}`;
+        console.log('[BEV Enhanced] Fetching:', url);
+        
+        const response = await fetch(url);
         
         if (response.ok) {
           const data: EnhancedBEVResponse = await response.json();
+          
+          console.log('[BEV Enhanced] Response:', {
+            hasDRR: !!data.drr,
+            drrSize: data.drr ? `${data.drr.width}x${data.drr.height}` : 'none',
+            structuresCount: data.projectedStructures?.length || 0
+          });
           
           // Convert DRR data to ImageData for canvas rendering
           if (data.drr) {
@@ -279,6 +296,9 @@ export function RTPlanPanel({
               imgData.data[i * 4 + 3] = 255; // A
             }
             setDrrImageData(imgData);
+            console.log('[BEV Enhanced] DRR ImageData created');
+          } else {
+            console.log('[BEV Enhanced] No DRR data in response');
           }
           
           // Store projected structures
@@ -287,6 +307,8 @@ export function RTPlanPanel({
           }
           
           console.log('[BEV Enhanced] Loaded DRR:', !!data.drr, 'Structures:', data.projectedStructures?.length || 0);
+        } else {
+          console.error('[BEV Enhanced] Request failed:', response.status, await response.text());
         }
       } catch (err) {
         console.error('[BEV Enhanced] Failed to fetch:', err);
@@ -1191,7 +1213,7 @@ export function RTPlanPanel({
               <div 
                 className={cn(
                   "rounded-xl border border-zinc-600/30 overflow-hidden bg-[#0a0a0f] relative",
-                  expandBEV ? "h-80" : "h-48"
+                  expandBEV ? "h-[420px]" : "h-48"
                 )}
               >
                 <canvas
@@ -1270,6 +1292,23 @@ export function RTPlanPanel({
                   <span>Z: {selectedBEV.isocenterPosition[2].toFixed(1)}</span>
                 </div>
               </div>
+              
+              {/* Static field info - shown when no animation available */}
+              {selectedBeam.numberOfControlPoints <= 2 && (
+                <div className="flex items-center justify-between bg-zinc-800/20 rounded-lg px-2 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="outline" 
+                      className="text-[9px] px-1.5 py-0.5 border-zinc-500/40 text-zinc-400"
+                    >
+                      STATIC
+                    </Badge>
+                    <span className="text-[10px] text-zinc-500">
+                      {selectedBeam.numberOfControlPoints} control point{selectedBeam.numberOfControlPoints > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
               
               {/* VMAT/Arc Controls - Professional Animation Interface */}
               {selectedBeam.numberOfControlPoints > 2 && (

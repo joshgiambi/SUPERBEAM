@@ -35,6 +35,7 @@ interface CachedDVH {
 // In-memory cache keyed by "doseSeriesId:structureSetId:prescriptionDose"
 const memoryCache = new Map<string, CachedDVH>();
 const MEMORY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour for in-memory cache
+const MEMORY_CACHE_MAX_SIZE = 50; // Max number of DVH results to cache in memory
 
 function getCacheKey(doseSeriesId: number, structureSetId: number, prescriptionDose: number): string {
   return `${doseSeriesId}:${structureSetId}:${prescriptionDose}`;
@@ -52,6 +53,20 @@ function getMemoryCachedDVH(key: string): DVHResponse | null {
 }
 
 function setMemoryCachedDVH(key: string, response: DVHResponse): void {
+  // Evict oldest entries if cache is full (LRU eviction)
+  if (memoryCache.size >= MEMORY_CACHE_MAX_SIZE) {
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+    for (const [k, v] of memoryCache.entries()) {
+      if (v.timestamp < oldestTime) {
+        oldestTime = v.timestamp;
+        oldestKey = k;
+      }
+    }
+    if (oldestKey) {
+      memoryCache.delete(oldestKey);
+    }
+  }
   memoryCache.set(key, { response, timestamp: Date.now() });
 }
 
@@ -80,10 +95,15 @@ interface DVHCurve {
     min: number;
     max: number;
     mean: number;
-    d95: number;
-    d50: number;
-    d2: number;
-    v100?: number;
+    d98: number;    // MIM: Dose covering 98% of volume
+    d95: number;    // MIM: Dose covering 95% of volume
+    d50: number;    // MIM: Median dose
+    d2: number;     // MIM: Near-max dose (2% of volume)
+    v100?: number;  // Volume receiving 100% of Rx
+    v95?: number;   // Volume receiving 95% of Rx
+    v50?: number;   // Volume receiving 50% of Rx
+    v20?: number;   // Volume receiving 20% of Rx (lung metric)
+    v5?: number;    // Volume receiving 5 Gy (low dose bath)
   };
 }
 
@@ -609,23 +629,45 @@ function calculateDVHForROI(
     };
   }
   
-  // Calculate percentiles from cumulative histogram
+  // Calculate percentiles from cumulative histogram (MIM-style Dx values)
   const totalVoxels = doseValues.length;
-  let d95 = 0, d50 = 0, d2 = max;
+  let d98 = 0, d95 = 0, d50 = 0, d2 = max;
   if (totalVoxels > 0) {
-    const target95 = totalVoxels * 0.05; // 95% of volume receives >= this dose
-    const target50 = totalVoxels * 0.50;
-    const target2 = totalVoxels * 0.98;
+    const target98 = totalVoxels * 0.02; // D98: 98% of volume receives >= this dose
+    const target95 = totalVoxels * 0.05; // D95: 95% of volume receives >= this dose
+    const target50 = totalVoxels * 0.50; // D50: Median dose
+    const target2 = totalVoxels * 0.98;  // D2: Near-max dose
     
     let runningSum = 0;
     for (let i = numBins; i >= 0; i--) {
       runningSum += histogram[i];
       const dose = i * binWidth;
+      if (runningSum >= target98 && d98 === 0) d98 = dose;
       if (runningSum >= target95 && d95 === 0) d95 = dose;
       if (runningSum >= target50 && d50 === 0) d50 = dose;
       if (runningSum >= target2 && d2 === max) d2 = dose;
     }
   }
+  
+  // Calculate Vx values (MIM-style volume metrics)
+  let v95Count = 0, v50Count = 0, v20Count = 0, v5Count = 0;
+  const rx95 = prescriptionDose * 0.95;
+  const rx50 = prescriptionDose * 0.50;
+  const rx20 = prescriptionDose * 0.20;
+  const dose5Gy = 5.0; // Fixed 5 Gy threshold for low-dose bath
+  
+  for (let i = 0; i < doseValues.length; i++) {
+    const dose = doseValues[i];
+    if (dose >= rx95) v95Count++;
+    if (dose >= rx50) v50Count++;
+    if (dose >= rx20) v20Count++;
+    if (dose >= dose5Gy) v5Count++;
+  }
+  
+  const v95 = totalVoxels > 0 ? (v95Count / totalVoxels) * 100 : 0;
+  const v50 = totalVoxels > 0 ? (v50Count / totalVoxels) * 100 : 0;
+  const v20 = totalVoxels > 0 ? (v20Count / totalVoxels) * 100 : 0;
+  const v5 = totalVoxels > 0 ? (v5Count / totalVoxels) * 100 : 0;
 
   return {
     roiNumber: roi.roiNumber,
@@ -637,10 +679,15 @@ function calculateDVHForROI(
       min: Number.isFinite(min) ? min : 0,
       max: Number.isFinite(max) ? max : 0,
       mean,
+      d98,
       d95,
       d50,
       d2,
       v100,
+      v95,
+      v50,
+      v20,
+      v5,
     },
   };
 }

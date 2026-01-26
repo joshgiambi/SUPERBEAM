@@ -367,7 +367,10 @@ export function RadiationTherapyPanel({
               onBeamsLoaded={onBeamsLoaded}
               expandBEV={expandBEV}
               onToggleExpandBEV={() => setExpandBEV(!expandBEV)}
-              ctSeriesId={ctSeriesId}
+              ctSeriesId={(() => {
+                console.log('[RadiationTherapyPanel] Passing to RTPlanPanel:', { ctSeriesId, structureSetId });
+                return ctSeriesId;
+              })()}
               structureSetId={structureSetId}
               showDRR={true}
               showStructuresInBEV={true}
