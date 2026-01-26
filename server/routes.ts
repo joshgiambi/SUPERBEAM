@@ -34,6 +34,7 @@ import supersegRouter from './superseg-api';
 import rtDoseRouter from './rt-dose-api';
 import rtPlanRouter from './rt-plan-api';
 import dvhRouter, { triggerDvhPrecompute } from './dvh-api';
+import registrationRouter from './fusion/registration-api';
 import { registerRobustImportRoutes } from './robust-import-routes';
 import { DicomMetadataWriter, EditablePatientMetadata, EditableSeriesMetadata } from './dicom-metadata-writer';
 const isDev = process.env.NODE_ENV !== 'production';
@@ -7120,6 +7121,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register DVH API routes
   app.use('/api/dvh', dvhRouter);
+
+  // Register Registration API routes (rigid and deformable registration)
+  app.use('/api/registration', registrationRouter);
 
   // Register Robust Import routes (handles large 20k+ file uploads)
   registerRobustImportRoutes(app);

@@ -58,6 +58,8 @@ import {
   EyeOff,
   Scan,
   Check,
+  Zap,
+  Info,
 } from 'lucide-react';
 import { WorkingViewer } from '@/components/dicom/working-viewer';
 import { MPRFloating } from '@/components/dicom/mpr-floating';
@@ -102,7 +104,25 @@ interface FuseBoxData {
   registrationId?: string;
 }
 
-type AutoRegistrationType = 'rigid' | 'contourBased' | 'landmarkBased' | 'intensityBased' | 'deformable';
+type AutoRegistrationType = 'rigid' | 'affine' | 'contourBased' | 'landmarkBased' | 'intensityBased' | 'bspline' | 'demons';
+
+// Registration API types
+interface RegistrationJobStatus {
+  id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  progress?: number;
+  statusMessage?: string;
+  result?: {
+    success: boolean;
+    transformMatrix?: number[];
+    translation?: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number };
+    finalMetricValue?: number;
+    iterations?: number;
+    computeTimeMs?: number;
+    error?: string;
+  };
+}
 
 // ============================================================================
 // DATA LOADING
@@ -520,31 +540,114 @@ function FuseBoxContent() {
     alert(`Registration saved!\n\nTranslation: (${currentTransform.translation.x}, ${currentTransform.translation.y}, ${currentTransform.translation.z}) mm\nRotation: (${currentTransform.rotation.x}, ${currentTransform.rotation.y}, ${currentTransform.rotation.z})°`);
   }, [currentTransform, fuseboxData]);
   
-  // Auto registration handler
-  const handleAutoRegister = useCallback((type: AutoRegistrationType) => {
+  // Registration job tracking state
+  const [registrationJobId, setRegistrationJobId] = useState<string | null>(null);
+  const [registrationProgress, setRegistrationProgress] = useState(0);
+  const [registrationStatus, setRegistrationStatus] = useState<string>('');
+  
+  // Auto registration handler - calls actual registration API
+  const handleAutoRegister = useCallback(async (type: AutoRegistrationType) => {
+    if (!fuseboxData) return;
+    
     setIsAutoRegistering(true);
     setAutoRegType(type);
+    setRegistrationProgress(0);
+    setRegistrationStatus('Starting registration...');
     
-    setTimeout(() => {
-      let newTransform = { ...currentTransform };
+    try {
+      // Map UI type to API algorithm name
+      const algorithmMap: Record<AutoRegistrationType, string> = {
+        'rigid': 'rigid',
+        'affine': 'affine',
+        'contourBased': 'contour-based',
+        'landmarkBased': 'landmark-based',
+        'intensityBased': 'rigid', // Use rigid with different metric
+        'bspline': 'bspline',
+        'demons': 'demons',
+      };
       
-      if (type === 'rigid') {
-        newTransform.translation = { x: -2.5, y: 1.8, z: -0.5 };
-        newTransform.rotation = { x: 0, y: 0, z: 0.3 };
-      } else if (type === 'contourBased') {
-        newTransform.translation = { x: -1.2, y: 2.1, z: 0.3 };
-        newTransform.rotation = { x: 0.1, y: -0.2, z: 0.5 };
-      } else if (type === 'landmarkBased') {
-        newTransform.translation = { x: -1.8, y: 1.5, z: 0 };
-        newTransform.rotation = { x: 0, y: 0, z: 0.2 };
+      // Determine best metric based on modality combination
+      const metric = fuseboxData.primaryModality === fuseboxData.secondaryModality 
+        ? 'normalized-correlation' 
+        : 'mutual-information';
+      
+      // Start registration job
+      const response = await fetch('/api/registration/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          primarySeriesId: fuseboxData.primarySeriesId,
+          secondarySeriesId: fuseboxData.secondarySeriesId,
+          algorithm: algorithmMap[type],
+          metric: type === 'intensityBased' ? 'normalized-correlation' : metric,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to start registration');
       }
       
-      setCurrentTransform(newTransform);
-      addToHistory(newTransform, `Auto ${type} registration`);
+      const { jobId } = await response.json();
+      setRegistrationJobId(jobId);
+      
+      // Poll for job completion
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await fetch(`/api/registration/${jobId}`);
+          const jobStatus: RegistrationJobStatus = await statusResponse.json();
+          
+          setRegistrationProgress(jobStatus.progress || 0);
+          setRegistrationStatus(jobStatus.statusMessage || '');
+          
+          if (jobStatus.status === 'completed' && jobStatus.result?.success) {
+            clearInterval(pollInterval);
+            
+            // Apply the registration result to transform
+            const result = jobStatus.result;
+            if (result.translation || result.rotation) {
+              const newTransform = {
+                ...currentTransform,
+                translation: result.translation || currentTransform.translation,
+                rotation: result.rotation || currentTransform.rotation,
+              };
+              setCurrentTransform(newTransform);
+              addToHistory(newTransform, `${type} registration (${result.iterations} iters, metric=${result.finalMetricValue?.toFixed(4)})`);
+            }
+            
+            setIsAutoRegistering(false);
+            setAutoRegType(null);
+            setRegistrationJobId(null);
+          } else if (jobStatus.status === 'failed' || jobStatus.status === 'cancelled') {
+            clearInterval(pollInterval);
+            console.error('Registration failed:', jobStatus.result?.error);
+            setIsAutoRegistering(false);
+            setAutoRegType(null);
+            setRegistrationJobId(null);
+          }
+        } catch (pollError) {
+          console.error('Error polling registration status:', pollError);
+        }
+      }, 500);
+      
+      // Cleanup interval after 5 minutes max
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isAutoRegistering) {
+          setIsAutoRegistering(false);
+          setAutoRegType(null);
+          setRegistrationJobId(null);
+          console.warn('Registration timed out');
+        }
+      }, 5 * 60 * 1000);
+      
+    } catch (err) {
+      console.error('Registration error:', err);
       setIsAutoRegistering(false);
       setAutoRegType(null);
-    }, 2000);
-  }, [currentTransform, addToHistory]);
+      setRegistrationJobId(null);
+    }
+  }, [fuseboxData, currentTransform, addToHistory, isAutoRegistering]);
 
   const updateTranslation = (axis: 'x' | 'y' | 'z', value: number) => {
     setCurrentTransform(prev => ({
@@ -1317,48 +1420,103 @@ function FuseBoxContent() {
               {activePanel === 'autoReg' && (
                 <div className="space-y-3">
                   <div className="text-[10px] text-gray-500 mb-2">
-                    Automatic registration methods (placeholders)
+                    MIM-style automatic registration methods
                   </div>
                   
-                  <AutoRegButton
-                    onClick={() => handleAutoRegister('rigid')}
-                    icon={<Cpu className="w-4 h-4" />}
-                    label="Automatic Rigid Registration"
-                    description="Mutual information-based alignment"
-                    isRunning={isAutoRegistering && autoRegType === 'rigid'}
-                    disabled={isAutoRegistering}
-                  />
+                  {/* Progress indicator when running */}
+                  {isAutoRegistering && (
+                    <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 text-purple-400 animate-spin" />
+                        <span className="text-xs text-purple-300 font-medium">
+                          {autoRegType} Registration
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
+                          style={{ width: `${registrationProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-400">{registrationStatus}</p>
+                    </div>
+                  )}
                   
-                  <AutoRegButton
-                    onClick={() => handleAutoRegister('contourBased')}
-                    icon={<Layers3 className="w-4 h-4" />}
-                    label="Contour-Based Registration"
-                    description="Align using structure contours"
-                    isRunning={isAutoRegistering && autoRegType === 'contourBased'}
-                    disabled={isAutoRegistering}
-                  />
+                  {/* Rigid Registration Section */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Rigid (6 DOF)</div>
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('rigid')}
+                      icon={<Cpu className="w-4 h-4" />}
+                      label="Mutual Information Registration"
+                      description="Best for multi-modality (CT-MR, CT-PET)"
+                      isRunning={isAutoRegistering && autoRegType === 'rigid'}
+                      disabled={isAutoRegistering}
+                    />
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('intensityBased')}
+                      icon={<Scan className="w-4 h-4" />}
+                      label="Normalized Correlation Registration"
+                      description="Best for same-modality (CT-CT, MR-MR)"
+                      isRunning={isAutoRegistering && autoRegType === 'intensityBased'}
+                      disabled={isAutoRegistering}
+                    />
+                  </div>
                   
-                  <AutoRegButton
-                    onClick={() => handleAutoRegister('landmarkBased')}
-                    icon={<Target className="w-4 h-4" />}
-                    label="Landmark-Based Registration"
-                    description="Align using anatomical landmarks"
-                    isRunning={isAutoRegistering && autoRegType === 'landmarkBased'}
-                    disabled={isAutoRegistering}
-                  />
+                  {/* Structure-guided Section */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Structure-Guided</div>
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('contourBased')}
+                      icon={<Layers3 className="w-4 h-4" />}
+                      label="Contour-Based Registration"
+                      description="Uses matching structure contours"
+                      isRunning={isAutoRegistering && autoRegType === 'contourBased'}
+                      disabled={isAutoRegistering}
+                    />
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('landmarkBased')}
+                      icon={<Target className="w-4 h-4" />}
+                      label="Landmark-Based Registration"
+                      description="Uses anatomical landmark pairs"
+                      isRunning={isAutoRegistering && autoRegType === 'landmarkBased'}
+                      disabled={isAutoRegistering}
+                    />
+                  </div>
                   
-                  <AutoRegButton
-                    onClick={() => handleAutoRegister('intensityBased')}
-                    icon={<Scan className="w-4 h-4" />}
-                    label="Intensity-Based Registration"
-                    description="Pixel value correlation matching"
-                    isRunning={isAutoRegistering && autoRegType === 'intensityBased'}
-                    disabled={isAutoRegistering}
-                  />
+                  {/* Deformable Section */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-medium text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      Deformable (DIR)
+                    </div>
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('bspline')}
+                      icon={<Grid3X3 className="w-4 h-4" />}
+                      label="B-Spline Deformable Registration"
+                      description="Handles anatomical changes (weight, tumor)"
+                      isRunning={isAutoRegistering && autoRegType === 'bspline'}
+                      disabled={isAutoRegistering}
+                    />
+                    
+                    <AutoRegButton
+                      onClick={() => handleAutoRegister('demons')}
+                      icon={<Wand2 className="w-4 h-4" />}
+                      label="Demons Deformable Registration"
+                      description="Fast optical-flow method for breathing motion"
+                      isRunning={isAutoRegistering && autoRegType === 'demons'}
+                      disabled={isAutoRegistering}
+                    />
+                  </div>
                   
-                  <div className="text-[9px] text-amber-400/70 flex items-center gap-1 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 mt-4">
-                    <AlertTriangle className="w-3 h-3" />
-                    Auto-registration currently applies mock transforms only
+                  <div className="text-[9px] text-cyan-400/70 flex items-center gap-1 p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20 mt-4">
+                    <Info className="w-3 h-3" />
+                    Registration uses SimpleITK backend when available
                   </div>
                 </div>
               )}
