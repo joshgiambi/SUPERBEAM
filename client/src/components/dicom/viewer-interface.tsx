@@ -63,18 +63,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   // Shared image cache to prevent reloading when switching modes
   const imageCache = useRef<Map<string, { images: any[], metadata: any }>>(new Map());
   
-  const [rtStructures, setRTStructuresInternal] = useState<any>(null);
-  
-  // DEBUG: Wrapper to trace all rtStructures state changes
-  const setRTStructures = (newValue: any) => {
-    console.warn('🔴 DEBUG setRTStructures called:', {
-      newSeriesId: newValue?.seriesId,
-      newStructureCount: newValue?.structures?.length,
-      newStructureNames: newValue?.structures?.map((s: any) => s.structureName),
-      caller: new Error().stack?.split('\n')[2]?.trim()
-    });
-    setRTStructuresInternal(newValue);
-  };
+  const [rtStructures, setRTStructures] = useState<any>(null);
   const [structureVisibility, setStructureVisibility] = useState<Map<number, boolean>>(new Map());
   const [selectedStructures, setSelectedStructures] = useState<Set<number>>(new Set());
   const [selectedStructureColors, setSelectedStructureColors] = useState<string[]>([]);

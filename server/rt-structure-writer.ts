@@ -172,8 +172,22 @@ export class RTStructureWriter {
     };
 
     try {
-      // Create DICOM dictionary with the dataset
-      const dicomDict = DicomDict.fromNameObject(dataset);
+      // Create meta header for DICOM Part 10 file
+      const meta = {
+        '00020001': { vr: 'OB', Value: [new Uint8Array([0, 1])] }, // FileMetaInformationVersion
+        '00020002': { vr: 'UI', Value: ['1.2.840.10008.5.1.4.1.1.481.3'] }, // MediaStorageSOPClassUID (RT Structure Set)
+        '00020003': { vr: 'UI', Value: [input.sopInstanceUID] }, // MediaStorageSOPInstanceUID
+        '00020010': { vr: 'UI', Value: ['1.2.840.10008.1.2.1'] }, // TransferSyntaxUID (Explicit VR Little Endian)
+        '00020012': { vr: 'UI', Value: ['1.2.826.0.1.3680043.8.498'] }, // ImplementationClassUID
+        '00020013': { vr: 'SH', Value: ['CONVERGE_RT'] }, // ImplementationVersionName
+      };
+      
+      // Convert natural dataset to tag-based format
+      const tagDataset = DicomMetaDictionary.denaturalizeDataset(dataset);
+      
+      // Create DICOM dictionary with meta and dataset
+      const dicomDict = new DicomDict(meta);
+      dicomDict.dict = tagDataset;
       
       // Generate the Part 10 buffer
       const buffer = dicomDict.write();

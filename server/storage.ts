@@ -77,6 +77,7 @@ export interface IStorage {
   saveRTStructureSet(seriesId: number, structureSetData: any, actionType: string, actionDetails: any): Promise<void>;
   duplicateRTStructureSet(seriesId: number, newLabel: string): Promise<{ newSeriesId: number; rtStructureSet: RTStructureSet }>;
   restoreFromHistory(seriesId: number, historyId: number): Promise<void>;
+  deleteRTStructureSeries(seriesId: number): Promise<void>;
   
   // RT Structure operations
   createRTStructure(data: InsertRTStructure): Promise<RTStructure>;
@@ -1282,6 +1283,37 @@ export class DatabaseStorage implements IStorage {
     );
 
     console.log(`✅ Restored RT structure set from history ${historyId}`);
+  }
+
+  // Delete an RT structure series and all associated data
+  async deleteRTStructureSeries(seriesId: number): Promise<void> {
+    console.log(`🗑️ Deleting RT structure series ${seriesId}...`);
+    
+    // Get the RT structure set for this series
+    const rtStructureSet = await this.getRTStructureSetBySeriesId(seriesId);
+    
+    if (rtStructureSet) {
+      // Delete all history entries
+      await db.delete(rtStructureHistory).where(eq(rtStructureHistory.rtStructureSetId, rtStructureSet.id));
+      
+      // Delete all structures and their contours
+      const structures = await this.getRTStructuresBySetId(rtStructureSet.id);
+      for (const structure of structures) {
+        await db.delete(rtStructureContours).where(eq(rtStructureContours.rtStructureId, structure.id));
+      }
+      await db.delete(rtStructures).where(eq(rtStructures.rtStructureSetId, rtStructureSet.id));
+      
+      // Delete superstructures
+      await db.delete(rtSuperstructures).where(eq(rtSuperstructures.rtSeriesId, seriesId));
+      
+      // Delete the RT structure set
+      await db.delete(rtStructureSets).where(eq(rtStructureSets.id, rtStructureSet.id));
+    }
+    
+    // Delete the series itself
+    await db.delete(series).where(eq(series.id, seriesId));
+    
+    console.log(`✅ Deleted RT structure series ${seriesId}`);
   }
 
   // ============================================================================

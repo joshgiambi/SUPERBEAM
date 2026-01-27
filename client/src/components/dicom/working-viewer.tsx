@@ -4087,19 +4087,13 @@ const lastViewedContourSliceRef = useRef<number | null>(null);
 
     // Special handling for undo/redo results which return full RT structures
     if (payload && payload.structures && !payload.action) {
-      console.warn('🟠 DEBUG: Applying undo/redo result with', payload.structures.length, 'structures');
-      console.warn('🟠 DEBUG: payload.seriesId:', payload.seriesId);
-      
       // CRITICAL FIX: If the seriesId changed, this is a full replacement, not a merge!
       // Don't merge when switching between different RT structure sets
       setLocalRTStructures((prevStructures: any) => {
         // If no previous structures or seriesId changed, just replace entirely
         if (!prevStructures || prevStructures.seriesId !== payload.seriesId) {
-          console.warn('🟠 DEBUG: Full replacement (seriesId changed or no prev)');
           return payload;
         }
-        
-        console.warn('🟠 DEBUG: Merging structures (same seriesId)');
         
         // Create a new object with the same reference for unchanged properties
         const updatedStructures = {

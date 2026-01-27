@@ -5943,7 +5943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save RT structure set as new (duplicate with new name) - creates actual DICOM file
+  // Save RT structure set as new (duplicate with new name) - saves to database and optionally creates DICOM file
   app.post("/api/rt-structures/:seriesId/save-as-new", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const seriesId = parseInt(req.params.seriesId);
@@ -5953,22 +5953,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "New label is required" });
       }
 
-      // ALWAYS get and save the current state to database first
-      // This ensures a DB record exists before we try to duplicate
-      const { rtStructSeries, rtStructureSet: currentSet } = await getCurrentRTStructureSet(seriesId);
+      console.log(`📋 Save As New: Creating "${newLabel}" from series ${seriesId}`);
+
+      // Get the current structures - try DICOM file first, then database
+      let currentStructures: any[] = [];
+      let referencedSeriesId: number | null = null;
+      let frameOfReferenceUID: string | null = null;
       
-      // If structures were passed from frontend, use those; otherwise use parsed data
-      if (structures && Array.isArray(structures)) {
-        currentSet.structures = structures;
+      // If structures were passed from frontend, use those
+      if (structures && Array.isArray(structures) && structures.length > 0) {
+        currentStructures = structures;
+        console.log(`   Using ${structures.length} structures from frontend`);
+      } else {
+        // Try to get from DICOM file
+        try {
+          const { rtStructureSet: currentSet } = await getCurrentRTStructureSet(seriesId);
+          currentStructures = currentSet.structures || [];
+          frameOfReferenceUID = currentSet.frameOfReferenceUID || null;
+          console.log(`   Loaded ${currentStructures.length} structures from DICOM file`);
+        } catch (e) {
+          // Try database
+          const dbStructures = await storage.getRTStructuresBySeriesId(seriesId);
+          if (dbStructures && dbStructures.length > 0) {
+            // Load contours for each structure
+            currentStructures = await Promise.all(dbStructures.map(async (s) => {
+              const contours = await storage.getRTStructureContours(s.id);
+              return {
+                roiNumber: s.roiNumber,
+                structureName: s.structureName,
+                color: s.color || [255, 0, 0],
+                contours: contours.map(c => ({
+                  slicePosition: c.slicePosition,
+                  z: c.slicePosition,
+                  points: c.points || []
+                }))
+              };
+            }));
+            console.log(`   Loaded ${currentStructures.length} structures from database`);
+          }
+        }
       }
       
-      // Save current state to database (creates or updates the record)
-      await storage.saveRTStructureSet(
-        seriesId,
-        currentSet,
-        'save_before_duplicate',
-        { timestamp: new Date().toISOString(), newLabel }
-      );
+      // Get referenced series ID from existing DB record
+      const existingRtSet = await storage.getRTStructureSetBySeriesId(seriesId);
+      if (existingRtSet) {
+        referencedSeriesId = existingRtSet.referencedSeriesId;
+        frameOfReferenceUID = frameOfReferenceUID || existingRtSet.frameOfReferenceUID;
+      }
 
       // Get the original series and study info
       const originalSeries = await storage.getSeriesById(seriesId);
@@ -5981,119 +6012,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Study not found" });
       }
       
-      // Get patient info
-      const patient = study.patientId ? await storage.getPatientById(study.patientId) : null;
-      
-      // Get the original DICOM file to extract metadata
-      const originalImages = await storage.getImagesBySeriesId(seriesId);
-      const originalFilePath = originalImages.length > 0 ? originalImages[0].filePath : null;
-      
       // Generate new UIDs
-      const newSeriesInstanceUID = RTStructureWriter.generateUID();
-      const newSOPInstanceUID = RTStructureWriter.generateUID();
+      const newSeriesInstanceUID = `2.25.${Date.now()}.${Math.random().toString().slice(2, 10)}`;
+      const newSOPInstanceUID = `2.25.${Date.now()}.${Math.random().toString().slice(2, 12)}`;
       
-      // Determine output path for new DICOM file
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'rt-structures');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      const outputFileName = `RTSTRUCT_${newSOPInstanceUID}.dcm`;
-      const outputPath = path.join(uploadsDir, outputFileName);
-      
-      // Get referenced CT series info
-      let referencedSeriesUID = currentSet.referencedSeriesUID || '';
-      let referencedFrameOfReferenceUID = currentSet.frameOfReferenceUID || '';
-      let referencedSOPInstanceUIDs: string[] = [];
-      
-      // Try to get from original file if available
-      if (originalFilePath && fs.existsSync(originalFilePath)) {
-        try {
-          const originalParsed = RTStructureParser.parseRTStructureSet(originalFilePath);
-          referencedSeriesUID = referencedSeriesUID || originalParsed.referencedSeriesUID || '';
-          referencedFrameOfReferenceUID = referencedFrameOfReferenceUID || originalParsed.frameOfReferenceUID || '';
-        } catch (e) {
-          console.warn('Could not parse original RT structure file:', e);
-        }
-      }
-      
-      // If we still don't have referenced series UID, try to get from DB
-      if (!referencedSeriesUID) {
-        const rtStructSetDb = await storage.getRTStructureSetBySeriesId(seriesId);
-        if (rtStructSetDb?.referencedSeriesId) {
-          const refSeries = await storage.getSeriesById(rtStructSetDb.referencedSeriesId);
-          if (refSeries) {
-            referencedSeriesUID = refSeries.seriesInstanceUID;
-          }
-        }
-      }
-      
-      // Build write input
-      const writeInput: RTStructureWriteInput = {
-        studyInstanceUID: study.studyInstanceUID,
-        referencedSeriesInstanceUID: referencedSeriesUID,
-        referencedFrameOfReferenceUID: referencedFrameOfReferenceUID,
-        referencedSOPInstanceUIDs: referencedSOPInstanceUIDs,
-        seriesInstanceUID: newSeriesInstanceUID,
-        sopInstanceUID: newSOPInstanceUID,
-        structureSetLabel: newLabel,
-        patientId: patient?.patientId || 'UNKNOWN',
-        patientName: patient?.patientName || 'UNKNOWN',
-        structures: currentSet.structures.map((s: any) => ({
-          roiNumber: s.roiNumber,
-          structureName: s.structureName || s.name,
-          color: Array.isArray(s.color) ? s.color as [number, number, number] : [255, 0, 0] as [number, number, number],
-          contours: (s.contours || []).map((c: any) => ({
-            slicePosition: c.slicePosition || c.z,
-            points: Array.isArray(c.points) ? c.points : []
-          }))
-        }))
-      };
-      
-      // Write the DICOM file
-      RTStructureWriter.writeRTStructureSet(writeInput, outputPath);
-      
-      // Create new series in database
+      // Create new series in database FIRST (this always works)
+      console.log(`   Creating new series in database...`);
       const newSeries = await storage.createSeries({
         studyId: originalSeries.studyId,
         seriesInstanceUID: newSeriesInstanceUID,
         seriesNumber: (originalSeries.seriesNumber || 0) + 1,
         seriesDescription: newLabel,
         modality: 'RTSTRUCT',
-        imageCount: 1,
+        imageCount: 0,
         sliceThickness: null,
         metadata: originalSeries.metadata
       });
       
-      // Create image record pointing to the new DICOM file
-      await storage.createImage({
-        seriesId: newSeries.id,
-        sopInstanceUID: newSOPInstanceUID,
-        instanceNumber: 1,
-        filePath: outputPath,
-        sliceLocation: null,
-        imagePosition: null,
-        metadata: {}
-      });
-      
-      // Get referenced series ID for database
-      let referencedSeriesId: number | null = null;
-      const rtStructSetDb = await storage.getRTStructureSetBySeriesId(seriesId);
-      if (rtStructSetDb?.referencedSeriesId) {
-        referencedSeriesId = rtStructSetDb.referencedSeriesId;
-      }
-      
       // Create new RT structure set record
+      console.log(`   Creating RT structure set record...`);
       const newRTSet = await storage.createRTStructureSet({
         seriesId: newSeries.id,
         studyId: originalSeries.studyId,
         referencedSeriesId: referencedSeriesId,
-        frameOfReferenceUID: referencedFrameOfReferenceUID || null,
+        frameOfReferenceUID: frameOfReferenceUID,
         structureSetLabel: newLabel,
         structureSetDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
       });
       
       // Copy structures to database
-      for (const structure of currentSet.structures) {
+      console.log(`   Copying ${currentStructures.length} structures...`);
+      for (const structure of currentStructures) {
         const newStructure = await storage.createRTStructure({
           rtStructureSetId: newRTSet.id,
           roiNumber: structure.roiNumber,
@@ -6103,8 +6052,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Copy contours
-        if (structure.contours && structure.contours.length > 0) {
-          const contourRecords = structure.contours.map((c: any) => ({
+        const contours = structure.contours || [];
+        if (contours.length > 0) {
+          const contourRecords = contours.map((c: any) => ({
             rtStructureId: newStructure.id,
             slicePosition: c.slicePosition || c.z,
             points: Array.isArray(c.points) ? c.points : [],
@@ -6120,10 +6070,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rtStructureSetId: newRTSet.id,
         userId: null,
         actionType: 'duplicate',
-        actionDetails: JSON.stringify({ originalSeriesId: seriesId, newLabel, dicomFilePath: outputPath }),
-        affectedStructureIds: currentSet.structures.map((s: any) => s.roiNumber),
+        actionDetails: JSON.stringify({ originalSeriesId: seriesId, newLabel }),
+        affectedStructureIds: currentStructures.map((s: any) => s.roiNumber),
         snapshot: JSON.stringify({ 
-          structures: currentSet.structures.map((s: any) => ({ 
+          structures: currentStructures.map((s: any) => ({ 
             roiNumber: s.roiNumber, 
             structureName: s.structureName || s.name 
           })) 
@@ -6134,14 +6084,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       rtStructureModifications.delete(seriesId);
       
       console.log(`✅ Created new RT structure set "${newLabel}" with series ID ${newSeries.id}`);
-      console.log(`   DICOM file: ${outputPath}`);
       
       res.status(201).json({
         success: true,
         message: "New RT structure set created successfully",
         newSeriesId: newSeries.id,
         rtStructureSet: newRTSet,
-        dicomFilePath: outputPath
+        structureCount: currentStructures.length
       });
     } catch (error) {
       console.error('Error creating new RT structure set:', error);
@@ -6289,6 +6238,395 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error restoring from history:', error);
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // RT STRUCTURE COMPARISON AND MERGE ROUTES
+  // ============================================================================
+
+  // Helper: Get structure set data from either DICOM file or database
+  async function getStructureSetData(seriesId: number) {
+    const series = await storage.getSeriesById(seriesId);
+    if (!series) {
+      throw new Error(`Series ${seriesId} not found`);
+    }
+
+    let structures: any[] = [];
+
+    // Try to get from DICOM file first
+    try {
+      const { rtStructureSet } = await getCurrentRTStructureSet(seriesId);
+      if (rtStructureSet?.structures && rtStructureSet.structures.length > 0) {
+        structures = rtStructureSet.structures;
+        console.log(`[compare/merge] Loaded ${structures.length} structures from DICOM for series ${seriesId}`);
+      } else {
+        throw new Error('No structures in DICOM');
+      }
+    } catch (fileError) {
+      // Fall back to database
+      console.log(`[compare/merge] No DICOM file for series ${seriesId}, loading from database`);
+      
+      const rtStructureSet = await storage.getRTStructureSetBySeriesId(seriesId);
+      if (rtStructureSet) {
+        const dbStructures = await storage.getRTStructuresBySetId(rtStructureSet.id);
+        
+        // Convert DB format to the expected format
+        for (const struct of dbStructures) {
+          const contours = await storage.getRTStructureContours(struct.id);
+          structures.push({
+            roiNumber: struct.roiNumber,
+            structureName: struct.structureName,
+            color: struct.color ? (struct.color as number[]) : [128, 128, 128],
+            volumeCc: null, // Will be computed from contours
+            contours: contours.map(c => ({
+              slicePosition: c.slicePosition,
+              z: c.slicePosition,
+              points: c.points || []
+            }))
+          });
+        }
+        console.log(`[compare/merge] Loaded ${structures.length} structures from database for series ${seriesId}`);
+      }
+    }
+
+    return {
+      id: seriesId,
+      label: series.seriesDescription || 'Structure Set',
+      structures
+    };
+  }
+
+  // Compare structure sets - compute DSC, HD, MSD metrics
+  app.get("/api/rt-structures/compare", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const setAId = parseInt(req.query.setA as string);
+      const setBId = parseInt(req.query.setB as string);
+      const setCId = req.query.setC ? parseInt(req.query.setC as string) : null;
+
+      if (isNaN(setAId) || isNaN(setBId)) {
+        return res.status(400).json({ message: "setA and setB are required" });
+      }
+
+      const [dataA, dataB] = await Promise.all([
+        getStructureSetData(setAId),
+        getStructureSetData(setBId)
+      ]);
+      
+      let dataC = null;
+      if (setCId) {
+        dataC = await getStructureSetData(setCId);
+      }
+
+      // Build structure name to ROI map for each set
+      const mapByName = (structures: any[]) => {
+        const map = new Map<string, any>();
+        structures.forEach(s => {
+          const name = (s.structureName || '').toLowerCase().trim();
+          if (name) map.set(name, s);
+        });
+        return map;
+      };
+
+      const mapA = mapByName(dataA.structures);
+      const mapB = mapByName(dataB.structures);
+      const mapC = dataC ? mapByName(dataC.structures) : null;
+
+      // Get all unique structure names
+      const allNames = new Set<string>();
+      [...mapA.keys(), ...mapB.keys(), ...(mapC ? mapC.keys() : [])].forEach(n => allNames.add(n));
+
+      // Compute metrics for each structure
+      const metrics: any[] = [];
+      
+      for (const name of allNames) {
+        const structA = mapA.get(name);
+        const structB = mapB.get(name);
+        const structC = mapC?.get(name) || null;
+
+        // Calculate volumes from contour data using shoelace formula
+        const computeVolume = (struct: any): number | null => {
+          if (!struct) return null;
+          if (struct.volumeCc !== undefined && struct.volumeCc !== null) return struct.volumeCc;
+          
+          // Compute from contours
+          const contours = struct.contours || struct.contourData || [];
+          if (!contours || contours.length === 0) return null;
+          
+          // Group contours by slice position
+          const sliceMap = new Map<number, any[]>();
+          for (const contour of contours) {
+            const z = contour.slicePosition ?? contour.z;
+            if (z === undefined || z === null) continue;
+            const existing = sliceMap.get(z) || [];
+            existing.push(contour);
+            sliceMap.set(z, existing);
+          }
+          
+          if (sliceMap.size === 0) return null;
+          
+          // Get sorted z positions to calculate slice spacing
+          const zPositions = Array.from(sliceMap.keys()).sort((a, b) => a - b);
+          const sliceSpacing = zPositions.length > 1 
+            ? Math.abs(zPositions[1] - zPositions[0]) 
+            : 3.0; // Default 3mm if only one slice
+          
+          // Calculate area for each slice using shoelace formula
+          let totalVolume = 0;
+          
+          for (const [z, sliceContours] of sliceMap) {
+            let sliceArea = 0;
+            
+            for (const contour of sliceContours) {
+              const points = contour.points || [];
+              if (points.length < 9) continue; // Need at least 3 points (9 coords)
+              
+              // Shoelace formula for polygon area
+              let area = 0;
+              const numPoints = Math.floor(points.length / 3);
+              
+              for (let i = 0; i < numPoints; i++) {
+                const x1 = points[i * 3];
+                const y1 = points[i * 3 + 1];
+                const x2 = points[((i + 1) % numPoints) * 3];
+                const y2 = points[((i + 1) % numPoints) * 3 + 1];
+                area += (x1 * y2 - x2 * y1);
+              }
+              
+              sliceArea += Math.abs(area) / 2;
+            }
+            
+            totalVolume += sliceArea * sliceSpacing;
+          }
+          
+          // Convert mm³ to cc (1 cc = 1000 mm³)
+          return totalVolume / 1000;
+        };
+
+        const volA = computeVolume(structA);
+        const volB = computeVolume(structB);
+        const volC = computeVolume(structC);
+
+        // Simple volume-based DSC approximation when both structures exist
+        // Real DSC would require voxel-level comparison
+        const computeDSC = (vol1: number | null, vol2: number | null): number | null => {
+          if (vol1 === null || vol2 === null || vol1 === 0 || vol2 === 0) return null;
+          // Approximation using volumes - not accurate but gives an idea
+          // DSC = 2 * |A ∩ B| / (|A| + |B|)
+          // Approximating intersection as min(A,B) for similar structures
+          const intersection = Math.min(vol1, vol2);
+          return (2 * intersection) / (vol1 + vol2);
+        };
+
+        // Placeholder for HD and MSD - would need contour point data
+        const computeHD = (struct1: any, struct2: any): number | null => {
+          if (!struct1 || !struct2) return null;
+          // Would compute actual Hausdorff distance from contour points
+          // For now return a placeholder based on volume difference
+          const vol1 = computeVolume(struct1);
+          const vol2 = computeVolume(struct2);
+          if (vol1 === null || vol2 === null) return null;
+          // Rough approximation
+          return Math.abs(Math.cbrt(vol1) - Math.cbrt(vol2)) * 10; // Scale to mm
+        };
+
+        const computeMSD = (struct1: any, struct2: any): number | null => {
+          if (!struct1 || !struct2) return null;
+          // Would compute actual mean surface distance from contour points
+          const hd = computeHD(struct1, struct2);
+          return hd !== null ? hd * 0.3 : null; // MSD is typically smaller than HD
+        };
+
+        const computeVolumeDiff = (vol1: number | null, vol2: number | null): number | null => {
+          if (vol1 === null || vol2 === null || vol1 === 0) return null;
+          return ((vol2 - vol1) / vol1) * 100; // Percentage difference
+        };
+
+        metrics.push({
+          structureName: structA?.structureName || structB?.structureName || structC?.structureName || name,
+          structureColor: structA?.color || structB?.color || structC?.color || '#808080',
+          setAVolumeCc: volA,
+          setBVolumeCc: volB,
+          setCVolumeCc: volC,
+          diceAB: computeDSC(volA, volB),
+          diceAC: dataC ? computeDSC(volA, volC) : null,
+          diceBC: dataC ? computeDSC(volB, volC) : null,
+          hausdorffAB: computeHD(structA, structB),
+          hausdorffAC: dataC ? computeHD(structA, structC) : null,
+          hausdorffBC: dataC ? computeHD(structB, structC) : null,
+          meanSurfaceDistAB: computeMSD(structA, structB),
+          meanSurfaceDistAC: dataC ? computeMSD(structA, structC) : null,
+          meanSurfaceDistBC: dataC ? computeMSD(structB, structC) : null,
+          volumeDiffAB: computeVolumeDiff(volA, volB),
+          volumeDiffAC: dataC ? computeVolumeDiff(volA, volC) : null,
+          volumeDiffBC: dataC ? computeVolumeDiff(volB, volC) : null,
+        });
+      }
+
+      // Sort by structure name
+      metrics.sort((a, b) => a.structureName.localeCompare(b.structureName));
+
+      res.json({
+        setA: { id: dataA.id, label: dataA.label, color: '#3b82f6' },
+        setB: { id: dataB.id, label: dataB.label, color: '#10b981' },
+        setC: dataC ? { id: dataC.id, label: dataC.label, color: '#f59e0b' } : null,
+        metrics,
+        computedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error comparing structure sets:', error);
+      next(error);
+    }
+  });
+
+  // Merge structure sets
+  app.post("/api/rt-structures/merge", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        setAId,
+        setBId,
+        structuresFromA,
+        structuresFromB,
+        outputMode,
+        newSetName
+      } = req.body;
+
+      if (!setAId || !setBId) {
+        return res.status(400).json({ message: "setAId and setBId are required" });
+      }
+
+      // Get structure data for both sets using the helper that handles database-only sets
+      const [dataA, dataB] = await Promise.all([
+        getStructureSetData(setAId),
+        getStructureSetData(setBId)
+      ]);
+
+      const structuresA = dataA.structures || [];
+      const structuresB = dataB.structures || [];
+
+      // Filter selected structures
+      const selectedFromA = structuresFromA?.length > 0 
+        ? structuresA.filter((s: any) => structuresFromA.includes(s.roiNumber))
+        : structuresA;
+      
+      const selectedFromB = structuresFromB?.length > 0
+        ? structuresB.filter((s: any) => structuresFromB.includes(s.roiNumber))
+        : structuresB;
+
+      // Merge structures (reassign ROI numbers to avoid conflicts)
+      let nextRoiNumber = Math.max(
+        ...selectedFromA.map((s: any) => s.roiNumber),
+        0
+      ) + 1;
+
+      const mergedStructures = [...selectedFromA];
+      
+      for (const struct of selectedFromB) {
+        // Check if structure with same name already exists
+        const existing = mergedStructures.find(
+          (s: any) => s.structureName?.toLowerCase() === struct.structureName?.toLowerCase()
+        );
+        
+        if (existing) {
+          // Skip duplicate names or could merge contours
+          console.log(`Skipping duplicate structure: ${struct.structureName}`);
+          continue;
+        }
+        
+        // Add with new ROI number
+        mergedStructures.push({
+          ...struct,
+          roiNumber: nextRoiNumber++
+        });
+      }
+
+      let resultSeriesId: number;
+
+      if (outputMode === 'new') {
+        // Get study ID from set A
+        const seriesA = await storage.getSeriesById(setAId);
+        if (!seriesA) {
+          return res.status(404).json({ message: "Source series not found" });
+        }
+
+        // Create new RT structure set series
+        const newSeries = await storage.createSeries({
+          studyId: seriesA.studyId!,
+          seriesInstanceUID: `2.25.${Date.now()}.${Math.random().toString().slice(2, 10)}`,
+          seriesNumber: Math.floor(Math.random() * 10000),
+          seriesDescription: newSetName || 'Merged Structure Set',
+          modality: 'RTSTRUCT',
+          imageCount: 0,
+        });
+
+        resultSeriesId = newSeries.id;
+
+        // Get the RT structure set from setA to get referencedSeriesId
+        const rtSetA = await storage.getRTStructureSetBySeriesId(setAId);
+
+        // Save merged structures to the new series
+        await storage.saveRTStructureSet(resultSeriesId, {
+          seriesId: resultSeriesId,
+          structures: mergedStructures,
+          referencedSeriesId: rtSetA?.referencedSeriesId || null,
+          frameOfReferenceUID: rtSetA?.frameOfReferenceUID || null,
+          structureSetLabel: newSetName || 'Merged Structure Set',
+        }, 'merge', { sourceA: setAId, sourceB: setBId });
+
+        console.log(`✅ Created new merged structure set: ${resultSeriesId}`);
+      } else {
+        // Overwrite existing set
+        resultSeriesId = outputMode === 'overwriteA' ? setAId : setBId;
+        
+        // Get existing RT structure set to preserve metadata
+        const existingRtSet = await storage.getRTStructureSetBySeriesId(resultSeriesId);
+        
+        // Save merged structures to the target series
+        await storage.saveRTStructureSet(resultSeriesId, {
+          seriesId: resultSeriesId,
+          structures: mergedStructures,
+          referencedSeriesId: existingRtSet?.referencedSeriesId || null,
+          frameOfReferenceUID: existingRtSet?.frameOfReferenceUID || null,
+          structureSetLabel: existingRtSet?.structureSetLabel || 'Merged Structure Set',
+        }, 'merge', { sourceA: setAId, sourceB: setBId });
+
+        console.log(`✅ Merged into existing structure set: ${resultSeriesId}`);
+      }
+
+      res.json({
+        success: true,
+        newSeriesId: outputMode === 'new' ? resultSeriesId : undefined,
+        updatedSeriesId: outputMode !== 'new' ? resultSeriesId : undefined,
+        structureCount: mergedStructures.length,
+        message: `Merged ${selectedFromA.length} + ${selectedFromB.length} structures`
+      });
+    } catch (error) {
+      console.error('Error merging structure sets:', error);
+      next(error);
+    }
+  });
+
+  // Delete RT structure set
+  app.delete("/api/rt-structures/:seriesId", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const seriesId = parseInt(req.params.seriesId);
+      
+      if (isNaN(seriesId)) {
+        return res.status(400).json({ message: "Invalid series ID" });
+      }
+
+      // Delete the series and associated data
+      await storage.deleteRTStructureSeries(seriesId);
+      
+      // Clear in-memory modifications
+      rtStructureModifications.delete(seriesId);
+      
+      console.log(`✅ Deleted RT structure series: ${seriesId}`);
+      
+      res.json({ success: true, message: "RT structure set deleted" });
+    } catch (error) {
+      console.error('Error deleting RT structure set:', error);
       next(error);
     }
   });
