@@ -5,11 +5,11 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-26T22:28:19.791Z |
-| Total Changes | 36 |
-| Branch | perf-fixes-backup-20260122 |
+| Generated | 2026-01-27T22:12:15.518Z |
+| Total Changes | 37 |
+| Branch | main |
 | First Change | 2025-12-04 |
-| Last Change | 2026-01-26 |
+| Last Change | 2026-01-27 |
 | Contributors | joshgiambi |
 
 ## Change Classification Summary
@@ -19,7 +19,7 @@
 | 📈 Enhancement | 12 | Improvements to existing functionality |
 | ✨ Feature | 7 | New functionality implemented |
 | ♻️ Refactor | 6 | Code maintenance without functional changes |
-| 📝 Docs | 4 | Documentation updates |
+| 📝 Docs | 5 | Documentation updates |
 | 📦 Other | 4 | Other changes |
 | 🔧 Fix | 3 | Defect corrections |
 
@@ -29,7 +29,7 @@
 |-----------------|---------|
 | Infrastructure | 15 |
 | DICOM Processing | 13 |
-| User Interface | 10 |
+| User Interface | 11 |
 | Image Viewing | 7 |
 | Performance | 6 |
 | Image Fusion | 4 |
@@ -49,7 +49,7 @@
 | 🔴 High | 1 | Yes - Full verification |
 | 🟡 Medium | 19 | Yes - Standard verification |
 | 🟢 Low | 7 | Recommended |
-| ⚪ None | 9 | Not required |
+| ⚪ None | 10 | Not required |
 
 ## Detailed Change History
 
@@ -57,7 +57,8 @@
 
 | Date | Change ID | Type | Risk | Description | Affected Areas |
 |------|-----------|------|------|-------------|----------------|
-| 2026-01-26 | `9ea70c6` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhan... | Image Viewing, User Interface |
+| 2026-01-27 | `20960fe` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation and enhance UI components [Use... | User Interface |
+| 2026-01-26 | `57c76a5` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhan... | Image Viewing, User Interface |
 | 2026-01-26 | `dfa2f0f` | 📈 | 🟢 | ENHANCEMENT: Enhance regulatory features and UI components [User Interface] | User Interface |
 | 2026-01-26 | `13cf025` | ✨ | 🟡 | NEW FEATURE: Add DIR QA tools - Reg Reveal, Reg Refine, Jacobian visualizatio... | Image Fusion |
 | 2026-01-26 | `9ae494d` | ✨ | 🟡 | NEW FEATURE: Add rigid and deformable registration capabilities to FuseBox [I... | Image Fusion |
@@ -103,7 +104,21 @@
 
 *Showing most recent 30 changes with full details*
 
-### Change 9ea70c6
+### Change 20960fe
+
+**DOCUMENTATION: Update regulatory documentation and enhance UI components [User Interface]**
+
+| Attribute | Value |
+|-----------|-------|
+| Date | 2026-01-27 |
+| Author | joshgiambi |
+| Change Type | docs |
+| Risk Impact | ⚪ NONE |
+| Verification | not-required |
+| Affected Areas | User Interface |
+| Related Requirements | REQ-UI-* |
+
+### Change 57c76a5
 
 **DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhancements [Image Viewing, User Interface]**
 
@@ -508,20 +523,6 @@
 | Verification | pending |
 | Affected Areas | User Interface |
 | Related Requirements | REQ-UI-* |
-
-### Change 679d498
-
-**NEW FEATURE: Re-implement contour toolbar improvements: Radix DropdownMenu, Dissect tool, larger sizes, swapped Smooth/Nth, updated Blob labels [RT Structure, Contour Tools, User Interface]**
-
-| Attribute | Value |
-|-----------|-------|
-| Date | 2025-12-17 |
-| Author | joshgiambi |
-| Change Type | feature |
-| Risk Impact | 🟡 MEDIUM |
-| Verification | pending |
-| Affected Areas | RT Structure, Contour Tools, User Interface |
-| Related Requirements | REQ-RTSTRUCT-*, REQ-CONTOUR-*, REQ-UI-* |
 
 ---
 

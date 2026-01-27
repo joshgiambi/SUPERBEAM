@@ -1,19 +1,40 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-01-26T22:28:19.791Z",
+  "generatedAt": "2026-01-27T22:12:15.518Z",
   "repositoryInfo": {
-    "totalCommits": 36,
+    "totalCommits": 37,
     "firstCommit": "2025-12-04",
-    "lastCommit": "2026-01-26",
+    "lastCommit": "2026-01-27",
     "contributors": [
       "joshgiambi"
     ],
-    "branch": "perf-fixes-backup-20260122"
+    "branch": "main"
   },
   "commits": [
     {
-      "hash": "9ea70c6195a2c824b95b36dfd0e4217bd99fecab",
-      "shortHash": "9ea70c6",
+      "hash": "20960fe81bcc51e1263dcf01d05e9b2c804b90ee",
+      "shortHash": "20960fe",
+      "date": "2026-01-27",
+      "author": "joshgiambi",
+      "subject": "Update regulatory documentation and enhance UI components",
+      "regulatoryDescription": "DOCUMENTATION: Update regulatory documentation and enhance UI components [User Interface]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "User Interface"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-UI-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
+    {
+      "hash": "57c76a5fa14de6a7e1951354ab7b3e0493e3aedb",
+      "shortHash": "57c76a5",
       "date": "2026-01-26",
       "author": "joshgiambi",
       "subject": "docs(ui): Update regulatory documentation for dashboard and viewer enhancements",
@@ -851,8 +872,8 @@
     }
   ],
   "byCategory": {
+    "User Interface": 11,
     "Image Viewing": 7,
-    "User Interface": 10,
     "Image Fusion": 4,
     "DVH": 2,
     "RT Plan": 4,
@@ -867,7 +888,7 @@
     "RT Dose": 1
   },
   "byChangeType": {
-    "docs": 4,
+    "docs": 5,
     "enhancement": 12,
     "feature": 7,
     "fix": 3,

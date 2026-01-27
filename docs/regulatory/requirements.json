@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-01-26T22:28:19.487Z",
-  "totalRequirements": 204,
+  "generatedAt": "2026-01-27T22:12:15.216Z",
+  "totalRequirements": 206,
   "byCategory": {
     "General": 103,
     "Image Viewing": 16,
@@ -19,12 +19,12 @@
     "Data Import": 3,
     "RT Dose Display": 3,
     "RT Plan Display": 3,
-    "RT Structure Display": 2,
+    "RT Structure Display": 4,
     "Series Management": 2
   },
   "byRisk": {
     "low": 137,
-    "medium": 51,
+    "medium": 53,
     "high": 16
   },
   "requirements": [
@@ -337,7 +337,7 @@
         "SEGDrawingToolsResizing.spec.ts"
       ],
       "status": "verified",
-      "createdDate": "2026-01-21",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
@@ -1350,7 +1350,7 @@
       "relatedTests": [],
       "status": "implemented",
       "createdDate": "2025-10-01",
-      "lastModified": "2025-11-03"
+      "lastModified": "2026-01-26"
     },
     {
       "id": "REQ-GEN-026",
@@ -1375,7 +1375,7 @@
       "sourceType": "component",
       "relatedTests": [],
       "status": "implemented",
-      "createdDate": "2026-01-22",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
@@ -1941,7 +1941,7 @@
       "sourceType": "component",
       "relatedTests": [],
       "status": "implemented",
-      "createdDate": "2026-01-22",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
@@ -1956,7 +1956,7 @@
         "index.test.ts"
       ],
       "status": "verified",
-      "createdDate": "2026-01-22",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
@@ -2386,7 +2386,7 @@
       "sourceType": "component",
       "relatedTests": [],
       "status": "implemented",
-      "createdDate": "2025-12-03",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
@@ -2722,6 +2722,21 @@
     },
     {
       "id": "REQ-RTSTRUCT-001",
+      "title": "Rt Structure Compare Dialog",
+      "description": "RT Structure Set Comparison Dialog",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/rt-structure-compare-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTSTRUCT-002",
       "title": "Rt Structure History Modal",
       "description": "Load history when dialog opens",
       "category": "RT Structure Display",
@@ -2732,11 +2747,26 @@
         "TMTVModalityUnit.spec.ts"
       ],
       "status": "verified",
-      "createdDate": "2025-12-03",
+      "createdDate": "2026-01-26",
       "lastModified": "2026-01-26"
     },
     {
-      "id": "REQ-RTSTRUCT-002",
+      "id": "REQ-RTSTRUCT-003",
+      "title": "Rt Structure Merge Dialog",
+      "description": "RT Structure Set Merge Dialog",
+      "category": "RT Structure Display",
+      "riskClass": "medium",
+      "sourceFile": "client/src/components/dicom/rt-structure-merge-dialog.tsx",
+      "sourceType": "component",
+      "relatedTests": [
+        "promptHydrationDialog.test.ts"
+      ],
+      "status": "verified",
+      "createdDate": "2026-01-26",
+      "lastModified": "2026-01-26"
+    },
+    {
+      "id": "REQ-RTSTRUCT-004",
       "title": "Rt Structure Overlay",
       "description": "Marks contours as predictions",
       "category": "RT Structure Display",

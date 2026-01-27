@@ -5,9 +5,9 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-26T22:28:20.071Z |
-| Total Entries | 204 |
-| Complete | 116 |
+| Generated | 2026-01-27T22:12:15.804Z |
+| Total Entries | 206 |
+| Complete | 118 |
 | Partial | 88 |
 | Pending | 0 |
 
@@ -30,7 +30,7 @@
 | Patient Management | 2 | 2 | 0 | ██████████ 100% |
 | RT Dose Display | 3 | 1 | 2 | ███░░░░░░░ 33% |
 | RT Plan Display | 3 | 3 | 0 | ██████████ 100% |
-| RT Structure Display | 2 | 2 | 0 | ██████████ 100% |
+| RT Structure Display | 4 | 4 | 0 | ██████████ 100% |
 | Series Management | 2 | 0 | 2 | ░░░░░░░░░░ 0% |
 | Structure Management | 4 | 2 | 2 | █████░░░░░ 50% |
 
@@ -39,7 +39,7 @@
 | Risk Level | Total | Verified | Status |
 |------------|-------|----------|--------|
 | 🔴 High | 16 | 8 (50%) | ⚠️ In Progress |
-| 🟡 Medium | 51 | 41 (80%) | ⚠️ In Progress |
+| 🟡 Medium | 53 | 43 (81%) | ⚠️ In Progress |
 | 🟢 Low | 137 | 67 (49%) | ⚠️ In Progress |
 
 ## Full Traceability Matrix
@@ -226,8 +226,10 @@
 | REQ-RTPLAN-001 | DES-RT_PLAN_PANEL | `rt-plan-panel.tsx` | ✅ | ✅ |
 | REQ-RTPLAN-002 | DES-RT_PLAN_VALIDATION.TEST | `rt-plan-validation.test.ts` | ✅ | ✅ |
 | REQ-RTPLAN-003 | DES-RT_PLAN_API | `rt-plan-api.ts` | ✅ | ✅ |
-| REQ-RTSTRUCT-001 | DES-RT_STRUCTURE_HISTORY_MODAL | `rt-structure-history-modal.tsx` | ✅ | ✅ |
-| REQ-RTSTRUCT-002 | DES-RT_STRUCTURE_OVERLAY | `rt-structure-overlay.tsx` | ✅ | ✅ |
+| REQ-RTSTRUCT-001 | DES-RT_STRUCTURE_COMPARE_DIALOG | `rt-structure-compare-dialog.tsx` | ✅ | ✅ |
+| REQ-RTSTRUCT-002 | DES-RT_STRUCTURE_HISTORY_MODAL | `rt-structure-history-modal.tsx` | ✅ | ✅ |
+| REQ-RTSTRUCT-003 | DES-RT_STRUCTURE_MERGE_DIALOG | `rt-structure-merge-dialog.tsx` | ✅ | ✅ |
+| REQ-RTSTRUCT-004 | DES-RT_STRUCTURE_OVERLAY | `rt-structure-overlay.tsx` | ✅ | ✅ |
 | REQ-SERIES-001 | DES-SERIES_SELECTOR | `series-selector.tsx` | ⏳ | 🔧 |
 | REQ-SERIES-002 | DES-GLOBAL_SERIES_CACHE | `global-series-cache.ts` | ⏳ | 🔧 |
 | REQ-STRUCT-001 | DES-SUPERSTRUCTUREMANAGER | `SuperstructureManager.tsx` | ⏳ | 🔧 |
@@ -1855,7 +1857,7 @@
 | **Implementation** | `client/src/components/dicom/flexible-fusion-layout.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-002: Fusion Control Panel V2
 
@@ -1866,7 +1868,7 @@
 | **Implementation** | `client/src/components/dicom/fusion-control-panel-v2.tsx` |
 | **Verification** | MeasurementPanel.spec.ts, SegmentationPanel.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-003: Fusion Control Panel
 
@@ -1877,7 +1879,7 @@
 | **Implementation** | `client/src/components/dicom/fusion-control-panel.tsx` |
 | **Verification** | MeasurementPanel.spec.ts, SegmentationPanel.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-004: Fusion Debug Dialog
 
@@ -1888,7 +1890,7 @@
 | **Implementation** | `client/src/components/dicom/fusion-debug-dialog.tsx` |
 | **Verification** | promptHydrationDialog.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-005: Fusion Panel
 
@@ -1899,7 +1901,7 @@
 | **Implementation** | `client/src/components/dicom/fusion-panel.tsx` |
 | **Verification** | MeasurementPanel.spec.ts, SegmentationPanel.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-006: Fusion Viewport Grid
 
@@ -1910,7 +1912,7 @@
 | **Implementation** | `client/src/components/dicom/fusion-viewport-grid.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-007: Smart Fusion Viewport Manager
 
@@ -1921,7 +1923,7 @@
 | **Implementation** | `client/src/components/dicom/smart-fusion-viewport-manager.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-008: Unified Fusion Layout Toolbar V2
 
@@ -1932,7 +1934,7 @@
 | **Implementation** | `client/src/components/dicom/unified-fusion-layout-toolbar-v2.tsx` |
 | **Verification** | useToolbar.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-009: Unified Fusion Topbar
 
@@ -1943,7 +1945,7 @@
 | **Implementation** | `client/src/components/dicom/unified-fusion-topbar.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-010: Fusion Layout Service
 
@@ -1954,7 +1956,7 @@
 | **Implementation** | `client/src/lib/fusion-layout-service.ts` |
 | **Verification** | SegmentationService.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-011: Fusion Overlay Manager
 
@@ -1965,7 +1967,7 @@
 | **Implementation** | `client/src/lib/fusion-overlay-manager.ts` |
 | **Verification** | DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-012: Fusion Utils
 
@@ -1976,7 +1978,7 @@
 | **Implementation** | `client/src/lib/fusion-utils.ts` |
 | **Verification** | dicom-utils.test.ts, polygon-utils.test.ts, hydrationUtils.test.ts, segmentUtils.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-FUSION-013: Global Fusion Cache
 
@@ -1987,7 +1989,7 @@
 | **Implementation** | `client/src/lib/global-fusion-cache.ts` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 ### Image Viewing
 
@@ -2000,7 +2002,7 @@
 | **Implementation** | `client/src/components/dicom/AdvancedViewportLayout.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-002: Multi Viewport
 
@@ -2011,7 +2013,7 @@
 | **Implementation** | `client/src/components/dicom/multi-viewport.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MultipleSegmentationDataOverlays.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-003: Sonnet Viewport Manager
 
@@ -2022,7 +2024,7 @@
 | **Implementation** | `client/src/components/dicom/sonnet-viewport-manager.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-004: Unified Viewport Switcher
 
@@ -2033,7 +2035,7 @@
 | **Implementation** | `client/src/components/dicom/unified-viewport-switcher.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-005: Viewer Interface
 
@@ -2044,7 +2046,7 @@
 | **Implementation** | `client/src/components/dicom/viewer-interface.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-006: Viewer Toolbar
 
@@ -2055,7 +2057,7 @@
 | **Implementation** | `client/src/components/dicom/viewer-toolbar.tsx` |
 | **Verification** | useToolbar.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-007: Viewport Action Bar
 
@@ -2066,7 +2068,7 @@
 | **Implementation** | `client/src/components/dicom/viewport-action-bar.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-008: Viewport Action Corners
 
@@ -2077,7 +2079,7 @@
 | **Implementation** | `client/src/components/dicom/viewport-action-corners.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneBlendMode.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-009: Viewport Orientation Markers
 
@@ -2088,7 +2090,7 @@
 | **Implementation** | `client/src/components/dicom/viewport-orientation-markers.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneOrientation.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-010: Viewport Overlay
 
@@ -2099,7 +2101,7 @@
 | **Implementation** | `client/src/components/dicom/viewport-overlay.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, DataOverlayMenu.spec.ts, MPRThenRTOverlayNoHydration.spec.ts, MPRThenSEGOverlayNoHydration.spec.ts, MultipleSegmentationDataOverlays.spec.ts, RTDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, RTDataOverlayNoHydrationThenMPR.spec.ts, SEGDataOverlayForUnreferencedDisplaySetNoHydration.spec.ts, SEGDataOverlayNoHydrationThenMPR.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-011: Viewport Pane Ohif
 
@@ -2110,7 +2112,7 @@
 | **Implementation** | `client/src/components/dicom/viewport-pane-ohif.tsx` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, MeasurementPanel.spec.ts, SegmentationPanel.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-012: Working Viewer
 
@@ -2121,7 +2123,7 @@
 | **Implementation** | `client/src/components/dicom/working-viewer.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-013: Primary Viewport
 
@@ -2132,7 +2134,7 @@
 | **Implementation** | `client/src/components/viewer/PrimaryViewport.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-014: Gpu Viewport Manager
 
@@ -2143,7 +2145,7 @@
 | **Implementation** | `client/src/lib/gpu-viewport-manager.ts` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-015: Viewport Grid Service
 
@@ -2154,7 +2156,7 @@
 | **Implementation** | `client/src/lib/viewport-grid-service.ts` |
 | **Verification** | SegmentationService.test.ts, getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 #### REQ-VIEW-016: Viewport Scroll Sync
 
@@ -2165,7 +2167,7 @@
 | **Implementation** | `client/src/lib/viewport-scroll-sync.ts` |
 | **Verification** | getActiveViewportEnabledElement.test.ts, getCornerstoneViewportType.test.ts, getViewportEnabledElement.test.ts, getViewportOrientationFromImageOrientationPatient.test.ts, isMeasurementWithinViewport.test.ts, removeViewportSegmentationRepresentations.test.ts, toggleVOISliceSync.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `9ea70c6`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
+| **Change History** | `57c76a5`, `13cf025`, `9ae494d`, `c9c40ed`, `e4eae1b` |
 
 ### Margin Operations
 
@@ -2327,7 +2329,18 @@
 
 ### RT Structure Display
 
-#### REQ-RTSTRUCT-001: Rt Structure History Modal
+#### REQ-RTSTRUCT-001: Rt Structure Compare Dialog
+
+| Aspect | Reference |
+|--------|-----------|
+| **Risk** | 🟡 medium |
+| **Design** | DES-RT_STRUCTURE_COMPARE_DIALOG |
+| **Implementation** | `client/src/components/dicom/rt-structure-compare-dialog.tsx` |
+| **Verification** | promptHydrationDialog.test.ts |
+| **Status** | ✅ Verified |
+| **Change History** | `8f665e9`, `6c67120`, `e4eae1b`, `c33c816`, `8de8edb` |
+
+#### REQ-RTSTRUCT-002: Rt Structure History Modal
 
 | Aspect | Reference |
 |--------|-----------|
@@ -2338,7 +2351,18 @@
 | **Status** | ✅ Verified |
 | **Change History** | `8f665e9`, `6c67120`, `e4eae1b`, `c33c816`, `8de8edb` |
 
-#### REQ-RTSTRUCT-002: Rt Structure Overlay
+#### REQ-RTSTRUCT-003: Rt Structure Merge Dialog
+
+| Aspect | Reference |
+|--------|-----------|
+| **Risk** | 🟡 medium |
+| **Design** | DES-RT_STRUCTURE_MERGE_DIALOG |
+| **Implementation** | `client/src/components/dicom/rt-structure-merge-dialog.tsx` |
+| **Verification** | promptHydrationDialog.test.ts |
+| **Status** | ✅ Verified |
+| **Change History** | `8f665e9`, `6c67120`, `e4eae1b`, `c33c816`, `8de8edb` |
+
+#### REQ-RTSTRUCT-004: Rt Structure Overlay
 
 | Aspect | Reference |
 |--------|-----------|

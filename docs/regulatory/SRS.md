@@ -5,8 +5,8 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-26T22:28:19.487Z |
-| Total Requirements | 204 |
+| Generated | 2026-01-27T22:12:15.216Z |
+| Total Requirements | 206 |
 | Product Name | CONVERGE Medical Imaging Viewer |
 | Intended Use | Display and manipulation of medical imaging data |
 
@@ -15,8 +15,8 @@
 | Risk Level | Count | Percentage |
 |------------|-------|------------|
 | High | 16 | 7.8% |
-| Low | 137 | 67.2% |
-| Medium | 51 | 25.0% |
+| Low | 137 | 66.5% |
+| Medium | 53 | 25.7% |
 
 ## Requirements by Category
 
@@ -295,8 +295,10 @@
 
 | ID | Title | Risk | Status | Tests |
 |----|-------|------|--------|-------|
-| REQ-RTSTRUCT-001 | Rt Structure History Modal | 🟡 Medium | ✅ | 1 |
-| REQ-RTSTRUCT-002 | Rt Structure Overlay | 🟡 Medium | ✅ | 8 |
+| REQ-RTSTRUCT-001 | Rt Structure Compare Dialog | 🟡 Medium | ✅ | 1 |
+| REQ-RTSTRUCT-002 | Rt Structure History Modal | 🟡 Medium | ✅ | 1 |
+| REQ-RTSTRUCT-003 | Rt Structure Merge Dialog | 🟡 Medium | ✅ | 1 |
+| REQ-RTSTRUCT-004 | Rt Structure Overlay | 🟡 Medium | ✅ | 8 |
 
 ### Series Management
 
@@ -656,7 +658,7 @@
 
 **Verification:** findNearbyToolData.test.ts, useToolbar.test.ts, SEGDrawingToolsResizing.spec.ts
 
-**Created:** 2026-01-21 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
@@ -1788,7 +1790,7 @@
 
 **Status:** implemented
 
-**Created:** 2025-10-01 | **Modified:** 2025-11-03
+**Created:** 2025-10-01 | **Modified:** 2026-01-26
 
 ---
 
@@ -1820,7 +1822,7 @@
 
 **Status:** implemented
 
-**Created:** 2026-01-22 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
@@ -2492,7 +2494,7 @@
 
 **Status:** implemented
 
-**Created:** 2026-01-22 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
@@ -2510,7 +2512,7 @@
 
 **Verification:** index.test.ts
 
-**Created:** 2026-01-22 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
@@ -3016,7 +3018,7 @@
 
 **Status:** implemented
 
-**Created:** 2025-12-03 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
@@ -3396,7 +3398,25 @@
 
 ---
 
-### REQ-RTSTRUCT-001: Rt Structure History Modal
+### REQ-RTSTRUCT-001: Rt Structure Compare Dialog
+
+**Category:** RT Structure Display
+
+**Risk Classification:** medium
+
+**Description:** RT Structure Set Comparison Dialog
+
+**Source:** `client/src/components/dicom/rt-structure-compare-dialog.tsx`
+
+**Status:** verified
+
+**Verification:** promptHydrationDialog.test.ts
+
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
+
+---
+
+### REQ-RTSTRUCT-002: Rt Structure History Modal
 
 **Category:** RT Structure Display
 
@@ -3410,11 +3430,29 @@
 
 **Verification:** TMTVModalityUnit.spec.ts
 
-**Created:** 2025-12-03 | **Modified:** 2026-01-26
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
 
 ---
 
-### REQ-RTSTRUCT-002: Rt Structure Overlay
+### REQ-RTSTRUCT-003: Rt Structure Merge Dialog
+
+**Category:** RT Structure Display
+
+**Risk Classification:** medium
+
+**Description:** RT Structure Set Merge Dialog
+
+**Source:** `client/src/components/dicom/rt-structure-merge-dialog.tsx`
+
+**Status:** verified
+
+**Verification:** promptHydrationDialog.test.ts
+
+**Created:** 2026-01-26 | **Modified:** 2026-01-26
+
+---
+
+### REQ-RTSTRUCT-004: Rt Structure Overlay
 
 **Category:** RT Structure Display
 
