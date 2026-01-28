@@ -446,6 +446,71 @@ export function AITumorTool({
   // Multi-point mode (Shift key held) - collect multiple positive/negative points
   // ============================================================================
   
+  // Create and manage overlay canvas for multi-point mode (prevents flashing)
+  useEffect(() => {
+    if (!canvasRef.current || !isActive) {
+      // Clean up overlay canvas when not active
+      if (multiPointOverlayRef.current && multiPointOverlayRef.current.parentElement) {
+        multiPointOverlayRef.current.parentElement.removeChild(multiPointOverlayRef.current);
+        multiPointOverlayRef.current = null;
+      }
+      return;
+    }
+    
+    const mainCanvas = canvasRef.current;
+    
+    // Create overlay canvas if it doesn't exist
+    if (!multiPointOverlayRef.current) {
+      const overlayCanvas = document.createElement('canvas');
+      overlayCanvas.style.position = 'absolute';
+      
+      // Position the overlay canvas exactly on top of the main canvas
+      const mainRect = mainCanvas.getBoundingClientRect();
+      const parentRect = mainCanvas.parentElement!.getBoundingClientRect();
+      overlayCanvas.style.top = `${mainRect.top - parentRect.top}px`;
+      overlayCanvas.style.left = `${mainRect.left - parentRect.left}px`;
+      
+      overlayCanvas.style.pointerEvents = 'none'; // Allow events to pass through
+      overlayCanvas.style.zIndex = '15'; // Above other overlays
+      overlayCanvas.width = mainCanvas.width;
+      overlayCanvas.height = mainCanvas.height;
+      
+      // Match canvas styling
+      const computedStyle = window.getComputedStyle(mainCanvas);
+      overlayCanvas.style.width = computedStyle.width;
+      overlayCanvas.style.height = computedStyle.height;
+      overlayCanvas.style.imageRendering = 'auto';
+      
+      // Ensure the container can stack canvases
+      const parent = mainCanvas.parentElement as HTMLElement | null;
+      if (parent && getComputedStyle(parent).position === 'static') {
+        parent.style.position = 'relative';
+      }
+      mainCanvas.parentElement?.appendChild(overlayCanvas);
+      multiPointOverlayRef.current = overlayCanvas;
+    }
+    
+    // Update overlay canvas size and position if main canvas size changes
+    const overlay = multiPointOverlayRef.current;
+    if (overlay.width !== mainCanvas.width || overlay.height !== mainCanvas.height) {
+      overlay.width = mainCanvas.width;
+      overlay.height = mainCanvas.height;
+      
+      const mainRect = mainCanvas.getBoundingClientRect();
+      const parentRect = mainCanvas.parentElement!.getBoundingClientRect();
+      overlay.style.top = `${mainRect.top - parentRect.top}px`;
+      overlay.style.left = `${mainRect.left - parentRect.left}px`;
+      
+      const computedStyle = window.getComputedStyle(mainCanvas);
+      overlay.style.width = computedStyle.width;
+      overlay.style.height = computedStyle.height;
+    }
+    
+    return () => {
+      // Don't remove on every re-render, only when isActive becomes false
+    };
+  }, [isActive, canvasRef]);
+  
   // Handle shift key press/release for multi-point mode
   useEffect(() => {
     if (!isActive) return;
@@ -471,9 +536,17 @@ export function AITumorTool({
           await executeMultiPointSAM();
         }
         
-        // Clear the collected points
+        // Clear the collected points and overlay
         setMultiPoints([]);
         setDragPath([]);
+        
+        // Clear the overlay canvas
+        if (multiPointOverlayRef.current) {
+          const ctx = multiPointOverlayRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, multiPointOverlayRef.current.width, multiPointOverlayRef.current.height);
+          }
+        }
       }
     };
     
@@ -486,27 +559,29 @@ export function AITumorTool({
     };
   }, [isActive, isShiftHeld, isProcessing, multiPoints]);
   
-  // Draw multi-point overlay
+  // Draw multi-point overlay on dedicated canvas (prevents flashing)
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const overlay = multiPointOverlayRef.current;
+    if (!overlay) return;
     
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = overlay.getContext('2d');
     if (!ctx) return;
+    
+    // Clear the overlay
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
     
     // Only draw when in multi-point mode
     if (!isShiftHeld && multiPoints.length === 0 && dragPath.length === 0) return;
     
-    // We need to draw on the canvas - save and restore to not disturb the image
     ctx.save();
     
-    // Draw drag path (chunky preview line)
+    // Draw drag path (subtle dashed line)
     if (dragPath.length > 1) {
-      ctx.strokeStyle = '#00ff00';
-      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(100, 200, 100, 0.6)';
+      ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.setLineDash([10, 5]);
+      ctx.setLineDash([6, 4]);
       ctx.beginPath();
       ctx.moveTo(dragPath[0].canvasX, dragPath[0].canvasY);
       for (let i = 1; i < dragPath.length; i++) {
@@ -516,31 +591,42 @@ export function AITumorTool({
       ctx.setLineDash([]);
     }
     
-    // Draw collected points
+    // Draw collected points with subtle styling
     for (const point of multiPoints) {
       const isPositive = point.label === 1;
-      const color = isPositive ? '#00ff00' : '#ff0000';
+      // Softer colors: cyan for positive, orange-red for negative
+      const fillColor = isPositive ? 'rgba(64, 224, 208, 0.25)' : 'rgba(255, 99, 71, 0.25)';
+      const strokeColor = isPositive ? 'rgba(64, 224, 208, 0.9)' : 'rgba(255, 99, 71, 0.9)';
       const symbol = isPositive ? '+' : '−';
       
-      // Draw circle
+      // Draw subtle circle (smaller radius)
       ctx.beginPath();
-      ctx.arc(point.canvasX, point.canvasY, 12, 0, Math.PI * 2);
-      ctx.fillStyle = color + '40'; // Semi-transparent fill
+      ctx.arc(point.canvasX, point.canvasY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
       ctx.fill();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
       
-      // Draw + or - symbol
-      ctx.fillStyle = color;
-      ctx.font = 'bold 18px sans-serif';
+      // Draw + or - symbol (smaller font)
+      ctx.fillStyle = strokeColor;
+      ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(symbol, point.canvasX, point.canvasY);
     }
     
+    // Draw shift-held indicator when in multi-point mode
+    if (isShiftHeld && multiPoints.length === 0 && dragPath.length === 0) {
+      ctx.fillStyle = 'rgba(100, 200, 100, 0.8)';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Multi-point mode: Click to add points', 10, 10);
+    }
+    
     ctx.restore();
-  }, [isShiftHeld, multiPoints, dragPath, canvasRef]);
+  }, [isShiftHeld, multiPoints, dragPath]);
   
   // Execute multi-point SAM segmentation
   const executeMultiPointSAM = async () => {

@@ -80,6 +80,7 @@ interface BottomToolbarPrototypeV2Props {
   viewerOffsetLeft?: number;     // Left offset in pixels (e.g., sidebar width)
   // FuseBox props - appears when fusion is active
   hasFusionActive?: boolean;     // Is a fusion secondary currently loaded/displayed?
+  isFuseBoxOpen?: boolean;       // Is the FuseBox popup window currently open?
   onFuseBoxOpen?: () => void;    // Open the FuseBox popup for fusion editing
   // Save props
   onSaveSnapshot?: () => void;   // Save current state to history
@@ -126,6 +127,7 @@ export function BottomToolbarPrototypeV2({
   viewerOffsetLeft = 0,
   // FuseBox props
   hasFusionActive = false,
+  isFuseBoxOpen = false,
   onFuseBoxOpen,
   // Save props
   onSaveSnapshot,
@@ -335,39 +337,32 @@ export function BottomToolbarPrototypeV2({
               {/* History Dropdown */}
               {showHistory && (
                 <div 
-                  className="absolute bottom-full left-0 mb-2 w-80 max-h-80 overflow-y-auto rounded-xl z-[100]"
+                  className="absolute bottom-full left-0 mb-3 w-[280px] rounded-xl backdrop-blur-xl overflow-hidden z-[100]"
                   style={{
-                    background: 'linear-gradient(180deg, rgba(30, 32, 44, 0.98) 0%, rgba(20, 22, 30, 0.99) 100%)',
-                    border: '1px solid rgba(251, 191, 36, 0.3)',
-                    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 40px -10px rgba(251, 191, 36, 0.15)',
+                    background: 'linear-gradient(180deg, hsla(45, 15%, 12%, 0.98) 0%, hsla(45, 10%, 8%, 0.99) 100%)',
+                    boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(251, 191, 36, 0.2), 0 0 40px -15px rgba(251, 191, 36, 0.15)',
                   }}
                 >
-                  <div 
-                    className="sticky top-0 p-3 border-b"
-                    style={{
-                      background: 'rgba(30, 32, 44, 0.98)',
-                      borderColor: 'rgba(251, 191, 36, 0.2)',
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <History className="w-4 h-4 text-amber-400" />
-                        <span className="text-sm text-amber-200 font-semibold">Edit History</span>
-                      </div>
-                      <button 
-                        className="text-gray-400 hover:text-white transition-colors h-6 w-6 flex items-center justify-center rounded-md hover:bg-white/10"
-                        onClick={() => setShowHistory(false)}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                  {/* Header */}
+                  <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm font-medium text-white">Edit History</span>
                     </div>
+                    <button 
+                      className="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-white rounded-md hover:bg-white/5 transition-colors"
+                      onClick={() => setShowHistory(false)}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                   
-                  <div className="p-2">
+                  {/* Content */}
+                  <div className="p-2 max-h-64 overflow-y-auto">
                     {historyItems.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
-                        <History className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                        <p className="text-xs font-medium">No history yet</p>
+                      <div className="text-center py-6">
+                        <History className="w-8 h-8 mx-auto mb-2 text-amber-500/30" />
+                        <p className="text-xs font-medium text-gray-300">No history yet</p>
                         <p className="text-[10px] mt-1 text-gray-500">Edit actions will appear here</p>
                       </div>
                     ) : (
@@ -382,8 +377,8 @@ export function BottomToolbarPrototypeV2({
                             className={cn(
                               'w-full text-left px-3 py-2 rounded-lg text-xs transition-all',
                               index === currentHistoryIndex
-                                ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/40'
-                                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                                ? 'bg-amber-500/15 border border-amber-500/30 text-amber-200'
+                                : 'bg-black/20 border border-white/5 text-gray-300 hover:bg-white/5 hover:text-white'
                             )}
                           >
                             <div className="font-medium">{item.action}</div>
@@ -461,9 +456,11 @@ export function BottomToolbarPrototypeV2({
 
                 // Determine active color scheme based on tool type
                 const getActiveStyles = () => {
-                  // FuseBox button - always highlighted when visible (indicates fusion is active)
+                  // FuseBox button - only highlighted when the popup window is open
                   if (tool.id === 'fusebox') {
-                    return 'bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40 hover:bg-rose-500/30';
+                    return isFuseBoxOpen
+                      ? 'bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40 hover:bg-rose-500/30'
+                      : 'text-white/70 hover:text-rose-300 hover:bg-rose-500/10';
                   }
                   if (tool.id === 'mpr' && isActive) {
                     return 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40';

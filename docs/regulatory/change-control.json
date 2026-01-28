@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-01-27T22:12:15.518Z",
+  "generatedAt": "2026-01-27T22:24:03.736Z",
   "repositoryInfo": {
-    "totalCommits": 37,
+    "totalCommits": 38,
     "firstCommit": "2025-12-04",
     "lastCommit": "2026-01-27",
     "contributors": [
@@ -11,6 +11,27 @@
     "branch": "main"
   },
   "commits": [
+    {
+      "hash": "ba87ba002a9c15739fd19a2778f8d04ee980719e",
+      "shortHash": "ba87ba0",
+      "date": "2026-01-27",
+      "author": "joshgiambi",
+      "subject": "docs(regulatory): Sync auto-generated regulatory documentation",
+      "regulatoryDescription": "DOCUMENTATION: Sync auto-generated regulatory documentation [Infrastructure]",
+      "body": "",
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "affectedCategories": [
+        "Infrastructure"
+      ],
+      "changeType": "docs",
+      "requirementIds": [
+        "REQ-INFRA-*"
+      ],
+      "verificationStatus": "not-required",
+      "riskImpact": "none"
+    },
     {
       "hash": "20960fe81bcc51e1263dcf01d05e9b2c804b90ee",
       "shortHash": "20960fe",
@@ -872,13 +893,13 @@
     }
   ],
   "byCategory": {
+    "Infrastructure": 16,
     "User Interface": 11,
     "Image Viewing": 7,
     "Image Fusion": 4,
     "DVH": 2,
     "RT Plan": 4,
     "Performance": 6,
-    "Infrastructure": 15,
     "Data Management": 3,
     "Boolean Operations": 3,
     "DICOM Processing": 13,
@@ -888,7 +909,7 @@
     "RT Dose": 1
   },
   "byChangeType": {
-    "docs": 5,
+    "docs": 6,
     "enhancement": 12,
     "feature": 7,
     "fix": 3,

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-27T22:12:15.804Z |
+| Generated | 2026-01-27T22:24:04.030Z |
 | Total Entries | 206 |
 | Complete | 118 |
 | Partial | 88 |
@@ -2406,7 +2406,7 @@
 | **Implementation** | `client/src/components/dicom/SuperstructureManager.tsx` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b`, `274419a` |
+| **Change History** | `ba87ba0`, `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b` |
 
 #### REQ-STRUCT-002: Blob Management Dialog
 
@@ -2417,7 +2417,7 @@
 | **Implementation** | `client/src/components/dicom/blob-management-dialog.tsx` |
 | **Verification** | promptHydrationDialog.test.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b`, `274419a` |
+| **Change History** | `ba87ba0`, `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b` |
 
 #### REQ-STRUCT-003: Structure Blob List
 
@@ -2428,7 +2428,7 @@
 | **Implementation** | `client/src/components/dicom/structure-blob-list.tsx` |
 | **Verification** | Worklist.spec.ts |
 | **Status** | ✅ Verified |
-| **Change History** | `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b`, `274419a` |
+| **Change History** | `ba87ba0`, `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b` |
 
 #### REQ-STRUCT-004: Blob Operations
 
@@ -2439,7 +2439,7 @@
 | **Implementation** | `client/src/lib/blob-operations.ts` |
 | **Verification** | Pending |
 | **Status** | 🔧 Implemented |
-| **Change History** | `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b`, `274419a` |
+| **Change History** | `ba87ba0`, `8f665e9`, `c9c40ed`, `6c67120`, `e4eae1b` |
 
 ## Legend
 

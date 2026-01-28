@@ -39,9 +39,14 @@ import {
   Rows3,
   SunMedium,
   Loader2,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
 } from 'lucide-react';
 import type { FusionSecondaryDescriptor, RegistrationOption } from '@/types/fusion';
 import type { FusionLayoutPreset } from './fusion-control-panel-v2';
+import { group4DCTFusionDescriptors, formatPhaseLabel, type FourDCTFusionGroup } from '@/lib/dicom-utils';
 
 // ============================================================================
 // TYPES
@@ -103,6 +108,12 @@ interface UnifiedFusionTopbarProps {
   registrationOptions?: RegistrationOption[];
   selectedRegistrationId?: string | null;
   onRegistrationChange?: (id: string | null) => void;
+  
+  // 4DCT playback props
+  active4DCTPhaseIndex?: number;
+  on4DCTPhaseChange?: (phaseIndex: number) => void;
+  is4DCTPlaying?: boolean;
+  on4DCTPlayPauseToggle?: () => void;
   
   className?: string;
 }
@@ -366,6 +377,16 @@ export interface FusionDropdownProps {
   registrationOptions?: RegistrationOption[];
   selectedRegistrationId?: string | null;
   onRegistrationChange?: (id: string | null) => void;
+  // 4DCT props
+  fourDCTGroups?: FourDCTFusionGroup[];
+  nonFourDCTDescriptors?: FusionSecondaryDescriptor[];
+  active4DCTGroup?: FourDCTFusionGroup | null;
+  active4DCTPhaseIndex?: number;
+  on4DCTPhaseChange?: (phaseIndex: number) => void;
+  is4DCTPlaying?: boolean;
+  on4DCTPlayPauseToggle?: () => void;
+  expanded4DCTGroups?: Set<string>;
+  toggle4DCTGroupExpanded?: (groupId: string) => void;
 }
 
 const PANEL_WIDTH = 320;
@@ -388,9 +409,19 @@ export function FusionDropdown({
   registrationOptions = [],
   selectedRegistrationId,
   onRegistrationChange,
+  fourDCTGroups = [],
+  nonFourDCTDescriptors,
+  active4DCTGroup,
+  active4DCTPhaseIndex = 0,
+  on4DCTPhaseChange,
+  is4DCTPlaying = false,
+  on4DCTPlayPauseToggle,
+  expanded4DCTGroups = new Set(),
+  toggle4DCTGroupExpanded,
 }: FusionDropdownProps) {
   const fusionColor = selectedSecondary ? getModalityColor(selectedSecondary.secondaryModality) : 'gray';
-  const readySecondaries = availableSecondaries.filter(s => {
+  // Use nonFourDCTDescriptors if provided, otherwise filter ready from all
+  const readySecondaries = (nonFourDCTDescriptors ?? availableSecondaries).filter(s => {
     const status = secondaryStatuses.get(s.secondarySeriesId);
     return status?.status === 'ready' || status?.status === 'idle';
   });
@@ -608,6 +639,39 @@ export function FusionDropdown({
               
               {/* Quick swap tags - clicking these should NOT open the panel */}
               <div data-quick-swap className="flex flex-wrap gap-2">
+                {/* 4DCT Groups */}
+                {fourDCTGroups.map((group) => {
+                  const firstPhase = group.phases[0]?.descriptor;
+                  const isActive = active4DCTGroup?.groupId === group.groupId;
+                  return (
+                    <button
+                      key={group.groupId}
+                      data-quick-swap
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (isActive) {
+                          onSecondaryChange(null);
+                        } else if (firstPhase) {
+                          onSecondaryChange(firstPhase);
+                        }
+                      }}
+                      className={cn(
+                        "h-7 px-3 rounded-lg flex items-center gap-2 text-xs font-medium transition-all border",
+                        isActive
+                          ? "bg-cyan-500/20 text-white border-cyan-400/50"
+                          : "text-gray-300 border-transparent hover:bg-white/10"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        isActive ? "bg-cyan-400" : "bg-cyan-500"
+                      )} />
+                      <span>4DCT</span>
+                    </button>
+                  );
+                })}
+                {/* Regular secondaries */}
                 {readySecondaries.map((sec) => {
                   const isActive = selectedSecondary?.secondarySeriesId === sec.secondarySeriesId;
                   return (
@@ -693,10 +757,185 @@ export function FusionDropdown({
                 </div>
               )}
 
+              {/* 4DCT Playback Controls - Show when 4DCT is active */}
+              {active4DCTGroup && (
+                <div className="px-4 py-3 border-b border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-semibold">4DCT Playback</span>
+                    <Badge className="bg-cyan-600/80 text-cyan-100 border-cyan-500/50 text-[9px] px-1.5 h-4">
+                      {active4DCTGroup.phaseCount} phases
+                    </Badge>
+                  </div>
+                  
+                  {/* Playback controls */}
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <button
+                      className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-cyan-500/20 transition-colors"
+                      onClick={() => {
+                        const newIdx = active4DCTPhaseIndex === 0 ? active4DCTGroup.phaseCount - 1 : active4DCTPhaseIndex - 1;
+                        on4DCTPhaseChange?.(newIdx);
+                      }}
+                    >
+                      <SkipBack className="h-4 w-4 text-cyan-400" />
+                    </button>
+                    
+                    <button
+                      className={cn(
+                        "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+                        is4DCTPlaying 
+                          ? "bg-cyan-500/30 hover:bg-cyan-500/40" 
+                          : "bg-cyan-600/50 hover:bg-cyan-600/60"
+                      )}
+                      onClick={on4DCTPlayPauseToggle}
+                    >
+                      {is4DCTPlaying ? (
+                        <Pause className="h-4 w-4 text-cyan-100" />
+                      ) : (
+                        <Play className="h-4 w-4 text-cyan-100 ml-0.5" />
+                      )}
+                    </button>
+                    
+                    <button
+                      className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-cyan-500/20 transition-colors"
+                      onClick={() => {
+                        const newIdx = (active4DCTPhaseIndex + 1) % active4DCTGroup.phaseCount;
+                        on4DCTPhaseChange?.(newIdx);
+                      }}
+                    >
+                      <SkipForward className="h-4 w-4 text-cyan-400" />
+                    </button>
+                  </div>
+                  
+                  {/* Phase indicator track with notches */}
+                  <div className="relative h-6 bg-gray-800/50 rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-between px-1">
+                      {active4DCTGroup.phases.map((phase, idx) => {
+                        const isActive = idx === active4DCTPhaseIndex;
+                        return (
+                          <button
+                            key={phase.descriptor.secondarySeriesId}
+                            className="relative w-6 h-full flex flex-col items-center justify-center hover:bg-cyan-500/20 rounded transition-colors"
+                            onClick={() => on4DCTPhaseChange?.(idx)}
+                            title={`Phase ${formatPhaseLabel(phase.phasePercentage)}`}
+                          >
+                            <div 
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full transition-all",
+                                isActive 
+                                  ? "bg-cyan-400 scale-150 shadow-[0_0_8px_rgba(34,211,238,0.6)]" 
+                                  : "bg-gray-500 hover:bg-cyan-300"
+                              )}
+                            />
+                            <span className={cn(
+                              "text-[7px] mt-0.5 tabular-nums",
+                              isActive ? "text-cyan-300 font-semibold" : "text-gray-500"
+                            )}>
+                              {phase.phasePercentage}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Current phase label */}
+                  <div className="text-center text-[11px] text-cyan-300 mt-1">
+                    Phase {formatPhaseLabel(active4DCTGroup.phases[active4DCTPhaseIndex]?.phasePercentage ?? 0)}
+                  </div>
+                </div>
+              )}
+
               {/* Scan Cards */}
               <div className="px-4 pb-4">
                 <div className="space-y-2">
-                  {readySecondaries.length === 0 ? (
+                  {/* 4DCT Groups */}
+                  {fourDCTGroups.map((group) => {
+                    const isGroupExpanded = expanded4DCTGroups.has(group.groupId);
+                    const isGroupActive = group.phases.some(p => p.descriptor.secondarySeriesId === selectedSecondary?.secondarySeriesId);
+                    const firstPhase = group.phases[0];
+                    const allReady = group.phases.every(p => {
+                      const status = secondaryStatuses.get(p.descriptor.secondarySeriesId);
+                      return status?.status === 'ready' || status?.status === 'idle';
+                    });
+                    
+                    return (
+                      <div key={group.groupId} className="space-y-1">
+                        <button
+                          onClick={() => {
+                            if (allReady && firstPhase) {
+                              if (isGroupActive) {
+                                onSecondaryChange(null);
+                              } else {
+                                onSecondaryChange(firstPhase.descriptor);
+                              }
+                            }
+                          }}
+                          className={cn(
+                            "w-full h-11 px-4 rounded-lg flex items-center gap-3 text-sm font-medium transition-all",
+                            isGroupActive
+                              ? "bg-cyan-500/25 text-white border border-cyan-400/60"
+                              : "text-gray-300 bg-gray-800/30 hover:bg-cyan-800/30 border border-cyan-700/30",
+                            !allReady && "opacity-60"
+                          )}
+                        >
+                          <button
+                            className="flex-shrink-0 p-0.5 rounded hover:bg-cyan-500/20 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggle4DCTGroupExpanded?.(group.groupId);
+                            }}
+                          >
+                            {isGroupExpanded ? (
+                              <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
+                            ) : (
+                              <ChevronRight className="w-3.5 h-3.5 text-cyan-400" />
+                            )}
+                          </button>
+                          <div className={cn(
+                            "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                            isGroupActive ? "bg-cyan-400" : "bg-cyan-500"
+                          )} />
+                          <span className="font-semibold text-cyan-300">4DCT</span>
+                          <span className="text-gray-400 truncate flex-1 text-left text-xs">
+                            {group.baseDescription || '4D CT'} ({group.phaseCount} phases)
+                          </span>
+                        </button>
+                        
+                        {/* Expanded phase list */}
+                        {isGroupExpanded && (
+                          <div className="ml-6 space-y-0.5 pl-3 border-l border-cyan-600/30">
+                            {group.phases.map((phase, idx) => {
+                              const isPhaseActive = phase.descriptor.secondarySeriesId === selectedSecondary?.secondarySeriesId;
+                              return (
+                                <button
+                                  key={phase.descriptor.secondarySeriesId}
+                                  onClick={() => {
+                                    onSecondaryChange(isPhaseActive ? null : phase.descriptor);
+                                    on4DCTPhaseChange?.(idx);
+                                  }}
+                                  className={cn(
+                                    "w-full h-8 px-3 rounded-md flex items-center gap-2 text-xs font-medium transition-all",
+                                    isPhaseActive
+                                      ? "bg-cyan-500/20 text-white border border-cyan-400/40"
+                                      : "text-gray-400 hover:bg-cyan-800/20 border border-transparent"
+                                  )}
+                                >
+                                  <Badge className="bg-cyan-700/60 text-cyan-200 border-cyan-600/40 text-[9px] px-1 min-w-[28px] text-center">
+                                    {formatPhaseLabel(phase.phasePercentage)}
+                                  </Badge>
+                                  <span>Phase {formatPhaseLabel(phase.phasePercentage)}</span>
+                                  {isPhaseActive && <div className="w-1 h-1 rounded-full bg-cyan-400 ml-auto" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Regular (non-4DCT) scan cards */}
+                  {readySecondaries.length === 0 && fourDCTGroups.length === 0 ? (
                     <div className="text-[11px] text-gray-500 py-2">
                       {manifestLoading ? 'Loading fusion scans...' : 'No fusion scans available'}
                     </div>
@@ -897,13 +1136,46 @@ export function UnifiedFusionTopbar({
   selectedRegistrationId,
   onRegistrationChange,
   
+  // 4DCT playback
+  active4DCTPhaseIndex = 0,
+  on4DCTPhaseChange,
+  is4DCTPlaying = false,
+  on4DCTPlayPauseToggle,
+  
   className,
 }: UnifiedFusionTopbarProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isPanelOpen = isExpanded !== undefined ? isExpanded : internalExpanded;
   const setPanelOpen = onExpandedChange || setInternalExpanded;
+  const [expanded4DCTGroups, setExpanded4DCTGroups] = useState<Set<string>>(new Set());
   
   const panelRef = useRef<HTMLDivElement>(null);
+  
+  // Group secondary options into 4DCT groups and regular series
+  const { fourDCTGroups, nonFourDCTDescriptors } = useMemo(() => {
+    return group4DCTFusionDescriptors(secondaryOptions);
+  }, [secondaryOptions]);
+  
+  // Check if currently selected secondary is part of a 4DCT group
+  const active4DCTGroup = useMemo(() => {
+    if (!secondarySeriesId) return null;
+    return fourDCTGroups.find(g => 
+      g.phases.some(p => p.descriptor.secondarySeriesId === secondarySeriesId)
+    );
+  }, [secondarySeriesId, fourDCTGroups]);
+  
+  // Toggle 4DCT group expansion
+  const toggle4DCTGroupExpanded = (groupId: string) => {
+    setExpanded4DCTGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
   
   // Find selected secondary descriptor
   const selectedSecondary = useMemo(() => {
@@ -987,6 +1259,16 @@ export function UnifiedFusionTopbar({
               registrationOptions={registrationOptions}
               selectedRegistrationId={selectedRegistrationId}
               onRegistrationChange={onRegistrationChange}
+              // 4DCT props
+              fourDCTGroups={fourDCTGroups}
+              nonFourDCTDescriptors={nonFourDCTDescriptors}
+              active4DCTGroup={active4DCTGroup}
+              active4DCTPhaseIndex={active4DCTPhaseIndex}
+              on4DCTPhaseChange={on4DCTPhaseChange}
+              is4DCTPlaying={is4DCTPlaying}
+              on4DCTPlayPauseToggle={on4DCTPlayPauseToggle}
+              expanded4DCTGroups={expanded4DCTGroups}
+              toggle4DCTGroupExpanded={toggle4DCTGroupExpanded}
             />
           </div>
         )}

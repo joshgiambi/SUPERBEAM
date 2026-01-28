@@ -10,7 +10,12 @@ import express, { Request, Response } from 'express';
 import axios from 'axios';
 import { spawn } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { logger } from './logger.ts';
+
+// ES Module compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -72,15 +77,18 @@ router.post('/start', async (req: Request, res: Response) => {
   try {
     // Get the project root directory (parent of server/)
     const projectRoot = path.resolve(__dirname, '..');
-    const startScript = path.join(projectRoot, 'start-superseg.sh');
+    // Use the SAM start script in server/sam/
+    const startScript = path.join(projectRoot, 'server', 'sam', 'start-service.sh');
 
-    logger.info(`🔬 Running: ${startScript} --force`);
+    logger.info(`🔬 Running: ${startScript}`);
 
-    // Spawn the start script in background with --force flag for non-interactive mode
-    const child = spawn('bash', [startScript, '--force'], {
-      cwd: projectRoot,
+    // Spawn the start script in background
+    // Set NONINTERACTIVE=1 to skip prompts
+    const child = spawn('bash', [startScript], {
+      cwd: path.dirname(startScript),
       detached: true,
       stdio: 'ignore',
+      env: { ...process.env, NONINTERACTIVE: '1' },
     });
 
     child.unref(); // Allow parent to exit independently

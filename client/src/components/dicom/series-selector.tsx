@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Layers3, Palette, Settings, Search, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, ChevronUp, Minimize2, Maximize2, FolderTree, X, Plus, Edit3, Link, Folder, ArrowUpDown, ArrowUp, ArrowDown, Zap, Bug, Loader2, AlertTriangle, SplitSquareHorizontal, History, Save, Network, IterationCw, GitMerge, Boxes, Star, Target, Scale } from 'lucide-react';
-import { DICOMSeries, WindowLevel, WINDOW_LEVEL_PRESETS } from '@/lib/dicom-utils';
+import { DICOMSeries, WindowLevel, WINDOW_LEVEL_PRESETS, group4DCTSeries, formatPhaseLabel, is4DCTSeries, type FourDCTGroup } from '@/lib/dicom-utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { pillClass, pillClassForModality } from '@/lib/pills';
@@ -119,7 +119,10 @@ export function SeriesSelector({
   const [selectedRTSeries, setSelectedRTSeries] = useState<any>(null);
   // RT Dose series state
   const [doseSeries, setDoseSeries] = useState<any[]>([]);
-  const [userSelectedPrimaryCT, setUserSelectedPrimaryCT] = useState<number | null>(null); // User-selected primary CT for hierarchy
+  // User-selected primary CT for hierarchy - persisted to localStorage per study
+  // Initial state is null; the useEffect below loads from localStorage once studyId is available
+  const [userSelectedPrimaryCT, setUserSelectedPrimaryCT] = useState<number | null>(null);
+  const primaryCTLoadedRef = useRef(false); // Track if we've done the initial load from localStorage
   const [structureVisibility, setStructureVisibility] = useState<Map<number, boolean>>(new Map());
   const [selectedStructures, setSelectedStructures] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,6 +140,7 @@ export function SeriesSelector({
   const [seriesHistoryStatus, setSeriesHistoryStatus] = useState<Map<number, boolean>>(new Map());
   const [expandedSuperstructures, setExpandedSuperstructures] = useState<Set<number>>(new Set());
   const [expandedRTGroups, setExpandedRTGroups] = useState<Set<number>>(new Set()); // Track which RT series groups are expanded (keyed by referencedSeriesId)
+  const [expanded4DCTGroups, setExpanded4DCTGroups] = useState<Set<string>>(new Set()); // Track which 4DCT groups are expanded (keyed by groupId)
   const [selectedRTForCT, setSelectedRTForCT] = useState<Map<number, number>>(new Map()); // Track selected RT series ID for each CT series (ctSeriesId -> rtSeriesId)
   const [checkedRTSeries, setCheckedRTSeries] = useState<Set<number>>(new Set()); // Track checked RT series for bulk operations
   const [showCompareDialog, setShowCompareDialog] = useState(false);
@@ -165,6 +169,51 @@ export function SeriesSelector({
   const [expandedBlobStructures, setExpandedBlobStructures] = useState<Set<number>>(new Set()); // Track which structures have blob list expanded
   const [rtSeriesWithSuperstructures, setRTSeriesWithSuperstructures] = useState<Set<number>>(new Set()); // Track which RT series have superstructures
   const { toast } = useToast();
+  
+  // Load persisted primary CT when studyId changes (must run before save effect)
+  useEffect(() => {
+    if (!studyId) {
+      setUserSelectedPrimaryCT(null);
+      primaryCTLoadedRef.current = false;
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(`primaryCT-study-${studyId}`);
+      const parsed = stored ? JSON.parse(stored) : null;
+      // Only set if we have a valid stored value
+      if (parsed !== null && typeof parsed === 'number') {
+        setUserSelectedPrimaryCT(parsed);
+      }
+    } catch {
+      // Keep current state on error
+    }
+    // Mark as loaded so save effect can safely run
+    primaryCTLoadedRef.current = true;
+  }, [studyId]);
+
+  // Persist userSelectedPrimaryCT to localStorage when it changes
+  useEffect(() => {
+    // Don't save until we've loaded the initial value (prevents clearing on mount)
+    if (!studyId || !primaryCTLoadedRef.current) return;
+    try {
+      if (userSelectedPrimaryCT !== null) {
+        localStorage.setItem(`primaryCT-study-${studyId}`, JSON.stringify(userSelectedPrimaryCT));
+      } else {
+        localStorage.removeItem(`primaryCT-study-${studyId}`);
+      }
+    } catch {
+      // localStorage may be unavailable (private browsing, etc.)
+    }
+  }, [userSelectedPrimaryCT, studyId]);
+  
+  // Clear invalid primary CT if the stored series no longer exists (after series loads)
+  useEffect(() => {
+    if (!userSelectedPrimaryCT || series.length === 0) return;
+    // If the stored primary CT doesn't exist in the series list, clear it
+    if (!series.some(s => s.id === userSelectedPrimaryCT)) {
+      setUserSelectedPrimaryCT(null);
+    }
+  }, [series, userSelectedPrimaryCT]);
   
   // Helper: Get viewport number for a given secondary series ID (returns null if not in any viewport)
   const getViewportForSeries = (seriesId: number): number | null => {
@@ -228,6 +277,19 @@ export function SeriesSelector({
         next.delete(ctSeriesId);
       } else {
         next.add(ctSeriesId);
+      }
+      return next;
+    });
+  };
+  
+  // Helper: Toggle 4DCT group expansion
+  const toggle4DCTGroupExpanded = (groupId: string) => {
+    setExpanded4DCTGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
       }
       return next;
     });
@@ -1488,20 +1550,26 @@ export function SeriesSelector({
 
                       return (
                         <div className="space-y-1">
-                          {shown.map(({ vpNum, seriesEntry }) => (
-                            <div key={`${vpNum}-${seriesEntry.id}`} className="flex items-center gap-2 text-xs pl-4 border-l-2 border-blue-500/40">
-                              <Zap className="h-3 w-3 text-blue-400" />
-                              <span className={cn(pillClass('blue'), 'h-5 px-2')}>
-                                VP {vpNum}
-                              </span>
-                              <Badge className={pillClassForModality(seriesEntry.modality)}>
-                                {seriesEntry.modality}
-                              </Badge>
-                              <span className="text-gray-200 truncate font-medium">
-                                {formatSeriesLabel(seriesEntry)}
-                              </span>
-                            </div>
-                          ))}
+                          {shown.map(({ vpNum, seriesEntry }) => {
+                            const isFourDCT = is4DCTSeries(seriesEntry.seriesDescription);
+                            return (
+                              <div key={`${vpNum}-${seriesEntry.id}`} className={cn(
+                                "flex items-center gap-2 text-xs pl-4 border-l-2",
+                                isFourDCT ? "border-cyan-500/40" : "border-blue-500/40"
+                              )}>
+                                <Zap className={cn("h-3 w-3", isFourDCT ? "text-cyan-400" : "text-blue-400")} />
+                                <span className={cn(pillClass(isFourDCT ? 'cyan' : 'blue'), 'h-5 px-2')}>
+                                  VP {vpNum}
+                                </span>
+                                <Badge className={isFourDCT ? pillClass('cyan') : pillClassForModality(seriesEntry.modality)}>
+                                  {isFourDCT ? '4DCT' : seriesEntry.modality}
+                                </Badge>
+                                <span className="text-gray-200 truncate font-medium">
+                                  {formatSeriesLabel(seriesEntry)}
+                                </span>
+                              </div>
+                            );
+                          })}
                           {remaining > 0 && (
                             <div className="text-[10px] text-gray-400 pl-4">
                               +{remaining} more fusion overlay{remaining === 1 ? '' : 's'}
@@ -1516,11 +1584,16 @@ export function SeriesSelector({
                       const secondarySeries = seriesById.get(Number(secondarySeriesId)) || series.find((s) => s.id === secondarySeriesId);
                       if (!secondarySeries) return null;
                       const modality = secondarySeries.modality?.toUpperCase();
+                      // Check if this is a 4DCT phase
+                      const isFourDCT = is4DCTSeries(secondarySeries.seriesDescription);
                       return (
-                        <div className="flex items-center gap-2 text-xs pl-4 border-l-2 border-blue-500/40">
-                          <Zap className="h-3 w-3 text-blue-400" />
-                          <Badge className={pillClassForModality(modality)}>
-                            {secondarySeries.modality}
+                        <div className={cn(
+                          "flex items-center gap-2 text-xs pl-4 border-l-2",
+                          isFourDCT ? "border-cyan-500/40" : "border-blue-500/40"
+                        )}>
+                          <Zap className={cn("h-3 w-3", isFourDCT ? "text-cyan-400" : "text-blue-400")} />
+                          <Badge className={isFourDCT ? pillClass('cyan') : pillClassForModality(modality)}>
+                            {isFourDCT ? '4DCT' : secondarySeries.modality}
                           </Badge>
                           <span className="text-gray-200 truncate font-medium">
                             {formatSeriesLabel(secondarySeries)}
@@ -1558,12 +1631,23 @@ export function SeriesSelector({
                     const ptSeries = series.filter(s => ['PT', 'PET', 'NM'].includes(modalityOf(s)));
                     const regSeries = series.filter(s => modalityOf(s) === 'REG');
                     const otherSeries = series.filter(s => !['CT', 'MR', 'PT', 'PET', 'NM', 'REG', 'RTSTRUCT'].includes(modalityOf(s)));
+                    
+                    // Separate 4DCT phases from regular CT series
+                    const allCTForGrouping = series.filter(s => modalityOf(s) === 'CT');
+                    const { fourDCTGroups, nonFourDCTSeries: regularCTSeries } = group4DCTSeries(allCTForGrouping);
+                    
+                    // Create a set of all 4DCT phase series IDs for exclusion from other sidebar sections
+                    const fourDCTPhaseIds = new Set<number>(
+                      fourDCTGroups.flatMap(g => g.phases.map(p => p.series.id))
+                    );
 
                     // Helper: get all planning CTs (CTs referenced by RT structures or that are registration primaries)
                     // Excludes CTAC CTs (CTs that share Frame of Reference with PET) as they should be grouped with PET
+                    // Excludes 4DCT phases (they are shown separately in 4DCT groups)
                     const getAllPlanningCTs = () => {
                       const ctacIdSet = new Set(regCtacSeriesIds ?? []);
-                      const allCTSeries = series.filter(s => modalityOf(s) === 'CT' && !ctacIdSet.has(s.id));
+                      // Use regularCTSeries (excludes 4DCT phases) instead of filtering all CT
+                      const allCTSeries = regularCTSeries.filter(s => !ctacIdSet.has(s.id));
                       if (allCTSeries.length === 0) return [];
 
                       // Gather signals
@@ -1701,29 +1785,36 @@ export function SeriesSelector({
                           const fusionReadyMr = Array.from(new Map([...mrAssoc, ...additionalMrAssoc].map((entry) => [entry.id, entry])).values());
 
                           const ctCandidatesForPet = series.filter(
-                            (s) => modalityOf(s) === 'CT' && candidateSetWithPrimary.has(s.id),
+                            (s) => modalityOf(s) === 'CT' && candidateSetWithPrimary.has(s.id) && !fourDCTPhaseIds.has(s.id),
                           );
 
                           const hasExplicitPetCandidates = Boolean(petMapForPrimary && petMapForPrimary.size);
 
                           // Compute ALL CT IDs that will be shown under PET/CT section
                           // This includes explicitly linked CTs, CTAC CTs, and studyId-based fallback CTs
-                          const ctIdsShownUnderPet = new Set<number>(ctIdsLinkedToPet);
+                          // But excludes 4DCT phases which are shown in their own group
+                          const ctIdsShownUnderPet = new Set<number>(
+                            Array.from(ctIdsLinkedToPet).filter(id => !fourDCTPhaseIds.has(id))
+                          );
                           
                           // Add all CTAC CTs (identified by server as sharing Frame of Reference with PET)
+                          // Exclude 4DCT phases
                           regCtacSeriesIds?.forEach((ctacId) => {
-                            if (Number.isFinite(ctacId) && ctacId !== seriesItem.id) {
+                            if (Number.isFinite(ctacId) && ctacId !== seriesItem.id && !fourDCTPhaseIds.has(ctacId)) {
                               ctIdsShownUnderPet.add(ctacId);
                             }
                           });
                           
                           // Add CTs that match studyId with any PT (mimics the fallback logic in PET/CT section)
+                          // Exclude 4DCT phases
                           ptAssoc.forEach((pt) => {
                             const ptStudyIdNum = Number(pt?.studyId);
                             if (!Number.isFinite(ptStudyIdNum)) return;
                             series.forEach((s) => {
                               if (modalityOf(s) !== 'CT') return;
                               if (s.id === seriesItem.id) return;
+                              // Exclude 4DCT phases - they are shown in their own group
+                              if (fourDCTPhaseIds.has(s.id)) return;
                               const ctStudyIdNum = Number(s?.studyId);
                               if (Number.isFinite(ctStudyIdNum) && ctStudyIdNum === ptStudyIdNum) {
                                 ctIdsShownUnderPet.add(s.id);
@@ -1738,6 +1829,8 @@ export function SeriesSelector({
                             if (ctIdsShownUnderPet.has(s.id)) return false;
                             // Exclude CTAC CTs (identified by server as sharing FoR with PET)
                             if (regCtacSeriesIds?.includes?.(s.id)) return false;
+                            // Exclude 4DCT phases - they are shown in their own group
+                            if (fourDCTPhaseIds.has(s.id)) return false;
                             return true;
                           });
                           
@@ -1751,6 +1844,8 @@ export function SeriesSelector({
                             if (regCtacSeriesIds?.includes?.(ct.id)) return false;
                             // Exclude CTs that will be shown under PET section
                             if (ctIdsShownUnderPet.has(ct.id)) return false;
+                            // Exclude 4DCT phases - they are shown in their own group
+                            if (fourDCTPhaseIds.has(ct.id)) return false;
                             return true;
                           });
                           const registeredCtAssoc = [
@@ -2383,6 +2478,278 @@ export function SeriesSelector({
                                 );
                               })()}
                               
+                              {/* 4DCT Groups - nested under primary CT at same level as Registered CT */}
+                              {fourDCTGroups.length > 0 && (
+                                <div className="space-y-2 border-l-2 border-cyan-500/40 pl-2">
+                                  <div className="text-[10px] text-cyan-300/80 uppercase tracking-wider font-semibold px-1 pb-0.5">4DCT</div>
+                                  {fourDCTGroups.map((group) => {
+                                    const isExpanded = expanded4DCTGroups.has(group.groupId);
+                                    const firstPhase = group.phases[0]?.series;
+                                    const isAnyPhaseSelected = group.phases.some(p => selectedSeries?.id === p.series.id);
+                                    const isAnyPhaseFused = group.phases.some(p => secondarySeriesId === p.series.id);
+                                    const hasMultiplePhases = group.phases.length > 1;
+                                    
+                                    // Get fusion status from first phase for loading/ready states
+                                    const firstPhaseId = firstPhase?.id;
+                                    const loadingState = firstPhaseId ? secondaryLoadingStates?.get(firstPhaseId) : undefined;
+                                    const fusionStatus = firstPhaseId ? fusionStatuses?.get(firstPhaseId) : undefined;
+                                    const isLoading = Boolean(loadingState?.isLoading || fusionStatus?.status === 'loading');
+                                    const isReady = fusionStatus?.status === 'ready';
+                                    const hasError = fusionStatus?.status === 'error';
+                                    const progress = Math.max(0, Math.min(100, loadingState?.progress ?? 0));
+                                    
+                                    return (
+                                      <div key={group.groupId} className="relative space-y-1">
+                                        {/* Chevron positioned on the left - like RT structure sets */}
+                                        {hasMultiplePhases && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggle4DCTGroupExpanded(group.groupId);
+                                            }}
+                                            className="absolute -left-[15px] top-2.5 p-0 bg-gray-950 border border-gray-950 hover:bg-cyan-500/20 hover:border-cyan-500/40 rounded transition-all duration-200 z-10 flex items-center justify-center w-3.5 h-3.5"
+                                          >
+                                            <ChevronRight 
+                                              className={`w-2.5 h-2.5 text-cyan-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                            />
+                                          </button>
+                                        )}
+                                        
+                                        {/* 4DCT Group Header */}
+                                        <div
+                                          className={cn(
+                                            "group relative overflow-hidden w-full py-1.5 px-2 min-h-9 rounded-lg transition-all duration-150 border text-left text-xs cursor-pointer backdrop-blur-sm",
+                                            isAnyPhaseFused
+                                              ? 'bg-gradient-to-r from-cyan-500/20 to-cyan-600/10 border-cyan-400/60 shadow-md shadow-cyan-500/20'
+                                              : 'bg-gray-800/20 border-transparent hover:bg-gray-800/40 hover:border-gray-700/30'
+                                          )}
+                                          onClick={() => {
+                                            if (firstPhase) {
+                                              onSeriesSelect(firstPhase);
+                                            }
+                                            if (hasMultiplePhases) {
+                                              toggle4DCTGroupExpanded(group.groupId);
+                                            }
+                                          }}
+                                        >
+                                          {/* Loading progress background */}
+                                          {isLoading && (
+                                            <div 
+                                              className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 to-cyan-400/10 transition-all duration-300"
+                                              style={{ width: `${progress}%` }}
+                                            />
+                                          )}
+                                          <div className="relative z-10 flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                              <Badge variant="outline" className={cn(
+                                                "flex-shrink-0",
+                                                pillClass('cyan')
+                                              )}>4DCT</Badge>
+                                              <span className={cn(
+                                                "truncate text-xs font-medium",
+                                                isAnyPhaseFused ? "text-cyan-100" : "text-gray-200"
+                                              )}>
+                                                {group.baseDescription || '4D CT'}
+                                              </span>
+                                              <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                                {group.phaseCount} phases
+                                              </span>
+                                            </div>
+                                            
+                                            {/* Fusion icon - like Registered CT */}
+                                            {onSecondarySeriesSelect && firstPhase && (
+                                              <TooltipProvider delayDuration={0}>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(firstPhase.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : isAnyPhaseFused;
+
+                                                      if (isInSplitView && assignedVp) {
+                                                        return (
+                                                          <span className={cn(pillClass('cyan'), "h-7 px-2.5 flex-shrink-0")}>
+                                                            VP {assignedVp}
+                                                          </span>
+                                                        );
+                                                      }
+
+                                                      if (isActiveFusion) {
+                                                        return (
+                                                          <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-7 w-7 flex-shrink-0 bg-cyan-600 hover:bg-cyan-700 animate-pulse"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (onSecondarySeriesSelect) {
+                                                                onSecondarySeriesSelect(null);
+                                                              }
+                                                            }}
+                                                          >
+                                                            <Zap className="h-3.5 w-3.5 text-white" />
+                                                          </Button>
+                                                        );
+                                                      }
+
+                                                      return (
+                                                        <Button
+                                                          size="icon"
+                                                          variant="ghost"
+                                                          className={`h-7 w-7 flex-shrink-0 ${isLoading ? 'cursor-wait' : hasError ? 'hover:bg-amber-700/30' : 'hover:bg-cyan-700/30'}`}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!isReady && onRebuildFusionManifest) {
+                                                              onRebuildFusionManifest();
+                                                            }
+                                                            onSecondarySeriesSelect(firstPhase.id);
+                                                          }}
+                                                          disabled={false}
+                                                        >
+                                                          {isLoading ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-200" />
+                                                          ) : hasError ? (
+                                                            <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                                                          ) : (
+                                                            <Zap className="h-3.5 w-3.5 text-cyan-300" />
+                                                          )}
+                                                        </Button>
+                                                      );
+                                                    })()}
+                                                  </TooltipTrigger>
+                                                  <TooltipContent className="bg-gradient-to-br from-cyan-600/95 via-cyan-500/95 to-cyan-600/95 border border-cyan-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                    {(() => {
+                                                      const assignedVp = isInSplitView ? getViewportForSeries(firstPhase.id) : null;
+                                                      const isActiveFusion = isInSplitView ? Boolean(assignedVp) : isAnyPhaseFused;
+                                                      const message = isInSplitView && assignedVp
+                                                        ? `Assigned to VP ${assignedVp}`
+                                                        : (isActiveFusion ? '4DCT Fusion Active - Click to disable' : (isReady ? 'Activate 4DCT fusion overlay' : 'Click to initialize 4DCT fusion'));
+                                                      return <p className="font-medium">{message}</p>;
+                                                    })()}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Expanded Phase List */}
+                                        {isExpanded && (
+                                          <div className="space-y-0.5 pl-2 ml-1">
+                                            {group.phases.map((phase) => {
+                                              const phaseLoadingState = secondaryLoadingStates?.get(phase.series.id);
+                                              const phaseFusionStatus = fusionStatuses?.get(phase.series.id);
+                                              const phaseIsLoading = Boolean(phaseLoadingState?.isLoading || phaseFusionStatus?.status === 'loading');
+                                              const phaseIsReady = phaseFusionStatus?.status === 'ready';
+                                              const phaseHasError = phaseFusionStatus?.status === 'error';
+                                              const phaseProgress = Math.max(0, Math.min(100, phaseLoadingState?.progress ?? 0));
+                                              const isPhaseActive = secondarySeriesId === phase.series.id;
+                                              
+                                              return (
+                                                <div
+                                                  key={phase.series.id}
+                                                  className={cn(
+                                                    "group relative py-1 px-2 rounded-md border cursor-pointer transition-all duration-150 overflow-hidden",
+                                                    isPhaseActive
+                                                      ? 'bg-gradient-to-r from-cyan-500/25 to-cyan-600/15 border-cyan-400/50'
+                                                      : 'bg-gray-800/10 border-gray-700/30 hover:bg-gray-800/20 hover:border-gray-600/40'
+                                                  )}
+                                                  onClick={() => onSeriesSelect(phase.series)}
+                                                >
+                                                  {/* Loading progress background */}
+                                                  {phaseIsLoading && (
+                                                    <div 
+                                                      className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 to-cyan-400/10 transition-all duration-300"
+                                                      style={{ width: `${phaseProgress}%` }}
+                                                    />
+                                                  )}
+                                                  <div className="relative z-10 flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                      <Badge className={cn(
+                                                        "flex-shrink-0 min-w-[36px] text-center",
+                                                        pillClass('cyan')
+                                                      )}>
+                                                        {formatPhaseLabel(phase.phasePercentage)}
+                                                      </Badge>
+                                                      <span className={cn(
+                                                        "text-[11px] font-medium truncate",
+                                                        isPhaseActive ? 'text-cyan-100' : 'text-gray-300'
+                                                      )}>
+                                                        Phase {formatPhaseLabel(phase.phasePercentage)}
+                                                      </span>
+                                                      <span className="text-[10px] text-gray-500 flex-shrink-0 tabular-nums">
+                                                        {phase.series.imageCount}
+                                                      </span>
+                                                    </div>
+                                                    
+                                                    {/* Fusion icon for individual phases */}
+                                                    {onSecondarySeriesSelect && (
+                                                      <TooltipProvider delayDuration={0}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            {(() => {
+                                                              if (isPhaseActive) {
+                                                                return (
+                                                                  <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-6 w-6 flex-shrink-0 bg-cyan-600 hover:bg-cyan-700 animate-pulse"
+                                                                    onClick={(e) => {
+                                                                      e.stopPropagation();
+                                                                      if (onSecondarySeriesSelect) {
+                                                                        onSecondarySeriesSelect(null);
+                                                                      }
+                                                                    }}
+                                                                  >
+                                                                    <Zap className="h-3 w-3 text-white" />
+                                                                  </Button>
+                                                                );
+                                                              }
+
+                                                              return (
+                                                                <Button
+                                                                  size="icon"
+                                                                  variant="ghost"
+                                                                  className={`h-6 w-6 flex-shrink-0 ${phaseIsLoading ? 'cursor-wait' : phaseHasError ? 'hover:bg-amber-700/30' : 'hover:bg-cyan-700/30'}`}
+                                                                  onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (!phaseIsReady && onRebuildFusionManifest) {
+                                                                      onRebuildFusionManifest();
+                                                                    }
+                                                                    onSecondarySeriesSelect(phase.series.id);
+                                                                  }}
+                                                                  disabled={false}
+                                                                >
+                                                                  {phaseIsLoading ? (
+                                                                    <Loader2 className="h-3 w-3 animate-spin text-cyan-200" />
+                                                                  ) : phaseHasError ? (
+                                                                    <AlertTriangle className="h-3 w-3 text-amber-300" />
+                                                                  ) : (
+                                                                    <Zap className="h-3 w-3 text-cyan-300" />
+                                                                  )}
+                                                                </Button>
+                                                              );
+                                                            })()}
+                                                          </TooltipTrigger>
+                                                          <TooltipContent className="bg-gradient-to-br from-cyan-600/95 via-cyan-500/95 to-cyan-600/95 border border-cyan-400/30 text-white text-xs rounded-lg shadow-lg">
+                                                            <p className="font-medium">
+                                                              {isPhaseActive ? 'Phase Active - Click to disable' : (phaseIsReady ? `Activate ${formatPhaseLabel(phase.phasePercentage)} phase` : 'Click to initialize')}
+                                                            </p>
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              
                               {/* Registration and MR Series that can be fused (REG-preferred; fallback: all MR) */}
                               {(() => {
                                 if (fusionReadyMr.length === 0) return null;
@@ -2631,13 +2998,17 @@ export function SeriesSelector({
                                        ctSiblings = linkedCtIds
                                          .map((ctId) => (Number.isFinite(ctId) ? seriesById.get(Number(ctId)) : undefined))
                                          .filter((entry): entry is DICOMSeries => Boolean(entry))
-                                         .filter((ctEntry) => ctEntry.id !== seriesItem.id);
+                                         .filter((ctEntry) => ctEntry.id !== seriesItem.id)
+                                         // Exclude 4DCT phases - they are shown in their own group
+                                         .filter((ctEntry) => !fourDCTPhaseIds.has(ctEntry.id));
                                      }
 
                                      if (!ctSiblings.length) {
                                        ctSiblings = series.filter((ctCandidate) => {
                                          if (modalityOf(ctCandidate) !== 'CT') return false;
                                          if (ctCandidate.id === seriesItem.id) return false;
+                                         // Exclude 4DCT phases - they are shown in their own group
+                                         if (fourDCTPhaseIds.has(ctCandidate.id)) return false;
                                          const ctStudyIdNumber = Number(ctCandidate?.studyId);
                                          if (!Number.isFinite(ptStudyIdNumber) || !Number.isFinite(ctStudyIdNumber)) {
                                            return false;

@@ -5,8 +5,8 @@
 | Field | Value |
 |-------|-------|
 | Document Version | 1.0.0 |
-| Generated | 2026-01-27T22:12:15.518Z |
-| Total Changes | 37 |
+| Generated | 2026-01-27T22:24:03.736Z |
+| Total Changes | 38 |
 | Branch | main |
 | First Change | 2025-12-04 |
 | Last Change | 2026-01-27 |
@@ -18,8 +18,8 @@
 |-------------|-------|-------------|
 | 📈 Enhancement | 12 | Improvements to existing functionality |
 | ✨ Feature | 7 | New functionality implemented |
+| 📝 Docs | 6 | Documentation updates |
 | ♻️ Refactor | 6 | Code maintenance without functional changes |
-| 📝 Docs | 5 | Documentation updates |
 | 📦 Other | 4 | Other changes |
 | 🔧 Fix | 3 | Defect corrections |
 
@@ -27,7 +27,7 @@
 
 | Functional Area | Changes |
 |-----------------|---------|
-| Infrastructure | 15 |
+| Infrastructure | 16 |
 | DICOM Processing | 13 |
 | User Interface | 11 |
 | Image Viewing | 7 |
@@ -49,7 +49,7 @@
 | 🔴 High | 1 | Yes - Full verification |
 | 🟡 Medium | 19 | Yes - Standard verification |
 | 🟢 Low | 7 | Recommended |
-| ⚪ None | 10 | Not required |
+| ⚪ None | 11 | Not required |
 
 ## Detailed Change History
 
@@ -57,6 +57,7 @@
 
 | Date | Change ID | Type | Risk | Description | Affected Areas |
 |------|-----------|------|------|-------------|----------------|
+| 2026-01-27 | `ba87ba0` | 📝 | ⚪ | DOCUMENTATION: Sync auto-generated regulatory documentation [Infrastructure] | Infrastructure |
 | 2026-01-27 | `20960fe` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation and enhance UI components [Use... | User Interface |
 | 2026-01-26 | `57c76a5` | 📝 | ⚪ | DOCUMENTATION: Update regulatory documentation for dashboard and viewer enhan... | Image Viewing, User Interface |
 | 2026-01-26 | `dfa2f0f` | 📈 | 🟢 | ENHANCEMENT: Enhance regulatory features and UI components [User Interface] | User Interface |
@@ -103,6 +104,20 @@
 ## Individual Change Records
 
 *Showing most recent 30 changes with full details*
+
+### Change ba87ba0
+
+**DOCUMENTATION: Sync auto-generated regulatory documentation [Infrastructure]**
+
+| Attribute | Value |
+|-----------|-------|
+| Date | 2026-01-27 |
+| Author | joshgiambi |
+| Change Type | docs |
+| Risk Impact | ⚪ NONE |
+| Verification | not-required |
+| Affected Areas | Infrastructure |
+| Related Requirements | REQ-INFRA-* |
 
 ### Change 20960fe
 
@@ -509,20 +524,6 @@
 | Verification | pending |
 | Affected Areas | Contour Tools |
 | Related Requirements | REQ-CONTOUR-* |
-
-### Change daff8ed
-
-**CHANGE: Style Generate buttons with consistent dark backgrounds for better text visibility [User Interface]**
-
-| Attribute | Value |
-|-----------|-------|
-| Date | 2025-12-17 |
-| Author | joshgiambi |
-| Change Type | other |
-| Risk Impact | 🟢 LOW |
-| Verification | pending |
-| Affected Areas | User Interface |
-| Related Requirements | REQ-UI-* |
 
 ---
 

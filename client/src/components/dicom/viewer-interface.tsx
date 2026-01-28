@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { contoursToVIP } from '@/boolean/integrate';
 import { union as vipUnion, intersect as vipIntersect, subtract as vipSubtract } from '@/boolean/vipBoolean';
 import { vipToRectContours } from '@/boolean/simpleContours';
-import { DICOMSeries, DICOMStudy, WindowLevel, WINDOW_LEVEL_PRESETS } from '@/lib/dicom-utils';
+import { DICOMSeries, DICOMStudy, WindowLevel, WINDOW_LEVEL_PRESETS, group4DCTFusionDescriptors, is4DCTSeries, get4DCTBaseDescription } from '@/lib/dicom-utils';
 import type { RegistrationAssociation, RegistrationSeriesDetail } from '@/types/fusion';
 import type { FusionManifest, FusionSecondaryDescriptor } from '@/types/fusion';
 import { fetchFusionManifest, preloadFusionSecondary, getFusionManifest, clearFusionCaches } from '@/lib/fusion-utils';
@@ -88,6 +88,18 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
   const [secondarySeriesId, setSecondarySeriesId] = useState<number | null>(null);
   const [fusionOpacity, setFusionOpacity] = useState(0.5);
   const [fusionDisplayMode, setFusionDisplayMode] = useState<'overlay' | 'side-by-side'>('overlay');
+  
+  // FuseBox popup window state
+  const [isFuseBoxOpen, setIsFuseBoxOpen] = useState(false);
+  const fuseBoxWindowRef = useRef<Window | null>(null);
+  
+  // 4DCT playback state
+  const [active4DCTPhaseIndex, setActive4DCTPhaseIndex] = useState(0);
+  const [is4DCTPlaying, setIs4DCTPlaying] = useState(false);
+  const fourDCTPlaybackRef = useRef<NodeJS.Timeout | null>(null);
+  const [fourDCTPhases, setFourDCTPhases] = useState<number[]>([]); // Array of secondary series IDs for 4DCT phases
+  // Store window/level per 4DCT group so all phases share the same W/L
+  const [fourDCTWindowLevels, setFourDCTWindowLevels] = useState<Map<string, WindowLevel>>(new Map());
   
   // RT Dose state
   const [showDosePanel, setShowDosePanel] = useState(false);
@@ -889,6 +901,25 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     };
   }, [selectedDoseSeriesId]);
 
+  // Wrapper for setWindowLevel that also stores W/L for 4DCT groups
+  const handleWindowLevelChange = useCallback((wl: WindowLevel) => {
+    setWindowLevel(wl);
+    
+    // If current series is a 4DCT phase, store W/L for the group
+    const desc = selectedSeries?.seriesDescription;
+    if (desc && is4DCTSeries(desc)) {
+      const groupId = get4DCTBaseDescription(desc);
+      if (groupId) {
+        console.log(`🎯 Storing W/L for 4DCT group "${groupId}": W=${wl.window}, L=${wl.level}`);
+        setFourDCTWindowLevels(prev => {
+          const next = new Map(prev);
+          next.set(groupId, wl);
+          return next;
+        });
+      }
+    }
+  }, [selectedSeries]);
+
   const handleSeriesSelect = async (seriesData: DICOMSeries) => {
     try {
       // Fetch images for the selected series
@@ -898,7 +929,30 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
       }
       
       const seriesWithImages = await response.json();
-      setSelectedSeries(seriesWithImages);
+      // Merge original seriesData with API response to preserve seriesDescription
+      const mergedSeries = {
+        ...seriesData,
+        ...seriesWithImages,
+        // Ensure seriesDescription is preserved from original data if API doesn't return it
+        seriesDescription: seriesWithImages.seriesDescription || seriesData.seriesDescription || '',
+      };
+      setSelectedSeries(mergedSeries);
+      
+      // Check if this is a 4DCT phase and we have stored W/L for the group
+      const seriesDescription = mergedSeries.seriesDescription;
+      if (is4DCTSeries(seriesDescription)) {
+        const groupId = get4DCTBaseDescription(seriesDescription);
+        if (groupId) {
+          const storedWL = fourDCTWindowLevels.get(groupId);
+          if (storedWL) {
+            console.log(`🔄 Applied stored 4DCT window/level for group: ${groupId}`);
+            setWindowLevel(storedWL);
+            // Skip the auto window/level detection below
+            await initializeFusionForSeries(seriesData);
+            return;
+          }
+        }
+      }
       
       // Apply default window/level based on modality and series description
       if (seriesWithImages.images?.length > 0) {
@@ -957,6 +1011,18 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
         
         if (autoWindowLevel) {
           setWindowLevel(autoWindowLevel);
+          
+          // If this is the first 4DCT phase selection, store the W/L for the group
+          if (is4DCTSeries(seriesDescription)) {
+            const groupId = get4DCTBaseDescription(seriesDescription);
+            if (groupId) {
+              setFourDCTWindowLevels(prev => {
+                const next = new Map(prev);
+                next.set(groupId, autoWindowLevel!);
+                return next;
+              });
+            }
+          }
         }
       }
       
@@ -1114,6 +1180,86 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     
     preloadFusion();
   }, [secondarySeriesId, selectedSeries?.id]);
+
+  // 4DCT playback effect - cycle through phases when playing
+  useEffect(() => {
+    // Clean up any existing interval
+    if (fourDCTPlaybackRef.current) {
+      clearInterval(fourDCTPlaybackRef.current);
+      fourDCTPlaybackRef.current = null;
+    }
+    
+    if (!is4DCTPlaying || fourDCTPhases.length === 0) {
+      return;
+    }
+    
+    // Start playback - cycle through phases at ~4fps (250ms interval)
+    fourDCTPlaybackRef.current = setInterval(() => {
+      setActive4DCTPhaseIndex(prev => {
+        const nextIndex = (prev + 1) % fourDCTPhases.length;
+        // Update the secondary series ID to the next phase
+        setSecondarySeriesId(fourDCTPhases[nextIndex]);
+        return nextIndex;
+      });
+    }, 250);
+    
+    return () => {
+      if (fourDCTPlaybackRef.current) {
+        clearInterval(fourDCTPlaybackRef.current);
+        fourDCTPlaybackRef.current = null;
+      }
+    };
+  }, [is4DCTPlaying, fourDCTPhases]);
+  
+  // Detect and populate 4DCT phases when fusionManifest changes
+  useEffect(() => {
+    if (!fusionManifest?.secondaries) {
+      setFourDCTPhases([]);
+      return;
+    }
+    
+    const { fourDCTGroups } = group4DCTFusionDescriptors(fusionManifest.secondaries);
+    
+    // If we have 4DCT groups, check if the current secondary is part of one
+    if (fourDCTGroups.length > 0 && secondarySeriesId) {
+      const activeGroup = fourDCTGroups.find(g => 
+        g.phases.some(p => p.descriptor.secondarySeriesId === secondarySeriesId)
+      );
+      
+      if (activeGroup) {
+        // Set the phases array
+        const phaseIds = activeGroup.phases.map(p => p.descriptor.secondarySeriesId);
+        setFourDCTPhases(phaseIds);
+        
+        // Set the active index based on current selection
+        const currentIndex = activeGroup.phases.findIndex(
+          p => p.descriptor.secondarySeriesId === secondarySeriesId
+        );
+        if (currentIndex >= 0) {
+          setActive4DCTPhaseIndex(currentIndex);
+        }
+        return;
+      }
+    }
+    
+    // Not in a 4DCT group, clear phases
+    setFourDCTPhases([]);
+  }, [fusionManifest?.secondaries, secondarySeriesId]);
+  
+  // 4DCT playback control callbacks
+  const handle4DCTPlayPauseToggle = useCallback(() => {
+    setIs4DCTPlaying(prev => !prev);
+  }, []);
+  
+  const handle4DCTPhaseChange = useCallback((phaseIndex: number) => {
+    if (fourDCTPhases.length === 0 || phaseIndex < 0 || phaseIndex >= fourDCTPhases.length) {
+      return;
+    }
+    setActive4DCTPhaseIndex(phaseIndex);
+    setSecondarySeriesId(fourDCTPhases[phaseIndex]);
+    // Stop playback when manually selecting a phase
+    setIs4DCTPlaying(false);
+  }, [fourDCTPhases]);
 
   const handleZoomIn = () => {
     try {
@@ -2417,6 +2563,20 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
     }
   }, [showLocalizationTool]);
 
+  // Monitor FuseBox popup window - detect when it's closed
+  useEffect(() => {
+    if (!isFuseBoxOpen) return;
+    
+    const checkWindow = setInterval(() => {
+      if (fuseBoxWindowRef.current?.closed) {
+        setIsFuseBoxOpen(false);
+        fuseBoxWindowRef.current = null;
+      }
+    }, 500);
+    
+    return () => clearInterval(checkWindow);
+  }, [isFuseBoxOpen]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -2440,7 +2600,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             selectedSeries={selectedSeries}
             onSeriesSelect={handleSeriesSelect}
             windowLevel={windowLevel}
-            onWindowLevelChange={setWindowLevel}
+            onWindowLevelChange={handleWindowLevelChange}
             studyId={studyData.studies[0]?.id}
             studyIds={studyData.studies.map((s: any) => s.id)}
             regAssociations={regAssociations}
@@ -2574,6 +2734,11 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   onLayoutPresetChange={handleLayoutPresetChange}
                   isExpanded={showFusionPanel}
                   onExpandedChange={setShowFusionPanel}
+                  // 4DCT playback props
+                  active4DCTPhaseIndex={active4DCTPhaseIndex}
+                  on4DCTPhaseChange={handle4DCTPhaseChange}
+                  is4DCTPlaying={is4DCTPlaying}
+                  on4DCTPlayPauseToggle={handle4DCTPlayPauseToggle}
                   className="z-20"
                 />
               )}
@@ -2658,7 +2823,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                     } catch {}
                   }}
                   windowLevel={windowLevel}
-                  onWindowLevelChange={setWindowLevel}
+                  onWindowLevelChange={handleWindowLevelChange}
                   imageCache={imageCache}
                   registrationAssociations={registrationRelationshipMap}
                   onLayoutChange={(layout) => {
@@ -2691,7 +2856,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       seriesId={selectedSeries.id}
                       studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
                       windowLevel={windowLevel}
-                      onWindowLevelChange={setWindowLevel}
+                      onWindowLevelChange={handleWindowLevelChange}
                       rtStructures={rtStructures}
                       structureVisibility={structureVisibility}
                       brushToolState={brushToolState}
@@ -2763,7 +2928,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                       seriesId={selectedSeries.id}
                       studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
                       windowLevel={windowLevel}
-                      onWindowLevelChange={setWindowLevel}
+                      onWindowLevelChange={handleWindowLevelChange}
                       rtStructures={rtStructures}
                       structureVisibility={structureVisibility}
                       brushToolState={brushToolState}
@@ -2835,7 +3000,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
                   seriesId={selectedSeries.id}
                   studyId={selectedSeries.studyId ?? studyData.studies[0]?.id}
                   windowLevel={windowLevel}
-                  onWindowLevelChange={setWindowLevel}
+                  onWindowLevelChange={handleWindowLevelChange}
                   rtStructures={rtStructures}
                   structureVisibility={structureVisibility}
                   brushToolState={brushToolState}
@@ -3015,6 +3180,7 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
           viewerOffsetLeft={384}
           // FuseBox props - show when fusion secondary is active
           hasFusionActive={secondarySeriesId !== null}
+          isFuseBoxOpen={isFuseBoxOpen}
           // Save props
           onSaveSnapshot={handleSaveSnapshot}
           saveStatus={saveStatus}
@@ -3037,9 +3203,13 @@ export function ViewerInterface({ studyData, onContourSettingsChange, contourSet
             };
             sessionStorage.setItem('fusebox-data', JSON.stringify(fuseboxData));
             
-            // Open FuseBox in a new window
+            // Open FuseBox in a new window and track its state
             const windowFeatures = 'width=1400,height=900,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no';
-            window.open('/fusebox', 'FuseBox', windowFeatures);
+            const fuseBoxWindow = window.open('/fusebox', 'FuseBox', windowFeatures);
+            if (fuseBoxWindow) {
+              fuseBoxWindowRef.current = fuseBoxWindow;
+              setIsFuseBoxOpen(true);
+            }
           }}
         />
       )}

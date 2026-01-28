@@ -344,28 +344,37 @@ export function ViewerToolbar({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-0 mb-3 w-80 max-h-80 overflow-y-auto rounded-xl shadow-2xl z-[100]"
+                      className="absolute bottom-full left-0 mb-4 w-[280px] rounded-xl backdrop-blur-xl overflow-hidden z-[100]"
                       style={{
-                        background: 'linear-gradient(180deg, rgba(30, 35, 45, 0.98) 0%, rgba(20, 24, 33, 0.99) 100%)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(20px)',
+                        background: 'linear-gradient(180deg, hsla(45, 15%, 12%, 0.98) 0%, hsla(45, 10%, 8%, 0.99) 100%)',
+                        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(251, 191, 36, 0.2), 0 0 40px -15px rgba(251, 191, 36, 0.15)',
                       }}
                     >
-                      <div className="p-3">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-semibold text-orange-300">Edit History</span>
-                          <button 
-                            onClick={() => setShowHistory(false)}
-                            className="h-5 w-5 flex items-center justify-center rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                      {/* Header */}
+                      <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <History className="w-4 h-4 text-amber-400" />
+                          <span className="text-sm font-medium text-white">Edit History</span>
                         </div>
-                        <div className="space-y-1">
-                          {historyItems.length === 0 ? (
-                            <div className="text-gray-500 text-xs px-2 py-2">No history yet</div>
-                          ) : (
-                            historyItems.map((h, idx) => {
+                        <button 
+                          onClick={() => setShowHistory(false)}
+                          className="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-white rounded-md hover:bg-white/5 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="p-2 max-h-64 overflow-y-auto">
+                        {historyItems.length === 0 ? (
+                          <div className="text-center py-6">
+                            <History className="w-8 h-8 mx-auto mb-2 text-amber-500/30" />
+                            <p className="text-xs font-medium text-gray-300">No history yet</p>
+                            <p className="text-[10px] mt-1 text-gray-500">Edit actions will appear here</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {historyItems.map((h, idx) => {
                               const date = new Date(h.timestamp);
                               const isCurrent = idx === currentHistoryIndex;
                               return (
@@ -374,27 +383,27 @@ export function ViewerToolbar({
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg transition-all text-xs",
                                     isCurrent 
-                                      ? 'bg-orange-500/15 border border-orange-500/30 text-orange-200' 
-                                      : 'bg-white/5 border border-transparent text-gray-300 hover:bg-white/10 hover:border-white/10'
+                                      ? 'bg-amber-500/15 border border-amber-500/30 text-amber-200' 
+                                      : 'bg-black/20 border border-white/5 text-gray-300 hover:bg-white/5 hover:text-white'
                                   )}
                                   onClick={() => {
                                     onSelectHistory?.(idx);
                                     setShowHistory(false);
                                   }}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-medium">{h.action}</span>
-                                    <span className="text-[10px] text-gray-500">{date.toLocaleTimeString()}</span>
-                                  </div>
-                                  <div className="text-[10px] text-gray-500 mt-0.5">
+                                  <div className="font-medium">{h.action}</div>
+                                  <div className="text-[10px] text-gray-400 mt-0.5">
                                     {h.structureName || `Structure ${h.structureId}`}
                                     {h.slicePosition !== undefined && ` • Slice ${h.slicePosition.toFixed(1)}`}
                                   </div>
+                                  <div className="text-[10px] text-gray-500 mt-0.5">
+                                    {date.toLocaleTimeString()}
+                                  </div>
                                 </button>
                               );
-                            })
-                          )}
-                        </div>
+                            })}
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}

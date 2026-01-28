@@ -138,6 +138,240 @@ export function calculateWindowLevel(windowCenter: string, windowWidth: string):
   };
 }
 
+// ============================================================================
+// 4DCT (4-Dimensional CT) Utility Functions
+// ============================================================================
+
+/**
+ * Regular expressions for identifying 4DCT phase series
+ * Matches patterns like:
+ * - "4D 2.0 B30f 0 - 90  TRIGGER_DELAY 60%"
+ * - "Phase 10%"
+ * - "CT 4D 0%"
+ * - "Resp 30%"
+ */
+const FOUR_DCT_PATTERNS = [
+  /TRIGGER_DELAY\s*(\d+)%/i,           // TRIGGER_DELAY XX%
+  /(?:^|[\s_-])(\d+)%\s*$/,            // Ends with XX%
+  /phase\s*(\d+)%/i,                    // Phase XX%
+  /(?:4D|4-D|4DCT)[^%]*?(\d+)%/i,      // 4D/4DCT with XX%
+  /resp(?:iratory)?\s*(\d+)%/i,        // Respiratory XX%
+  /gated?\s*(\d+)%/i,                  // Gated XX%
+];
+
+/**
+ * Pattern to extract base description by removing the phase percentage
+ */
+const PHASE_REMOVAL_PATTERNS = [
+  /\s*TRIGGER_DELAY\s*\d+%\s*/gi,
+  /\s*Phase\s*\d+%\s*/gi,
+  /\s*\d+%\s*$/gi,
+];
+
+/**
+ * Check if a series is a 4DCT phase based on its description
+ * @param seriesDescription - The series description to check
+ * @returns True if this appears to be a 4DCT phase
+ */
+export function is4DCTSeries(seriesDescription: string | null | undefined): boolean {
+  if (!seriesDescription) return false;
+  return FOUR_DCT_PATTERNS.some(pattern => pattern.test(seriesDescription));
+}
+
+/**
+ * Extract the phase percentage from a 4DCT series description
+ * @param seriesDescription - The series description
+ * @returns Phase percentage (0-100) or null if not found
+ */
+export function extract4DCTPhasePercentage(seriesDescription: string | null | undefined): number | null {
+  if (!seriesDescription) return null;
+  
+  for (const pattern of FOUR_DCT_PATTERNS) {
+    const match = seriesDescription.match(pattern);
+    if (match && match[1]) {
+      const percentage = parseInt(match[1], 10);
+      if (percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Get the base description for grouping 4DCT phases
+ * Removes the phase percentage part to allow grouping related phases
+ * @param seriesDescription - The series description
+ * @returns Base description for grouping
+ */
+export function get4DCTBaseDescription(seriesDescription: string | null | undefined): string {
+  if (!seriesDescription) return '';
+  
+  let base = seriesDescription;
+  for (const pattern of PHASE_REMOVAL_PATTERNS) {
+    base = base.replace(pattern, ' ');
+  }
+  // Normalize whitespace
+  return base.trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Interface for a grouped 4DCT collection
+ */
+export interface FourDCTGroup {
+  /** Unique identifier for this 4DCT group (based on base description) */
+  groupId: string;
+  /** Base description (e.g., "4D 2.0 B30f 0 - 90") */
+  baseDescription: string;
+  /** Display name for the group */
+  displayName: string;
+  /** Array of phase series, sorted by phase percentage */
+  phases: Array<{
+    series: DICOMSeries;
+    phasePercentage: number;
+  }>;
+  /** Total number of phases (typically 10 for respiratory 4DCT) */
+  phaseCount: number;
+}
+
+/**
+ * Group 4DCT series into collections by their base description
+ * @param allSeries - Array of all series to scan
+ * @returns Array of 4DCT groups and array of non-4DCT series
+ */
+export function group4DCTSeries(allSeries: DICOMSeries[]): {
+  fourDCTGroups: FourDCTGroup[];
+  nonFourDCTSeries: DICOMSeries[];
+} {
+  const fourDCTMap = new Map<string, FourDCTGroup>();
+  const nonFourDCTSeries: DICOMSeries[] = [];
+  
+  for (const series of allSeries) {
+    // Only check CT modality
+    if (series.modality !== 'CT') {
+      nonFourDCTSeries.push(series);
+      continue;
+    }
+    
+    const phasePercentage = extract4DCTPhasePercentage(series.seriesDescription);
+    
+    if (phasePercentage !== null) {
+      const baseDescription = get4DCTBaseDescription(series.seriesDescription);
+      const groupId = `4dct-${baseDescription.toLowerCase().replace(/\s+/g, '-')}`;
+      
+      if (!fourDCTMap.has(groupId)) {
+        fourDCTMap.set(groupId, {
+          groupId,
+          baseDescription,
+          displayName: `4DCT: ${baseDescription || 'Unnamed'}`,
+          phases: [],
+          phaseCount: 0,
+        });
+      }
+      
+      const group = fourDCTMap.get(groupId)!;
+      group.phases.push({ series, phasePercentage });
+      group.phaseCount = group.phases.length;
+    } else {
+      nonFourDCTSeries.push(series);
+    }
+  }
+  
+  // Sort phases within each group by percentage
+  for (const group of fourDCTMap.values()) {
+    group.phases.sort((a, b) => a.phasePercentage - b.phasePercentage);
+  }
+  
+  return {
+    fourDCTGroups: Array.from(fourDCTMap.values()),
+    nonFourDCTSeries,
+  };
+}
+
+/**
+ * Get phase label for display (e.g., "0%", "10%", "20%")
+ * @param phasePercentage - The phase percentage
+ * @returns Formatted phase label
+ */
+export function formatPhaseLabel(phasePercentage: number): string {
+  return `${phasePercentage}%`;
+}
+
+/**
+ * Interface for a grouped 4DCT collection from fusion secondary descriptors
+ */
+export interface FourDCTFusionGroup {
+  /** Unique identifier for this 4DCT group */
+  groupId: string;
+  /** Base description (e.g., "4D 2.0 B30f 0 - 90") */
+  baseDescription: string;
+  /** Display name for the group */
+  displayName: string;
+  /** Array of phase descriptors, sorted by phase percentage */
+  phases: Array<{
+    descriptor: any; // FusionSecondaryDescriptor - using any to avoid circular import
+    phasePercentage: number;
+  }>;
+  /** Total number of phases */
+  phaseCount: number;
+}
+
+/**
+ * Group fusion secondary descriptors by 4DCT phases
+ * @param descriptors - Array of FusionSecondaryDescriptor
+ * @returns Object with 4DCT groups and non-4DCT descriptors
+ */
+export function group4DCTFusionDescriptors(descriptors: any[]): {
+  fourDCTGroups: FourDCTFusionGroup[];
+  nonFourDCTDescriptors: any[];
+} {
+  const fourDCTMap = new Map<string, FourDCTFusionGroup>();
+  const nonFourDCTDescriptors: any[] = [];
+  
+  for (const descriptor of descriptors) {
+    // Only check CT modality
+    const modality = (descriptor.secondaryModality || '').toUpperCase();
+    if (modality !== 'CT') {
+      nonFourDCTDescriptors.push(descriptor);
+      continue;
+    }
+    
+    const seriesDescription = descriptor.secondarySeriesDescription || '';
+    const phasePercentage = extract4DCTPhasePercentage(seriesDescription);
+    
+    if (phasePercentage !== null) {
+      const baseDescription = get4DCTBaseDescription(seriesDescription);
+      const groupId = `4dct-fusion-${baseDescription.toLowerCase().replace(/\s+/g, '-')}`;
+      
+      if (!fourDCTMap.has(groupId)) {
+        fourDCTMap.set(groupId, {
+          groupId,
+          baseDescription,
+          displayName: `4DCT: ${baseDescription || 'Unnamed'}`,
+          phases: [],
+          phaseCount: 0,
+        });
+      }
+      
+      const group = fourDCTMap.get(groupId)!;
+      group.phases.push({ descriptor, phasePercentage });
+      group.phaseCount = group.phases.length;
+    } else {
+      nonFourDCTDescriptors.push(descriptor);
+    }
+  }
+  
+  // Sort phases within each group by percentage
+  for (const group of fourDCTMap.values()) {
+    group.phases.sort((a, b) => a.phasePercentage - b.phasePercentage);
+  }
+  
+  return {
+    fourDCTGroups: Array.from(fourDCTMap.values()),
+    nonFourDCTDescriptors,
+  };
+}
+
 /**
  * Helper functions for safe metadata parsing
  * These ensure MRI and CT metadata are handled consistently

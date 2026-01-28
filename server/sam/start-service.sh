@@ -27,15 +27,23 @@ if [ ! -f "$CHECKPOINT" ]; then
     echo "  For vit_h (highest quality, ~2.4GB):"
     echo "    wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -O sam_vit_h.pth"
     echo ""
-    read -p "Download vit_b now? (y/n) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Downloading SAM vit_b checkpoint..."
+    
+    # Check for non-interactive mode (started from UI)
+    if [ "$NONINTERACTIVE" = "1" ]; then
+        echo "Non-interactive mode: Auto-downloading SAM vit_b checkpoint..."
         curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
         CHECKPOINT="sam_vit_b.pth"
     else
-        echo "Please download the checkpoint and run again."
-        exit 1
+        read -p "Download vit_b now? (y/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Downloading SAM vit_b checkpoint..."
+            curl -L -o sam_vit_b.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
+            CHECKPOINT="sam_vit_b.pth"
+        else
+            echo "Please download the checkpoint and run again."
+            exit 1
+        fi
     fi
 fi
 
@@ -54,15 +62,23 @@ echo "✓ Python 3 available"
 if lsof -Pi :5003 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "⚠️  Warning: Port 5003 is already in use"
     echo ""
-    read -p "Kill existing process and restart? (y/n) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Killing existing process..."
-        lsof -ti:5003 | xargs kill -9
+    
+    # Check for non-interactive mode (started from UI)
+    if [ "$NONINTERACTIVE" = "1" ]; then
+        echo "Non-interactive mode: Killing existing process..."
+        lsof -ti:5003 | xargs kill -9 2>/dev/null || true
         sleep 1
     else
-        echo "Exiting..."
-        exit 1
+        read -p "Kill existing process and restart? (y/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Killing existing process..."
+            lsof -ti:5003 | xargs kill -9
+            sleep 1
+        else
+            echo "Exiting..."
+            exit 1
+        fi
     fi
 fi
 

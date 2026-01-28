@@ -112,26 +112,32 @@ export function BottomToolbarPrototype() {
                 </div>
 
                 {showHistory && (
-                  <div className="absolute bottom-full left-0 mb-2 bg-black/95 border border-orange-400/50 rounded-lg shadow-2xl backdrop-blur-sm w-96 max-h-96 overflow-y-auto z-50">
-                    <div className="sticky top-0 bg-gray-900/95 border-b border-orange-400/30 p-3 backdrop-blur-sm">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <History className="w-4 h-4 text-orange-400" />
-                          <span className="text-sm text-orange-200 font-semibold">Edit History</span>
-                        </div>
-                        <button 
-                          className="text-gray-400 hover:text-gray-200 transition-colors"
-                          onClick={() => setShowHistory(false)}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                  <div 
+                    className="absolute bottom-full left-0 mb-3 w-[280px] rounded-xl backdrop-blur-xl overflow-hidden z-50"
+                    style={{
+                      background: 'linear-gradient(180deg, hsla(45, 15%, 12%, 0.98) 0%, hsla(45, 10%, 8%, 0.99) 100%)',
+                      boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(251, 191, 36, 0.2), 0 0 40px -15px rgba(251, 191, 36, 0.15)',
+                    }}
+                  >
+                    {/* Header */}
+                    <div className="px-3 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <History className="w-4 h-4 text-amber-400" />
+                        <span className="text-sm font-medium text-white">Edit History</span>
                       </div>
+                      <button 
+                        className="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-white rounded-md hover:bg-white/5 transition-colors"
+                        onClick={() => setShowHistory(false)}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     
-                    <div className="p-3">
-                      <div className="text-center py-8 text-gray-400">
-                        <History className="w-10 h-10 mx-auto mb-2 text-gray-600" />
-                        <p className="text-xs font-medium">No history yet</p>
+                    {/* Content */}
+                    <div className="p-2 max-h-64 overflow-y-auto">
+                      <div className="text-center py-6">
+                        <History className="w-8 h-8 mx-auto mb-2 text-amber-500/30" />
+                        <p className="text-xs font-medium text-gray-300">No history yet</p>
                         <p className="text-[10px] mt-1 text-gray-500">Edit actions will appear here</p>
                       </div>
                     </div>
